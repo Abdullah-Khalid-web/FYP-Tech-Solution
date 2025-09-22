@@ -1,0 +1,33 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <img src="<%= shop.logo %>" alt="<%= shop.name %>"
+                style="height:30px; margin-right:10px; border-radius:5px;">
+            <%= shop.name %>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <% if (user && user.username) { %>
+                    <li class="nav-item"><a class="nav-link" href="/user_profile">Hi, <%= user.username %></a></li>
+                    <li class="nav-item"><a class="nav-link" href="/products">Products</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/billing">Billing</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/returns">Returns</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/reports">Sales-Reports</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/list_bills">List-Bills</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+                    <% }
+                    else { %>
+                    <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/register">Subscribe</a></li>
+                    <% } %>
+                    <li class="nav-item">
+                        <button class="btn btn-sm btn-outline-light me-2" onclick="toggleTheme()">🌓Theme</button>
+                    </li>
+            </ul>
+        </div>
+    </div>
+</nav>

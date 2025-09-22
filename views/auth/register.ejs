@@ -1,0 +1,236 @@
+<%- include('../partials/header', { title: 'Shop Registration' }) %>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Register Your Shop</h4>
+        </div>
+        <div class="card-body">
+          <% if (error) { %>
+            <div class="alert alert-danger"><%= error %></div>
+          <% } %>
+          <% if (success) { %>
+            <div class="alert alert-success"><%= success %></div>
+          <% } %>
+
+          <form action="/register" method="POST" enctype="multipart/form-data">
+            <h5 class="mb-3">Shop Information</h5>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="shopName" class="form-label">Shop Name *</label>
+                <input type="text" class="form-control" id="shopName" name="shopName" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="plan" class="form-label">Subscription Plan *</label>
+                <select class="form-select" id="plan" name="plan" required>
+                  <option value="">Select Plan</option>
+                  <option value="basic">Basic - PKR 1,000/month</option>
+                  <option value="pro">Pro - PKR 2,500/month</option>
+                  <option value="enterprise">Enterprise - PKR 5,000/month</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- Subscription Duration Section -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Subscription Duration *</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="subscriptionDuration" id="monthly" value="monthly" checked>
+                  <label class="form-check-label" for="monthly">
+                    Monthly (Standard Rate)
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="subscriptionDuration" id="quarterly" value="quarterly">
+                  <label class="form-check-label" for="quarterly">
+                    Quarterly (5% Discount)
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="subscriptionDuration" id="yearly" value="yearly">
+                  <label class="form-check-label" for="yearly">
+                    Yearly (15% Discount)
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <h6 class="card-title">Subscription Summary</h6>
+                    <div id="priceSummary">
+                      <p class="mb-1">Plan: <span id="selectedPlan">Basic</span></p>
+                      <p class="mb-1">Duration: <span id="selectedDuration">Monthly</span></p>
+                      <p class="mb-1">Price: <span id="calculatedPrice">PKR 1,000</span></p>
+                      <p class="mb-0">Savings: <span id="savings">PKR 0</span></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Payment Method -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="paymentMethod" class="form-label">Payment Method *</label>
+                <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+                  <option value="">Select Payment Method</option>
+                  <option value="credit_card">Credit Card</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="jazzcash">JazzCash</option>
+                  <option value="easypaisa">EasyPaisa</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="paymentDetails" class="form-label">Payment Reference/Details</label>
+                <input type="text" class="form-control" id="paymentDetails" name="paymentDetails">
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="email" class="form-label">Shop Email *</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="phone" class="form-label">Shop Phone</label>
+                <input type="tel" class="form-control" id="phone" name="phone">
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="address" class="form-label">Shop Address</label>
+              <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="currency" class="form-label">Currency</label>
+                <select class="form-select" id="currency" name="currency">
+                  <option value="PKR">PKR</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="logo" class="form-label">Shop Logo</label>
+                <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="primaryColor" class="form-label">Primary Color</label>
+                <input type="color" class="form-control form-control-color" id="primaryColor" name="primaryColor" value="#007bff">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="secondaryColor" class="form-label">Secondary Color</label>
+                <input type="color" class="form-control form-control-color" id="secondaryColor" name="secondaryColor" value="#6c757d">
+              </div>
+            </div>
+
+            <hr class="my-4">
+            <h5 class="mb-3">Owner Information</h5>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="ownerName" class="form-label">Full Name *</label>
+                <input type="text" class="form-control" id="ownerName" name="ownerName" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="ownerEmail" class="form-label">Email *</label>
+                <input type="email" class="form-control" id="ownerEmail" name="ownerEmail" required>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="ownerPhone" class="form-label">Phone Number</label>
+                <input type="tel" class="form-control" id="ownerPhone" name="ownerPhone">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="cnic" class="form-label">CNIC (National ID)</label>
+                <input type="text" class="form-control" id="cnic" name="cnic" placeholder="XXXXX-XXXXXXX-X">
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="ownerPassword" class="form-label">Password *</label>
+                <input type="password" class="form-control" id="ownerPassword" name="ownerPassword" required minlength="6">
+                <div class="form-text">Minimum 6 characters</div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label  for="confirmPassword" class="form-label">Confirm Password *</label>
+                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="salary" class="form-label">Monthly Salary (Optional)</label>
+              <input type="number" class="form-control" id="salary" name="salary" min="0" step="0.01">
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary btn-lg">Register Shop</button>
+            </div>
+          </form>
+
+          <div class="mt-3 text-center">
+            <p>Already have an account? <a href="/login">Login here</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Dynamic pricing calculation
+  const planSelect = document.getElementById('plan');
+  const durationRadios = document.querySelectorAll('input[name="subscriptionDuration"]');
+  const priceSpan = document.getElementById('calculatedPrice');
+  const savingsSpan = document.getElementById('savings');
+  const planSpan = document.getElementById('selectedPlan');
+  const durationSpan = document.getElementById('selectedDuration');
+
+  // Pricing configuration
+  const pricing = {
+    basic: { monthly: 1000, quarterly: 2850, yearly: 10200 },
+    pro: { monthly: 2500, quarterly: 7125, yearly: 25500 },
+    enterprise: { monthly: 5000, quarterly: 14250, yearly: 51000 }
+  };
+
+  function updatePrice() {
+    const selectedPlan = planSelect.value || 'basic';
+    const selectedDuration = document.querySelector('input[name="subscriptionDuration"]:checked').value;
+    
+    const basePrice = pricing[selectedPlan].monthly;
+    let price = pricing[selectedPlan][selectedDuration];
+    let savings = 0;
+    
+    // Calculate savings
+    if (selectedDuration === 'quarterly') {
+      savings = (basePrice * 3) - price;
+    } else if (selectedDuration === 'yearly') {
+      savings = (basePrice * 12) - price;
+    }
+    
+    // Update display
+    planSpan.textContent = planSelect.options[planSelect.selectedIndex].text.split('-')[0].trim();
+    durationSpan.textContent = selectedDuration.charAt(0).toUpperCase() + selectedDuration.slice(1);
+    priceSpan.textContent = `PKR ${price.toLocaleString()}`;
+    savingsSpan.textContent = `PKR ${savings.toLocaleString()}`;
+  }
+
+  // Add event listeners
+  planSelect.addEventListener('change', updatePrice);
+  durationRadios.forEach(radio => {
+    radio.addEventListener('change', updatePrice);
+  });
+
+  // Initialize
+  updatePrice();
+</script>

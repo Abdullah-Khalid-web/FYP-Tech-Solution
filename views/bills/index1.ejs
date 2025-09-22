@@ -1,0 +1,908 @@
+<!-- bills/index.ejs -->
+<div class="container">
+    <!-- Quick Bill Creation Section -->
+    <div class="row mt-3">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Quick Bill Creation</h5>
+                </div>
+                <div class="card-body">
+                    <form id="quickBillForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Customer (Optional)</label>
+                                <input type="text" class="form-control" id="quickCustomerName" placeholder="Customer name">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone (Optional)</label>
+                                <input type="text" class="form-control" id="quickCustomerPhone" placeholder="Phone number">
+                            </div>
+                        </div>
+
+                        <!-- Product Search and Add -->
+                        <div class="mb-3">
+                            <label class="form-label">Add Products</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="quickProductSearch" 
+                                       placeholder="Scan barcode or search products" autofocus>
+                                <button class="btn btn-outline-secondary" type="button" id="openProductList">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                            </div>
+                            <div id="quickSearchResults" class="mt-2" style="display: none;">
+                                <div class="list-group" id="quickProductResultsList"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bill Items Table -->
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm" id="quickBillItems">
+                                <thead>
+                                    <tr>
+                                        <th width="25%">Product</th>
+                                        <th width="15%">Price</th>
+                                        <th width="10%">Qty</th>
+                                        <th width="15%">Discount</th>
+                                        <th width="15%">Tax</th>
+                                        <th width="15%">Total</th>
+                                        <th width="5%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Items will be added here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Bill Summary -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Payment Method</label>
+                                    <select class="form-select" id="quickPaymentMethod">
+                                        <option value="cash">Cash</option>
+                                        <option value="card">Card</option>
+                                        <option value="mobile">Mobile Payment</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Additional Notes</label>
+                                    <textarea class="form-control" id="quickBillNotes" rows="2"></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body p-2">
+                                        <div class="d-flex justify-content-between">
+                                            <span>Subtotal:</span>
+                                            <span id="quickSubtotal">0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total Discount:</span>
+                                            <span id="quickTotalDiscount">0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total Tax:</span>
+                                            <span id="quickTotalTax">0.00</span>
+                                        </div>
+                                        <hr class="my-1">
+                                        <div class="d-flex justify-content-between fw-bold">
+                                            <span>Total:</span>
+                                            <span id="quickTotal">0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-2">
+                                            <span>Paid Amount:</span>
+                                            <input type="number" class="form-control form-control-sm w-50" 
+                                                   id="quickPaidAmount" value="0.00" min="0" step="0.01">
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-2">
+                                            <span>Change:</span>
+                                            <span id="quickChangeAmount">0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                            <button type="button" class="btn btn-secondary me-md-2" id="clearBill">
+                                <i class="fas fa-times me-1"></i> Clear
+                            </button>
+                            <button type="button" class="btn btn-warning me-md-2" id="voiceBill">
+                                <i class="fas fa-microphone me-1"></i> Voice Bill
+                            </button>
+                            <button type="button" class="btn btn-primary me-md-2" id="finalizeBill">
+                                <i class="fas fa-check-circle me-1"></i> Finalize
+                            </button>
+                            <button type="submit" class="btn btn-success" id="submitBill" style="display: none;">
+                                <i class="fas fa-check me-1"></i> Create Bill
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bills Quick Access -->
+    <div class="row mt-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Bills</h5>
+                    <a href="/bills/list" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-list me-1"></i> View All Bills
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Bill #</th>
+                                    <th>Time</th>
+                                    <th>Customer</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (recentBills && recentBills.length) { %>
+                                    <% recentBills.forEach(bill => { %>
+                                        <tr>
+                                            <td><%= bill.bill_number %></td>
+                                            <td><%= new Date(bill.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></td>
+                                            <td><%= bill.customer_name || 'Walk-in' %></td>
+                                            <td><%= bill.item_count %></td>
+                                            <td><%= Number(bill.total_amount).toFixed(2) %></td>
+                                            <td>
+                                                <span class="badge <%= 
+                                                    bill.due_amount <= 0 ? 'bg-success' : 
+                                                    bill.paid_amount > 0 ? 'bg-warning' : 'bg-danger' 
+                                                %>">
+                                                    <%= bill.due_amount <= 0 ? 'Paid' : 
+                                                        bill.paid_amount > 0 ? 'Partial' : 'Unpaid' %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="/bills/<%= bill.id %>" class="btn btn-sm btn-outline-primary me-1">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="/bills/print/<%= bill.id %>" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-print"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="7" class="text-center py-3 text-muted">
+                                            No recent bills found
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product List Modal -->
+<div class="modal fade" id="productListModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Select Products</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="modalProductSearch" placeholder="Search products...">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalProductList">
+                            <!-- Products will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Bill Modal -->
+<div class="modal fade" id="printBillModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Bill #<span id="printBillNumber"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="printBillContent">
+                <!-- Bill content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Close
+                </button>
+                <button type="button" class="btn btn-primary" id="printBillBtn">
+                    <i class="fas fa-print me-1"></i> Print Bill
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Quick bill functionality
+    const quickBillForm = document.getElementById('quickBillForm');
+    const quickProductSearch = document.getElementById('quickProductSearch');
+    const quickBillItems = document.getElementById('quickBillItems').querySelector('tbody');
+    let quickBillProducts = [];
+    
+    // Focus on search input immediately
+    quickProductSearch.focus();
+    
+    // Product search functionality
+    // Replace the quickProductSearch event listener with this:
+    quickProductSearch.addEventListener('input', async function() {
+    const searchTerm = this.value.trim();
+    if (searchTerm.length < 1) {
+        document.getElementById('quickSearchResults').style.display = 'none';
+        return;
+    }
+    
+    try {
+        // Replace with your actual API endpoint
+        const response = await fetch(`/api/products/${productId}`);
+        const product = await response.json();
+        const results = await response.json();
+        
+        const resultsList = document.getElementById('quickProductResultsList');
+        resultsList.innerHTML = '';
+        
+        if (results.length === 0) {
+            resultsList.innerHTML = '<div class="list-group-item text-muted">No products found</div>';
+        } else {
+            results.forEach(product => {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'list-group-item list-group-item-action';
+                item.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">${product.name}</h6>
+                            <small class="text-muted">${product.barcode || 'N/A'} | Stock: ${product.stock || 0}</small>
+                        </div>
+                        <div>
+                            <span class="fw-bold me-2">${product.price.toFixed(2)}</span>
+                            <button class="btn btn-sm btn-primary add-quick-product" data-id="${product.id}">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                `;
+                resultsList.appendChild(item);
+            });
+        }
+        
+        document.getElementById('quickSearchResults').style.display = 'block';
+    } catch (error) {
+        console.error('Search error:', error);
+        document.getElementById('quickSearchResults').style.display = 'none';
+    }
+});
+    // Add product from quick search
+    document.getElementById('quickProductResultsList').addEventListener('click', function(e) {
+        if (e.target.closest('.add-quick-product')) {
+            const productId = e.target.closest('.add-quick-product').dataset.id;
+            // In real app, get product details from API
+            const product = {
+                id: productId,
+                name: `Product ${productId}`,
+                price: 100 * productId,
+                quantity: 1,
+                discount: 0,
+                tax_rate: productId == 1 ? 5 : productId == 2 ? 10 : 8,
+                stock: productId == 1 ? 10 : productId == 2 ? 5 : 8
+            };
+            addToQuickBill(product);
+            quickProductSearch.value = '';
+            document.getElementById('quickSearchResults').style.display = 'none';
+            quickProductSearch.focus();
+        }
+    });
+    
+    // Open product list modal
+    document.getElementById('openProductList').addEventListener('click', function() {
+        $('#productListModal').modal('show');
+        // Load products - replace with actual API call
+        loadModalProducts();
+    });
+    
+    // Load products in modal
+    function loadModalProducts(search = '') {
+        // Simulate API call - replace with actual fetch
+        setTimeout(() => {
+            const products = [
+                { id: 1, name: 'Product 1', price: 100, stock: 10, category: 'Category A', tax_rate: 5 },
+                { id: 2, name: 'Product 2', price: 200, stock: 5, category: 'Category B', tax_rate: 10 },
+                { id: 3, name: 'Product 3', price: 150, stock: 8, category: 'Category A', tax_rate: 8 },
+                { id: 4, name: 'Product 4', price: 250, stock: 12, category: 'Category B', tax_rate: 5 },
+                { id: 5, name: 'Product 5', price: 300, stock: 3, category: 'Category C', tax_rate: 10 }
+            ].filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+            
+            const productList = document.getElementById('modalProductList');
+            productList.innerHTML = '';
+            
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <strong>${product.name}</strong><br>
+                        <small class="text-muted">${product.category}</small>
+                    </td>
+                    <td>${product.price.toFixed(2)}</td>
+                    <td>${product.stock}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary add-from-modal" data-id="${product.id}">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </td>
+                `;
+                productList.appendChild(row);
+            });
+        }, 200);
+    }
+    
+    // Search in product modal
+    document.getElementById('modalProductSearch').addEventListener('input', function() {
+        loadModalProducts(this.value);
+    });
+    
+    // Add product from modal
+    document.getElementById('modalProductList').addEventListener('click', function(e) {
+        if (e.target.closest('.add-from-modal')) {
+            const productId = e.target.closest('.add-from-modal').dataset.id;
+            // In real app, get product details from API
+            const product = {
+                id: productId,
+                name: `Product ${productId}`,
+                price: 100 * productId,
+                quantity: 1,
+                discount: 0,
+                tax_rate: productId == 1 ? 5 : productId == 2 ? 10 : productId == 3 ? 8 : productId == 4 ? 5 : 10,
+                stock: productId == 1 ? 10 : productId == 2 ? 5 : productId == 3 ? 8 : productId == 4 ? 12 : 3
+            };
+            addToQuickBill(product);
+            $('#productListModal').modal('hide');
+            quickProductSearch.focus();
+        }
+    });
+    
+    // Add product to quick bill
+    function addToQuickBill(product) {
+        const existingItem = quickBillProducts.find(item => item.id === product.id);
+        
+        if (existingItem) {
+            // Check if we have enough stock
+            if (existingItem.quantity + 1 > product.stock) {
+                alert(`Only ${product.stock} items available in stock!`);
+                return;
+            }
+            existingItem.quantity += 1;
+        } else {
+            // Check if we have at least 1 in stock
+            if (product.stock < 1) {
+                alert('This product is out of stock!');
+                return;
+            }
+            quickBillProducts.push({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                quantity: 1,
+                discount: product.discount || 0,
+                tax_rate: product.tax_rate || 0,
+                stock: product.stock || 0
+            });
+        }
+        
+        updateQuickBillTable();
+    }
+    
+    // Update quick bill table
+    function updateQuickBillTable() {
+        quickBillItems.innerHTML = '';
+        let subtotal = 0;
+        let totalDiscount = 0;
+        let totalTax = 0;
+        
+        quickBillProducts.forEach((product, index) => {
+            const discountAmount = (product.price * product.quantity * product.discount) / 100;
+            const priceAfterDiscount = (product.price * product.quantity) - discountAmount;
+            const taxAmount = (priceAfterDiscount * product.tax_rate) / 100;
+            const total = priceAfterDiscount + taxAmount;
+            
+            subtotal += product.price * product.quantity;
+            totalDiscount += discountAmount;
+            totalTax += taxAmount;
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${product.name}</td>
+                <td>${product.price.toFixed(2)}</td>
+                <td>
+                    <div class="input-group input-group-sm">
+                        <button class="btn btn-outline-secondary minus-btn" type="button" data-index="${index}">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <input type="number" class="form-control text-center quantity-input" 
+                               value="${product.quantity}" min="1" max="${product.stock}" data-index="${index}">
+                        <button class="btn btn-outline-secondary plus-btn" type="button" data-index="${index}">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group input-group-sm">
+                        <input type="number" class="form-control discount-input" 
+                               value="${product.discount}" min="0" max="100" data-index="${index}">
+                        <span class="input-group-text">%</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group input-group-sm">
+                        <input type="number" class="form-control tax-input" 
+                               value="${product.tax_rate}" min="0" max="100" data-index="${index}" readonly>
+                        <span class="input-group-text">%</span>
+                    </div>
+                </td>
+                <td>${total.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger remove-item" data-index="${index}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            quickBillItems.appendChild(row);
+        });
+        
+        const total = subtotal - totalDiscount + totalTax;
+        
+        document.getElementById('quickSubtotal').textContent = subtotal.toFixed(2);
+        document.getElementById('quickTotalDiscount').textContent = totalDiscount.toFixed(2);
+        document.getElementById('quickTotalTax').textContent = totalTax.toFixed(2);
+        document.getElementById('quickTotal').textContent = total.toFixed(2);
+        
+        // Auto-set paid amount to total
+        const paidAmountInput = document.getElementById('quickPaidAmount');
+        paidAmountInput.value = total.toFixed(2);
+        
+        // Calculate change
+        calculateChange();
+    }
+    
+    // Calculate change amount
+    function calculateChange() {
+        const paidAmount = parseFloat(document.getElementById('quickPaidAmount').value) || 0;
+        const totalAmount = parseFloat(document.getElementById('quickTotal').textContent) || 0;
+        const change = paidAmount - totalAmount;
+        document.getElementById('quickChangeAmount').textContent = change.toFixed(2);
+    }
+    
+    // Handle quantity changes in quick bill
+    quickBillItems.addEventListener('click', function(e) {
+        if (e.target.closest('.minus-btn')) {
+            const index = e.target.closest('.minus-btn').dataset.index;
+            if (quickBillProducts[index].quantity > 1) {
+                quickBillProducts[index].quantity -= 1;
+                updateQuickBillTable();
+            }
+        } else if (e.target.closest('.plus-btn')) {
+            const index = e.target.closest('.plus-btn').dataset.index;
+            if (quickBillProducts[index].quantity < quickBillProducts[index].stock) {
+                quickBillProducts[index].quantity += 1;
+                updateQuickBillTable();
+            } else {
+                alert(`Only ${quickBillProducts[index].stock} items available in stock!`);
+            }
+        } else if (e.target.closest('.remove-item')) {
+            const index = e.target.closest('.remove-item').dataset.index;
+            quickBillProducts.splice(index, 1);
+            updateQuickBillTable();
+        }
+    });
+    
+    // Handle input changes in quick bill
+    quickBillItems.addEventListener('change', function(e) {
+        if (e.target.classList.contains('quantity-input')) {
+            const index = e.target.dataset.index;
+            const newQuantity = parseInt(e.target.value) || 1;
+            
+            // Check stock availability
+            if (newQuantity > quickBillProducts[index].stock) {
+                alert(`Only ${quickBillProducts[index].stock} items available in stock!`);
+                e.target.value = quickBillProducts[index].quantity;
+                return;
+            }
+            
+            quickBillProducts[index].quantity = newQuantity;
+            updateQuickBillTable();
+        } else if (e.target.classList.contains('discount-input')) {
+            const index = e.target.dataset.index;
+            const newDiscount = parseFloat(e.target.value) || 0;
+            
+            if (newDiscount < 0) {
+                e.target.value = 0;
+                quickBillProducts[index].discount = 0;
+            } else if (newDiscount > 100) {
+                e.target.value = 100;
+                quickBillProducts[index].discount = 100;
+            } else {
+                quickBillProducts[index].discount = newDiscount;
+            }
+            
+            updateQuickBillTable();
+        }
+    });
+    
+    // Handle paid amount changes
+    document.getElementById('quickPaidAmount').addEventListener('input', calculateChange);
+    
+    // Clear bill
+    document.getElementById('clearBill').addEventListener('click', function() {
+        if (quickBillProducts.length > 0 && !confirm('Are you sure you want to clear the current bill?')) {
+            return;
+        }
+        
+        quickBillProducts = [];
+        updateQuickBillTable();
+        document.getElementById('quickCustomerName').value = '';
+        document.getElementById('quickCustomerPhone').value = '';
+        document.getElementById('quickBillNotes').value = '';
+        document.getElementById('quickPaymentMethod').value = 'cash';
+        quickProductSearch.focus();
+    });
+    
+    // Voice bill button
+    document.getElementById('voiceBill').addEventListener('click', function() {
+        alert('Voice billing functionality would be implemented here. This would use the Web Speech API to allow voice commands for adding products, setting quantities, etc.');
+    });
+    
+    // Finalize bill button
+    document.getElementById('finalizeBill').addEventListener('click', function() {
+        if (quickBillProducts.length === 0) {
+            alert('Please add at least one product to the bill');
+            return;
+        }
+        
+        const paidAmount = parseFloat(document.getElementById('quickPaidAmount').value) || 0;
+        const totalAmount = parseFloat(document.getElementById('quickTotal').textContent) || 0;
+        
+        if (paidAmount < totalAmount && !confirm('The paid amount is less than the total. Are you sure you want to proceed?')) {
+            return;
+        }
+        
+        // Show submit button (hidden by default)
+        document.getElementById('submitBill').style.display = 'block';
+        this.style.display = 'none';
+        
+        // Disable editing
+        quickProductSearch.disabled = true;
+        document.getElementById('openProductList').disabled = true;
+        document.querySelectorAll('#quickBillItems input, #quickBillItems button').forEach(el => {
+            el.disabled = true;
+        });
+        
+        // Focus on submit button
+        document.getElementById('submitBill').focus();
+    });
+    
+    // Submit quick bill
+    quickBillForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (quickBillProducts.length === 0) {
+            alert('Please add at least one product to the bill');
+            return;
+        }
+        
+        const billData = {
+            customer_name: document.getElementById('quickCustomerName').value,
+            customer_phone: document.getElementById('quickCustomerPhone').value,
+            payment_method: document.getElementById('quickPaymentMethod').value,
+            paid_amount: parseFloat(document.getElementById('quickPaidAmount').value),
+            notes: document.getElementById('quickBillNotes').value,
+            items: quickBillProducts.map(item => ({
+                product_id: item.id,
+                quantity: item.quantity,
+                price: item.price,
+                discount: item.discount,
+                tax_rate: item.tax_rate
+            }))
+        };
+        
+        // Simulate API call - replace with actual fetch
+        fetch('/bills', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(billData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show print preview
+                showPrintPreview(data.billId, data.billNumber);
+                
+                // Reset form for new bill
+                quickBillProducts = [];
+                updateQuickBillTable();
+                document.getElementById('quickCustomerName').value = '';
+                document.getElementById('quickCustomerPhone').value = '';
+                document.getElementById('quickBillNotes').value = '';
+                document.getElementById('quickPaymentMethod').value = 'cash';
+                document.getElementById('submitBill').style.display = 'none';
+                document.getElementById('finalizeBill').style.display = 'block';
+                quickProductSearch.disabled = false;
+                document.getElementById('openProductList').disabled = false;
+                quickProductSearch.focus();
+            } else {
+                alert('Error creating bill: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating bill');
+        });
+    });
+    
+    // Show print preview
+    function showPrintPreview(billId, billNumber) {
+        // In a real app, you would fetch the bill details from the server
+        // For this example, we'll use the current data
+        
+        const billDetails = {
+            id: billId,
+            bill_number: billNumber,
+            date: new Date().toLocaleString(),
+            customer_name: document.getElementById('quickCustomerName').value || 'Walk-in Customer',
+            customer_phone: document.getElementById('quickCustomerPhone').value || 'N/A',
+            payment_method: document.getElementById('quickPaymentMethod').value,
+            subtotal: document.getElementById('quickSubtotal').textContent,
+            total_discount: document.getElementById('quickTotalDiscount').textContent,
+            total_tax: document.getElementById('quickTotalTax').textContent,
+            total: document.getElementById('quickTotal').textContent,
+            paid_amount: document.getElementById('quickPaidAmount').value,
+            change: document.getElementById('quickChangeAmount').textContent,
+            items: quickBillProducts.map(item => ({
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                discount: item.discount,
+                tax_rate: item.tax_rate,
+                total: (item.price * item.quantity * (1 - item.discount/100) * (1 + item.tax_rate/100))
+            })),
+            shop: {
+                name: 'My Shop',
+                address: '123 Main Street, City',
+                phone: '0123456789',
+                email: 'shop@example.com'
+            }
+        };
+        
+        // Set bill number
+        document.getElementById('printBillNumber').textContent = billDetails.bill_number;
+        
+        // Create print content
+        const printContent = document.getElementById('printBillContent');
+        printContent.innerHTML = `
+            <style>
+                .print-bill {
+                    font-family: Arial, sans-serif;
+                    max-width: 800px;
+                    margin: 0 auto;
+                }
+                .print-header {
+                    text-align: center;
+                    margin-bottom: 20px;
+                    border-bottom: 2px dashed #000;
+                    padding-bottom: 10px;
+                }
+                .print-header h2 {
+                    margin: 0;
+                    font-size: 24px;
+                }
+                .print-header p {
+                    margin: 5px 0;
+                    font-size: 14px;
+                }
+                .bill-info {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 15px;
+                    font-size: 14px;
+                }
+                .bill-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 15px;
+                }
+                .bill-table th {
+                    text-align: left;
+                    border-bottom: 1px solid #000;
+                    padding: 5px;
+                }
+                .bill-table td {
+                    padding: 5px;
+                    border-bottom: 1px solid #ddd;
+                }
+                .bill-table .text-right {
+                    text-align: right;
+                }
+                .bill-totals {
+                    margin-left: auto;
+                    width: 300px;
+                    border-top: 1px dashed #000;
+                    padding-top: 10px;
+                }
+                .bill-totals-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 5px;
+                }
+                .bill-footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    font-size: 12px;
+                    border-top: 2px dashed #000;
+                    padding-top: 10px;
+                }
+                @media print {
+                    body * {
+                        visibility: hidden;
+                    }
+                    .print-bill, .print-bill * {
+                        visibility: visible;
+                    }
+                    .print-bill {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                    }
+                    .no-print {
+                        display: none !important;
+                    }
+                }
+            </style>
+            
+            <div class="print-bill">
+                <div class="print-header">
+                    <h2>${billDetails.shop.name}</h2>
+                    <p>${billDetails.shop.address}</p>
+                    <p>Tel: ${billDetails.shop.phone} | Email: ${billDetails.shop.email}</p>
+                </div>
+                
+                <div class="bill-info">
+                    <div>
+                        <strong>Bill #:</strong> ${billDetails.bill_number}<br>
+                        <strong>Date:</strong> ${billDetails.date}<br>
+                        <strong>Payment Method:</strong> ${billDetails.payment_method.charAt(0).toUpperCase() + billDetails.payment_method.slice(1)}
+                    </div>
+                    <div>
+                        <strong>Customer:</strong> ${billDetails.customer_name}<br>
+                        <strong>Phone:</strong> ${billDetails.customer_phone}
+                    </div>
+                </div>
+                
+                <table class="bill-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th class="text-right">Price</th>
+                            <th class="text-right">Qty</th>
+                            <th class="text-right">Disc.</th>
+                            <th class="text-right">Tax</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${billDetails.items.map(item => `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td class="text-right">${item.price.toFixed(2)}</td>
+                                <td class="text-right">${item.quantity}</td>
+                                <td class="text-right">${item.discount}%</td>
+                                <td class="text-right">${item.tax_rate}%</td>
+                                <td class="text-right">${item.total.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                
+                <div class="bill-totals">
+                    <div class="bill-totals-row">
+                        <span>Subtotal:</span>
+                        <span>${billDetails.subtotal}</span>
+                    </div>
+                    <div class="bill-totals-row">
+                        <span>Discount:</span>
+                        <span>-${billDetails.total_discount}</span>
+                    </div>
+                    <div class="bill-totals-row">
+                        <span>Tax:</span>
+                        <span>${billDetails.total_tax}</span>
+                    </div>
+                    <div class="bill-totals-row" style="font-weight: bold; font-size: 1.1em;">
+                        <span>Total:</span>
+                        <span>${billDetails.total}</span>
+                    </div>
+                    <div class="bill-totals-row">
+                        <span>Paid Amount:</span>
+                        <span>${billDetails.paid_amount}</span>
+                    </div>
+                    <div class="bill-totals-row">
+                        <span>Change:</span>
+                        <span>${billDetails.change}</span>
+                    </div>
+                </div>
+                
+                <div class="bill-footer">
+                    Thank you for your business!<br>
+                    Please bring this receipt for any returns or exchanges within 7 days
+                </div>
+            </div>
+        `;
+        
+        // Show print modal
+        $('#printBillModal').modal('show');
+    }
+    
+    // Print bill button
+    document.getElementById('printBillBtn').addEventListener('click', function() {
+        const printContent = document.getElementById('printBillContent').innerHTML;
+        const originalContent = document.body.innerHTML;
+        
+        document.body.innerHTML = printContent;
+        window.print();
+        document.body.innerHTML = originalContent;
+        
+        // Re-bind events
+        $('#printBillModal').modal('show');
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Focus on search when modal is closed and not already focused
+        if (e.key !== 'Escape' && 
+            !quickProductSearch.matches(':focus') && 
+            !document.querySelector('.modal.show')) {
+            quickProductSearch.focus();
+        }
+        
+        // Ctrl+Enter to finalize bill
+        if (e.ctrlKey && e.key === 'Enter' && quickBillProducts.length > 0) {
+            document.getElementById('finalizeBill').click();
+        }
+    });
+});
+</script>
