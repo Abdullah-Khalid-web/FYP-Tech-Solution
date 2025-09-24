@@ -1,52 +1,440 @@
-<div class="hero-section bg-primary text-white py-5">
-  <div class="container">
-    <div class="row align-items-center">
-      <div class="col-md-6">
-        <h1 class="display-4 fw-bold">Transform Your Retail Business</h1>
-        <p class="lead">AI-powered inventory management, sales tracking, and business analytics in one powerful platform.</p>
-        <div class="d-flex gap-3 mt-4">
-          <a href="/register" class="btn btn-light btn-lg px-4">Get Started</a>
-          <a href="/login" class="btn btn-outline-light btn-lg px-4">Login</a>
+<style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --accent-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+        
+        .hero-section {
+            background: var(--gradient);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,192C1248,192,1344,128,1392,96L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
+            background-size: cover;
+            background-position: bottom;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-image {
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+        
+        .hero-image:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            background: var(--gradient);
+            color: white;
+        }
+        
+        .pricing-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .pricing-card.featured {
+            border: 2px solid var(--primary-color);
+        }
+        
+        .price-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            z-index: 2;
+        }
+        
+        .btn-primary {
+            background: var(--gradient);
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+        
+        .btn-outline-primary {
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .section-title {
+            position: relative;
+            margin-bottom: 3rem;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--gradient);
+            border-radius: 2px;
+        }
+        
+        .testimonial-card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .testimonial-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .footer {
+            background: var(--dark-color);
+            color: white;
+        }
+        
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background: var(--primary-color);
+            transform: translateY(-3px);
+        }
+        
+        .feature-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .hero-section {
+                text-align: center;
+            }
+            
+            .display-4 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+    <!-- Hero Section -->
+    <section class="hero-section text-white py-5">
+        <div class="container">
+            <div class="row align-items-center min-vh-80">
+                <div class="col-lg-6 hero-content">
+                    <h1 class="display-4 fw-bold mb-4">Transform Your Retail Business with AI</h1>
+                    <p class="lead mb-4">Streamline operations, boost sales, and make data-driven decisions with our all-in-one retail management platform.</p>
+                    <div class="d-flex flex-wrap gap-3 mt-4">
+                        <a href="/register" class="btn btn-light btn-lg px-4 py-3 fw-semibold">Start Free Trial</a>
+                        <a href="#features" class="btn btn-outline-light btn-lg px-4 py-3 fw-semibold">Learn More</a>
+                    </div>
+                    <div class="mt-4">
+                        <small class="d-block mb-2">Trusted by 5,000+ retailers worldwide</small>
+                        <div class="d-flex gap-3">
+                            <img src="https://via.placeholder.com/100x30/fff/fff?text=Brand1" alt="Brand 1" class="img-fluid" style="opacity: 0.8;">
+                            <img src="https://via.placeholder.com/100x30/fff/fff?text=Brand2" alt="Brand 2" class="img-fluid" style="opacity: 0.8;">
+                            <img src="https://via.placeholder.com/100x30/fff/fff?text=Brand3" alt="Brand 3" class="img-fluid" style="opacity: 0.8;">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mt-5 mt-lg-0">
+                    <img src="images/dashboard-preview.jpeg" alt="Dashboard Preview" class="img-fluid hero-image">
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="col-md-6">
-        <img src="/images/dashboard-preview.png" alt="Dashboard Preview" class="img-fluid rounded shadow">
-      </div>
-    </div>
-  </div>
-</div>
+    </section>
 
-<div class="features-section py-5">
-  <div class="container">
-    <h2 class="text-center mb-5">Why Choose RetailPro?</h2>
-    <div class="row g-4">
-      <div class="col-md-4">
-        <div class="card h-100 border-0 shadow-sm">
-          <div class="card-body text-center">
-            <i class="bi bi-speedometer2 fs-1 text-primary mb-3"></i>
-            <h3>Real-time Analytics</h3>
-            <p>Get instant insights into your sales, inventory, and customer behavior.</p>
-          </div>
+    <!-- Stats Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-3 col-6 mb-4">
+                    <div class="stat-number">98%</div>
+                    <p class="text-muted">Customer Satisfaction</p>
+                </div>
+                <div class="col-md-3 col-6 mb-4">
+                    <div class="stat-number">45%</div>
+                    <p class="text-muted">Average Sales Increase</p>
+                </div>
+                <div class="col-md-3 col-6 mb-4">
+                    <div class="stat-number">24/7</div>
+                    <p class="text-muted">Support Availability</p>
+                </div>
+                <div class="col-md-3 col-6 mb-4">
+                    <div class="stat-number">5,000+</div>
+                    <p class="text-muted">Active Retailers</p>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card h-100 border-0 shadow-sm">
-          <div class="card-body text-center">
-            <i class="bi bi-phone fs-1 text-primary mb-3"></i>
-            <h3>Mobile Ready</h3>
-            <p>Manage your business from anywhere with our responsive interface.</p>
-          </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section py-5">
+        <div class="container">
+            <h2 class="text-center section-title">Powerful Features for Retail Success</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm pricing-card">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon">
+                                <i class="bi bi-speedometer2 fs-1"></i>
+                            </div>
+                            <h3>Real-time Analytics</h3>
+                            <p>Get instant insights into your sales performance, inventory levels, and customer behavior with our intuitive dashboard.</p>
+                            <ul class="feature-list text-start mt-3">
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> Live sales tracking</li>
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> Inventory alerts</li>
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> Customer insights</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm pricing-card">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon">
+                                <i class="bi bi-robot fs-1"></i>
+                            </div>
+                            <h3>AI-Powered Insights</h3>
+                            <p>Leverage artificial intelligence to predict trends, optimize pricing, and automate inventory management.</p>
+                            <ul class="feature-list text-start mt-3">
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> Demand forecasting</li>
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> Smart reordering</li>
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> Price optimization</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm pricing-card">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon">
+                                <i class="bi bi-phone fs-1"></i>
+                            </div>
+                            <h3>Mobile Management</h3>
+                            <p>Run your business from anywhere with our fully responsive mobile app that works on all devices.</p>
+                            <ul class="feature-list text-start mt-3">
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> iOS and Android apps</li>
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> Offline capability</li>
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> Push notifications</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card h-100 border-0 shadow-sm">
-          <div class="card-body text-center">
-            <i class="bi bi-robot fs-1 text-primary mb-3"></i>
-            <h3>AI Recommendations</h3>
-            <p>Smart suggestions to optimize inventory and increase profits.</p>
-          </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing-section py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center section-title mb-5">Simple, Transparent Pricing</h2>
+            <p class="text-center text-muted mb-5">No hidden fees. Cancel anytime. 14-day free trial on all plans.</p>
+            
+            <div class="row g-4 justify-content-center">
+                <!-- Starter Plan -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 pricing-card">
+                        <div class="card-header bg-white text-center py-4 position-relative">
+                            <h3 class="fw-bold">Starter</h3>
+                            <div class="price my-3">
+                                <span class="h1 fw-bold">$19</span>
+                                <span class="text-muted">/month</span>
+                            </div>
+                            <small class="text-muted">Perfect for small shops and startups</small>
+                        </div>
+                        <div class="card-body py-4">
+                            <ul class="list-unstyled">
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Up to 100 products</li>
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Basic sales reporting</li>
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Email support</li>
+                                <li class="mb-3 py-2 text-muted"><i class="bi bi-x-circle me-2"></i> No AI features</li>
+                                <li class="mb-3 py-2 text-muted"><i class="bi bi-x-circle me-2"></i> Limited integrations</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-white border-0 text-center pb-4">
+                            <a href="/register?plan=starter" class="btn btn-outline-primary w-100">Start Free Trial</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Professional Plan (Featured) -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 pricing-card featured shadow-lg position-relative">
+                        <span class="price-badge badge bg-primary py-2 px-3">MOST POPULAR</span>
+                        <div class="card-header bg-primary text-white text-center py-4">
+                            <h3 class="fw-bold">Professional</h3>
+                            <div class="price my-3">
+                                <span class="h1 fw-bold">$49</span>
+                                <span class="text-light">/month</span>
+                            </div>
+                            <small>Ideal for growing businesses</small>
+                        </div>
+                        <div class="card-body py-4">
+                            <ul class="list-unstyled">
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Up to 1,000 products</li>
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Advanced analytics</li>
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Basic AI features</li>
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Priority support</li>
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> API access</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-white border-0 text-center pb-4">
+                            <a href="/register?plan=professional" class="btn btn-primary w-100">Start Free Trial</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Enterprise Plan -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 pricing-card">
+                        <div class="card-header bg-white text-center py-4">
+                            <h3 class="fw-bold">Enterprise</h3>
+                            <div class="price my-3">
+                                <span class="h1 fw-bold">$99</span>
+                                <span class="text-muted">/month</span>
+                            </div>
+                            <small class="text-muted">For large retailers and chains</small>
+                        </div>
+                        <div class="card-body py-4">
+                            <ul class="list-unstyled">
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Unlimited products</li>
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Full AI capabilities</li>
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Dedicated account manager</li>
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 24/7 phone support</li>
+                                <li class="mb-3 py-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Custom integrations</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-white border-0 text-center pb-4">
+                            <a href="/register?plan=enterprise" class="btn btn-outline-primary w-100">Start Free Trial</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-5">
+                <p class="text-muted">Need a custom solution? <a href="/contact" class="text-decoration-none">Contact our sales team</a></p>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials-section py-5">
+        <div class="container">
+            <h2 class="text-center section-title mb-5">What Our Customers Say</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card testimonial-card h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://via.placeholder.com/60x60/4361ee/ffffff?text=JS" alt="John Smith" class="testimonial-avatar me-3">
+                                <div>
+                                    <h5 class="mb-0">John Smith</h5>
+                                    <small class="text-muted">Boutique Owner</small>
+                                </div>
+                            </div>
+                            <p class="mb-0">"RetailPro has transformed how I manage my inventory. The AI recommendations have helped reduce overstock by 30% while increasing sales."</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card testimonial-card h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://via.placeholder.com/60x60/3a0ca3/ffffff?text=SR" alt="Sarah Johnson" class="testimonial-avatar me-3">
+                                <div>
+                                    <h5 class="mb-0">Sarah Johnson</h5>
+                                    <small class="text-muted">Retail Chain Manager</small>
+                                </div>
+                            </div>
+                            <p class="mb-0">"The real-time analytics have been a game-changer for our multi-store operations. We can now make data-driven decisions instantly."</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card testimonial-card h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://via.placeholder.com/60x60/4cc9f0/ffffff?text=MR" alt="Mike Rodriguez" class="testimonial-avatar me-3">
+                                <div>
+                                    <h5 class="mb-0">Mike Rodriguez</h5>
+                                    <small class="text-muted">E-commerce & Retail</small>
+                                </div>
+                            </div>
+                            <p class="mb-0">"The mobile app allows me to manage my business from anywhere. The interface is intuitive and the features are exactly what I needed."</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section py-5 bg-primary text-white">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h2 class="mb-4">Ready to Transform Your Retail Business?</h2>
+                    <p class="lead mb-4">Join thousands of retailers who have increased their efficiency and profitability with RetailPro.</p>
+                    <a href="/register" class="btn btn-light btn-lg px-5 py-3 fw-semibold">Start Your Free Trial Today</a>
+                    <p class="mt-3 small">No credit card required • 14-day free trial • Cancel anytime</p>
+                </div>
+            </div>
+        </div>
+    </section>

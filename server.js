@@ -199,11 +199,7 @@ app.use('/', registerRouter);
 app.use('/products', productsRouter);
 app.use('/bills', billsRouter);
 
-// Basic routes
-// app.get('/', (req, res) => {
-//   res.render('index', { title: 'Home' });
-// });
-
+// Home 
 app.get('/', (req, res) => {
   if (req.session.userId) {
     return res.render('dashboard.ejs');
@@ -217,6 +213,7 @@ app.get('/pricing', (req, res) => {
   res.render('pricing', { title: 'Pricing' });
 });
 
+// Log In
 app.get('/login', (req, res) => {
   if (req.session.userId) {
     return res.redirect('/');
@@ -268,19 +265,6 @@ app.post('/login', async (req, res) => {
       req.session.username = user.name;
       req.session.shopId = user.shop_id;
 
-      // res.cookie('user_id', user.id, {
-      //   maxAge: 30 * 24 * 60 * 60 * 1000,
-      //   httpOnly: true,
-      //   secure: process.env.NODE_ENV === 'production'
-      // });
-
-      // res.cookie('username', user.name, {
-      //   maxAge: 30 * 24 * 60 * 60 * 1000,
-      //   httpOnly: true,
-      //   secure: process.env.NODE_ENV === 'production'
-      // });
-
-      // Set cookies to expire far in the future (10 years)
       const cookieOptions = {
         expires: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000), // 10 years
         httpOnly: true,
@@ -304,6 +288,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
+// Logout
 app.get('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {

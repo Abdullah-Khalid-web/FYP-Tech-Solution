@@ -1,168 +1,211 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales & Returns Management</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #4361ee;
-            --secondary-color: #3f37c9;
-            --success-color: #4cc9f0;
-            --danger-color: #f72585;
-            --warning-color: #f8961e;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3f37c9;
+        --success-color: #4cc9f0;
+        --danger-color: #f72585;
+        --warning-color: #f8961e;
+        --light-color: #f8f9fa;
+        --dark-color: #212529;
+    }
+
+    body {
+        background-color: #f5f7fb;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        border: none;
+    }
+
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+        font-weight: 600;
+    }
+
+    .bg-primary {
+        background-color: var(--primary-color) !important;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+    .btn-success {
+        background-color: var(--success-color);
+        border-color: var(--success-color);
+    }
+
+    .btn-danger {
+        background-color: var(--danger-color);
+        border-color: var(--danger-color);
+    }
+
+    .btn-warning {
+        background-color: var(--warning-color);
+        border-color: var(--warning-color);
+        color: white;
+    }
+
+    .mode-indicator {
+        font-size: 0.85rem;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+
+    .transaction-table th {
+        background-color: #e9ecef;
+        font-weight: 600;
+    }
+
+    .summary-card {
+        background-color: #f8f9fa;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .return-item {
+        background-color: #fff0f5;
+    }
+
+    .sale-item {
+        background-color: #f0f8ff;
+    }
+
+    .nav-tabs .nav-link.active {
+        font-weight: 600;
+        border-bottom: 3px solid var(--primary-color);
+    }
+
+    .search-highlight {
+        background-color: #fff3cd;
+    }
+
+    .modal-header {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+    .transaction-history {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .transaction-type-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    .print-receipt {
+        display: none;
+    }
+
+    .bill-item {
+        border-left: 4px solid var(--primary-color);
+        padding-left: 10px;
+        margin-bottom: 10px;
+    }
+
+    .bill-item.returned {
+        border-left-color: var(--danger-color);
+        opacity: 0.7;
+    }
+
+    .bill-header {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+    .return-option-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .return-option-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .return-option-card.selected {
+        border: 2px solid var(--primary-color);
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
         }
-        
-        body {
-            background-color: #f5f7fb;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+        .print-receipt,
+        .print-receipt * {
+            visibility: visible;
         }
-        
-        .card {
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            border: none;
+
+        .print-receipt {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            display: block;
         }
-        
-        .card-header {
-            border-radius: 10px 10px 0 0 !important;
-            font-weight: 600;
+
+        .no-print {
+            display: none !important;
         }
-        
-        .bg-primary {
-            background-color: var(--primary-color) !important;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-        
-        .btn-success {
-            background-color: var(--success-color);
-            border-color: var(--success-color);
-        }
-        
-        .btn-danger {
-            background-color: var(--danger-color);
-            border-color: var(--danger-color);
-        }
-        
-        .btn-warning {
-            background-color: var(--warning-color);
-            border-color: var(--warning-color);
-            color: white;
-        }
-        
-        .mode-indicator {
-            font-size: 0.85rem;
-            padding: 5px 10px;
-            border-radius: 20px;
-        }
-        
-        .transaction-table th {
-            background-color: #e9ecef;
-            font-weight: 600;
-        }
-        
-        .summary-card {
-            background-color: #f8f9fa;
-            border-left: 4px solid var(--primary-color);
-        }
-        
-        .return-item {
-            background-color: #fff0f5;
-        }
-        
-        .sale-item {
-            background-color: #f0f8ff;
-        }
-        
-        .nav-tabs .nav-link.active {
-            font-weight: 600;
-            border-bottom: 3px solid var(--primary-color);
-        }
-        
-        .search-highlight {
-            background-color: #fff3cd;
-        }
-        
-        #productListModal .modal-header {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .cursor-pointer {
-            cursor: pointer;
-        }
-        
-        .transaction-history {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-    </style>
-</head>
-<body>
+    }
+</style>
+
     <div class="container py-4">
         <!-- Header -->
         <div class="row mb-4">
             <div class="col-md-8 mx-auto text-center">
                 <h1 class="mb-3"><i class="fas fa-cash-register me-2"></i>Sales & Returns Management</h1>
-                <p class="lead">Process sales and returns in a single interface</p>
+                <p class="lead">Process sales and returns with or without bill reference</p>
             </div>
         </div>
 
         <!-- Main Content -->
         <div class="row">
             <div class="col-md-8">
-                <!-- Mode Toggle -->
-                <div class="card mb-4">
-                    <div class="card-body py-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Transaction Type</h5>
-                            <div class="d-flex">
-                                <span class="mode-indicator bg-success me-2" id="saleModeIndicator">Sale Mode</span>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="modeToggle" style="width: 3rem; height: 1.5rem;">
-                                </div>
-                                <span class="mode-indicator bg-danger ms-2" id="returnModeIndicator">Return Mode</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Customer Information -->
                 <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Customer Information</h5>
+                        <button class="btn btn-sm btn-light" id="searchCustomerBtn">
+                            <i class="fas fa-search me-1"></i>Search Customer
+                        </button>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Customer Name</label>
-                                <input type="text" class="form-control" id="customerName" placeholder="Enter customer name">
+                                <input type="text" class="form-control" id="customerName"
+                                    placeholder="Enter customer name">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Phone Number</label>
-                                <input type="text" class="form-control" id="customerPhone" placeholder="Enter phone number">
+                                <input type="text" class="form-control" id="customerPhone"
+                                    placeholder="Enter phone number">
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Email Address</label>
-                                <input type="email" class="form-control" id="customerEmail" placeholder="Enter email address">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Customer ID</label>
-                                <input type="text" class="form-control" id="customerId" placeholder="Optional customer ID">
+                        </div>
+                        <div id="customerBillsSection" style="display: none;">
+                            <h6>Previous Bills</h6>
+                            <div id="customerBillsList">
+                                <!-- Previous bills will appear here -->
                             </div>
                         </div>
                     </div>
@@ -172,15 +215,21 @@
                 <div class="card mb-4">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Product Selection</h5>
-                        <button class="btn btn-sm btn-light" id="viewProductsBtn">
-                            <i class="fas fa-boxes me-1"></i>View All Products
-                        </button>
+                        <div>
+                            <button class="btn btn-sm btn-light me-2" id="viewProductsBtn">
+                                <i class="fas fa-boxes me-1"></i>View All Products
+                            </button>
+                            <button class="btn btn-sm btn-light" id="addReturnBtn">
+                                <i class="fas fa-undo me-1"></i>Add Return
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label">Search Products</label>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="productSearch" placeholder="Scan barcode or search products">
+                                <input type="text" class="form-control" id="productSearch"
+                                    placeholder="Scan barcode or search products">
                                 <button class="btn btn-outline-secondary" type="button" id="scanBarcodeBtn">
                                     <i class="fas fa-barcode"></i>
                                 </button>
@@ -202,7 +251,9 @@
                             <table class="table table-sm transaction-table" id="transactionItems">
                                 <thead>
                                     <tr>
-                                        <th width="30%">Product</th>
+                                        <th width="5%">Type</th>
+                                        <th width="20%">Product</th>
+                                        <th width="10%">Bill Ref</th>
                                         <th width="15%">Price</th>
                                         <th width="10%">Qty</th>
                                         <th width="15%">Discount</th>
@@ -237,15 +288,13 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label" id="paymentAmountLabel">Amount Paid</label>
-                                <input type="number" class="form-control" id="paymentAmount" value="0.00" min="0" step="0.01">
+                                <input type="number" class="form-control" id="paymentAmount" value="0.00" min="0"
+                                    step="0.01">
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Additional Notes</label>
-                                <textarea class="form-control" id="transactionNotes" rows="2" placeholder="Any additional notes for this transaction"></textarea>
-                            </div>
-                            <div class="col-md-12 mb-3" id="returnReasonSection" style="display: none;">
-                                <label class="form-label">Return Reason</label>
-                                <textarea class="form-control" id="returnReason" rows="2" placeholder="Reason for return"></textarea>
+                                <textarea class="form-control" id="transactionNotes" rows="2"
+                                    placeholder="Any additional notes for this transaction"></textarea>
                             </div>
                         </div>
                     </div>
@@ -262,8 +311,12 @@
                     <div class="card-body">
                         <div class="summary-card p-3 mb-3">
                             <div class="d-flex justify-content-between mb-2">
-                                <span>Subtotal:</span>
-                                <span id="summarySubtotal">$0.00</span>
+                                <span>Subtotal (Sales):</span>
+                                <span id="summarySalesSubtotal">$0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal (Returns):</span>
+                                <span id="summaryReturnsSubtotal">$0.00</span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Total Discount:</span>
@@ -275,7 +328,7 @@
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
-                                <span>Total Amount:</span>
+                                <span>Net Amount:</span>
                                 <span id="summaryTotal">$0.00</span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
@@ -286,8 +339,9 @@
                                 <span>Change:</span>
                                 <span id="summaryChange">$0.00</span>
                             </div>
-                            <div class="d-flex justify-content-between fw-bold text-danger" id="refundSection" style="display: none;">
-                                <span>Refund Amount:</span>
+                            <div class="d-flex justify-content-between fw-bold text-danger" id="refundSection"
+                                style="display: none;">
+                                <span>Refund Due:</span>
                                 <span id="summaryRefund">$0.00</span>
                             </div>
                         </div>
@@ -300,77 +354,9 @@
                             <button class="btn btn-warning mb-2" id="saveDraftBtn">
                                 <i class="fas fa-save me-2"></i>Save as Draft
                             </button>
-                            <button class="btn btn-success mb-2" id="holdTransactionBtn">
-                                <i class="fas fa-pause me-2"></i>Hold Transaction
-                            </button>
                             <button class="btn btn-primary mb-2" id="finalizeBtn">
-                                <i class="fas fa-check-circle me-2"></i>Finalize Sale
+                                <i class="fas fa-check-circle me-2"></i>Finalize Transaction
                             </button>
-                            <button class="btn btn-danger" id="processReturnBtn" style="display: none;">
-                                <i class="fas fa-undo me-2"></i>Process Return
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Transactions -->
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Recent Transactions</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="nav nav-tabs" id="transactionTabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" type="button" role="tab">Sales</button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="returns-tab" data-bs-toggle="tab" data-bs-target="#returns" type="button" role="tab">Returns</button>
-                            </li>
-                        </ul>
-                        <div class="tab-content transaction-history pt-3" id="transactionTabContent">
-                            <div class="tab-pane fade show active" id="sales" role="tabpanel">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item d-flex justify-content-between align-items-center cursor-pointer">
-                                        <div>
-                                            <div class="fw-bold">#INV-2023-1001</div>
-                                            <div class="small">John Doe • Today 10:30 AM</div>
-                                        </div>
-                                        <span class="badge bg-success rounded-pill">$125.50</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center cursor-pointer">
-                                        <div>
-                                            <div class="fw-bold">#INV-2023-1002</div>
-                                            <div class="small">Jane Smith • Today 09:15 AM</div>
-                                        </div>
-                                        <span class="badge bg-success rounded-pill">$89.99</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center cursor-pointer">
-                                        <div>
-                                            <div class="fw-bold">#INV-2023-1003</div>
-                                            <div class="small">Robert Johnson • Yesterday</div>
-                                        </div>
-                                        <span class="badge bg-success rounded-pill">$215.75</span>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="tab-pane fade" id="returns" role="tabpanel">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item d-flex justify-content-between align-items-center cursor-pointer">
-                                        <div>
-                                            <div class="fw-bold">#RET-2023-1001</div>
-                                            <div class="small">Defective item • Today 11:45 AM</div>
-                                        </div>
-                                        <span class="badge bg-danger rounded-pill">-$45.99</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center cursor-pointer">
-                                        <div>
-                                            <div class="fw-bold">#RET-2023-1002</div>
-                                            <div class="small">Wrong size • Yesterday</div>
-                                        </div>
-                                        <span class="badge bg-danger rounded-pill">-$32.50</span>
-                                    </li>
-                                </ul>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -388,7 +374,8 @@
                 </div>
                 <div class="modal-body">
                     <div class="input-group mb-3">
-                        <input type="text" class="form-control" placeholder="Search products..." id="modalProductSearch">
+                        <input type="text" class="form-control" placeholder="Search products..."
+                            id="modalProductSearch">
                         <button class="btn btn-outline-secondary" type="button">
                             <i class="fas fa-search"></i>
                         </button>
@@ -408,31 +395,51 @@
                                     <td>Wireless Headphones</td>
                                     <td>$59.99</td>
                                     <td>42</td>
-                                    <td><button class="btn btn-sm btn-primary">Add</button></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary add-product"
+                                            data-product='{"name":"Wireless Headphones","price":59.99,"sku":"WH-1000XM4","stock":42}'>Add
+                                            Sale</button>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td>Bluetooth Speaker</td>
                                     <td>$39.99</td>
                                     <td>27</td>
-                                    <td><button class="btn btn-sm btn-primary">Add</button></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary add-product"
+                                            data-product='{"name":"Bluetooth Speaker","price":39.99,"sku":"BT-SPKR250","stock":27}'>Add
+                                            Sale</button>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td>Smart Watch</td>
                                     <td>$199.99</td>
                                     <td>15</td>
-                                    <td><button class="btn btn-sm btn-primary">Add</button></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary add-product"
+                                            data-product='{"name":"Smart Watch","price":199.99,"sku":"SW-GALAXY5","stock":15}'>Add
+                                            Sale</button>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td>Phone Case</td>
                                     <td>$19.99</td>
                                     <td>83</td>
-                                    <td><button class="btn btn-sm btn-primary">Add</button></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary add-product"
+                                            data-product='{"name":"Phone Case","price":19.99,"sku":"PC-IPHONE14","stock":83}'>Add
+                                            Sale</button>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td>USB-C Cable</td>
                                     <td>$12.99</td>
                                     <td>126</td>
-                                    <td><button class="btn btn-sm btn-primary">Add</button></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary add-product"
+                                            data-product='{"name":"USB-C Cable","price":12.99,"sku":"CABLE-USB-C","stock":126}'>Add
+                                            Sale</button>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -445,63 +452,266 @@
         </div>
     </div>
 
+    <!-- Return Options Modal -->
+    <div class="modal fade" id="returnOptionsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Return Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card return-option-card h-100" id="returnWithBillCard">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-receipt fa-3x text-primary mb-3"></i>
+                                    <h5>Return with Bill Reference</h5>
+                                    <p class="text-muted">Select items from a previous bill for return</p>
+                                    <small class="text-muted">Recommended for better tracking</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card return-option-card h-100" id="returnWithoutBillCard">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-undo fa-3x text-warning mb-3"></i>
+                                    <h5>Return without Bill</h5>
+                                    <p class="text-muted">Add return items without bill reference</p>
+                                    <small class="text-muted">For returns without receipt</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Return with Bill Section -->
+                    <div id="returnWithBillSection" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Search Bill by ID</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="billSearch" placeholder="Enter Bill ID">
+                                <button class="btn btn-outline-primary" type="button" id="searchBillBtn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="billDetails" style="display: none;">
+                            <div class="bill-header">
+                                <h6>Bill Details</h6>
+                                <p class="mb-1"><strong>Bill ID:</strong> <span id="billIdDisplay">INV-2023-1001</span>
+                                </p>
+                                <p class="mb-1"><strong>Date:</strong> <span id="billDate">2023-10-15</span></p>
+                                <p class="mb-0"><strong>Customer:</strong> <span id="billCustomer">John Doe</span></p>
+                            </div>
+
+                            <h6>Items in Bill</h6>
+                            <div id="billItemsList">
+                                <!-- Bill items will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Return without Bill Section -->
+                    <div id="returnWithoutBillSection" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Search Products for Return</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="returnProductSearch"
+                                    placeholder="Search products">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Price</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="returnProductsList">
+                                    <tr>
+                                        <td>Wireless Headphones</td>
+                                        <td>$59.99</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-danger add-return-without-bill"
+                                                data-product='{"name":"Wireless Headphones","price":59.99,"sku":"WH-1000XM4"}'>Add
+                                                Return</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Bluetooth Speaker</td>
+                                        <td>$39.99</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-danger add-return-without-bill"
+                                                data-product='{"name":"Bluetooth Speaker","price":39.99,"sku":"BT-SPKR250"}'>Add
+                                                Return</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Smart Watch</td>
+                                        <td>$199.99</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-danger add-return-without-bill"
+                                                data-product='{"name":"Smart Watch","price":199.99,"sku":"SW-GALAXY5"}'>Add
+                                                Return</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Phone Case</td>
+                                        <td>$19.99</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-danger add-return-without-bill"
+                                                data-product='{"name":"Phone Case","price":19.99,"sku":"PC-IPHONE14"}'>Add
+                                                Return</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>USB-C Cable</td>
+                                        <td>$12.99</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-danger add-return-without-bill"
+                                                data-product='{"name":"USB-C Cable","price":12.99,"sku":"CABLE-USB-C"}'>Add
+                                                Return</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="addSelectedReturnsBtn" style="display: none;">Add
+                        Selected Returns</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Receipt -->
+    <div class="print-receipt" id="printReceipt">
+        <div class="container">
+            <div class="text-center mb-3">
+                <h2>Store Name</h2>
+                <p>123 Main Street, City, State 12345</p>
+                <p>Phone: (123) 456-7890</p>
+            </div>
+            <hr>
+            <div class="row mb-2">
+                <div class="col-6">
+                    <strong>Invoice #:</strong> <span id="receiptInvoice">INV-2023-1001</span>
+                </div>
+                <div class="col-6 text-end">
+                    <strong>Date:</strong> <span id="receiptDate"></span>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <strong>Customer:</strong> <span id="receiptCustomer">John Doe</span><br>
+                    <strong>Phone:</strong> <span id="receiptPhone">(555) 123-4567</span>
+                </div>
+            </div>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Product</th>
+                        <th>Bill Ref</th>
+                        <th>Price</th>
+                        <th>Qty</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="receiptItems">
+                    <!-- Receipt items will appear here -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" class="text-end"><strong>Subtotal (Sales):</strong></td>
+                        <td id="receiptSalesSubtotal">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-end"><strong>Subtotal (Returns):</strong></td>
+                        <td id="receiptReturnsSubtotal">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-end"><strong>Discount:</strong></td>
+                        <td id="receiptDiscount">-$0.00</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-end"><strong>Tax:</strong></td>
+                        <td id="receiptTax">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-end"><strong>Net Amount:</strong></td>
+                        <td id="receiptTotal">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-end"><strong>Amount Paid:</strong></td>
+                        <td id="receiptPaid">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-end"><strong>Change/Refund:</strong></td>
+                        <td id="receiptChange">$0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+            <div class="text-center mt-4">
+                <p>Thank you for your business!</p>
+                <p>Return policy: 15 days with receipt and original packaging</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mode toggle functionality
-            const modeToggle = document.getElementById('modeToggle');
-            const saleModeIndicator = document.getElementById('saleModeIndicator');
-            const returnModeIndicator = document.getElementById('returnModeIndicator');
-            const returnReasonSection = document.getElementById('returnReasonSection');
-            const finalizeBtn = document.getElementById('finalizeBtn');
-            const processReturnBtn = document.getElementById('processReturnBtn');
-            const changeSection = document.getElementById('changeSection');
-            const refundSection = document.getElementById('refundSection');
-            const paymentAmountLabel = document.getElementById('paymentAmountLabel');
-            const paymentTypeLabel = document.getElementById('paymentTypeLabel');
-            
-            modeToggle.addEventListener('change', function() {
-                if (this.checked) {
-                    // Return mode
-                    saleModeIndicator.classList.remove('bg-success');
-                    saleModeIndicator.classList.add('bg-secondary');
-                    returnModeIndicator.classList.remove('bg-secondary');
-                    returnModeIndicator.classList.add('bg-danger');
-                    returnReasonSection.style.display = 'block';
-                    finalizeBtn.style.display = 'none';
-                    processReturnBtn.style.display = 'block';
-                    changeSection.style.display = 'none';
-                    refundSection.style.display = 'flex';
-                    paymentAmountLabel.textContent = 'Amount Refunded';
-                    paymentTypeLabel.textContent = 'Amount Refunded:';
-                } else {
-                    // Sale mode
-                    saleModeIndicator.classList.remove('bg-secondary');
-                    saleModeIndicator.classList.add('bg-success');
-                    returnModeIndicator.classList.remove('bg-danger');
-                    returnModeIndicator.classList.add('bg-secondary');
-                    returnReasonSection.style.display = 'none';
-                    finalizeBtn.style.display = 'block';
-                    processReturnBtn.style.display = 'none';
-                    changeSection.style.display = 'flex';
-                    refundSection.style.display = 'none';
-                    paymentAmountLabel.textContent = 'Amount Paid';
-                    paymentTypeLabel.textContent = 'Amount Paid:';
+        document.addEventListener('DOMContentLoaded', function () {
+            // Transaction items array
+            let transactionItems = [];
+
+            // Sample previous bills data
+            const previousBills = [
+                {
+                    id: 'INV-2023-1001',
+                    date: '2023-10-15',
+                    customer: 'John Doe',
+                    phone: '(555) 123-4567',
+                    items: [
+                        { name: 'Wireless Headphones', price: 59.99, quantity: 1, sku: 'WH-1000XM4', returned: false },
+                        { name: 'Phone Case', price: 19.99, quantity: 2, sku: 'PC-IPHONE14', returned: false },
+                        { name: 'USB-C Cable', price: 12.99, quantity: 1, sku: 'CABLE-USB-C', returned: true }
+                    ]
+                },
+                {
+                    id: 'INV-2023-1002',
+                    date: '2023-10-10',
+                    customer: 'Jane Smith',
+                    phone: '(555) 987-6543',
+                    items: [
+                        { name: 'Bluetooth Speaker', price: 39.99, quantity: 1, sku: 'BT-SPKR250', returned: false },
+                        { name: 'Smart Watch', price: 199.99, quantity: 1, sku: 'SW-GALAXY5', returned: false }
+                    ]
                 }
-            });
-            
+            ];
+
             // Product search functionality
             const productSearch = document.getElementById('productSearch');
             const searchResultsCard = document.getElementById('searchResultsCard');
             const searchResultsList = document.getElementById('searchResultsList');
-            
-            productSearch.addEventListener('input', function() {
+
+            productSearch.addEventListener('input', function () {
                 if (this.value.length > 2) {
                     // Simulate search results
                     searchResultsCard.style.display = 'block';
                     searchResultsList.innerHTML = `
-                        <a href="#" class="list-group-item list-group-item-action">
+                        <a href="#" class="list-group-item list-group-item-action add-product-search" data-product='{"name":"Wireless Headphones","price":59.99,"sku":"WH-1000XM4","stock":42}'>
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">Wireless Headphones</h6>
                                 <small class="text-muted">$59.99</small>
@@ -509,7 +719,7 @@
                             <p class="mb-1">SKU: WH-1000XM4</p>
                             <small class="text-muted">In stock: 42</small>
                         </a>
-                        <a href="#" class="list-group-item list-group-item-action">
+                        <a href="#" class="list-group-item list-group-item-action add-product-search" data-product='{"name":"Bluetooth Speaker","price":39.99,"sku":"BT-SPKR250","stock":27}'>
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">Bluetooth Speaker</h6>
                                 <small class="text-muted">$39.99</small>
@@ -518,108 +728,441 @@
                             <small class="text-muted">In stock: 27</small>
                         </a>
                     `;
+
+                    // Add event listeners to search result items
+                    document.querySelectorAll('.add-product-search').forEach(item => {
+                        item.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            const product = JSON.parse(this.getAttribute('data-product'));
+                            addItemToTransaction(product, 'sale');
+                            searchResultsCard.style.display = 'none';
+                            productSearch.value = '';
+                        });
+                    });
                 } else {
                     searchResultsCard.style.display = 'none';
                 }
             });
-            
+
             // View Products Modal
             const viewProductsBtn = document.getElementById('viewProductsBtn');
             const productListModal = new bootstrap.Modal(document.getElementById('productListModal'));
-            
-            viewProductsBtn.addEventListener('click', function() {
+
+            viewProductsBtn.addEventListener('click', function () {
                 productListModal.show();
             });
-            
-            // Add sample transaction items
-            const transactionItems = document.getElementById('transactionItems').querySelector('tbody');
-            
-            // Sample data for demonstration
-            const sampleItems = [
-                { name: 'Wireless Headphones', price: 59.99, quantity: 1, discount: 0, tax: 5.40, total: 65.39 },
-                { name: 'Phone Case', price: 19.99, quantity: 2, discount: 2.00, tax: 3.42, total: 41.40 }
-            ];
-            
-            // Function to add items to the transaction table
-            function addItemToTransaction(item, isReturn = false) {
-                const row = transactionItems.insertRow();
-                if (isReturn) {
-                    row.classList.add('return-item');
-                } else {
-                    row.classList.add('sale-item');
+
+            // Return Options Modal
+            const addReturnBtn = document.getElementById('addReturnBtn');
+            const returnOptionsModal = new bootstrap.Modal(document.getElementById('returnOptionsModal'));
+
+            addReturnBtn.addEventListener('click', function () {
+                returnOptionsModal.show();
+            });
+
+            // Return option selection
+            const returnWithBillCard = document.getElementById('returnWithBillCard');
+            const returnWithoutBillCard = document.getElementById('returnWithoutBillCard');
+            const returnWithBillSection = document.getElementById('returnWithBillSection');
+            const returnWithoutBillSection = document.getElementById('returnWithoutBillSection');
+            const addSelectedReturnsBtn = document.getElementById('addSelectedReturnsBtn');
+
+            returnWithBillCard.addEventListener('click', function () {
+                returnWithBillCard.classList.add('selected');
+                returnWithoutBillCard.classList.remove('selected');
+                returnWithBillSection.style.display = 'block';
+                returnWithoutBillSection.style.display = 'none';
+                addSelectedReturnsBtn.style.display = 'block';
+            });
+
+            returnWithoutBillCard.addEventListener('click', function () {
+                returnWithoutBillCard.classList.add('selected');
+                returnWithBillCard.classList.remove('selected');
+                returnWithBillSection.style.display = 'none';
+                returnWithoutBillSection.style.display = 'block';
+                addSelectedReturnsBtn.style.display = 'none';
+            });
+
+            // Search customer functionality
+            const searchCustomerBtn = document.getElementById('searchCustomerBtn');
+            const customerBillsSection = document.getElementById('customerBillsSection');
+            const customerBillsList = document.getElementById('customerBillsList');
+
+            searchCustomerBtn.addEventListener('click', function () {
+                const customerName = document.getElementById('customerName').value;
+                const customerPhone = document.getElementById('customerPhone').value;
+
+                if (!customerName && !customerPhone) {
+                    alert('Please enter customer name or phone number to search.');
+                    return;
                 }
-                
-                row.innerHTML = `
-                    <td>${item.name}</td>
-                    <td>$${item.price.toFixed(2)}</td>
-                    <td>
-                        <input type="number" class="form-control form-control-sm" value="${item.quantity}" min="1">
-                    </td>
-                    <td>
-                        <input type="number" class="form-control form-control-sm" value="${item.discount.toFixed(2)}" min="0" step="0.01">
-                    </td>
-                    <td>$${item.tax.toFixed(2)}</td>
-                    <td>$${item.total.toFixed(2)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-danger">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                `;
-                
+
+                // Simulate customer search
+                const customerBills = previousBills.filter(bill =>
+                    bill.customer.toLowerCase().includes(customerName.toLowerCase()) ||
+                    bill.phone.includes(customerPhone)
+                );
+
+                if (customerBills.length > 0) {
+                    customerBillsList.innerHTML = '';
+                    customerBills.forEach(bill => {
+                        const billElement = document.createElement('div');
+                        billElement.className = 'bill-item';
+                        billElement.innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <strong>${bill.id}</strong>
+                                <span>${bill.date}</span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary mt-1 view-bill-btn" data-bill-id="${bill.id}">
+                                <i class="fas fa-eye me-1"></i>View Items
+                            </button>
+                        `;
+                        customerBillsList.appendChild(billElement);
+                    });
+
+                    customerBillsSection.style.display = 'block';
+
+                    // Add event listeners to view bill buttons
+                    document.querySelectorAll('.view-bill-btn').forEach(button => {
+                        button.addEventListener('click', function () {
+                            const billId = this.getAttribute('data-bill-id');
+                            const bill = previousBills.find(b => b.id === billId);
+                            if (bill) {
+                                returnOptionsModal.show();
+                                returnWithBillCard.click();
+                                showBillItemsForReturn(bill);
+                            }
+                        });
+                    });
+                } else {
+                    customerBillsSection.style.display = 'block';
+                    customerBillsList.innerHTML = '<p class="text-muted">No previous bills found for this customer.</p>';
+                }
+            });
+
+            // Search bill functionality
+            const searchBillBtn = document.getElementById('searchBillBtn');
+            const billDetails = document.getElementById('billDetails');
+
+            searchBillBtn.addEventListener('click', function () {
+                const billId = document.getElementById('billSearch').value;
+                if (!billId) {
+                    alert('Please enter a bill ID to search.');
+                    return;
+                }
+
+                // Simulate bill search
+                const bill = previousBills.find(b => b.id === billId);
+                if (bill) {
+                    showBillItemsForReturn(bill);
+                } else {
+                    alert('Bill not found. Please check the bill ID and try again.');
+                }
+            });
+
+            // Function to show bill items for return
+            function showBillItemsForReturn(bill) {
+                document.getElementById('billIdDisplay').textContent = bill.id;
+                document.getElementById('billDate').textContent = bill.date;
+                document.getElementById('billCustomer').textContent = bill.customer;
+
+                const billItemsList = document.getElementById('billItemsList');
+                billItemsList.innerHTML = '';
+
+                bill.items.forEach(item => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = `bill-item ${item.returned ? 'returned' : ''}`;
+                    itemElement.innerHTML = `
+                        <div class="form-check">
+                            <input class="form-check-input return-item-check" type="checkbox" 
+                                   value="${item.name}" data-price="${item.price}" 
+                                   data-sku="${item.sku}" ${item.returned ? 'disabled' : ''}>
+                            <label class="form-check-label">
+                                <strong>${item.name}</strong> - $${item.price.toFixed(2)} x ${item.quantity}
+                                ${item.returned ? '<span class="badge bg-danger ms-2">Already Returned</span>' : ''}
+                            </label>
+                        </div>
+                    `;
+                    billItemsList.appendChild(itemElement);
+                });
+
+                billDetails.style.display = 'block';
+
+                // Enable/disable add returns button based on selection
+                addSelectedReturnsBtn.disabled = true;
+
+                document.querySelectorAll('.return-item-check').forEach(checkbox => {
+                    checkbox.addEventListener('change', function () {
+                        const anyChecked = document.querySelectorAll('.return-item-check:checked').length > 0;
+                        addSelectedReturnsBtn.disabled = !anyChecked;
+                    });
+                });
+
+                // Add event listener to add selected returns button
+                addSelectedReturnsBtn.onclick = function () {
+                    document.querySelectorAll('.return-item-check:checked').forEach(checkbox => {
+                        const product = {
+                            name: checkbox.value,
+                            price: parseFloat(checkbox.getAttribute('data-price')),
+                            sku: checkbox.getAttribute('data-sku'),
+                            stock: 0 // Not relevant for returns
+                        };
+                        addItemToTransaction(product, 'return', bill.id);
+                    });
+                    returnOptionsModal.hide();
+                };
+            }
+
+            // Add event listeners to modal product buttons
+            document.addEventListener('click', function (e) {
+                if (e.target.classList.contains('add-product')) {
+                    const product = JSON.parse(e.target.getAttribute('data-product'));
+                    addItemToTransaction(product, 'sale');
+                    productListModal.hide();
+                }
+
+                if (e.target.classList.contains('add-return-without-bill')) {
+                    const product = JSON.parse(e.target.getAttribute('data-product'));
+                    addItemToTransaction(product, 'return');
+                    returnOptionsModal.hide();
+                }
+            });
+
+            // Function to add items to the transaction table
+            function addItemToTransaction(product, type, billRef = '') {
+                const item = {
+                    id: Date.now(),
+                    name: product.name,
+                    price: product.price,
+                    quantity: 1,
+                    discount: 0,
+                    tax: product.price * 0.1, // 10% tax for example
+                    type: type,
+                    sku: product.sku,
+                    billRef: billRef
+                };
+
+                item.total = (item.price * item.quantity) - item.discount + item.tax;
+
+                transactionItems.push(item);
+                renderTransactionItems();
                 updateSummary();
             }
-            
-            // Add sample items
-            sampleItems.forEach(item => addItemToTransaction(item));
-            
+
+            // Function to render transaction items in the table
+            function renderTransactionItems() {
+                const tbody = document.getElementById('transactionItems').querySelector('tbody');
+                tbody.innerHTML = '';
+
+                transactionItems.forEach(item => {
+                    const row = tbody.insertRow();
+                    if (item.type === 'return') {
+                        row.classList.add('return-item');
+                    } else {
+                        row.classList.add('sale-item');
+                    }
+
+                    row.innerHTML = `
+                        <td>
+                            <span class="transaction-type-badge ${item.type === 'sale' ? 'bg-success' : 'bg-danger'}">
+                                ${item.type === 'sale' ? 'Sale' : 'Return'}
+                            </span>
+                        </td>
+                        <td>${item.name}<br><small class="text-muted">SKU: ${item.sku}</small></td>
+                        <td>${item.billRef || '-'}</td>
+                        <td>$${item.price.toFixed(2)}</td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm" value="${item.quantity}" min="1" data-id="${item.id}">
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm" value="${item.discount.toFixed(2)}" min="0" step="0.01" data-id="${item.id}">
+                        </td>
+                        <td>$${item.tax.toFixed(2)}</td>
+                        <td>$${item.total.toFixed(2)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger remove-item" data-id="${item.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                });
+
+                // Add event listeners to quantity and discount inputs
+                document.querySelectorAll('.transaction-table input').forEach(input => {
+                    input.addEventListener('change', function () {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        const item = transactionItems.find(i => i.id === id);
+
+                        if (this.type === 'number') {
+                            if (this.classList.contains('form-control-sm')) {
+                                if (this.parentElement.cellIndex === 4) { // Quantity column
+                                    item.quantity = parseFloat(this.value);
+                                } else if (this.parentElement.cellIndex === 5) { // Discount column
+                                    item.discount = parseFloat(this.value);
+                                }
+                            }
+
+                            item.total = (item.price * item.quantity) - item.discount + item.tax;
+                            renderTransactionItems();
+                            updateSummary();
+                        }
+                    });
+                });
+
+                // Add event listeners to remove buttons
+                document.querySelectorAll('.remove-item').forEach(button => {
+                    button.addEventListener('click', function () {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        transactionItems = transactionItems.filter(item => item.id !== id);
+                        renderTransactionItems();
+                        updateSummary();
+                    });
+                });
+            }
+
             // Update transaction summary
             function updateSummary() {
-                const subtotal = 107.38; // Sample value
-                const discount = 2.00; // Sample value
-                const tax = 8.82; // Sample value
-                const total = 114.20; // Sample value
-                const paid = 120.00; // Sample value
-                const change = 5.80; // Sample value
-                const refund = 114.20; // Sample value
-                
-                document.getElementById('summarySubtotal').textContent = `$${subtotal.toFixed(2)}`;
-                document.getElementById('summaryDiscount').textContent = `-$${discount.toFixed(2)}`;
-                document.getElementById('summaryTax').textContent = `$${tax.toFixed(2)}`;
-                document.getElementById('summaryTotal').textContent = `$${total.toFixed(2)}`;
-                document.getElementById('summaryPaid').textContent = `$${paid.toFixed(2)}`;
-                document.getElementById('summaryChange').textContent = `$${change.toFixed(2)}`;
-                document.getElementById('summaryRefund').textContent = `$${refund.toFixed(2)}`;
+                const salesSubtotal = transactionItems
+                    .filter(item => item.type === 'sale')
+                    .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+                const returnsSubtotal = transactionItems
+                    .filter(item => item.type === 'return')
+                    .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+                const totalDiscount = transactionItems
+                    .reduce((sum, item) => sum + item.discount, 0);
+
+                const totalTax = transactionItems
+                    .reduce((sum, item) => sum + item.tax, 0);
+
+                const netTotal = salesSubtotal - returnsSubtotal - totalDiscount + totalTax;
+
+                const paidAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+                const change = paidAmount - netTotal;
+
+                document.getElementById('summarySalesSubtotal').textContent = `$${salesSubtotal.toFixed(2)}`;
+                document.getElementById('summaryReturnsSubtotal').textContent = `$${returnsSubtotal.toFixed(2)}`;
+                document.getElementById('summaryDiscount').textContent = `-$${totalDiscount.toFixed(2)}`;
+                document.getElementById('summaryTax').textContent = `$${totalTax.toFixed(2)}`;
+                document.getElementById('summaryTotal').textContent = `$${netTotal.toFixed(2)}`;
+                document.getElementById('summaryPaid').textContent = `$${paidAmount.toFixed(2)}`;
+
+                if (netTotal >= 0) {
+                    document.getElementById('changeSection').style.display = 'flex';
+                    document.getElementById('refundSection').style.display = 'none';
+                    document.getElementById('summaryChange').textContent = `$${Math.max(change, 0).toFixed(2)}`;
+                } else {
+                    document.getElementById('changeSection').style.display = 'none';
+                    document.getElementById('refundSection').style.display = 'flex';
+                    document.getElementById('summaryRefund').textContent = `$${Math.abs(netTotal).toFixed(2)}`;
+                }
             }
-            
-            // Initialize summary
-            updateSummary();
-            
+
+            // Initialize with sample items
+            addItemToTransaction({
+                name: 'Wireless Headphones',
+                price: 59.99,
+                sku: 'WH-1000XM4',
+                stock: 42
+            }, 'sale');
+
+            addItemToTransaction({
+                name: 'Phone Case',
+                price: 19.99,
+                sku: 'PC-IPHONE14',
+                stock: 83
+            }, 'sale');
+
+            // Payment amount change listener
+            document.getElementById('paymentAmount').addEventListener('change', updateSummary);
+
             // Clear transaction button
-            document.getElementById('clearTransactionBtn').addEventListener('click', function() {
+            document.getElementById('clearTransactionBtn').addEventListener('click', function () {
                 if (confirm('Are you sure you want to clear this transaction?')) {
-                    transactionItems.innerHTML = '';
+                    transactionItems = [];
+                    renderTransactionItems();
                     document.getElementById('customerName').value = '';
                     document.getElementById('customerPhone').value = '';
-                    document.getElementById('customerEmail').value = '';
-                    document.getElementById('customerId').value = '';
                     document.getElementById('paymentAmount').value = '0.00';
                     document.getElementById('transactionNotes').value = '';
-                    document.getElementById('returnReason').value = '';
+                    customerBillsSection.style.display = 'none';
                     updateSummary();
                 }
             });
-            
-            // Finalize sale button
-            document.getElementById('finalizeBtn').addEventListener('click', function() {
-                alert('Sale finalized successfully! Transaction has been recorded.');
+
+            // Finalize transaction button
+            document.getElementById('finalizeBtn').addEventListener('click', function () {
+                if (transactionItems.length === 0) {
+                    alert('Please add at least one item to the transaction.');
+                    return;
+                }
+
+                const customerName = document.getElementById('customerName').value;
+                if (!customerName) {
+                    alert('Please enter customer name.');
+                    return;
+                }
+
+                // Ask if user wants to print receipt
+                if (confirm('Transaction finalized successfully! Would you like to print the receipt?')) {
+                    printReceipt();
+                }
             });
-            
-            // Process return button
-            document.getElementById('processReturnBtn').addEventListener('click', function() {
-                alert('Return processed successfully! Refund has been issued.');
-            });
+
+            // Function to generate and print receipt
+            function printReceipt() {
+                // Set receipt details
+                document.getElementById('receiptInvoice').textContent = 'INV-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
+                document.getElementById('receiptDate').textContent = new Date().toLocaleString();
+                document.getElementById('receiptCustomer').textContent = document.getElementById('customerName').value;
+                document.getElementById('receiptPhone').textContent = document.getElementById('customerPhone').value;
+
+                // Set receipt items
+                const receiptItems = document.getElementById('receiptItems');
+                receiptItems.innerHTML = '';
+
+                transactionItems.forEach(item => {
+                    const row = receiptItems.insertRow();
+                    row.innerHTML = `
+                        <td>${item.type === 'sale' ? 'Sale' : 'Return'}</td>
+                        <td>${item.name}<br><small>SKU: ${item.sku}</small></td>
+                        <td>${item.billRef || '-'}</td>
+                        <td>$${item.price.toFixed(2)}</td>
+                        <td>${item.quantity}</td>
+                        <td>$${item.total.toFixed(2)}</td>
+                    `;
+                });
+
+                // Set receipt totals
+                const salesSubtotal = transactionItems
+                    .filter(item => item.type === 'sale')
+                    .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+                const returnsSubtotal = transactionItems
+                    .filter(item => item.type === 'return')
+                    .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+                const totalDiscount = transactionItems
+                    .reduce((sum, item) => sum + item.discount, 0);
+
+                const totalTax = transactionItems
+                    .reduce((sum, item) => sum + item.tax, 0);
+
+                const netTotal = salesSubtotal - returnsSubtotal - totalDiscount + totalTax;
+                const paidAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+                const change = paidAmount - netTotal;
+
+                document.getElementById('receiptSalesSubtotal').textContent = `$${salesSubtotal.toFixed(2)}`;
+                document.getElementById('receiptReturnsSubtotal').textContent = `$${returnsSubtotal.toFixed(2)}`;
+                document.getElementById('receiptDiscount').textContent = `-$${totalDiscount.toFixed(2)}`;
+                document.getElementById('receiptTax').textContent = `$${totalTax.toFixed(2)}`;
+                document.getElementById('receiptTotal').textContent = `$${netTotal.toFixed(2)}`;
+                document.getElementById('receiptPaid').textContent = `$${paidAmount.toFixed(2)}`;
+                document.getElementById('receiptChange').textContent = `$${Math.abs(change).toFixed(2)}`;
+
+                // Print the receipt
+                window.print();
+            }
         });
     </script>
-</body>
-</html>
