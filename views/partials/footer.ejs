@@ -1,26 +1,8 @@
-
 <footer class="bg-dark text-white text-center py-3 mt-5">
-    <p class="mb-0">&copy; <?php echo date("Y");  ?> <?= htmlspecialchars($shop_name) ?>. All Rights Reserved.</p>
-    <p class="mb-0">Contact: <strong><?= htmlspecialchars($shop_phone) ?></strong> or <a href="mailto:support@nextgents.com" class="text-white"><?= htmlspecialchars($shop_email) ?></a></p>
-    <p><?= htmlspecialchars($shop_add) ?></p>
+    <p class="mb-0">&copy; <%= new Date().getFullYear() %> <%= shop.name %>. All Rights Reserved.</p>
+    <p class="mb-0">Contact: <strong><%= shop.phone %></strong> or <a href="mailto:<%= shop.email %>" class="text-white"><%= shop.email %></a></p>
+    <p><%= shop.address %></p>
     <p class="mb-0">Software made by <strong>NextGen TechSolution</strong></p>
     <p class="mb-0">For any issues or support, contact us at: +92 333 1223334444 or <a href="mailto:support@nextgents.com" class="text-white">NextGenTechSolution@gmail.com</a></p>
     <p class="mb-0"><a class="nav-link" href="admin">Admin Panel</a></p>
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  
-  <!-- DataTables JS -->
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-  <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-  
-  <!-- Custom JS -->
-  <script src="/js/scripts.js"></script>
-</body>
-</html>

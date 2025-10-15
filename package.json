@@ -12,20 +12,22 @@
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
+    "chart.js": "^4.5.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "csurf": "^1.11.0",
     "dotenv": "^17.2.1",
     "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-ejs-layouts": "^2.5.1",
     "express-flash": "^0.0.2",
     "express-session": "^1.18.2",
+    "flatpickr": "^4.6.13",
     "multer": "^2.0.2",
     "mysql2": "^3.14.3",
     "nodemon": "^3.1.10",
     "uuid": "^11.1.0"
   },
-  "devDependencies": {},
   "keywords": []
 }

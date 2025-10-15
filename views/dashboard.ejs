@@ -1,5 +1,5 @@
 <!-- dashboard.ejs -->
-<div class="container dashboard-container">
+<div class="p-5 dashboard-container">
   <!-- Welcome Header with Date/Time -->
   <div class="dashboard-header">
     <div>
@@ -27,7 +27,7 @@
       </div>
     </div>
 
-    <div class="stat-card bg-success" onclick="window.location.href='/sales'">
+    <div class="stat-card bg-success" onclick="window.location.href='/ALLbills'">
       <div class="stat-icon">
         <i class="fas fa-receipt"></i>
       </div>
@@ -40,7 +40,7 @@
       </div>
     </div>
 
-    <div class="stat-card bg-warning" onclick="window.location.href='/employees'">
+    <div class="stat-card bg-warning" onclick="window.location.href='/EmpMgmt'">
       <div class="stat-icon">
         <i class="fas fa-users"></i>
       </div>
@@ -50,7 +50,7 @@
       </div>
     </div>
 
-    <div class="stat-card bg-danger" onclick="window.location.href='/inventory/alerts'">
+    <div class="stat-card bg-danger" onclick="window.location.href='/reports'">
       <div class="stat-icon">
         <i class="fas fa-exclamation-triangle"></i>
       </div>
@@ -92,7 +92,7 @@
             <p>Add Customer</p>
           </a>
           
-          <a href="/employees" class="action-card">
+          <a href="/EmpMgmt" class="action-card">
             <div class="action-icon bg-warning">
               <i class="fas fa-users"></i>
             </div>
@@ -112,6 +112,27 @@
             </div>
             <p>Inventory</p>
           </a>
+
+          <a href="/shop_setting" class="action-card">
+            <div class="action-icon bg-dark">
+              <i class="fas fa-warehouse"></i>
+            </div>
+            <p>Shop Setting</p>
+          </a>
+
+          <a href="/expenses" class="action-card">
+            <div class="action-icon bg-dark">
+              <i class="fas fa-warehouse"></i>
+            </div>
+            <p>Shop Expenses</p>
+          </a>
+
+          <a href="/raw" class="action-card">
+            <div class="action-icon bg-dark">
+              <i class="fas fa-warehouse"></i>
+            </div>
+            <p>Raw Material</p>
+          </a>
         </div>
       </div>
 
@@ -119,7 +140,7 @@
       <div class="recent-sales card">
         <div class="section-header">
           <h2><i class="fas fa-shopping-cart"></i> Recent Sales</h2>
-          <a href="/sales" class="view-all">View All</a>
+          <a href="/ALLbills" class="view-all">View All</a>
         </div>
         <div class="sales-list" id="recentSales">
           <!-- Will be populated by JavaScript -->
@@ -136,7 +157,7 @@
       <div class="low-stock card">
         <div class="section-header">
           <h2><i class="fas fa-exclamation-triangle"></i> Low Stock Alerts</h2>
-          <a href="/inventory/alerts" class="view-all">View All</a>
+          <a href="/alerts" class="view-all">View All</a>
         </div>
         <div class="alert-table">
           <table class="table">
@@ -703,8 +724,8 @@
         data.forEach(item => {
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>${item.name}</td>
-            <td><span class="badge badge-danger">${item.stock} left</span></td>
+            <td class="badge badge-danger">${item.name}</td>
+            <td><span class="badge-danger">${item.quantity} left</span></td>
             <td>
               <button class="btn btn-sm btn-primary" onclick="reorderProduct(${item.id})">
                 <i class="fas fa-shopping-cart"></i> Reorder

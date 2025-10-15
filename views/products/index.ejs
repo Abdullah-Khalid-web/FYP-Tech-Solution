@@ -1,640 +1,739 @@
-<!-- <h1>shop name: <%= (shop && shop.name) || 'My Shop' %></h1> -->
+<!DOCTYPE html>
+<html lang="en">
 
-<div class="container-fluid mt-4">
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <h2 class="mb-0">Product Management</h2>
-            <p class="text-muted">Manage your inventory efficiently</p>
-        </div>
-        <div class="col-md-6 text-end">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                <i class="fas fa-plus me-2"></i>Add Product
-            </button>
-        </div>
-    </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management - <%= (shop && shop.name) || 'My Shop' %>
+    </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: <%=(shop && shop.primary_color) || '#007bff' %>;
+            --secondary-color: <%=(shop && shop.secondary_color) || '#6c757d' %>;
+        }
 
-    <!-- Search and Filter Section -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" id="productSearch" class="form-control" placeholder="Search products...">
-                    </div>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-header {
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .table th {
+            background: #f8fafc;
+            color: #374151;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e5e7eb;
+            padding: 0.75rem 1rem;
+        }
+
+        .table td {
+            padding: 1rem;
+            border-color: #f3f4f6;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .badge-pill {
+            border-radius: 50px;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e429f;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            color: #374151;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 0.375rem;
+            border: 1px solid #e5e7eb;
+            padding: 0.5rem 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+        }
+
+        .input-group-text {
+            background-color: #f8fafc;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            color: #d1d5db;
+            margin-bottom: 1rem;
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .page-link {
+            color: var(--primary-color);
+        }
+
+        .img-thumbnail {
+            border-radius: 0.375rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-outline-success {
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        .btn-outline-success:hover {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .btn-outline-secondary {
+            color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 1rem 0;
+                margin-bottom: 1rem;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+
+<body data-shop-currency="<%= (shop && shop.currency) || 'PKR' %>">
+    <!-- Shop data for JavaScript -->
+    <script>
+        window.shopData = {
+            currency: '<%= (shop && shop.currency) || "PKR" %>',
+            name: '<%= (shop && shop.name) || "My Shop" %>',
+            primaryColor: '<%= (shop && shop.primary_color) || "#007bff" %>',
+            secondaryColor: '<%= (shop && shop.secondary_color) || "#6c757d" %>'
+        };
+    </script>
+
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h3 mb-2"><i class="fas fa-boxes me-2"></i>Product Management</h1>
+                    <p class="mb-0 text-muted">Manage your inventory efficiently</p>
                 </div>
-                <div class="col-md-3">
-                    <select id="categoryFilter" class="form-select">
-                        <option value="">All Categories</option>
-                        <% if (categories && categories.length) { %>
-                            <% categories.forEach(category => { %>
-                                <option value="<%= category %>"><%= category %></option>
-                            <% }); %>
-                        <% } %>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select id="statusFilter" class="form-select">
-                        <option value="">All Statuses</option>
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button id="resetFilters" class="btn btn-outline-secondary w-100">
-                        <i class="fas fa-sync-alt me-1"></i> Reset
+                <div class="col-md-4 text-md-end">
+                    <a href="/" class="btn btn-outline btn-sm me-2">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        <i class="fas fa-plus me-2"></i>Add Product
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Products Table -->
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover" id="productsTable">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Id</th>
-                            <th>Image</th>
-                            <th>Name</th>
-                            <th>SKU</th>
-                            <th>Category</th>
-                            <th>Stock</th>
-                            <th>Buying Price</th>
-                            <th>Selling Price</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (products && products.length) { %>
-                            <% products.forEach(product => { %>
-                                <tr data-product-id="<%= product.id %>">
-                                    <td><%= product.id %></td>
-                                    <td>
-                                        <% if (product.image) { %>
-                                            <img src="/uploads/<%= product.image %>" alt="<%= product.name %>" 
-                                                 class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
-                                        <% } else { %>
-                                            <div class="no-image-placeholder" 
-                                                 style="width: 50px; height: 50px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
-                                                <i class="fas fa-box-open text-muted"></i>
-                                            </div>
+    <div class="container-fluid">
+        <!-- Search and Filter Section -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Products</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="productSearch" class="form-control" placeholder="Search products...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select id="categoryFilter" class="form-select">
+                            <option value="">All Categories</option>
+                            <% if (categories && categories.length) { %>
+                                <% categories.forEach(category=> { %>
+                                    <option value="<%= category %>">
+                                        <%= category %>
+                                    </option>
+                                    <% }); %>
                                         <% } %>
-                                    </td>
-                                    <td><%= product.name %></td>
-                                    <td><%= product.sku || 'N/A' %></td>
-                                    <td><%= product.category || 'Uncategorized' %></td>
-                                    <td>
-                                        <span class="badge <%= product.quantity <= product.min_stock_alert ? 'bg-warning' : 'bg-success' %>">
-                                            <%= product.quantity %>
-                                            <% if (product.quantity <= product.min_stock_alert) { %>
-                                                <i class="fas fa-exclamation-triangle ms-1"></i>
-                                            <% } %>
-                                        </span>
-                                    </td>
-                                    <td><%= Number(product.buying_price || 0).toFixed(2) %></td>
-                                    <td><%= Number(product.selling_price || 0).toFixed(2) %></td>
-                                    <td>
-                                        <span class="badge <%= product.status === 'active' ? 'bg-success' : 'bg-secondary' %>">
-                                            <%= product.status.charAt(0).toUpperCase() + product.status.slice(1) %>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <button class="btn btn-outline-primary edit-product" data-bs-toggle="tooltip" title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-outline-success add-stock" data-bs-toggle="tooltip" title="Add Stock">
-                                                <i class="fas fa-plus-circle"></i>
-                                            </button>
-                                            <button class="btn btn-outline-secondary toggle-status" data-bs-toggle="tooltip" 
-                                                    title="<%= product.status === 'active' ? 'Deactivate' : 'Activate' %>">
-                                                <i class="fas <%= product.status === 'active' ? 'fa-toggle-on' : 'fa-toggle-off' %>"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <% }); %>
-                        <% } else { %>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select id="statusFilter" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="resetFilters" class="btn btn-outline w-100">
+                            <i class="fas fa-sync-alt me-1"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <!-- Products Table -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Products</h5>
+                    <span class="badge bg-primary badge-pill">
+                        <%= products && products.length ? products.length : '0' %> products
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="productsTable">
+                        <thead class="table-light">
                             <tr>
-                                <td colspan="9" class="text-center py-4">
-                                    <i class="fas fa-box-open fa-2x text-muted mb-3"></i>
-                                    <h5>No products found</h5>
-                                    <p>Add your first product to get started</p>
-                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                                        <i class="fas fa-plus me-2"></i>Add Product
-                                    </button>
-                                </td>
+                                <th>ID</th>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Stock</th>
+                                <th>Buying Price</th>
+                                <th>Selling Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
-                        <% } %>
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Pagination -->
-            <% if (totalPages > 1) { %>
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center mt-4">
-                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                            <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        <% for (let i = 1; i <= totalPages; i++) { %>
-                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
-                            </li>
-                        <% } %>
-                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                            <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            <% } %>
-        </div>
-    </div>
-</div>
+                        </thead>
+                        <tbody>
+                            <% if (products && products.length) { %>
+                                <% products.forEach(product=> { %>
+                                    <tr data-product-id="<%= product.id %>"
+                                        data-category="<%= product.category || '' %>"
+                                        data-status="<%= product.status %>">
+                                        <td>
+                                            <%= product.id %>
+                                        </td>
+                                        <td>
+                                            <% if (product.image) { %>
+                                                <img src="/uploads/<%= product.image %>" alt="<%= product.name %>"
+                                                    class="img-thumbnail"
+                                                    style="width: 50px; height: 50px; object-fit: cover;">
+                                                <% } else { %>
+                                                    <div class="no-image-placeholder"
+                                                        style="width: 50px; height: 50px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem;">
+                                                        <i class="fas fa-box-open text-muted"></i>
+                                                    </div>
+                                                    <% } %>
+                                        </td>
+                                        <td data-brand="<%= product.brand || '' %>">
+                                            <div class="fw-semibold">
+                                                <%= product.name %>
+                                            </div>
+                                            <% if (product.brand) { %>
+                                                <small class="text-muted">
+                                                    <%= product.brand %>
+                                                </small>
+                                                <% } %>
+                                        </td>
+                                        <td>
+                                            <%= product.sku || 'N/A' %>
+                                        </td>
+                                        <td data-size="<%= product.size || '' %>">
+                                            <%= product.category || 'Uncategorized' %>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge <%= product.quantity <= product.min_stock_alert ? 'bg-warning' : 'bg-success' %>">
+                                                <%= product.quantity %>
+                                                    <% if (product.quantity <=product.min_stock_alert) { %>
+                                                        <i class="fas fa-exclamation-triangle ms-1"></i>
+                                                        <% } %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <%= Number(product.buying_price || 0).toFixed(2) %>
+                                        </td>
+                                        <td>
+                                            <%= Number(product.selling_price || 0).toFixed(2) %>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge <%= product.status === 'active' ? 'bg-success' : 'bg-secondary' %>">
+                                                <%= product.status.charAt(0).toUpperCase() + product.status.slice(1) %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button class="btn btn-outline-primary edit-product"
+                                                    data-bs-toggle="tooltip" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-success add-stock"
+                                                    data-bs-toggle="tooltip" title="Add Stock">
+                                                    <i class="fas fa-plus-circle"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary toggle-status"
+                                                    data-bs-toggle="tooltip"
+                                                    title="<%= product.status === 'active' ? 'Deactivate' : 'Activate' %>">
+                                                    <i
+                                                        class="fas <%= product.status === 'active' ? 'fa-toggle-on' : 'fa-toggle-off' %>"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                        <% } else { %>
+                                            <tr>
+                                                <td colspan="10" class="text-center py-4">
+                                                    <div class="empty-state">
+                                                        <div class="empty-state-icon">
+                                                            <i class="fas fa-box-open"></i>
+                                                        </div>
+                                                        <h5>No products found</h5>
+                                                        <p class="text-muted mb-3">Add your first product to get started
+                                                        </p>
+                                                        <button class="btn btn-primary" data-bs-toggle="modal"
+                                                            data-bs-target="#addProductModal">
+                                                            <i class="fas fa-plus me-2"></i>Add Product
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
 
-<!-- Add Product Modal -->
-<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header" style="background-color: <%= (shop && shop.primary_color) || '#007bff' %>; color: white;">
-                <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="addProductForm" enctype="multipart/form-data">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="productName" class="form-label">Product Name *</label>
-                                <input type="text" class="form-control" id="productName" name="name" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="productBrand" class="form-label">Brand</label>
-                                <input type="text" class="form-control" id="productBrand" name="brand">
-                            </div>
-                            <div class="mb-3">
-                                <label for="productCategory" class="form-label">Category</label>
-                                <input type="text" class="form-control" id="productCategory" name="category" list="categoryList">
-                                <datalist id="categoryList">
-                                    <% if (categories && categories.length) { %>
-                                        <% categories.forEach(category => { %>
-                                            <option value="<%= category %>">
-                                        <% }); %>
+                <!-- Pagination -->
+                <% if (totalPages> 1) { %>
+                    <div class="card-header border-top">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                <% for (let i=1; i <=totalPages; i++) { %>
+                                    <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                        <a class="page-link" href="?page=<%= i %>">
+                                            <%= i %>
+                                        </a>
+                                    </li>
                                     <% } %>
-                                </datalist>
-                            </div>
-                            <div class="mb-3">
-                                <label for="productSize" class="form-label">Size</label>
-                                <input type="text" class="form-control" id="productSize" name="size">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="productImage" class="form-label">Product Image</label>
-                                <input type="file" class="form-control" id="productImage" name="image" accept="image/*">
-                                <div class="mt-2" id="imagePreviewContainer" style="display: none;">
-                                    <img id="imagePreview" src="#" alt="Preview" style="max-height: 150px; max-width: 100%;">
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="productSKU" class="form-label">SKU</label>
-                                <input type="text" class="form-control" id="productSKU" name="sku">
-                            </div>
-                            <div class="mb-3">
-                                <label for="productBarcode" class="form-label">Barcode</label>
-                                <input type="text" class="form-control" id="productBarcode" name="barcode">
-                            </div>
-                        </div>
+                                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                            <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+                            </ul>
+                        </nav>
                     </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="buyingPrice" class="form-label">Buying Price *</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><%= (shop && shop.currency) || 'PKR' %></span>
-                                    <input type="number" step="0.01" class="form-control" id="buyingPrice" name="buying_price" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="sellingPrice" class="form-label">Selling Price *</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><%= (shop && shop.currency) || 'PKR' %></span>
-                                    <input type="number" step="0.01" class="form-control" id="sellingPrice" name="selling_price" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="taxPercent" class="form-label">Tax (%)</label>
-                                <input type="number" step="0.01" class="form-control" id="taxPercent" name="tax_percent" value="0">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="initialQuantity" class="form-label">Initial Quantity *</label>
-                                <input type="number" class="form-control" id="initialQuantity" name="quantity" value="0" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="minStockAlert" class="form-label">Low Stock Alert Level</label>
-                                <input type="number" class="form-control" id="minStockAlert" name="min_stock_alert" value="5">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Product</button>
-                </div>
-            </form>
+                    <% } %>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Edit Product Modal -->
-<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header" style="background-color: <%= (shop && shop.primary_color) || '#007bff' %>; color: white;">
-                <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="editProductForm" enctype="multipart/form-data">
-                <input type="hidden" id="editProductId" name="id">
-                <div class="modal-body">
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+    <!-- Add Product Modal -->
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="addProductForm" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productName" class="form-label">Product Name *</label>
+                                    <input type="text" class="form-control" id="productName" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="productBrand" class="form-label">Brand</label>
+                                    <input type="text" class="form-control" id="productBrand" name="brand">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="productCategory" class="form-label">Category</label>
+                                    <input type="text" class="form-control" id="productCategory" name="category"
+                                        list="categoryList">
+                                    <datalist id="categoryList">
+                                        <% if (categories && categories.length) { %>
+                                            <% categories.forEach(category=> { %>
+                                                <option value="<%= category %>">
+                                                    <% }); %>
+                                                        <% } %>
+                                    </datalist>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="productSize" class="form-label">Size</label>
+                                    <input type="text" class="form-control" id="productSize" name="size">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productImage" class="form-label">Product Image</label>
+                                    <input type="file" class="form-control" id="productImage" name="image"
+                                        accept="image/*">
+                                    <div class="mt-2" id="imagePreviewContainer" style="display: none;">
+                                        <img id="imagePreview" src="#" alt="Preview"
+                                            style="max-height: 150px; max-width: 100%; border-radius: 0.375rem;">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="productSKU" class="form-label">SKU</label>
+                                    <input type="text" class="form-control" id="productSKU" name="sku">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="productBarcode" class="form-label">Barcode</label>
+                                    <input type="text" class="form-control" id="productBarcode" name="barcode">
+                                </div>
+                            </div>
                         </div>
-                        <p>Loading product details...</p>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="buyingPrice" class="form-label">Buying Price *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <%= (shop && shop.currency) || 'PKR' %>
+                                        </span>
+                                        <input type="number" step="0.01" class="form-control" id="buyingPrice"
+                                            name="buying_price" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="sellingPrice" class="form-label">Selling Price *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <%= (shop && shop.currency) || 'PKR' %>
+                                        </span>
+                                        <input type="number" step="0.01" class="form-control" id="sellingPrice"
+                                            name="selling_price" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="taxPercent" class="form-label">Tax (%)</label>
+                                    <input type="number" step="0.01" class="form-control" id="taxPercent"
+                                        name="tax_percent" value="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="initialQuantity" class="form-label">Initial Quantity *</label>
+                                    <input type="number" class="form-control" id="initialQuantity" name="quantity"
+                                        value="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="minStockAlert" class="form-label">Low Stock Alert Level</label>
+                                    <input type="number" class="form-control" id="minStockAlert" name="min_stock_alert"
+                                        value="5">
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Product</button>
-                </div>
-            </form>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Product</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Add Stock Modal -->
-<!-- Add Stock Modal -->
-<div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header" style="background-color: <%= (shop && shop.secondary_color) || '#6c757d' %>; color: white;">
-                <h5 class="modal-title" id="addStockModalLabel">Add Stock</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="addStockForm">
-                <input type="hidden" id="stockProductId" name="product_id">
-                <div class="modal-body">
-                    <div class="row mb-4">
-                        <div class="col-md-8">
-                            <h5 id="stockProductName"></h5>
-                            <div class="row small text-muted">
-                                <div class="col-md-3">
-                                    <strong>Brand:</strong> <span id="stockProductBrand"></span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Category:</strong> <span id="stockProductCategory"></span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Size:</strong> <span id="stockProductSize"></span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>SKU:</strong> <span id="stockProductSku"></span>
-                                </div>
+    <!-- Edit Product Modal -->
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editProductForm" enctype="multipart/form-data">
+                    <input type="hidden" id="editProductId" name="id">
+                    <div class="modal-body">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <div class="d-flex align-items-center justify-content-end">
-                                <span class="me-2">Current Stock:</span>
-                                <span class="badge bg-primary fs-6" id="currentStockBadge">0</span>
-                            </div>
+                            <p>Loading product details...</p>
                         </div>
                     </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card mb-3">
-                                <div class="card-header bg-light">
-                                    <h6 class="mb-0">Current Prices</h6>
+    <!-- Add Stock Modal -->
+    <div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addStockModalLabel">Add Stock</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="addStockForm">
+                    <input type="hidden" id="stockProductId" name="product_id">
+                    <div class="modal-body">
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <h5 id="stockProductName"></h5>
+                                <div class="row small text-muted">
+                                    <div class="col-md-3">
+                                        <strong>Brand:</strong> <span id="stockProductBrand"></span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Category:</strong> <span id="stockProductCategory"></span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Size:</strong> <span id="stockProductSize"></span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>SKU:</strong> <span id="stockProductSku"></span>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Buying Price</label>
-                                            <div class="input-group mb-3">
-                                                <span class="input-group-text"><%= (shop && shop.currency) || 'PKR' %></span>
-                                                <input type="text" class="form-control" id="currentBuyingPrice" readonly>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="d-flex align-items-center justify-content-end">
+                                    <span class="me-2">Current Stock:</span>
+                                    <span class="badge bg-primary badge-pill" id="currentStockBadge">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Current Prices</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Buying Price</label>
+                                                <div class="input-group mb-3">
+                                                    <span class="input-group-text">
+                                                        <%= (shop && shop.currency) || 'PKR' %>
+                                                    </span>
+                                                    <input type="text" class="form-control" id="currentBuyingPrice"
+                                                        readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Selling Price</label>
+                                                <div class="input-group mb-3">
+                                                    <span class="input-group-text">
+                                                        <%= (shop && shop.currency) || 'PKR' %>
+                                                    </span>
+                                                    <input type="text" class="form-control" id="currentSellingPrice"
+                                                        readonly>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Selling Price</label>
-                                            <div class="input-group mb-3">
-                                                <span class="input-group-text"><%= (shop && shop.currency) || 'PKR' %></span>
-                                                <input type="text" class="form-control" id="currentSellingPrice" readonly>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header bg-light">
-                                    <h6 class="mb-0">Update Information</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <label for="quantityToAdd" class="form-label">Quantity to Add *</label>
-                                        <input type="number" class="form-control" id="quantityToAdd" name="quantity" min="1" required>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Update Information</h6>
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="newBuyingPrice" class="form-label">New Buying Price</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><%= (shop && shop.currency) || 'PKR' %></span>
-                                            <input type="number" step="0.01" class="form-control" id="newBuyingPrice" name="buying_price">
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="quantityToAdd" class="form-label">Quantity to Add *</label>
+                                            <input type="number" class="form-control" id="quantityToAdd" name="quantity"
+                                                min="1" required>
                                         </div>
-                                        <small class="text-muted">Leave blank to keep current price</small>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="newSellingPrice" class="form-label">New Selling Price</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><%= (shop && shop.currency) || 'PKR' %></span>
-                                            <input type="number" step="0.01" class="form-control" id="newSellingPrice" name="selling_price">
+                                        <div class="mb-3">
+                                            <label for="newBuyingPrice" class="form-label">New Buying Price</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <%= (shop && shop.currency) || 'PKR' %>
+                                                </span>
+                                                <input type="number" step="0.01" class="form-control"
+                                                    id="newBuyingPrice" name="buying_price">
+                                            </div>
+                                            <small class="text-muted">Leave blank to keep current price</small>
                                         </div>
-                                        <small class="text-muted">Leave blank to keep current price</small>
+                                        <div class="mb-3">
+                                            <label for="newSellingPrice" class="form-label">New Selling Price</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <%= (shop && shop.currency) || 'PKR' %>
+                                                </span>
+                                                <input type="number" step="0.01" class="form-control"
+                                                    id="newSellingPrice" name="selling_price">
+                                            </div>
+                                            <small class="text-muted">Leave blank to keep current price</small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Update Stock & Prices</button>
-                </div>
-            </form>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Stock & Prices</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-<style>
-    :root {
-        --primary-color: <%= (shop && shop.primary_color) || '#007bff' %>;
-        --secondary-color: <%= (shop && shop.secondary_color) || '#6c757d' %>;
-    }
-    
-    .btn-primary {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-    }
-    
-    .btn-outline-primary {
-        color: var(--primary-color);
-        border-color: var(--primary-color);
-    }
-    
-    .btn-outline-primary:hover {
-        background-color: var(--primary-color);
-        color: white;
-    }
-    
-    .badge.bg-primary {
-        background-color: var(--primary-color) !important;
-    }
-    
-    .page-item.active .page-link {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-    }
-    
-    .page-link {
-        color: var(--primary-color);
-    }
-    
-    .table-hover tbody tr:hover {
-        background-color: rgba(var(--primary-color-rgb), 0.05);
-    }
-    
-    .btn-secondary {
-        background-color: var(--secondary-color);
-        border-color: var(--secondary-color);
-    }
-    
-    .btn-outline-secondary {
-        color: var(--secondary-color);
-        border-color: var(--secondary-color);
-    }
-    
-    .btn-outline-secondary:hover {
-        background-color: var(--secondary-color);
-        color: white;
-    }
-</style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize tooltips
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-        
-        // Image preview for add product form
-        document.getElementById('productImage').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    document.getElementById('imagePreview').src = event.target.result;
-                    document.getElementById('imagePreviewContainer').style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                document.getElementById('imagePreviewContainer').style.display = 'none';
-            }
-        });
-        
-        // Handle add product form submission
-        document.getElementById('addProductForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            
-            fetch('/products', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Product added successfully!', 'success');
-                    $('#addProductModal').modal('hide');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showToast(data.message || 'Error adding product', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred', 'error');
-            });
-        });
-        
-// Replace your existing edit form submission with this:
-document.getElementById('editProductForm')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    const productId = document.getElementById('editProductId').value;
-
-    fetch(`/products/${productId}`, {
-        method: 'PUT',  // or 'POST' if your backend expects POST
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Product updated successfully!', 'success');
-            $('#editProductModal').modal('hide');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(data.message || 'Error updating product', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('An error occurred', 'error');
-    });
-});
-
-        // Handle edit product clicks
-       // Replace your existing edit button handlers with this:
-document.querySelectorAll('.edit-product').forEach(button => {
-    button.addEventListener('click', function() {
-        const productId = this.closest('tr').getAttribute('data-product-id');
-        loadProductForEdit(productId);
-    });
-});
-
-// Replace your existing add stock click handler with this:
-document.querySelectorAll('.add-stock').forEach(button => {
-    button.addEventListener('click', function() {
-        const row = this.closest('tr');
-        const productId = row.getAttribute('data-product-id');
-        
-        // Get all product data from the table row
-        const productData = {
-            id: productId,
-            name: row.querySelector('td:nth-child(3)').textContent.trim(),
-            brand: row.querySelector('td:nth-child(3)').getAttribute('data-brand') || '',
-            category: row.querySelector('td:nth-child(5)').textContent.trim(),
-            size: row.querySelector('td:nth-child(5)').getAttribute('data-size') || '',
-            sku: row.querySelector('td:nth-child(4)').textContent.trim(),
-            currentStock: row.querySelector('td:nth-child(6)').textContent.trim(),
-            buyingPrice: row.querySelector('td:nth-child(7)').textContent.trim(),
-            sellingPrice: row.querySelector('td:nth-child(8)').textContent.trim()
-        };
-
-        // Populate the modal with product information
-        document.getElementById('stockProductId').value = productId;
-        document.getElementById('stockProductName').textContent = productData.name;
-        document.getElementById('stockProductBrand').textContent = productData.brand || 'N/A';
-        document.getElementById('stockProductCategory').textContent = productData.category || 'N/A';
-        document.getElementById('stockProductSize').textContent = productData.size || 'N/A';
-        document.getElementById('stockProductSku').textContent = productData.sku || 'N/A';
-        document.getElementById('currentStockBadge').textContent = productData.currentStock;
-        document.getElementById('currentBuyingPrice').value = productData.buyingPrice;
-        document.getElementById('currentSellingPrice').value = productData.sellingPrice;
-        
-        // Clear input fields
-        document.getElementById('quantityToAdd').value = '';
-        document.getElementById('newBuyingPrice').value = '';
-        document.getElementById('newSellingPrice').value = '';
-        
-        $('#addStockModal').modal('show');
-    });
-});
-
-
-// Update your add stock form submission to handle selling price
-// Update your add stock form submission to handle selling price
-    document.getElementById('addStockForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    
-    // Include selling price in the form data if provided
-    const newSellingPrice = document.getElementById('newSellingPrice').value;
-    if (newSellingPrice) {
-        formData.append('selling_price', newSellingPrice);
+    <script>
+        // Helper function to get shop currency
+function getShopCurrency() {
+    // Try multiple ways to get the currency
+    if (window.shopData && window.shopData.currency) {
+        return window.shopData.currency;
     }
     
-    fetch('/products/add-stock', {
-        method: 'POST',
-        body: new URLSearchParams(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Stock and prices updated successfully!', 'success');
-            $('#addStockModal').modal('hide');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(data.message || 'Error updating stock', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('An error occurred', 'error');
-    });
-});
-        // Handle toggle status clicks
-    document.querySelectorAll('.toggle-status').forEach(button => {
-            button.addEventListener('click', function() {
-                const productId = this.closest('tr').getAttribute('data-product-id');
-                toggleProductStatus(productId);
-            });
-        });
-        
-        // Search functionality
-        document.getElementById('productSearch').addEventListener('input', function() {
-            filterProducts();
-        });
-        
-        // Filter functionality
-        document.getElementById('categoryFilter').addEventListener('change', function() {
-            filterProducts();
-        });
-        
-        document.getElementById('statusFilter').addEventListener('change', function() {
-            filterProducts();
-        });
-        
-        // Reset filters
-        document.getElementById('resetFilters').addEventListener('click', function() {
-            document.getElementById('productSearch').value = '';
-            document.getElementById('categoryFilter').value = '';
-            document.getElementById('statusFilter').value = '';
-            filterProducts();
-        });
-    });
+    const currencyElement = document.querySelector('[data-shop-currency]');
+    if (currencyElement) {
+        return currencyElement.getAttribute('data-shop-currency');
+    }
     
-    function loadProductForEdit(productId) {
+    const bodyCurrency = document.body.getAttribute('data-shop-currency');
+    if (bodyCurrency) {
+        return bodyCurrency;
+    }
+    
+    return 'PKR'; // Default fallback
+}
+
+// Helper function to escape HTML
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    // Simple alert for now - replace with a proper toast notification if needed
+    alert(`${type.toUpperCase()}: ${message}`);
+}
+
+// Load product for editing
+function loadProductForEdit(productId) {
     // Show loading state
     const editModalBody = document.querySelector('#editProductModal .modal-body');
     editModalBody.innerHTML = `
@@ -651,7 +750,7 @@ document.querySelectorAll('.add-stock').forEach(button => {
     fetch(`/products/${productId}/edit`)
         .then(response => {
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error(`Server returned ${response.status}`);
             }
             return response.json();
         })
@@ -678,8 +777,10 @@ document.querySelectorAll('.add-stock').forEach(button => {
         });
 }
 
+// Render edit form
 function renderEditForm(product) {
     const editModalBody = document.querySelector('#editProductModal .modal-body');
+    const currency = getShopCurrency();
     
     editModalBody.innerHTML = `
         <div class="row">
@@ -711,7 +812,7 @@ function renderEditForm(product) {
                     <input type="file" class="form-control" id="editProductImage" name="image" accept="image/*">
                     ${product.image ? `
                         <div class="mt-2">
-                            <img src="/uploads/${escapeHtml(product.image)}" alt="Current Image" style="max-height: 150px; max-width: 100%;">
+                            <img src="/uploads/${escapeHtml(product.image)}" alt="Current Image" style="max-height: 150px; max-width: 100%; border-radius: 0.375rem;">
                             <div class="form-check mt-2">
                                 <input class="form-check-input" type="checkbox" id="removeImage" name="remove_image">
                                 <label class="form-check-label" for="removeImage">Remove current image</label>
@@ -734,7 +835,7 @@ function renderEditForm(product) {
                 <div class="mb-3">
                     <label for="editBuyingPrice" class="form-label">Buying Price *</label>
                     <div class="input-group">
-                        <span class="input-group-text">${escapeHtml((shop && shop.currency) || 'PKR')}</span>
+                        <span class="input-group-text">${currency}</span>
                         <input type="number" step="0.01" class="form-control" id="editBuyingPrice" name="buying_price" value="${Number(product.buying_price || 0).toFixed(2)}" required>
                     </div>
                 </div>
@@ -743,7 +844,7 @@ function renderEditForm(product) {
                 <div class="mb-3">
                     <label for="editSellingPrice" class="form-label">Selling Price *</label>
                     <div class="input-group">
-                        <span class="input-group-text">${escapeHtml((shop && shop.currency) || 'PKR')}</span>
+                        <span class="input-group-text">${currency}</span>
                         <input type="number" step="0.01" class="form-control" id="editSellingPrice" name="selling_price" value="${Number(product.selling_price || 0).toFixed(2)}" required>
                     </div>
                 </div>
@@ -768,7 +869,7 @@ function renderEditForm(product) {
             reader.onload = function(event) {
                 const previewContainer = document.createElement('div');
                 previewContainer.className = 'mt-2';
-                previewContainer.innerHTML = `<img src="${event.target.result}" alt="Preview" style="max-height: 150px; max-width: 100%;">`;
+                previewContainer.innerHTML = `<img src="${event.target.result}" alt="Preview" style="max-height: 150px; max-width: 100%; border-radius: 0.375rem;">`;
                 this.parentNode.appendChild(previewContainer);
             };
             reader.readAsDataURL(file);
@@ -776,85 +877,283 @@ function renderEditForm(product) {
     });
 }
 
-    function toggleProductStatus(productId) {
-        if (!confirm('Are you sure you want to change the status of this product?')) return;
-        
-        fetch(`/products/${productId}/toggle-status`, {
-            method: 'POST'
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Product status updated successfully!', 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showToast(data.message || 'Error updating status', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred', 'error');
-            });
-    }
+// Toggle product status
+function toggleProductStatus(productId) {
+    if (!confirm('Are you sure you want to change the status of this product?')) return;
     
-// Replace the existing filterProducts function with this:
+    fetch(`/products/${productId}/toggle-status`, {
+        method: 'POST'
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Product status updated successfully!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Error updating status', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred', 'error');
+        });
+}
+
+// Filter products - FIXED VERSION
 function filterProducts() {
     const searchTerm = document.getElementById('productSearch').value.toLowerCase();
     const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
     const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
     
-    document.querySelectorAll('#productsTable tbody tr').forEach(row => {
-        if (row.getAttribute('data-product-id') === null) return; // Skip the "no products" row
+    let visibleCount = 0;
+    
+    document.querySelectorAll('#productsTable tbody tr[data-product-id]').forEach(row => {
+        // Skip the "no products" row
+        if (!row.getAttribute('data-product-id')) return;
         
+        // Get data from table cells and data attributes
         const name = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
         const sku = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-        const category = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
-        const statusBadge = row.querySelector('td:nth-child(9) .badge');
-        const status = statusBadge ? statusBadge.textContent.trim().toLowerCase() : '';
+        const category = row.getAttribute('data-category') ? row.getAttribute('data-category').toLowerCase() : '';
+        const status = row.getAttribute('data-status') ? row.getAttribute('data-status').toLowerCase() : '';
         
-        // Search across multiple fields (name, SKU, category)
+        // Search across multiple fields (name, SKU)
         const matchesSearch = searchTerm === '' || 
             name.includes(searchTerm) || 
-            sku.includes(searchTerm) || 
-            category.includes(searchTerm);
+            sku.includes(searchTerm);
         
-        const matchesCategory = categoryFilter === '' || category === categoryFilter;
+        // Category filter - handle empty categories
+        const matchesCategory = categoryFilter === '' || 
+            (categoryFilter && category === categoryFilter) ||
+            (categoryFilter === '' && category === '');
         
-        // Fix status filter comparison
+        // Status filter - handle both backend status and display status
         let statusMatch = true;
         if (statusFilter !== '') {
             if (statusFilter === 'active') {
-                statusMatch = status.includes('active');
+                statusMatch = status === 'active';
             } else if (statusFilter === 'inactive') {
-                statusMatch = status.includes('inactive');
+                statusMatch = status === 'inactive';
             }
         }
         
-        row.style.display = matchesSearch && matchesCategory && statusMatch ? '' : 'none';
+        // Show or hide row based on all filters
+        const shouldShow = matchesSearch && matchesCategory && statusMatch;
+        row.style.display = shouldShow ? '' : 'none';
+        
+        if (shouldShow) {
+            visibleCount++;
+        }
     });
     
-    // Show "no products" message if all rows are hidden
-    const visibleRows = document.querySelectorAll('#productsTable tbody tr[style=""]').length;
-    const noProductsRow = document.querySelector('#productsTable tbody tr[data-product-id=""]');
+    // Show/hide the "no products" message
+    const noProductsRow = document.querySelector('#productsTable tbody tr:not([data-product-id])');
     if (noProductsRow) {
-        noProductsRow.style.display = visibleRows === 0 ? '' : 'none';
+        noProductsRow.style.display = visibleCount === 0 ? '' : 'none';
+    }
+    
+    // Update the product count badge
+    const countBadge = document.querySelector('.card-header .badge');
+    if (countBadge) {
+        countBadge.textContent = `${visibleCount} products`;
     }
 }
 
+// Enhanced filter function with debouncing
+let filterTimeout;
+function debounceFilter() {
+    clearTimeout(filterTimeout);
+    filterTimeout = setTimeout(filterProducts, 300);
+}
 
-
-function showToast(message, type = 'success') {
-        // Simple alert for now - replace with a proper toast notification if needed
-        alert(`${type.toUpperCase()}: ${message}`);
-    }
+// Main DOM content loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded - initializing product management');
     
-function escapeHtml(unsafe) {
-        if (!unsafe) return '';
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-</script>
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Image preview for add product form
+    document.getElementById('productImage').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('imagePreview').src = event.target.result;
+                document.getElementById('imagePreviewContainer').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+        }
+    });
+    
+    // Handle add product form submission
+    document.getElementById('addProductForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('/products', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Product added successfully!', 'success');
+                $('#addProductModal').modal('hide');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Error adding product', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred', 'error');
+        });
+    });
+
+    // Handle edit product form submission
+    document.getElementById('editProductForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const productId = document.getElementById('editProductId').value;
+
+        fetch(`/products/${productId}`, {
+            method: 'PUT',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Product updated successfully!', 'success');
+                $('#editProductModal').modal('hide');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Error updating product', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred', 'error');
+        });
+    });
+
+    // Handle edit product clicks
+    document.querySelectorAll('.edit-product').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.closest('tr').getAttribute('data-product-id');
+            loadProductForEdit(productId);
+        });
+    });
+
+    // Handle add stock form submission
+    document.getElementById('addStockForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        // Include selling price in the form data if provided
+        const newSellingPrice = document.getElementById('newSellingPrice').value;
+        if (newSellingPrice) {
+            formData.append('selling_price', newSellingPrice);
+        }
+        
+        fetch('/products/add-stock', {
+            method: 'POST',
+            body: new URLSearchParams(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Stock and prices updated successfully!', 'success');
+                $('#addStockModal').modal('hide');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Error updating stock', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred', 'error');
+        });
+    });
+
+    // Handle add stock clicks
+    document.querySelectorAll('.add-stock').forEach(button => {
+        button.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const productId = row.getAttribute('data-product-id');
+            
+            // Get all product data from the table row and data attributes
+            const productData = {
+                id: productId,
+                name: row.querySelector('td:nth-child(3)').textContent.trim(),
+                brand: row.querySelector('td:nth-child(3)').getAttribute('data-brand') || '',
+                category: row.getAttribute('data-category') || '',
+                size: row.querySelector('td:nth-child(5)').getAttribute('data-size') || '',
+                sku: row.querySelector('td:nth-child(4)').textContent.trim(),
+                currentStock: row.querySelector('td:nth-child(6)').textContent.trim(),
+                buyingPrice: row.querySelector('td:nth-child(7)').textContent.trim(),
+                sellingPrice: row.querySelector('td:nth-child(8)').textContent.trim()
+            };
+
+            // Populate the modal with product information
+            document.getElementById('stockProductId').value = productId;
+            document.getElementById('stockProductName').textContent = productData.name;
+            document.getElementById('stockProductBrand').textContent = productData.brand || 'N/A';
+            document.getElementById('stockProductCategory').textContent = productData.category || 'N/A';
+            document.getElementById('stockProductSize').textContent = productData.size || 'N/A';
+            document.getElementById('stockProductSku').textContent = productData.sku || 'N/A';
+            document.getElementById('currentStockBadge').textContent = productData.currentStock;
+            document.getElementById('currentBuyingPrice').value = productData.buyingPrice;
+            document.getElementById('currentSellingPrice').value = productData.sellingPrice;
+            
+            // Clear input fields
+            document.getElementById('quantityToAdd').value = '';
+            document.getElementById('newBuyingPrice').value = '';
+            document.getElementById('newSellingPrice').value = '';
+            
+            $('#addStockModal').modal('show');
+        });
+    });
+
+    // Handle toggle status clicks
+    document.querySelectorAll('.toggle-status').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.closest('tr').getAttribute('data-product-id');
+            toggleProductStatus(productId);
+        });
+    });
+    
+    // Search functionality with debouncing
+    document.getElementById('productSearch').addEventListener('input', function() {
+        debounceFilter();
+    });
+    
+    // Filter functionality
+    document.getElementById('categoryFilter').addEventListener('change', function() {
+        filterProducts();
+    });
+    
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        filterProducts();
+    });
+    
+    // Reset filters
+    document.getElementById('resetFilters').addEventListener('click', function() {
+        document.getElementById('productSearch').value = '';
+        document.getElementById('categoryFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        filterProducts();
+    });
+    
+    // Initial filter to handle any pre-selected filters
+    setTimeout(filterProducts, 100);
+});
+    </script>
+</body>
+
+</html>

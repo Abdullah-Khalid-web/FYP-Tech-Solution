@@ -1,7 +1,19 @@
 <style>
+    :root {
+        --primary-color: <%=shop.primary_color || '#007bff' %>;
+        --danger-color: #dc3545;
+    }
+
     .transaction-table th {
         background-color: #e9ecef;
         font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
+
+    .transaction-table td {
+        padding: 0.5rem;
+        vertical-align: middle;
     }
 
     .summary-card {
@@ -10,1087 +22,917 @@
     }
 
     .return-item {
-        background-color: #fff0f5;
-    }
-
-    .sale-item {
-        background-color: #f0f8ff;
-    }
-
-    .nav-tabs .nav-link.active {
-        font-weight: 600;
-        border-bottom: 3px solid var(--primary-color);
-    }
-
-    .search-highlight {
         background-color: #fff3cd;
     }
 
-    .modal-header {
-        background-color: var(--primary-color);
-        color: white;
+    .sale-item {
+        background-color: #f8f9fa;
     }
 
-    .cursor-pointer {
+    .quantity-controls {
+        width: 120px;
+    }
+
+    .search-result-item {
         cursor: pointer;
+        transition: background-color 0.2s;
     }
 
-    .transaction-history {
-        max-height: 400px;
+    .search-result-item:hover {
+        background-color: #e9ecef;
+    }
+
+    .product-search-input {
+        position: relative;
+    }
+
+    .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        max-height: 300px;
         overflow-y: auto;
-    }
-
-    .transaction-type-badge {
-        font-size: 0.7rem;
-        padding: 2px 6px;
-        border-radius: 4px;
-    }
-
-    .print-receipt {
+        z-index: 1000;
         display: none;
     }
 
-    .bill-item {
-        border-left: 4px solid var(--primary-color);
-        padding-left: 10px;
-        margin-bottom: 10px;
-    }
-
-    .bill-item.returned {
-        border-left-color: var(--danger-color);
-        opacity: 0.7;
-    }
-
-    .bill-header {
-        background-color: #e9ecef;
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 10px;
-    }
-
     .return-option-card {
-        transition: all 0.3s ease;
         cursor: pointer;
+        transition: all 0.3s ease;
     }
 
     .return-option-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .return-option-card.selected {
         border: 2px solid var(--primary-color);
     }
 
+    .bill-item-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        margin-bottom: 0.5rem;
+        padding: 0.75rem;
+    }
+
+    .custom-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+    }
+
+    .return-option-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .return-option-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .return-option-card.selected {
+        border: 2px solid var(--primary-color);
+        background-color: #f8f9fa;
+    }
+
+    .return-quantity-control {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 0.375rem;
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .quick-return-quantity {
+        max-width: 60px;
+    }
+
     @media print {
-        body * {
-            visibility: hidden;
-        }
-
-        .print-receipt,
-        .print-receipt * {
-            visibility: visible;
-        }
-
-        .print-receipt {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            display: block;
-        }
-
         .no-print {
             display: none !important;
         }
+
+        body {
+            background: white !important;
+        }
+
+        .container {
+            max-width: none !important;
+        }
     }
 </style>
+</head>
 
-<div class="container py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-md-8 mx-auto text-center">
-            <h1 class="mb-3"><i class="fas fa-cash-register me-2"></i>Sales & Returns Management</h1>
-            <p class="lead">Process sales and returns with or without bill reference</p>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="row">
-        <!-- Customer Information -->
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Customer Information</h5>
-                <button class="btn btn-sm btn-light" id="searchCustomerBtn">
-                    <i class="fas fa-search me-1"></i>Search Customer
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Customer Name</label>
-                        <input type="text" class="form-control" id="customerName" placeholder="Enter customer name">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Phone Number</label>
-                        <input type="text" class="form-control" id="customerPhone" placeholder="Enter phone number">
+<body class="bg-light">
+    <div class="container-fluid py-3">
+        <!-- Header -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0"><i class="fas fa-cash-register me-2"></i>Sales & Returns</h2>
+                    <div>
+                        <a href="/ALLbills" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-list me-1"></i>All Bills
+                        </a>
+                        <!-- <button class="btn btn-success" onclick="printReceipt()" id="printBtn" style="display: none;">
+                            <i class="fas fa-print me-1"></i>Print Receipt
+                        </button> -->
                     </div>
                 </div>
-                <div id="customerBillsSection" style="display: none;">
-                    <h6>Previous Bills</h6>
-                    <div id="customerBillsList">
-                        <!-- Previous bills will appear here -->
-                    </div>
-                </div>
+                <p class="text-muted mb-0">Process sales and returns with complete transaction management</p>
             </div>
         </div>
 
-        <!-- Product Search and Selection -->
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Product Selection</h5>
-                <div>
-                    <button class="btn btn-sm btn-light me-2" id="viewProductsBtn">
-                        <i class="fas fa-boxes me-1"></i>View All Products
-                    </button>
-                    <button class="btn btn-sm btn-light" id="addReturnBtn">
-                        <i class="fas fa-undo me-1"></i>Add Return
-                    </button>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">Search Products</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="productSearch"
-                            placeholder="Scan barcode or search products">
-                        <button class="btn btn-outline-secondary" type="button" id="scanBarcodeBtn">
-                            <i class="fas fa-barcode"></i>
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Left Column - Customer & Products -->
+            <div class="col-lg-8">
+                <!-- Customer Information -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Customer Information</h5>
+                        <button class="btn btn-sm btn-light" id="searchCustomerBtn">
+                            <i class="fas fa-search me-1"></i>Find Previous Bills
                         </button>
                     </div>
-                </div>
-
-                <!-- Search Results -->
-                <div class="card mb-3" id="searchResultsCard" style="display: none;">
-                    <div class="card-body p-2">
-                        <h6 class="card-title">Search Results</h6>
-                        <div class="list-group" id="searchResultsList">
-                            <!-- Search results will appear here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Transaction Items Table -->
-                <div class="table-responsive">
-                    <table class="table table-sm transaction-table" id="transactionItems">
-                        <thead>
-                            <tr>
-                                <th width="5%">Type</th>
-                                <th width="20%">Product</th>
-                                <th width="10%">Bill Ref</th>
-                                <th width="15%">Price</th>
-                                <th width="10%">Qty</th>
-                                <th width="15%">Discount</th>
-                                <th width="15%">Tax</th>
-                                <th width="10%">Total</th>
-                                <th width="5%"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Transaction items will appear here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Transaction Summary -->
-    <!-- Summary Card -->
-    <div class="row">
-        <div class="card ">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Transaction Summary</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Payment Method</label>
-                        <select class="form-select" id="paymentMethod">
-                            <option value="cash">Cash</option>
-                            <option value="card">Credit/Debit Card</option>
-                            <option value="mobile">Mobile Payment</option>
-                            <option value="bank">Bank Transfer</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label" id="paymentAmountLabel">Amount Paid</label>
-                        <input type="number" class="form-control" id="paymentAmount" value="0.00" min="0" step="0.01">
-                    </div>
-                    
-                </div>
-                    <div class="col-md-12 mb-3">
-                    <label class="form-label">Additional Notes</label>
-                    <textarea class="form-control" id="transactionNotes" rows="2"
-                        placeholder="Any additional notes for this transaction"></textarea>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span>Subtotal (Sales):</span>
-                    <span id="summarySalesSubtotal">$0.00</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span>Subtotal (Returns):</span>
-                    <span id="summaryReturnsSubtotal">$0.00</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span>Total Discount:</span>
-                    <span id="summaryDiscount">-$0.00</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span>Total Tax:</span>
-                    <span id="summaryTax">$0.00</span>
-                </div>
-                <hr>
-                <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
-                    <span>Net Amount:</span>
-                    <span id="summaryTotal">$0.00</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span id="paymentTypeLabel">Amount Paid:</span>
-                    <span id="summaryPaid">$0.00</span>
-                </div>
-                <div class="d-flex justify-content-between fw-bold" id="changeSection">
-                    <span>Change:</span>
-                    <span id="summaryChange">$0.00</span>
-                </div>
-                <div class="d-flex justify-content-between fw-bold text-danger" id="refundSection"
-                    style="display: none;">
-                    <span>Refund Due:</span>
-                    <span id="summaryRefund">$0.00</span>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-           <div class="row g-2">
-  <div class="col-12 col-md-4">
-    <button class="btn btn-secondary w-100" id="clearTransactionBtn">
-      <i class="fas fa-times me-2"></i> Clear Transaction
-    </button>
-  </div>
-  <div class="col-12 col-md-4">
-    <button class="btn btn-warning w-100" id="saveDraftBtn">
-      <i class="fas fa-save me-2"></i> Save as Draft
-    </button>
-  </div>
-  <div class="col-12 col-md-4">
-    <button class="btn btn-primary w-100" id="finalizeBtn">
-      <i class="fas fa-check-circle me-2"></i> Finalize Transaction
-    </button>
-  </div>
-</div>
-
-        </div>
-    </div>
-</div>
-
-<!-- Product List Modal -->
-<div class="modal fade" id="productListModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Product Catalog</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" placeholder="Search products..." id="modalProductSearch">
-                    <button class="btn btn-outline-secondary" type="button">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Price</th>
-                                <th>Stock</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Wireless Headphones</td>
-                                <td>$59.99</td>
-                                <td>42</td>
-                                <td>
-                                    <button class="btn btn-sm btn-primary add-product"
-                                        data-product='{"name":"Wireless Headphones","price":59.99,"sku":"WH-1000XM4","stock":42}'>Add
-                                        Sale</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Bluetooth Speaker</td>
-                                <td>$39.99</td>
-                                <td>27</td>
-                                <td>
-                                    <button class="btn btn-sm btn-primary add-product"
-                                        data-product='{"name":"Bluetooth Speaker","price":39.99,"sku":"BT-SPKR250","stock":27}'>Add
-                                        Sale</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Smart Watch</td>
-                                <td>$199.99</td>
-                                <td>15</td>
-                                <td>
-                                    <button class="btn btn-sm btn-primary add-product"
-                                        data-product='{"name":"Smart Watch","price":199.99,"sku":"SW-GALAXY5","stock":15}'>Add
-                                        Sale</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Phone Case</td>
-                                <td>$19.99</td>
-                                <td>83</td>
-                                <td>
-                                    <button class="btn btn-sm btn-primary add-product"
-                                        data-product='{"name":"Phone Case","price":19.99,"sku":"PC-IPHONE14","stock":83}'>Add
-                                        Sale</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>USB-C Cable</td>
-                                <td>$12.99</td>
-                                <td>126</td>
-                                <td>
-                                    <button class="btn btn-sm btn-primary add-product"
-                                        data-product='{"name":"USB-C Cable","price":12.99,"sku":"CABLE-USB-C","stock":126}'>Add
-                                        Sale</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Return Options Modal -->
-<div class="modal fade" id="returnOptionsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add Return Item</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card return-option-card h-100" id="returnWithBillCard">
-                            <div class="card-body text-center">
-                                <i class="fas fa-receipt fa-3x text-primary mb-3"></i>
-                                <h5>Return with Bill Reference</h5>
-                                <p class="text-muted">Select items from a previous bill for return</p>
-                                <small class="text-muted">Recommended for better tracking</small>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Customer Name <small
+                                        class="text-muted">(Optional)</small></label>
+                                <input type="text" class="form-control" id="customerName"
+                                    placeholder="Walk-in Customer">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number <small
+                                        class="text-muted">(Optional)</small></label>
+                                <input type="text" class="form-control" id="customerPhone"
+                                    placeholder="Enter phone number">
                             </div>
                         </div>
+                        <div id="customerBillsSection" class="mt-3" style="display: none;">
+                            <h6>Previous Bills</h6>
+                            <div id="customerBillsList" class="small"></div>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="card return-option-card h-100" id="returnWithoutBillCard">
-                            <div class="card-body text-center">
-                                <i class="fas fa-undo fa-3x text-warning mb-3"></i>
-                                <h5>Return without Bill</h5>
-                                <p class="text-muted">Add return items without bill reference</p>
-                                <small class="text-muted">For returns without receipt</small>
+                </div>
+
+                <!-- Product Search and Selection -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Product Selection</h5>
+                        <div>
+                            <button class="btn btn-sm btn-light me-2" id="viewProductsBtn">
+                                <i class="fas fa-boxes me-1"></i>View All Products
+                            </button>
+                            <button class="btn btn-sm btn-light" id="addReturnBtn">
+                                <i class="fas fa-undo me-1"></i>Add Return
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3 product-search-input">
+                            <label class="form-label">Search Products</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="productSearch"
+                                    placeholder="Search by product name, SKU, or brand">
+                                <button class="btn btn-outline-secondary" type="button" id="scanBarcodeBtn">
+                                    <i class="fas fa-barcode"></i>
+                                </button>
+                            </div>
+                            <div class="search-results" id="searchResults"></div>
+                        </div>
+
+                        <!-- Transaction Items Table -->
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover transaction-table" id="transactionItems">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="5%">Type</th>
+                                        <th width="25%">Product</th>
+                                        <th width="10%">Price</th>
+                                        <th width="10%">Qty</th>
+                                        <th width="10%">Discount</th>
+                                        <th width="10%">Tax</th>
+                                        <th width="10%">Total</th>
+                                        <th width="5%">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionItemsBody">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="fas fa-shopping-cart fa-2x mb-2 d-block"></i>
+                                            No items added to transaction
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Summary -->
+            <div class="col-lg-4">
+                <div class="card summary-card sticky-top" style="top: 20px;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Transaction Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Payment Method</label>
+                                <select class="form-select" id="paymentMethod">
+                                    <option value="cash" selected>Cash</option>
+                                    <option value="card">Credit/Debit Card</option>
+                                    <option value="mobile">Mobile Payment</option>
+                                    <option value="bank">Bank Transfer</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Amount Paid</label>
+                                <input type="number" class="form-control" id="paymentAmount" value="0.00" min="0"
+                                    step="0.01">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Tax Amount (FBR)</label>
+                                <input type="number" class="form-control" id="taxAmount" value="1.00" min="0"
+                                    step="0.01">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Additional Notes</label>
+                                <textarea class="form-control" id="transactionNotes" rows="2"
+                                    placeholder="Any additional notes"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="transaction-summary">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal (Sales):</span>
+                                <span id="summarySalesSubtotal">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal (Returns):</span>
+                                <span id="summaryReturnsSubtotal">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Discount:</span>
+                                <span id="summaryDiscount">-<%= shop.currency || '₹' %>0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Tax:</span>
+                                <span id="summaryTax">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                                <span>Net Amount:</span>
+                                <span id="summaryTotal">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Amount Paid:</span>
+                                <span id="summaryPaid">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between fw-bold text-success" id="changeSection">
+                                <span>Change:</span>
+                                <span id="summaryChange">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between fw-bold text-danger" id="refundSection"
+                                style="display: none;">
+                                <span>Refund Due:</span>
+                                <span id="summaryRefund">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="row g-2 mt-3 no-print">
+                            <div class="col-12">
+                                <button class="btn btn-secondary w-100" id="clearTransactionBtn">
+                                    <i class="fas fa-times me-2"></i> Clear Transaction
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-primary w-100" id="finalizeBtn">
+                                    <i class="fas fa-check-circle me-2"></i> Finalize Transaction
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-warning w-100" onclick="printReceipt()" id="printBtn"
+                                    style="display: none;">
+                                    <i class="fas fa-print me-1"></i>Print Receipt
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Return with Bill Section -->
-                <div id="returnWithBillSection" style="display: none;">
-                    <div class="mb-3">
-                        <label class="form-label">Search Bill by ID</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="billSearch" placeholder="Enter Bill ID">
-                            <button class="btn btn-outline-primary" type="button" id="searchBillBtn">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="billDetails" style="display: none;">
-                        <div class="bill-header">
-                            <h6>Bill Details</h6>
-                            <p class="mb-1"><strong>Bill ID:</strong> <span id="billIdDisplay">INV-2023-1001</span>
-                            </p>
-                            <p class="mb-1"><strong>Date:</strong> <span id="billDate">2023-10-15</span></p>
-                            <p class="mb-0"><strong>Customer:</strong> <span id="billCustomer">John Doe</span></p>
-                        </div>
-
-                        <h6>Items in Bill</h6>
-                        <div id="billItemsList">
-                            <!-- Bill items will appear here -->
-                        </div>
-                    </div>
+    <!-- Product List Modal -->
+    <div class="modal fade" id="productListModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Product Catalog</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-
-                <!-- Return without Bill Section -->
-                <div id="returnWithoutBillSection" style="display: none;">
-                    <div class="mb-3">
-                        <label class="form-label">Search Products for Return</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="returnProductSearch"
-                                placeholder="Search products">
-                            <button class="btn btn-outline-secondary" type="button">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Search products..."
+                            id="modalProductSearch">
+                        <button class="btn btn-outline-primary" type="button" id="modalSearchBtn">
+                            <i class="fas fa-search"></i>
+                        </button>
                     </div>
-
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-hover table-sm">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Product</th>
+                                    <th>Product Name</th>
+                                    <th>Brand</th>
+                                    <th>SKU</th>
                                     <th>Price</th>
-                                    <th>Action</th>
+                                    <th>Stock</th>
+                                    <th width="15%">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="returnProductsList">
-                                <tr>
-                                    <td>Wireless Headphones</td>
-                                    <td>$59.99</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-danger add-return-without-bill"
-                                            data-product='{"name":"Wireless Headphones","price":59.99,"sku":"WH-1000XM4"}'>Add
-                                            Return</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Bluetooth Speaker</td>
-                                    <td>$39.99</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-danger add-return-without-bill"
-                                            data-product='{"name":"Bluetooth Speaker","price":39.99,"sku":"BT-SPKR250"}'>Add
-                                            Return</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Smart Watch</td>
-                                    <td>$199.99</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-danger add-return-without-bill"
-                                            data-product='{"name":"Smart Watch","price":199.99,"sku":"SW-GALAXY5"}'>Add
-                                            Return</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Phone Case</td>
-                                    <td>$19.99</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-danger add-return-without-bill"
-                                            data-product='{"name":"Phone Case","price":19.99,"sku":"PC-IPHONE14"}'>Add
-                                            Return</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>USB-C Cable</td>
-                                    <td>$12.99</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-danger add-return-without-bill"
-                                            data-product='{"name":"USB-C Cable","price":12.99,"sku":"CABLE-USB-C"}'>Add
-                                            Return</button>
-                                    </td>
-                                </tr>
+                            <tbody id="modalProductsList">
+                                <% products.forEach(product=> { %>
+                                    <tr>
+                                        <td>
+                                            <%= product.name %>
+                                        </td>
+                                        <td>
+                                            <%= product.brand || 'N/A' %>
+                                        </td>
+                                        <td>
+                                            <%= product.sku %>
+                                        </td>
+                                        <td>
+                                            <%= shop.currency || '₹' %>
+                                                <%= product.selling_price %>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge <%= product.quantity > 10 ? 'bg-success' : product.quantity > 0 ? 'bg-warning' : 'bg-danger' %>">
+                                                <%= product.quantity %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary add-product-modal"
+                                                data-product-id="<%= product.id %>"
+                                                data-product-name="<%= product.name %>"
+                                                data-product-price="<%= product.selling_price %>"
+                                                data-product-sku="<%= product.sku %>"
+                                                data-product-stock="<%= product.quantity %>"
+                                                data-product-brand="<%= product.brand || '' %>">
+                                                <i class="fas fa-plus me-1"></i>Add
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="addSelectedReturnsBtn" style="display: none;">Add
-                    Selected Returns</button>
-            </div>
         </div>
     </div>
-</div>
 
-<!-- Print Receipt -->
-<div class="print-receipt" id="printReceipt">
-    <div class="container">
-        <div class="text-center mb-3">
-            <h2>Store Name</h2>
-            <p>123 Main Street, City, State 12345</p>
-            <p>Phone: (123) 456-7890</p>
-        </div>
-        <hr>
-        <div class="row mb-2">
-            <div class="col-6">
-                <strong>Invoice #:</strong> <span id="receiptInvoice">INV-2023-1001</span>
-            </div>
-            <div class="col-6 text-end">
-                <strong>Date:</strong> <span id="receiptDate"></span>
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-12">
-                <strong>Customer:</strong> <span id="receiptCustomer">John Doe</span><br>
-                <strong>Phone:</strong> <span id="receiptPhone">(555) 123-4567</span>
-            </div>
-        </div>
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Product</th>
-                    <th>Bill Ref</th>
-                    <th>Price</th>
-                    <th>Qty</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody id="receiptItems">
-                <!-- Receipt items will appear here -->
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="5" class="text-end"><strong>Subtotal (Sales):</strong></td>
-                    <td id="receiptSalesSubtotal">$0.00</td>
-                </tr>
-                <tr>
-                    <td colspan="5" class="text-end"><strong>Subtotal (Returns):</strong></td>
-                    <td id="receiptReturnsSubtotal">$0.00</td>
-                </tr>
-                <tr>
-                    <td colspan="5" class="text-end"><strong>Discount:</strong></td>
-                    <td id="receiptDiscount">-$0.00</td>
-                </tr>
-                <tr>
-                    <td colspan="5" class="text-end"><strong>Tax:</strong></td>
-                    <td id="receiptTax">$0.00</td>
-                </tr>
-                <tr>
-                    <td colspan="5" class="text-end"><strong>Net Amount:</strong></td>
-                    <td id="receiptTotal">$0.00</td>
-                </tr>
-                <tr>
-                    <td colspan="5" class="text-end"><strong>Amount Paid:</strong></td>
-                    <td id="receiptPaid">$0.00</td>
-                </tr>
-                <tr>
-                    <td colspan="5" class="text-end"><strong>Change/Refund:</strong></td>
-                    <td id="receiptChange">$0.00</td>
-                </tr>
-            </tfoot>
-        </table>
-        <div class="text-center mt-4">
-            <p>Thank you for your business!</p>
-            <p>Return policy: 15 days with receipt and original packaging</p>
-        </div>
-    </div>
-</div>
-
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Transaction items array
-        let transactionItems = [];
-
-        // Sample previous bills data
-        const previousBills = [
-            {
-                id: 'INV-2023-1001',
-                date: '2023-10-15',
-                customer: 'John Doe',
-                phone: '(555) 123-4567',
-                items: [
-                    { name: 'Wireless Headphones', price: 59.99, quantity: 1, sku: 'WH-1000XM4', returned: false },
-                    { name: 'Phone Case', price: 19.99, quantity: 2, sku: 'PC-IPHONE14', returned: false },
-                    { name: 'USB-C Cable', price: 12.99, quantity: 1, sku: 'CABLE-USB-C', returned: true }
-                ]
-            },
-            {
-                id: 'INV-2023-1002',
-                date: '2023-10-10',
-                customer: 'Jane Smith',
-                phone: '(555) 987-6543',
-                items: [
-                    { name: 'Bluetooth Speaker', price: 39.99, quantity: 1, sku: 'BT-SPKR250', returned: false },
-                    { name: 'Smart Watch', price: 199.99, quantity: 1, sku: 'SW-GALAXY5', returned: false }
-                ]
-            }
-        ];
-
-        // Product search functionality
-        const productSearch = document.getElementById('productSearch');
-        const searchResultsCard = document.getElementById('searchResultsCard');
-        const searchResultsList = document.getElementById('searchResultsList');
-
-        productSearch.addEventListener('input', function () {
-            if (this.value.length > 2) {
-                // Simulate search results
-                searchResultsCard.style.display = 'block';
-                searchResultsList.innerHTML = `
-                        <a href="#" class="list-group-item list-group-item-action add-product-search" data-product='{"name":"Wireless Headphones","price":59.99,"sku":"WH-1000XM4","stock":42}'>
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Wireless Headphones</h6>
-                                <small class="text-muted">$59.99</small>
+    <!-- Return Options Modal -->
+    <div class="modal fade" id="returnOptionsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Return Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card return-option-card h-100" id="returnWithBillCard">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-receipt fa-3x text-primary mb-3"></i>
+                                    <h5>Return with Bill Reference</h5>
+                                    <p class="text-muted">Select items from a previous bill for return</p>
+                                </div>
                             </div>
-                            <p class="mb-1">SKU: WH-1000XM4</p>
-                            <small class="text-muted">In stock: 42</small>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action add-product-search" data-product='{"name":"Bluetooth Speaker","price":39.99,"sku":"BT-SPKR250","stock":27}'>
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Bluetooth Speaker</h6>
-                                <small class="text-muted">$39.99</small>
-                            </div>
-                            <p class="mb-1">SKU: BT-SPKR250</p>
-                            <small class="text-muted">In stock: 27</small>
-                        </a>
-                    `;
-
-                // Add event listeners to search result items
-                document.querySelectorAll('.add-product-search').forEach(item => {
-                    item.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        const product = JSON.parse(this.getAttribute('data-product'));
-                        addItemToTransaction(product, 'sale');
-                        searchResultsCard.style.display = 'none';
-                        productSearch.value = '';
-                    });
-                });
-            } else {
-                searchResultsCard.style.display = 'none';
-            }
-        });
-
-        // View Products Modal
-        const viewProductsBtn = document.getElementById('viewProductsBtn');
-        const productListModal = new bootstrap.Modal(document.getElementById('productListModal'));
-
-        viewProductsBtn.addEventListener('click', function () {
-            productListModal.show();
-        });
-
-        // Return Options Modal
-        const addReturnBtn = document.getElementById('addReturnBtn');
-        const returnOptionsModal = new bootstrap.Modal(document.getElementById('returnOptionsModal'));
-
-        addReturnBtn.addEventListener('click', function () {
-            returnOptionsModal.show();
-        });
-
-        // Return option selection
-        const returnWithBillCard = document.getElementById('returnWithBillCard');
-        const returnWithoutBillCard = document.getElementById('returnWithoutBillCard');
-        const returnWithBillSection = document.getElementById('returnWithBillSection');
-        const returnWithoutBillSection = document.getElementById('returnWithoutBillSection');
-        const addSelectedReturnsBtn = document.getElementById('addSelectedReturnsBtn');
-
-        returnWithBillCard.addEventListener('click', function () {
-            returnWithBillCard.classList.add('selected');
-            returnWithoutBillCard.classList.remove('selected');
-            returnWithBillSection.style.display = 'block';
-            returnWithoutBillSection.style.display = 'none';
-            addSelectedReturnsBtn.style.display = 'block';
-        });
-
-        returnWithoutBillCard.addEventListener('click', function () {
-            returnWithoutBillCard.classList.add('selected');
-            returnWithBillCard.classList.remove('selected');
-            returnWithBillSection.style.display = 'none';
-            returnWithoutBillSection.style.display = 'block';
-            addSelectedReturnsBtn.style.display = 'none';
-        });
-
-        // Search customer functionality
-        const searchCustomerBtn = document.getElementById('searchCustomerBtn');
-        const customerBillsSection = document.getElementById('customerBillsSection');
-        const customerBillsList = document.getElementById('customerBillsList');
-
-        searchCustomerBtn.addEventListener('click', function () {
-            const customerName = document.getElementById('customerName').value;
-            const customerPhone = document.getElementById('customerPhone').value;
-
-            if (!customerName && !customerPhone) {
-                alert('Please enter customer name or phone number to search.');
-                return;
-            }
-
-            // Simulate customer search
-            const customerBills = previousBills.filter(bill =>
-                bill.customer.toLowerCase().includes(customerName.toLowerCase()) ||
-                bill.phone.includes(customerPhone)
-            );
-
-            if (customerBills.length > 0) {
-                customerBillsList.innerHTML = '';
-                customerBills.forEach(bill => {
-                    const billElement = document.createElement('div');
-                    billElement.className = 'bill-item';
-                    billElement.innerHTML = `
-                            <div class="d-flex justify-content-between">
-                                <strong>${bill.id}</strong>
-                                <span>${bill.date}</span>
-                            </div>
-                            <button class="btn btn-sm btn-outline-primary mt-1 view-bill-btn" data-bill-id="${bill.id}">
-                                <i class="fas fa-eye me-1"></i>View Items
-                            </button>
-                        `;
-                    customerBillsList.appendChild(billElement);
-                });
-
-                customerBillsSection.style.display = 'block';
-
-                // Add event listeners to view bill buttons
-                document.querySelectorAll('.view-bill-btn').forEach(button => {
-                    button.addEventListener('click', function () {
-                        const billId = this.getAttribute('data-bill-id');
-                        const bill = previousBills.find(b => b.id === billId);
-                        if (bill) {
-                            returnOptionsModal.show();
-                            returnWithBillCard.click();
-                            showBillItemsForReturn(bill);
-                        }
-                    });
-                });
-            } else {
-                customerBillsSection.style.display = 'block';
-                customerBillsList.innerHTML = '<p class="text-muted">No previous bills found for this customer.</p>';
-            }
-        });
-
-        // Search bill functionality
-        const searchBillBtn = document.getElementById('searchBillBtn');
-        const billDetails = document.getElementById('billDetails');
-
-        searchBillBtn.addEventListener('click', function () {
-            const billId = document.getElementById('billSearch').value;
-            if (!billId) {
-                alert('Please enter a bill ID to search.');
-                return;
-            }
-
-            // Simulate bill search
-            const bill = previousBills.find(b => b.id === billId);
-            if (bill) {
-                showBillItemsForReturn(bill);
-            } else {
-                alert('Bill not found. Please check the bill ID and try again.');
-            }
-        });
-
-        // Function to show bill items for return
-        function showBillItemsForReturn(bill) {
-            document.getElementById('billIdDisplay').textContent = bill.id;
-            document.getElementById('billDate').textContent = bill.date;
-            document.getElementById('billCustomer').textContent = bill.customer;
-
-            const billItemsList = document.getElementById('billItemsList');
-            billItemsList.innerHTML = '';
-
-            bill.items.forEach(item => {
-                const itemElement = document.createElement('div');
-                itemElement.className = `bill-item ${item.returned ? 'returned' : ''}`;
-                itemElement.innerHTML = `
-                        <div class="form-check">
-                            <input class="form-check-input return-item-check" type="checkbox" 
-                                   value="${item.name}" data-price="${item.price}" 
-                                   data-sku="${item.sku}" ${item.returned ? 'disabled' : ''}>
-                            <label class="form-check-label">
-                                <strong>${item.name}</strong> - $${item.price.toFixed(2)} x ${item.quantity}
-                                ${item.returned ? '<span class="badge bg-danger ms-2">Already Returned</span>' : ''}
-                            </label>
                         </div>
-                    `;
-                billItemsList.appendChild(itemElement);
+                        <div class="col-md-6">
+                            <div class="card return-option-card h-100" id="returnWithoutBillCard">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-undo fa-3x text-warning mb-3"></i>
+                                    <h5>Return without Bill</h5>
+                                    <p class="text-muted">Add return items without bill reference</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Return with Bill Section -->
+                    <div id="returnWithBillSection" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Search Customer Bills</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="customerSearch"
+                                    placeholder="Enter customer name or phone">
+                                <button class="btn btn-outline-primary" type="button" id="searchCustomerBillsBtn">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="customerBillsResults" style="display: none;">
+                            <h6>Customer Bills</h6>
+                            <div id="customerBillsListReturn" class="mb-3"></div>
+                        </div>
+
+                        <div id="billItemsSection" style="display: none;">
+                            <h6>Select Items to Return</h6>
+                            <div id="billItemsListReturn"></div>
+                        </div>
+                    </div>
+
+                    <!-- Return without Bill Section -->
+                    <div id="returnWithoutBillSection" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Quick Return:</strong> Search for products to return without bill reference
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Search Products</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="returnProductSearch"
+                                    placeholder="Search products by name, SKU, or brand">
+                                <button class="btn btn-outline-primary" type="button" id="returnSearchBtn">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-hover table-sm">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Price</th>
+                                        <th>Stock</th>
+                                        <th width="120px">Qty</th>
+                                        <th width="100px">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="returnProductsList">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-3">
+                                            <i class="fas fa-search fa-2x mb-2 d-block"></i>
+                                            Search for products to return
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="addSelectedReturnsBtn" style="display: none;">
+                        <i class="fas fa-plus me-1"></i> Add Selected Returns
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Template (Hidden) -->
+    <div id="receiptTemplate" style="display: none;"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
             });
 
-            billDetails.style.display = 'block';
-
-            // Enable/disable add returns button based on selection
-            addSelectedReturnsBtn.disabled = true;
-
-            document.querySelectorAll('.return-item-check').forEach(checkbox => {
-                checkbox.addEventListener('change', function () {
-                    const anyChecked = document.querySelectorAll('.return-item-check:checked').length > 0;
-                    addSelectedReturnsBtn.disabled = !anyChecked;
-                });
-            });
-
-            // Add event listener to add selected returns button
-            addSelectedReturnsBtn.onclick = function () {
-                document.querySelectorAll('.return-item-check:checked').forEach(checkbox => {
-                    const product = {
-                        name: checkbox.value,
-                        price: parseFloat(checkbox.getAttribute('data-price')),
-                        sku: checkbox.getAttribute('data-sku'),
-                        stock: 0 // Not relevant for returns
+            // Image preview for add product form
+            document.getElementById('productImage').addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        document.getElementById('imagePreview').src = event.target.result;
+                        document.getElementById('imagePreviewContainer').style.display = 'block';
                     };
-                    addItemToTransaction(product, 'return', bill.id);
-                });
-                returnOptionsModal.hide();
-            };
-        }
-
-        // Add event listeners to modal product buttons
-        document.addEventListener('click', function (e) {
-            if (e.target.classList.contains('add-product')) {
-                const product = JSON.parse(e.target.getAttribute('data-product'));
-                addItemToTransaction(product, 'sale');
-                productListModal.hide();
-            }
-
-            if (e.target.classList.contains('add-return-without-bill')) {
-                const product = JSON.parse(e.target.getAttribute('data-product'));
-                addItemToTransaction(product, 'return');
-                returnOptionsModal.hide();
-            }
-        });
-
-        // Function to add items to the transaction table
-        function addItemToTransaction(product, type, billRef = '') {
-            const item = {
-                id: Date.now(),
-                name: product.name,
-                price: product.price,
-                quantity: 1,
-                discount: 0,
-                tax: product.price * 0.1, // 10% tax for example
-                type: type,
-                sku: product.sku,
-                billRef: billRef
-            };
-
-            item.total = (item.price * item.quantity) - item.discount + item.tax;
-
-            transactionItems.push(item);
-            renderTransactionItems();
-            updateSummary();
-        }
-
-        // Function to render transaction items in the table
-        function renderTransactionItems() {
-            const tbody = document.getElementById('transactionItems').querySelector('tbody');
-            tbody.innerHTML = '';
-
-            transactionItems.forEach(item => {
-                const row = tbody.insertRow();
-                if (item.type === 'return') {
-                    row.classList.add('return-item');
+                    reader.readAsDataURL(file);
                 } else {
-                    row.classList.add('sale-item');
+                    document.getElementById('imagePreviewContainer').style.display = 'none';
+                }
+            });
+
+            // Handle add product form submission
+            document.getElementById('addProductForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+
+                fetch('/products', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Product added successfully!', 'success');
+                            $('#addProductModal').modal('hide');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast(data.message || 'Error adding product', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('An error occurred', 'error');
+                    });
+            });
+
+            // Handle edit product form submission
+            document.getElementById('editProductForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const productId = document.getElementById('editProductId').value;
+
+                fetch(`/products/${productId}`, {
+                    method: 'PUT',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Product updated successfully!', 'success');
+                            $('#editProductModal').modal('hide');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast(data.message || 'Error updating product', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('An error occurred', 'error');
+                    });
+            });
+
+            // Handle edit product clicks
+            document.querySelectorAll('.edit-product').forEach(button => {
+                button.addEventListener('click', function () {
+                    const productId = this.closest('tr').getAttribute('data-product-id');
+                    loadProductForEdit(productId);
+                });
+            });
+
+            // Handle add stock form submission
+            document.getElementById('addStockForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+
+                // Include selling price in the form data if provided
+                const newSellingPrice = document.getElementById('newSellingPrice').value;
+                if (newSellingPrice) {
+                    formData.append('selling_price', newSellingPrice);
                 }
 
-                row.innerHTML = `
-                        <td>
-                            <span class="transaction-type-badge ${item.type === 'sale' ? 'bg-success' : 'bg-danger'}">
-                                ${item.type === 'sale' ? 'Sale' : 'Return'}
-                            </span>
-                        </td>
-                        <td>${item.name}<br><small class="text-muted">SKU: ${item.sku}</small></td>
-                        <td>${item.billRef || '-'}</td>
-                        <td>$${item.price.toFixed(2)}</td>
-                        <td>
-                            <input type="number" class="form-control form-control-sm" value="${item.quantity}" min="1" data-id="${item.id}">
-                        </td>
-                        <td>
-                            <input type="number" class="form-control form-control-sm" value="${item.discount.toFixed(2)}" min="0" step="0.01" data-id="${item.id}">
-                        </td>
-                        <td>$${item.tax.toFixed(2)}</td>
-                        <td>$${item.total.toFixed(2)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-danger remove-item" data-id="${item.id}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    `;
-            });
-
-            // Add event listeners to quantity and discount inputs
-            document.querySelectorAll('.transaction-table input').forEach(input => {
-                input.addEventListener('change', function () {
-                    const id = parseInt(this.getAttribute('data-id'));
-                    const item = transactionItems.find(i => i.id === id);
-
-                    if (this.type === 'number') {
-                        if (this.classList.contains('form-control-sm')) {
-                            if (this.parentElement.cellIndex === 4) { // Quantity column
-                                item.quantity = parseFloat(this.value);
-                            } else if (this.parentElement.cellIndex === 5) { // Discount column
-                                item.discount = parseFloat(this.value);
-                            }
+                fetch('/products/add-stock', {
+                    method: 'POST',
+                    body: new URLSearchParams(formData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Stock and prices updated successfully!', 'success');
+                            $('#addStockModal').modal('hide');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast(data.message || 'Error updating stock', 'error');
                         }
-
-                        item.total = (item.price * item.quantity) - item.discount + item.tax;
-                        renderTransactionItems();
-                        updateSummary();
-                    }
-                });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('An error occurred', 'error');
+                    });
             });
 
-            // Add event listeners to remove buttons
-            document.querySelectorAll('.remove-item').forEach(button => {
+            // Handle add stock clicks
+            document.querySelectorAll('.add-stock').forEach(button => {
                 button.addEventListener('click', function () {
-                    const id = parseInt(this.getAttribute('data-id'));
-                    transactionItems = transactionItems.filter(item => item.id !== id);
-                    renderTransactionItems();
-                    updateSummary();
+                    const row = this.closest('tr');
+                    const productId = row.getAttribute('data-product-id');
+
+                    // Get all product data from the table row
+                    const productData = {
+                        id: productId,
+                        name: row.querySelector('td:nth-child(3)').textContent.trim(),
+                        brand: row.querySelector('td:nth-child(3)').getAttribute('data-brand') || '',
+                        category: row.querySelector('td:nth-child(5)').textContent.trim(),
+                        size: row.querySelector('td:nth-child(5)').getAttribute('data-size') || '',
+                        sku: row.querySelector('td:nth-child(4)').textContent.trim(),
+                        currentStock: row.querySelector('td:nth-child(6)').textContent.trim(),
+                        buyingPrice: row.querySelector('td:nth-child(7)').textContent.trim(),
+                        sellingPrice: row.querySelector('td:nth-child(8)').textContent.trim()
+                    };
+
+                    // Populate the modal with product information
+                    document.getElementById('stockProductId').value = productId;
+                    document.getElementById('stockProductName').textContent = productData.name;
+                    document.getElementById('stockProductBrand').textContent = productData.brand || 'N/A';
+                    document.getElementById('stockProductCategory').textContent = productData.category || 'N/A';
+                    document.getElementById('stockProductSize').textContent = productData.size || 'N/A';
+                    document.getElementById('stockProductSku').textContent = productData.sku || 'N/A';
+                    document.getElementById('currentStockBadge').textContent = productData.currentStock;
+                    document.getElementById('currentBuyingPrice').value = productData.buyingPrice;
+                    document.getElementById('currentSellingPrice').value = productData.sellingPrice;
+
+                    // Clear input fields
+                    document.getElementById('quantityToAdd').value = '';
+                    document.getElementById('newBuyingPrice').value = '';
+                    document.getElementById('newSellingPrice').value = '';
+
+                    $('#addStockModal').modal('show');
                 });
             });
-        }
 
-        // Update transaction summary
-        function updateSummary() {
-            const salesSubtotal = transactionItems
-                .filter(item => item.type === 'sale')
-                .reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-            const returnsSubtotal = transactionItems
-                .filter(item => item.type === 'return')
-                .reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-            const totalDiscount = transactionItems
-                .reduce((sum, item) => sum + item.discount, 0);
-
-            const totalTax = transactionItems
-                .reduce((sum, item) => sum + item.tax, 0);
-
-            const netTotal = salesSubtotal - returnsSubtotal - totalDiscount + totalTax;
-
-            const paidAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
-            const change = paidAmount - netTotal;
-
-            document.getElementById('summarySalesSubtotal').textContent = `$${salesSubtotal.toFixed(2)}`;
-            document.getElementById('summaryReturnsSubtotal').textContent = `$${returnsSubtotal.toFixed(2)}`;
-            document.getElementById('summaryDiscount').textContent = `-$${totalDiscount.toFixed(2)}`;
-            document.getElementById('summaryTax').textContent = `$${totalTax.toFixed(2)}`;
-            document.getElementById('summaryTotal').textContent = `$${netTotal.toFixed(2)}`;
-            document.getElementById('summaryPaid').textContent = `$${paidAmount.toFixed(2)}`;
-
-            if (netTotal >= 0) {
-                document.getElementById('changeSection').style.display = 'flex';
-                document.getElementById('refundSection').style.display = 'none';
-                document.getElementById('summaryChange').textContent = `$${Math.max(change, 0).toFixed(2)}`;
-            } else {
-                document.getElementById('changeSection').style.display = 'none';
-                document.getElementById('refundSection').style.display = 'flex';
-                document.getElementById('summaryRefund').textContent = `$${Math.abs(netTotal).toFixed(2)}`;
-            }
-        }
-
-        // Initialize with sample items
-        addItemToTransaction({
-            name: 'Wireless Headphones',
-            price: 59.99,
-            sku: 'WH-1000XM4',
-            stock: 42
-        }, 'sale');
-
-        addItemToTransaction({
-            name: 'Phone Case',
-            price: 19.99,
-            sku: 'PC-IPHONE14',
-            stock: 83
-        }, 'sale');
-
-        // Payment amount change listener
-        document.getElementById('paymentAmount').addEventListener('change', updateSummary);
-
-        // Clear transaction button
-        document.getElementById('clearTransactionBtn').addEventListener('click', function () {
-            if (confirm('Are you sure you want to clear this transaction?')) {
-                transactionItems = [];
-                renderTransactionItems();
-                document.getElementById('customerName').value = '';
-                document.getElementById('customerPhone').value = '';
-                document.getElementById('paymentAmount').value = '0.00';
-                document.getElementById('transactionNotes').value = '';
-                customerBillsSection.style.display = 'none';
-                updateSummary();
-            }
-        });
-
-        // Finalize transaction button
-        document.getElementById('finalizeBtn').addEventListener('click', function () {
-            if (transactionItems.length === 0) {
-                alert('Please add at least one item to the transaction.');
-                return;
-            }
-
-            const customerName = document.getElementById('customerName').value;
-            if (!customerName) {
-                alert('Please enter customer name.');
-                return;
-            }
-
-            // Ask if user wants to print receipt
-            if (confirm('Transaction finalized successfully! Would you like to print the receipt?')) {
-                printReceipt();
-            }
-        });
-
-        // Function to generate and print receipt
-        function printReceipt() {
-            // Set receipt details
-            document.getElementById('receiptInvoice').textContent = 'INV-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('receiptDate').textContent = new Date().toLocaleString();
-            document.getElementById('receiptCustomer').textContent = document.getElementById('customerName').value;
-            document.getElementById('receiptPhone').textContent = document.getElementById('customerPhone').value;
-
-            // Set receipt items
-            const receiptItems = document.getElementById('receiptItems');
-            receiptItems.innerHTML = '';
-
-            transactionItems.forEach(item => {
-                const row = receiptItems.insertRow();
-                row.innerHTML = `
-                        <td>${item.type === 'sale' ? 'Sale' : 'Return'}</td>
-                        <td>${item.name}<br><small>SKU: ${item.sku}</small></td>
-                        <td>${item.billRef || '-'}</td>
-                        <td>$${item.price.toFixed(2)}</td>
-                        <td>${item.quantity}</td>
-                        <td>$${item.total.toFixed(2)}</td>
-                    `;
+            // Handle toggle status clicks
+            document.querySelectorAll('.toggle-status').forEach(button => {
+                button.addEventListener('click', function () {
+                    const productId = this.closest('tr').getAttribute('data-product-id');
+                    toggleProductStatus(productId);
+                });
             });
 
-            // Set receipt totals
-            const salesSubtotal = transactionItems
-                .filter(item => item.type === 'sale')
-                .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            // Search functionality
+            document.getElementById('productSearch').addEventListener('input', function () {
+                filterProducts();
+            });
 
-            const returnsSubtotal = transactionItems
-                .filter(item => item.type === 'return')
-                .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            // Filter functionality
+            document.getElementById('categoryFilter').addEventListener('change', function () {
+                filterProducts();
+            });
 
-            const totalDiscount = transactionItems
-                .reduce((sum, item) => sum + item.discount, 0);
+            document.getElementById('statusFilter').addEventListener('change', function () {
+                filterProducts();
+            });
 
-            const totalTax = transactionItems
-                .reduce((sum, item) => sum + item.tax, 0);
+            // Reset filters
+            document.getElementById('resetFilters').addEventListener('click', function () {
+                document.getElementById('productSearch').value = '';
+                document.getElementById('categoryFilter').value = '';
+                document.getElementById('statusFilter').value = '';
+                filterProducts();
+            });
+        });
 
-            const netTotal = salesSubtotal - returnsSubtotal - totalDiscount + totalTax;
-            const paidAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
-            const change = paidAmount - netTotal;
+        function loadProductForEdit(productId) {
+            // Show loading state
+            const editModalBody = document.querySelector('#editProductModal .modal-body');
+            editModalBody.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading product details...</p>
+        </div>
+    `;
 
-            document.getElementById('receiptSalesSubtotal').textContent = `$${salesSubtotal.toFixed(2)}`;
-            document.getElementById('receiptReturnsSubtotal').textContent = `$${returnsSubtotal.toFixed(2)}`;
-            document.getElementById('receiptDiscount').textContent = `-$${totalDiscount.toFixed(2)}`;
-            document.getElementById('receiptTax').textContent = `$${totalTax.toFixed(2)}`;
-            document.getElementById('receiptTotal').textContent = `$${netTotal.toFixed(2)}`;
-            document.getElementById('receiptPaid').textContent = `$${paidAmount.toFixed(2)}`;
-            document.getElementById('receiptChange').textContent = `$${Math.abs(change).toFixed(2)}`;
+            $('#editProductModal').modal('show');
 
-            // Print the receipt
-            window.print();
+            fetch(`/products/${productId}/edit`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server returned ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.product) {
+                        const product = data.product;
+                        renderEditForm(product);
+                    } else {
+                        throw new Error(data.message || 'Error loading product');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    editModalBody.innerHTML = `
+                <div class="alert alert-danger">
+                    Failed to load product: ${error.message}
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-primary" onclick="loadProductForEdit('${productId}')">
+                        <i class="fas fa-sync-alt me-2"></i>Try Again
+                    </button>
+                </div>
+            `;
+                });
         }
-    });
-</script>
+
+        function renderEditForm(product) {
+            const editModalBody = document.querySelector('#editProductModal .modal-body');
+
+            editModalBody.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="editProductName" class="form-label">Product Name *</label>
+                    <input type="text" class="form-control" id="editProductName" name="name" value="${escapeHtml(product.name || '')}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="editProductBrand" class="form-label">Brand</label>
+                    <input type="text" class="form-control" id="editProductBrand" name="brand" value="${escapeHtml(product.brand || '')}">
+                </div>
+                <div class="mb-3">
+                    <label for="editProductCategory" class="form-label">Category</label>
+                    <input type="text" class="form-control" id="editProductCategory" name="category" value="${escapeHtml(product.category || '')}" list="categoryList">
+                </div>
+                <div class="mb-3">
+                    <label for="editProductSize" class="form-label">Size</label>
+                    <input type="text" class="form-control" id="editProductSize" name="size" value="${escapeHtml(product.size || '')}">
+                </div>
+                <div class="mb-3">
+                    <label for="editMinStockAlert" class="form-label">Low Stock Alert Level</label>
+                    <input type="number" class="form-control" id="editMinStockAlert" name="min_stock_alert" value="${product.min_stock_alert || 5}">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="editProductImage" class="form-label">Product Image</label>
+                    <input type="file" class="form-control" id="editProductImage" name="image" accept="image/*">
+                    ${product.image ? `
+                        <div class="mt-2">
+                            <img src="/uploads/${escapeHtml(product.image)}" alt="Current Image" style="max-height: 150px; max-width: 100%; border-radius: 0.375rem;">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="removeImage" name="remove_image">
+                                <label class="form-check-label" for="removeImage">Remove current image</label>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="mb-3">
+                    <label for="editProductSKU" class="form-label">SKU</label>
+                    <input type="text" class="form-control" id="editProductSKU" name="sku" value="${escapeHtml(product.sku || '')}">
+                </div>
+                <div class="mb-3">
+                    <label for="editProductBarcode" class="form-label">Barcode</label>
+                    <input type="text" class="form-control" id="editProductBarcode" name="barcode" value="${escapeHtml(product.barcode || '')}">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="editBuyingPrice" class="form-label">Buying Price *</label>
+                    <div class="input-group">
+                        <span class="input-group-text">${escapeHtml((shop && shop.currency) || 'PKR')}</span>
+                        <input type="number" step="0.01" class="form-control" id="editBuyingPrice" name="buying_price" value="${Number(product.buying_price || 0).toFixed(2)}" required>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="editSellingPrice" class="form-label">Selling Price *</label>
+                    <div class="input-group">
+                        <span class="input-group-text">${escapeHtml((shop && shop.currency) || 'PKR')}</span>
+                        <input type="number" step="0.01" class="form-control" id="editSellingPrice" name="selling_price" value="${Number(product.selling_price || 0).toFixed(2)}" required>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="editTaxPercent" class="form-label">Tax (%)</label>
+                    <input type="number" step="0.01" class="form-control" id="editTaxPercent" name="tax_percent" value="${product.tax_percent || 0}">
+                </div>
+            </div>
+        </div>
+    `;
+
+            // Set the product ID in the hidden field
+            document.getElementById('editProductId').value = product.id;
+
+            // Initialize image preview for edit form
+            document.getElementById('editProductImage')?.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        const previewContainer = document.createElement('div');
+                        previewContainer.className = 'mt-2';
+                        previewContainer.innerHTML = `<img src="${event.target.result}" alt="Preview" style="max-height: 150px; max-width: 100%; border-radius: 0.375rem;">`;
+                        this.parentNode.appendChild(previewContainer);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        function toggleProductStatus(productId) {
+            if (!confirm('Are you sure you want to change the status of this product?')) return;
+
+            fetch(`/products/${productId}/toggle-status`, {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Product status updated successfully!', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showToast(data.message || 'Error updating status', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('An error occurred', 'error');
+                });
+        }
+
+        function filterProducts() {
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+
+            document.querySelectorAll('#productsTable tbody tr').forEach(row => {
+                if (row.getAttribute('data-product-id') === null) return; // Skip the "no products" row
+
+                const name = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                const sku = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+                const category = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
+                const statusBadge = row.querySelector('td:nth-child(9) .badge');
+                const status = statusBadge ? statusBadge.textContent.trim().toLowerCase() : '';
+
+                // Search across multiple fields (name, SKU, category)
+                const matchesSearch = searchTerm === '' ||
+                    name.includes(searchTerm) ||
+                    sku.includes(searchTerm) ||
+                    category.includes(searchTerm);
+
+                const matchesCategory = categoryFilter === '' || category === categoryFilter;
+
+                // Fix status filter comparison
+                let statusMatch = true;
+                if (statusFilter !== '') {
+                    if (statusFilter === 'active') {
+                        statusMatch = status.includes('active');
+                    } else if (statusFilter === 'inactive') {
+                        statusMatch = status.includes('inactive');
+                    }
+                }
+
+                row.style.display = matchesSearch && matchesCategory && statusMatch ? '' : 'none';
+            });
+
+            // Show "no products" message if all rows are hidden
+            const visibleRows = document.querySelectorAll('#productsTable tbody tr[style=""]').length;
+            const noProductsRow = document.querySelector('#productsTable tbody tr[data-product-id=""]');
+            if (noProductsRow) {
+                noProductsRow.style.display = visibleRows === 0 ? '' : 'none';
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            // Simple alert for now - replace with a proper toast notification if needed
+            alert(`${type.toUpperCase()}: ${message}`);
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
