@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
 
-const minimum_stock = 10; // Example minimum stock threshold
+const minimum_stock = 5; // Example minimum stock threshold
 
 // Dashboard API Routes
 router.get('/api/dashboard/stats', async (req, res) => {
@@ -22,7 +22,7 @@ router.get('/api/dashboard/stats', async (req, res) => {
 
     // Query employee count
     const [employees] = await pool.execute(
-      `SELECT COUNT(*) as count FROM \`${usersTable}\` WHERE role = 'employee' AND shop_id = ?`,
+      `SELECT COUNT(*) as count FROM \`${usersTable}\` WHERE shop_id = ?`,
       [shopId]
     );
 
@@ -80,7 +80,7 @@ router.get('/api/dashboard/low-stock', async (req, res) => {
 
     const productsTable = `shop_${shopId}_products`;
     const [lowStockItems] = await pool.execute(
-      `SELECT id, name, quantity as currentStock FROM \`${productsTable}\` WHERE quantity < ${minimum_stock} ORDER BY quantity ASC LIMIT 5`
+      `SELECT id, name, quantity FROM \`${productsTable}\` WHERE quantity < ${minimum_stock} ORDER BY quantity ASC LIMIT 5`
     );
 
     res.json(lowStockItems);
@@ -90,7 +90,7 @@ router.get('/api/dashboard/low-stock', async (req, res) => {
   }
 });
 
-// ... rest of your code remains the same
+
 router.get('/api/dashboard/activity', async (req, res) => {
   try {
     // In a real app, you would query an activities table

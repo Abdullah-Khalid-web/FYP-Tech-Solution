@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - <%= (shop && shop.name) || 'My Shop' %>
+  </title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: <%=(shop && shop.primary_color) || '#007bff' %>;
+      --secondary-color: <%=(shop && shop.secondary_color) || '#6c757d' %>;
+    }
+
+    body {
+      background-color: #f8fafc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .dashboard-header {
+      background-color: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      border: 1px solid #e5e7eb;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+      background: #f8fafc;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      border: 1px solid #e5e7eb;
+      transition: all 0.2s ease;
+      height: 100%;
+      text-align: center;
+    }
+
+    .stat-card:hover {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      color: #6b7280;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .profile-header {
+      background: linear-gradient(135deg, var(--primary-color), #1e429f);
+      color: white;
+      padding: 2rem 0;
+      border-radius: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      margin: 0 auto 1rem;
+      border: 3px solid white;
+    }
+
+    .badge-pill {
+      border-radius: 50px;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border: none;
+      border-radius: 0.375rem;
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #1e429f;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      color: #374151;
+      transition: all 0.2s ease;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+      background: transparent;
+    }
+
+    .form-control,
+    .form-select {
+      border-radius: 0.375rem;
+      border: 1px solid #e5e7eb;
+      padding: 0.5rem 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+    }
+
+    .table th {
+      background: #f8fafc;
+      color: #374151;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid #e5e7eb;
+      padding: 0.75rem 1rem;
+    }
+
+    .table td {
+      padding: 1rem;
+      border-color: #f3f4f6;
+      vertical-align: middle;
+    }
+
+    .table tbody tr:hover {
+      background-color: #f8fafc;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: #6b7280;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      color: #d1d5db;
+      margin-bottom: 1rem;
+    }
+
+    .nav-tabs .nav-link {
+      border: none;
+      color: #6b7280;
+      font-weight: 500;
+      padding: 0.75rem 1rem;
+    }
+
+    .nav-tabs .nav-link.active {
+      color: var(--primary-color);
+      border-bottom: 2px solid var(--primary-color);
+      background: transparent;
+    }
+
+    .salary-paid {
+      color: #10b981;
+    }
+
+    .salary-pending {
+      color: #f59e0b;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-header {
+        padding: 1rem 0;
+        margin-bottom: 1rem;
+      }
+
+      .card-body {
+        padding: 1rem;
+      }
+
+      .profile-header {
+        padding: 1.5rem 0;
+      }
+
+      .profile-avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="container-fluid">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h1 class="h3 mb-2"><i class="fas fa-user me-2"></i>My Profile</h1>
+          <p class="mb-0 text-muted">Manage your personal information and work statistics</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <a href="/" class="btn btn-outline btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="row align-items-center">
+        <div class="col-md-8 text-center text-md-start">
+          <div class="profile-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <h2 class="mb-1" id="userName">
+            <%= user.name %>
+          </h2>
+          <p class="mb-1" id="userRole">
+            <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
+          </p>
+          <p class="mb-0 opacity-75" id="userEmail">
+            <%= user.email %>
+          </p>
+        </div>
+        <div class="col-md-4 text-center text-md-end">
+          <div class="row">
+            <div class="col-6">
+              <div class="text-white">
+                <div class="h4 mb-1" id="monthlySalary">
+                  <%= user.salary ? '₨' + Number(user.salary).toFixed(2) : 'Not Set' %>
+                </div>
+                <small>Monthly Salary</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-white">
+                <div class="h4 mb-1" id="totalBillsThisMonth">0</div>
+                <small>Bills This Month</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="card">
+      <div class="card-body p-0">
+        <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal"
+              type="button" role="tab">
+              <i class="fas fa-user-circle me-2"></i>Personal Info
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="salary-tab" data-bs-toggle="tab" data-bs-target="#salary" type="button"
+              role="tab">
+              <i class="fas fa-money-bill-wave me-2"></i>Salary & Payments
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="work-tab" data-bs-toggle="tab" data-bs-target="#work" type="button" role="tab">
+              <i class="fas fa-chart-bar me-2"></i>Work Statistics
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="profileTabsContent">
+      <!-- Personal Info Tab -->
+      <div class="tab-pane fade show active" id="personal" role="tabpanel">
+        <div class="row">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Edit Personal Information</h5>
+              </div>
+              <div class="card-body">
+                <form id="personalInfoForm">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label for="name" class="form-label">Full Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="<%= user.name %>" required>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label for="email" class="form-label">Email Address *</label>
+                        <input type="email" class="form-control" id="email" name="email" value="<%= user.email %>"
+                          required>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" value="<%= user.phone || '' %>">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label for="cnic" class="form-label">CNIC</label>
+                        <input type="text" class="form-control" id="cnic" name="cnic" value="<%= user.cnic || '' %>">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label for="salary" class="form-label">Monthly Salary (<%= (shop && shop.currency) || 'PKR' %>
+                            )</label>
+                        <input type="number" step="0.01" class="form-control" id="salary" name="salary"
+                          value="<%= user.salary || '' %>">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <input type="text" class="form-control" id="role"
+                          value="<%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>" readonly>
+                        <small class="text-muted">Role cannot be changed from here</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3"><%= user.notes || '' %></textarea>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fas fa-save me-2"></i>Update Information
+                    </button>
+                    <button type="button" class="btn btn-outline" id="changePasswordBtn">
+                      <i class="fas fa-key me-2"></i>Change Password
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <!-- Quick Stats -->
+            <div class="row">
+              <div class="col-12 mb-4">
+                <div class="stat-card">
+                  <div class="stat-value" id="totalBillsCount">0</div>
+                  <div class="stat-label">Total Bills Created</div>
+                </div>
+              </div>
+              <div class="col-12 mb-4">
+                <div class="stat-card">
+                  <div class="stat-value" id="totalSalesAmount">₨0</div>
+                  <div class="stat-label">Total Sales Amount</div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="stat-card">
+                  <div class="stat-value" id="avgBillAmount">₨0</div>
+                  <div class="stat-label">Average Bill Amount</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Salary & Payments Tab -->
+      <div class="tab-pane fade" id="salary" role="tabpanel">
+        <div class="row">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Salary Payment History</h5>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead>
+                      <tr>
+                        <th>Month</th>
+                        <th>Amount</th>
+                        <th>Payment Date</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody id="salaryHistoryTable">
+                      <tr>
+                        <td colspan="5" class="text-center py-4">
+                          <div class="loading-spinner">
+                            <div class="spinner-border text-primary" role="status">
+                              <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 mb-0">Loading salary history...</p>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Salary Summary</h5>
+              </div>
+              <div class="card-body">
+                <div class="mb-4">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Monthly Salary:</span>
+                    <strong id="summaryMonthlySalary">₨0</strong>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">This Month:</span>
+                    <strong id="summaryThisMonth">₨0</strong>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Total Paid:</span>
+                    <strong class="text-success" id="summaryTotalPaid">₨0</strong>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Pending:</span>
+                    <strong class="text-warning" id="summaryPending">₨0</strong>
+                  </div>
+                </div>
+                <div class="alert alert-info">
+                  <small>
+                    <i class="fas fa-info-circle me-1"></i>
+                    Salary payments are processed at the end of each month.
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Loan Information -->
+            <div class="card mt-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Loan Information</h5>
+              </div>
+              <div class="card-body">
+                <div id="loanInfo">
+                  <div class="text-center py-3">
+                    <div class="loading-spinner">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <p class="mt-2 mb-0">Loading loan information...</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Work Statistics Tab -->
+      <div class="tab-pane fade" id="work" role="tabpanel">
+        <div class="row">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Monthly Performance</h5>
+              </div>
+              <div class="card-body">
+                <div class="row mb-4">
+                  <div class="col-md-4">
+                    <div class="stat-card">
+                      <div class="stat-value" id="monthBillsCount">0</div>
+                      <div class="stat-label">Bills This Month</div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="stat-card">
+                      <div class="stat-value" id="monthSalesAmount">₨0</div>
+                      <div class="stat-label">Sales This Month</div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="stat-card">
+                      <div class="stat-value" id="monthAvgBill">₨0</div>
+                      <div class="stat-label">Avg Bill This Month</div>
+                    </div>
+                  </div>
+                </div>
+                <canvas id="performanceChart" height="250"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Achievements</h5>
+              </div>
+              <div class="card-body">
+                <div id="achievementsList">
+                  <div class="achievement-item mb-3 p-3 border rounded">
+                    <div class="d-flex align-items-center">
+                      <div class="achievement-icon bg-primary text-white rounded-circle p-2 me-3">
+                        <i class="fas fa-star"></i>
+                      </div>
+                      <div>
+                        <h6 class="mb-1">First Bill</h6>
+                        <p class="mb-0 text-muted small">Created your first bill</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="achievement-item mb-3 p-3 border rounded">
+                    <div class="d-flex align-items-center">
+                      <div class="achievement-icon bg-success text-white rounded-circle p-2 me-3">
+                        <i class="fas fa-bolt"></i>
+                      </div>
+                      <div>
+                        <h6 class="mb-1">Quick Seller</h6>
+                        <p class="mb-0 text-muted small">Created 10+ bills in a day</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mt-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Recent Activity</h5>
+              </div>
+              <div class="card-body">
+                <div id="recentActivityList">
+                  <div class="text-center py-3">
+                    <div class="loading-spinner">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <p class="mt-2 mb-0">Loading recent activity...</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Change Password</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="changePasswordForm">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="currentPassword" class="form-label">Current Password *</label>
+              <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+            </div>
+            <div class="mb-3">
+              <label for="newPassword" class="form-label">New Password *</label>
+              <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="6">
+            </div>
+            <div class="mb-3">
+              <label for="confirmPassword" class="form-label">Confirm New Password *</label>
+              <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Change Password</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Shop data for JavaScript
+    window.shopData = {
+      currency: '<%= (shop && shop.currency) || "PKR" %>',
+      name: '<%= (shop && shop.name) || "My Shop" %>'
+    };
+
+    // Global variables
+    let performanceChart = null;
+
+    // Main initialization
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log('Initializing user profile...');
+
+      // Load all data
+      loadUserStatistics();
+      loadSalaryHistory();
+      loadWorkStatistics();
+      loadLoanInformation();
+      loadRecentActivity();
+
+      // Setup event listeners
+      setupEventListeners();
+    });
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Personal info form submission
+      document.getElementById('personalInfoForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        updatePersonalInfo();
+      });
+
+      // Change password button
+      document.getElementById('changePasswordBtn').addEventListener('click', function () {
+        $('#changePasswordModal').modal('show');
+      });
+
+      // Change password form submission
+      document.getElementById('changePasswordForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        changePassword();
+      });
+
+      // Tab change events
+      document.getElementById('salary-tab').addEventListener('click', function () {
+        loadSalaryHistory();
+        loadLoanInformation();
+      });
+
+      document.getElementById('work-tab').addEventListener('click', function () {
+        loadWorkStatistics();
+        loadRecentActivity();
+      });
+    }
+
+    // Load user statistics
+    async function loadUserStatistics() {
+      try {
+        const response = await fetch('/api/user/statistics');
+        const data = await response.json();
+
+        if (data.success) {
+          const stats = data.statistics;
+
+          // Update quick stats
+          document.getElementById('totalBillsCount').textContent = stats.totalBills.toLocaleString();
+          document.getElementById('totalSalesAmount').textContent = formatCurrency(stats.totalSales);
+          document.getElementById('avgBillAmount').textContent = formatCurrency(stats.averageBill);
+          document.getElementById('totalBillsThisMonth').textContent = stats.thisMonthBills.toLocaleString();
+
+        } else {
+          throw new Error(data.message || 'Failed to load statistics');
+        }
+      } catch (error) {
+        console.error('Error loading user statistics:', error);
+        showToast('Failed to load statistics', 'error');
+      }
+    }
+
+    // Load salary history
+    async function loadSalaryHistory() {
+      try {
+        const response = await fetch('/api/user/salary-history');
+        const data = await response.json();
+
+        const tableBody = document.getElementById('salaryHistoryTable');
+
+        if (data.success && data.salaries.length > 0) {
+          let html = '';
+          let totalPaid = 0;
+          let pendingAmount = 0;
+          const monthlySalary = parseFloat('<%= user.salary || 0 %>');
+
+          data.salaries.forEach(salary => {
+            const isPaid = salary.status === 'paid';
+            const amount = parseFloat(salary.amount);
+
+            if (isPaid) {
+              totalPaid += amount;
+            } else {
+              pendingAmount += monthlySalary;
+            }
+
+            html += `
+                    <tr>
+                        <td>${salary.month}</td>
+                        <td>${formatCurrency(amount)}</td>
+                        <td>${salary.paid_on ? new Date(salary.paid_on).toLocaleDateString() : '-'}</td>
+                        <td>
+                            <span class="badge ${isPaid ? 'bg-success' : 'bg-warning'}">
+                                ${isPaid ? 'Paid' : 'Pending'}
+                            </span>
+                        </td>
+                        <td>${salary.notes || '-'}</td>
+                    </tr>
+                `;
+          });
+
+          tableBody.innerHTML = html;
+
+          // Update summary
+          document.getElementById('summaryMonthlySalary').textContent = formatCurrency(monthlySalary);
+          document.getElementById('summaryThisMonth').textContent = formatCurrency(monthlySalary);
+          document.getElementById('summaryTotalPaid').textContent = formatCurrency(totalPaid);
+          document.getElementById('summaryPending').textContent = formatCurrency(pendingAmount);
+
+        } else {
+          tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <h5>No Salary History</h5>
+                            <p class="text-muted">No salary records found for your account.</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+      } catch (error) {
+        console.error('Error loading salary history:', error);
+        document.getElementById('salaryHistoryTable').innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4 text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Failed to load salary history
+                </td>
+            </tr>
+        `;
+      }
+    }
+
+    // Load work statistics
+    async function loadWorkStatistics() {
+      try {
+        const response = await fetch('/api/user/work-statistics');
+        const data = await response.json();
+
+        if (data.success) {
+          const stats = data.statistics;
+
+          // Update monthly stats
+          document.getElementById('monthBillsCount').textContent = stats.currentMonth.bills.toLocaleString();
+          document.getElementById('monthSalesAmount').textContent = formatCurrency(stats.currentMonth.sales);
+          document.getElementById('monthAvgBill').textContent = formatCurrency(stats.currentMonth.averageBill);
+
+          // Create performance chart
+          createPerformanceChart(stats.monthlyData);
+
+        } else {
+          throw new Error(data.message || 'Failed to load work statistics');
+        }
+      } catch (error) {
+        console.error('Error loading work statistics:', error);
+        showToast('Failed to load work statistics', 'error');
+      }
+    }
+
+    // Load loan information
+    async function loadLoanInformation() {
+      try {
+        const response = await fetch('/api/user/loans');
+        const data = await response.json();
+
+        const loanInfo = document.getElementById('loanInfo');
+
+        if (data.success && data.loans.length > 0) {
+          let html = '';
+          let totalLoans = 0;
+          let totalPaid = 0;
+
+          data.loans.forEach(loan => {
+            const amount = parseFloat(loan.amount);
+            const dueAmount = parseFloat(loan.due_amount);
+            const paidAmount = amount - dueAmount;
+
+            totalLoans += amount;
+            totalPaid += paidAmount;
+
+            html += `
+                    <div class="loan-item mb-3 p-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>${formatCurrency(amount)}</strong>
+                            <span class="badge ${loan.status === 'paid' ? 'bg-success' : loan.status === 'partial' ? 'bg-warning' : 'bg-danger'}">
+                                ${loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                            </span>
+                        </div>
+                        <div class="row small text-muted">
+                            <div class="col-6">
+                                <div>Taken: ${new Date(loan.taken_on).toLocaleDateString()}</div>
+                            </div>
+                            <div class="col-6 text-end">
+                                <div>Due: ${formatCurrency(dueAmount)}</div>
+                            </div>
+                        </div>
+                        ${loan.reason ? `<div class="mt-2"><small>Reason: ${loan.reason}</small></div>` : ''}
+                        ${loan.notes ? `<div class="mt-1"><small>Notes: ${loan.notes}</small></div>` : ''}
+                    </div>
+                `;
+          });
+
+          // Add summary
+          html = `
+                <div class="loan-summary mb-3 p-3 bg-light rounded">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h5 text-primary">${formatCurrency(totalLoans)}</div>
+                            <small>Total Loans</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h5 text-success">${formatCurrency(totalPaid)}</div>
+                            <small>Total Paid</small>
+                        </div>
+                    </div>
+                </div>
+                ${html}
+            `;
+
+          loanInfo.innerHTML = html;
+
+        } else {
+          loanInfo.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <h5>No Active Loans</h5>
+                    <p class="text-muted">You don't have any active loans.</p>
+                </div>
+            `;
+        }
+      } catch (error) {
+        console.error('Error loading loan information:', error);
+        document.getElementById('loanInfo').innerHTML = `
+            <div class="text-center py-4 text-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Failed to load loan information
+            </div>
+        `;
+      }
+    }
+
+    // Load recent activity
+    async function loadRecentActivity() {
+      try {
+        const response = await fetch('/api/user/recent-activity');
+        const data = await response.json();
+
+        const activityList = document.getElementById('recentActivityList');
+
+        if (data.success && data.activities.length > 0) {
+          let html = '';
+
+          data.activities.forEach(activity => {
+            const timeAgo = getTimeAgo(activity.created_at);
+
+            html += `
+                    <div class="activity-item mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="activity-icon me-3 mt-1">
+                                <i class="fas ${getActivityIcon(activity.action_type)} text-${getActivityColor(activity.action_type)}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <p class="mb-1 small">${activity.action}</p>
+                                <small class="text-muted">${timeAgo}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+          });
+
+          activityList.innerHTML = html;
+
+        } else {
+          activityList.innerHTML = `
+                <div class="text-center py-3 text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No recent activity found
+                </div>
+            `;
+        }
+      } catch (error) {
+        console.error('Error loading recent activity:', error);
+        document.getElementById('recentActivityList').innerHTML = `
+            <div class="text-center py-3 text-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Failed to load recent activity
+            </div>
+        `;
+      }
+    }
+
+    // Update personal information
+    async function updatePersonalInfo() {
+      const form = document.getElementById('personalInfoForm');
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('/api/user/update-profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(Object.fromEntries(formData))
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Profile updated successfully!', 'success');
+
+          // Update displayed information
+          document.getElementById('userName').textContent = formData.get('name');
+          document.getElementById('userEmail').textContent = formData.get('email');
+          document.getElementById('monthlySalary').textContent = formatCurrency(parseFloat(formData.get('salary') || 0));
+
+        } else {
+          throw new Error(data.message || 'Failed to update profile');
+        }
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        showToast('Failed to update profile', 'error');
+      }
+    }
+
+    // Change password
+    async function changePassword() {
+      const form = document.getElementById('changePasswordForm');
+      const formData = new FormData(form);
+
+      // Validate passwords match
+      if (formData.get('newPassword') !== formData.get('confirmPassword')) {
+        showToast('New passwords do not match', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/user/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(Object.fromEntries(formData))
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Password changed successfully!', 'success');
+          $('#changePasswordModal').modal('hide');
+          form.reset();
+        } else {
+          throw new Error(data.message || 'Failed to change password');
+        }
+      } catch (error) {
+        console.error('Error changing password:', error);
+        showToast('Failed to change password', 'error');
+      }
+    }
+
+    // Create performance chart
+    function createPerformanceChart(monthlyData) {
+      const ctx = document.getElementById('performanceChart').getContext('2d');
+
+      // Destroy existing chart if it exists
+      if (performanceChart) {
+        performanceChart.destroy();
+      }
+
+      const labels = monthlyData.map(item => item.month);
+      const salesData = monthlyData.map(item => item.sales);
+      const billsData = monthlyData.map(item => item.bills);
+
+      performanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Sales Amount',
+              data: salesData,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Number of Bills',
+              data: billsData,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: {
+                display: true,
+                text: 'Sales Amount'
+              },
+              ticks: {
+                callback: function (value) {
+                  return formatCurrency(value);
+                }
+              }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              title: {
+                display: true,
+                text: 'Number of Bills'
+              },
+              grid: {
+                drawOnChartArea: false,
+              },
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  if (context.dataset.yAxisID === 'y') {
+                    label += formatCurrency(context.parsed.y);
+                  } else {
+                    label += context.parsed.y;
+                  }
+                  return label;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Utility functions
+    function formatCurrency(amount) {
+      const currency = window.shopData?.currency || 'PKR';
+      return new Intl.NumberFormat('en-PK', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount || 0);
+    }
+
+    function getTimeAgo(timestamp) {
+      const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
+
+      if (seconds < 60) return 'Just now';
+
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes} min${minutes === 1 ? '' : 's'} ago`;
+
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+
+      const days = Math.floor(hours / 24);
+      return `${days} day${days === 1 ? '' : 's'} ago`;
+    }
+
+    function getActivityIcon(actionType) {
+      const icons = {
+        'sale': 'fa-shopping-cart',
+        'product': 'fa-box',
+        'customer': 'fa-user',
+        'employee': 'fa-users',
+        'system': 'fa-cog',
+        'login': 'fa-sign-in-alt',
+        'logout': 'fa-sign-out-alt'
+      };
+      return icons[actionType] || 'fa-info-circle';
+    }
+
+    function getActivityColor(actionType) {
+      const colors = {
+        'sale': 'success',
+        'product': 'primary',
+        'customer': 'info',
+        'employee': 'warning',
+        'system': 'secondary',
+        'login': 'success',
+        'logout': 'danger'
+      };
+      return colors[actionType] || 'secondary';
+    }
+
+    function showToast(message, type = 'success') {
+      // Simple alert for now - replace with a proper toast notification if needed
+      alert(`${type.toUpperCase()}: ${message}`);
+
+      // In production, you can use:
+      // toastr[type](message);
+    }    </script>
+</body>
+
+</html>

@@ -165,7 +165,7 @@ router.post('/register', upload.single('logo'), async (req, res) => {
     }
 
     // Delete uploaded file if exists
-    if (req.file) fs.unlink(req.file.path, () => {});
+    if (req.file) fs.unlink(req.file.path, () => { });
 
     console.error('Registration error:', err);
     return res.status(500).render('auth/register', {
@@ -217,6 +217,7 @@ async function createShopTables(connection, shopId) {
       paid_amount DECIMAL(10,2) NOT NULL,
       due_amount DECIMAL(10,2) DEFAULT 0,
       payment_method VARCHAR(50),
+      notes VARCHAR(250),
       created_by INT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE (bill_number),
@@ -234,6 +235,8 @@ async function createShopTables(connection, shopId) {
       quantity INT NOT NULL,
       unit_price DECIMAL(10,2) NOT NULL,
       discount DECIMAL(10,2) DEFAULT 0,
+      tax_amount VARCHAR(50),
+      item_type VARCHAR(50),
       total_price DECIMAL(10,2) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (bill_id) REFERENCES ${prefix}bills(id) ON DELETE CASCADE,
@@ -282,6 +285,122 @@ async function createShopTables(connection, shopId) {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  await connection.execute(`
+    CREATE TABLE ${prefix}expenses (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      category VARCHAR(255) NOT NULL,
+      description TEXT NOT NULL,
+      amount DECIMAL(10,2) NOT NULL,
+      expense_date DATE NOT NULL,
+      payment_method VARCHAR(50) DEFAULT 'cash',
+      receipt_number VARCHAR(100),
+      created_by INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX (category),
+    INDEX (expense_date),
+    INDEX (created_by)
+  )
+  `);
+  await connection.execute(`
+    CREATE TABLE ${prefix}raw_materials (
+id INT PRIMARY KEY AUTO_INCREMENT,
+  shop_id INT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  sku VARCHAR(100) UNIQUE,
+  barcode VARCHAR(100),
+  category VARCHAR(100),
+  description TEXT,
+  unit_of_measure VARCHAR(50) DEFAULT 'pcs',
+  current_stock DECIMAL(10,3) DEFAULT 0,
+  min_stock_level DECIMAL(10,3) DEFAULT 0,
+  max_stock_level DECIMAL(10,3) DEFAULT 0,
+  cost_price DECIMAL(10,2) DEFAULT 0,
+  supplier_id INT,
+  batch_tracking BOOLEAN DEFAULT FALSE,
+  expiry_tracking BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_by INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  INDEX (shop_id),
+  INDEX (category),
+  INDEX (supplier_id),
+  INDEX (is_active)
+
+  );
+  `);
+  await connection.execute(`
+    CREATE TABLE ${prefix}suppliers (
+   id INT PRIMARY KEY AUTO_INCREMENT,
+  shop_id INT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  contact_person VARCHAR(255),
+  email VARCHAR(255),
+  phone VARCHAR(50),
+  address TEXT,
+  tax_number VARCHAR(100),
+  payment_terms VARCHAR(100),
+  rating TINYINT DEFAULT 5,
+  is_active BOOLEAN DEFAULT TRUE,
+  notes TEXT,
+  created_by INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  INDEX (shop_id),
+  INDEX (is_active)
+
+    );
+  `);
+  await connection.execute(`
+    CREATE TABLE ${prefix}raw_material_stock_movements (
+     id INT PRIMARY KEY AUTO_INCREMENT,
+  shop_id INT NOT NULL,
+  raw_material_id INT NOT NULL,
+  batch_number VARCHAR(100),
+  movement_type ENUM('in', 'out', 'adjustment') NOT NULL,
+  quantity DECIMAL(10,3) NOT NULL,
+  unit_cost DECIMAL(10,2) DEFAULT 0,
+  total_cost DECIMAL(10,2) DEFAULT 0,
+  reference_type ENUM('purchase', 'production', 'waste', 'adjustment', 'transfer') NOT NULL,
+  reference_id INT,
+  notes TEXT,
+  movement_date DATE NOT NULL,
+  expiry_date DATE,
+  created_by INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  INDEX (shop_id),
+  INDEX (raw_material_id),
+  INDEX (movement_date),
+  INDEX (batch_number),
+  FOREIGN KEY (raw_material_id) REFERENCES ${prefix}raw_materials(id) ON DELETE CASCADE
+
+  );
+`);
+  await connection.execute(`
+    CREATE TABLE ${prefix}raw_material_alerts (
+   id INT PRIMARY KEY AUTO_INCREMENT,
+  shop_id INT NOT NULL,
+  raw_material_id INT NOT NULL,
+  alert_type ENUM('low_stock', 'expiry', 'over_stock') NOT NULL,
+  alert_message TEXT NOT NULL,
+  current_value DECIMAL(10,3),
+  threshold_value DECIMAL(10,3),
+  is_resolved BOOLEAN DEFAULT FALSE,
+  resolved_by INT,
+  resolved_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  INDEX (shop_id),
+  INDEX (raw_material_id),
+  INDEX (is_resolved),
+  INDEX (alert_type),
+  FOREIGN KEY (raw_material_id) REFERENCES ${prefix}raw_materials(id) ON DELETE CASCADE
+  );
+`);
 }
 
 module.exports = router;

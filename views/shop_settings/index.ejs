@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop Settings - <%= (shop && shop.name) || 'My Shop' %>
+  </title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: <%=(shop && shop.primary_color) || '#007bff' %>;
+      --secondary-color: <%=(shop && shop.secondary_color) || '#6c757d' %>;
+    }
+
+    body {
+      background-color: #f8fafc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .dashboard-header {
+      background-color: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      border: 1px solid #e5e7eb;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+      background: #f8fafc;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border: none;
+      border-radius: 0.375rem;
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #1e429f;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      color: #374151;
+      transition: all 0.2s ease;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+      background: transparent;
+    }
+
+    .form-control,
+    .form-select {
+      border-radius: 0.375rem;
+      border: 1px solid #e5e7eb;
+      padding: 0.5rem 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+    }
+
+    .color-preview {
+      width: 30px;
+      height: 30px;
+      border-radius: 0.375rem;
+      border: 2px solid #e5e7eb;
+      display: inline-block;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    .logo-preview {
+      max-width: 200px;
+      max-height: 100px;
+      border-radius: 0.375rem;
+      border: 2px solid #e5e7eb;
+      padding: 5px;
+    }
+
+    .nav-tabs .nav-link {
+      border: none;
+      color: #6b7280;
+      font-weight: 500;
+      padding: 0.75rem 1rem;
+    }
+
+    .nav-tabs .nav-link.active {
+      color: var(--primary-color);
+      border-bottom: 2px solid var(--primary-color);
+      background: transparent;
+    }
+
+    .setting-section {
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .setting-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .subscription-card {
+      background: linear-gradient(135deg, var(--primary-color), #1e429f);
+      color: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .danger-zone {
+      border: 2px solid #ef4444;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      background: #fef2f2;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-header {
+        padding: 1rem 0;
+        margin-bottom: 1rem;
+      }
+
+      .card-body {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="container-fluid">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h1 class="h3 mb-2"><i class="fas fa-cog me-2"></i>Shop Settings</h1>
+          <p class="mb-0 text-muted">Manage your shop configuration and preferences</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <a href="/" class="btn btn-outline btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    <!-- Navigation Tabs -->
+    <div class="card">
+      <div class="card-body p-0">
+        <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general"
+              type="button" role="tab">
+              <i class="fas fa-store me-2"></i>General
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="appearance-tab" data-bs-toggle="tab" data-bs-target="#appearance" type="button"
+              role="tab">
+              <i class="fas fa-palette me-2"></i>Appearance
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing" type="button"
+              role="tab">
+              <i class="fas fa-credit-card me-2"></i>Billing & Subscription
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button"
+              role="tab">
+              <i class="fas fa-users me-2"></i>Users & Permissions
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button"
+              role="tab">
+              <i class="fas fa-sliders-h me-2"></i>Advanced
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="settingsTabsContent">
+      <!-- General Settings Tab -->
+      <div class="tab-pane fade show active" id="general" role="tabpanel">
+        <div class="row">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Shop Information</h5>
+              </div>
+              <div class="card-body">
+                <form id="shopInfoForm" enctype="multipart/form-data">
+                  <div class="setting-section">
+                    <h6 class="fw-semibold mb-3">Basic Information</h6>
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="shopName" class="form-label">Shop Name *</label>
+                          <input type="text" class="form-control" id="shopName" name="name" value="<%= shop.name %>"
+                            required>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="shopEmail" class="form-label">Email Address *</label>
+                          <input type="email" class="form-control" id="shopEmail" name="email"
+                            value="<%= shop.email || '' %>" required>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="shopPhone" class="form-label">Phone Number</label>
+                          <input type="tel" class="form-control" id="shopPhone" name="phone"
+                            value="<%= shop.phone || '' %>">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="shopCurrency" class="form-label">Currency</label>
+                          <select class="form-select" id="shopCurrency" name="currency">
+                            <option value="PKR" <%=shop.currency==='PKR' ? 'selected' : '' %>>Pakistani Rupee (PKR)
+                            </option>
+                            <option value="USD" <%=shop.currency==='USD' ? 'selected' : '' %>>US Dollar (USD)</option>
+                            <option value="EUR" <%=shop.currency==='EUR' ? 'selected' : '' %>>Euro (EUR)</option>
+                            <option value="GBP" <%=shop.currency==='GBP' ? 'selected' : '' %>>British Pound (GBP)
+                            </option>
+                            <option value="INR" <%=shop.currency==='INR' ? 'selected' : '' %>>Indian Rupee (INR)
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <label for="shopAddress" class="form-label">Address</label>
+                      <textarea class="form-control" id="shopAddress" name="address"
+                        rows="3"><%= shop.address || '' %></textarea>
+                    </div>
+                  </div>
+
+                  <div class="setting-section">
+                    <h6 class="fw-semibold mb-3">Shop Logo</h6>
+                    <div class="row align-items-center">
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="shopLogo" class="form-label">Upload Logo</label>
+                          <input type="file" class="form-control" id="shopLogo" name="logo" accept="image/*">
+                          <div class="form-text">Recommended: 200x100px, PNG or JPG format</div>
+                        </div>
+                      </div>
+                      <div class="col-md-6 text-center">
+                        <% if (shop.logo && shop.logo !=='/images/default-logo.png' ) { %>
+                          <div class="mb-3">
+                            <img src="<%= shop.logo %>" alt="Current Logo" class="logo-preview">
+                            <div class="mt-2">
+                              <button type="button" class="btn btn-sm btn-outline-danger" id="removeLogoBtn">
+                                <i class="fas fa-trash me-1"></i>Remove Logo
+                              </button>
+                            </div>
+                          </div>
+                          <% } else { %>
+                            <div class="text-muted">
+                              <i class="fas fa-store fa-3x mb-2"></i>
+                              <p>No logo uploaded</p>
+                            </div>
+                            <% } %>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="resetForm()">
+                      <i class="fas fa-undo me-2"></i>Reset
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <!-- Quick Stats -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Shop Overview</h5>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <small class="text-muted">Shop ID</small>
+                  <div class="fw-semibold">
+                    <%= shop.id %>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <small class="text-muted">Registration Date</small>
+                  <div class="fw-semibold" id="registrationDate">Loading...</div>
+                </div>
+                <div class="mb-3">
+                  <small class="text-muted">Total Products</small>
+                  <div class="fw-semibold" id="totalProducts">Loading...</div>
+                </div>
+                <div class="mb-3">
+                  <small class="text-muted">Total Sales</small>
+                  <div class="fw-semibold" id="totalSales">Loading...</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mt-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+              </div>
+              <div class="card-body">
+                <div class="d-grid gap-2">
+                  <button class="btn btn-outline-primary text-start" onclick="backupData()">
+                    <i class="fas fa-download me-2"></i>Backup Data
+                  </button>
+                  <button class="btn btn-outline-info text-start" onclick="exportReports()">
+                    <i class="fas fa-file-export me-2"></i>Export Reports
+                  </button>
+                  <button class="btn btn-outline-warning text-start" onclick="showApiSettings()">
+                    <i class="fas fa-key me-2"></i>API Settings
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appearance Settings Tab -->
+      <div class="tab-pane fade" id="appearance" role="tabpanel">
+        <div class="row">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-paint-brush me-2"></i>Theme & Appearance</h5>
+              </div>
+              <div class="card-body">
+                <form id="appearanceForm">
+                  <div class="setting-section">
+                    <h6 class="fw-semibold mb-3">Color Scheme</h6>
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="primaryColor" class="form-label">Primary Color</label>
+                          <div class="input-group">
+                            <span class="input-group-text">
+                              <div class="color-preview" id="primaryColorPreview"
+                                style="background-color: <%= shop.primary_color %>"></div>
+                            </span>
+                            <input type="color" class="form-control form-control-color" id="primaryColor"
+                              name="primary_color" value="<%= shop.primary_color %>" title="Choose primary color">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="secondaryColor" class="form-label">Secondary Color</label>
+                          <div class="input-group">
+                            <span class="input-group-text">
+                              <div class="color-preview" id="secondaryColorPreview"
+                                style="background-color: <%= shop.secondary_color %>"></div>
+                            </span>
+                            <input type="color" class="form-control form-control-color" id="secondaryColor"
+                              name="secondary_color" value="<%= shop.secondary_color %>" title="Choose secondary color">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="alert alert-info">
+                      <small>
+                        <i class="fas fa-info-circle me-1"></i>
+                        Colors will be applied to buttons, headers, and other UI elements.
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="setting-section">
+                    <h6 class="fw-semibold mb-3">Display Settings</h6>
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="dateFormat" class="form-label">Date Format</label>
+                          <select class="form-select" id="dateFormat" name="date_format">
+                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="timeFormat" class="form-label">Time Format</label>
+                          <select class="form-select" id="timeFormat" name="time_format">
+                            <option value="12h">12-hour format</option>
+                            <option value="24h">24-hour format</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="darkMode" name="dark_mode">
+                        <label class="form-check-label" for="darkMode">Enable Dark Mode</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fas fa-save me-2"></i>Save Appearance
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="resetAppearance()">
+                      <i class="fas fa-undo me-2"></i>Reset to Default
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Preview</h5>
+              </div>
+              <div class="card-body">
+                <div class="text-center p-4 border rounded"
+                  style="background-color: <%= shop.primary_color %>; color: white;">
+                  <h6 class="mb-2">Primary Color Preview</h6>
+                  <p class="mb-3">This is how your primary color looks</p>
+                  <button class="btn btn-light btn-sm">Example Button</button>
+                </div>
+                <div class="mt-3 p-3 border rounded" style="border-left: 4px solid <%= shop.secondary_color %>;">
+                  <h6 class="mb-1">Secondary Color Preview</h6>
+                  <p class="mb-0 text-muted">Used for borders and accents</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Billing & Subscription Tab -->
+      <div class="tab-pane fade" id="billing" role="tabpanel">
+        <div class="row">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Current Subscription</h5>
+              </div>
+              <div class="card-body">
+                <div class="subscription-card">
+                  <div class="row align-items-center">
+                    <div class="col-md-8">
+                      <h4 class="mb-1" id="currentPlan">Loading...</h4>
+                      <p class="mb-2" id="planDescription">Loading plan details...</p>
+                      <small id="billingCycle">Loading billing cycle...</small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                      <h3 class="mb-1" id="planPrice">Loading...</h3>
+                      <button class="btn btn-light btn-sm" onclick="changePlan()">
+                        Change Plan
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="setting-section">
+                  <h6 class="fw-semibold mb-3">Billing Information</h6>
+                  <div id="billingInfo">
+                    <div class="text-center py-4">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <p class="mt-2 mb-0">Loading billing information...</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="setting-section">
+                  <h6 class="fw-semibold mb-3">Payment History</h6>
+                  <div class="table-responsive">
+                    <table class="table table-hover">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Amount</th>
+                          <th>Plan</th>
+                          <th>Status</th>
+                          <th>Receipt</th>
+                        </tr>
+                      </thead>
+                      <tbody id="paymentHistory">
+                        <tr>
+                          <td colspan="5" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                              <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 mb-0">Loading payment history...</p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Payment Methods</h5>
+              </div>
+              <div class="card-body">
+                <div id="paymentMethods">
+                  <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 mb-0">Loading payment methods...</p>
+                  </div>
+                </div>
+                <button class="btn btn-outline-primary w-100 mt-3" onclick="addPaymentMethod()">
+                  <i class="fas fa-plus me-2"></i>Add Payment Method
+                </button>
+              </div>
+            </div>
+
+            <div class="card mt-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Invoices</h5>
+              </div>
+              <div class="card-body">
+                <div class="d-grid gap-2">
+                  <button class="btn btn-outline-secondary text-start" onclick="downloadInvoice('last')">
+                    <i class="fas fa-download me-2"></i>Download Last Invoice
+                  </button>
+                  <button class="btn btn-outline-secondary text-start" onclick="viewAllInvoices()">
+                    <i class="fas fa-list me-2"></i>View All Invoices
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users & Permissions Tab -->
+      <div class="tab-pane fade" id="users" role="tabpanel">
+        <div class="row">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>User Management</h5>
+                  <button class="btn btn-primary btn-sm" onclick="addUser()">
+                    <i class="fas fa-plus me-1"></i>Add User
+                  </button>
+                </div>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="usersTable">
+                      <tr>
+                        <td colspan="6" class="text-center py-4">
+                          <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                          </div>
+                          <p class="mt-2 mb-0">Loading users...</p>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Role Permissions</h5>
+              </div>
+              <div class="card-body">
+                <div id="rolePermissions">
+                  <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 mb-0">Loading permissions...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mt-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Login Activity</h5>
+              </div>
+              <div class="card-body">
+                <div id="loginActivity">
+                  <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 mb-0">Loading activity...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Settings Tab -->
+      <div class="tab-pane fade" id="advanced" role="tabpanel">
+        <div class="row">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Data Management</h5>
+              </div>
+              <div class="card-body">
+                <div class="setting-section">
+                  <h6 class="fw-semibold mb-3">Backup & Restore</h6>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="createBackup()">
+                          <i class="fas fa-download me-2"></i>Create Backup
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="viewBackups()">
+                          <i class="fas fa-history me-2"></i>View Backups
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="d-grid gap-2">
+                        <button class="btn btn-outline-warning" onclick="restoreBackup()">
+                          <i class="fas fa-upload me-2"></i>Restore Backup
+                        </button>
+                        <button class="btn btn-outline-info" onclick="exportData()">
+                          <i class="fas fa-file-export me-2"></i>Export Data
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="setting-section">
+                  <h6 class="fw-semibold mb-3">API Settings</h6>
+                  <div class="mb-3">
+                    <label for="apiKey" class="form-label">API Key</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="apiKey" value="sk_****************" readonly>
+                      <button class="btn btn-outline-secondary" type="button" onclick="generateApiKey()">
+                        <i class="fas fa-sync me-1"></i>Generate
+                      </button>
+                    </div>
+                  </div>
+                  <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="apiEnabled" checked>
+                    <label class="form-check-label" for="apiEnabled">Enable API Access</label>
+                  </div>
+                </div>
+
+                <div class="danger-zone">
+                  <h6 class="fw-semibold mb-3 text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Danger Zone
+                  </h6>
+                  <p class="text-muted mb-3">
+                    These actions are irreversible. Please proceed with caution.
+                  </p>
+                  <div class="d-grid gap-2">
+                    <button class="btn btn-outline-danger" onclick="resetShopData()">
+                      <i class="fas fa-eraser me-2"></i>Reset All Data
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteShop()">
+                      <i class="fas fa-trash me-2"></i>Delete Shop
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tools me-2"></i>System Information</h5>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <small class="text-muted">System Version</small>
+                  <div class="fw-semibold" id="systemVersion">v2.1.0</div>
+                </div>
+                <div class="mb-3">
+                  <small class="text-muted">Database Size</small>
+                  <div class="fw-semibold" id="dbSize">Loading...</div>
+                </div>
+                <div class="mb-3">
+                  <small class="text-muted">Last Backup</small>
+                  <div class="fw-semibold" id="lastBackup">Never</div>
+                </div>
+                <div class="mb-3">
+                  <small class="text-muted">Server Status</small>
+                  <div class="fw-semibold text-success">
+                    <i class="fas fa-circle me-1"></i>Online
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mt-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notifications</h5>
+              </div>
+              <div class="card-body">
+                <div class="form-check form-switch mb-3">
+                  <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                  <label class="form-check-label" for="emailNotifications">Email Notifications</label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                  <input class="form-check-input" type="checkbox" id="lowStockAlerts" checked>
+                  <label class="form-check-label" for="lowStockAlerts">Low Stock Alerts</label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                  <input class="form-check-input" type="checkbox" id="salesReports" checked>
+                  <label class="form-check-label" for="salesReports">Daily Sales Reports</label>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="systemUpdates" checked>
+                  <label class="form-check-label" for="systemUpdates">System Update Notifications</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add User Modal -->
+  <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="addUserForm">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="newUserName" class="form-label">Full Name *</label>
+              <input type="text" class="form-control" id="newUserName" name="name" required>
+            </div>
+            <div class="mb-3">
+              <label for="newUserEmail" class="form-label">Email Address *</label>
+              <input type="email" class="form-control" id="newUserEmail" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="newUserRole" class="form-label">Role *</label>
+              <select class="form-select" id="newUserRole" name="role" required>
+                <option value="cashier">Cashier</option>
+                <option value="manager">Manager</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="newUserSalary" class="form-label">Salary</label>
+              <input type="number" step="0.01" class="form-control" id="newUserSalary" name="salary">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add User</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Shop data for JavaScript
+    window.shopData = {
+      currency: '<%= (shop && shop.currency) || "PKR" %>',
+      name: '<%= (shop && shop.name) || "My Shop" %>',
+      primaryColor: '<%= (shop && shop.primary_color) || "#007bff" %>',
+      secondaryColor: '<%= (shop && shop.secondary_color) || "#6c757d" %>'
+    };
+
+    // Main initialization
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log('Initializing shop settings...');
+
+      // Load initial data
+      loadShopStatistics();
+      loadSubscriptionInfo();
+      loadShopUsers();
+
+      // Setup event listeners
+      setupEventListeners();
+
+      // Initialize color pickers
+      initializeColorPickers();
+    });
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Shop info form
+      document.getElementById('shopInfoForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        updateShopInfo();
+      });
+
+      // Appearance form
+      document.getElementById('appearanceForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        updateAppearance();
+      });
+
+      // Add user form
+      document.getElementById('addUserForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        submitAddUser();
+      });
+
+      // Remove logo button
+      document.getElementById('removeLogoBtn')?.addEventListener('click', function () {
+        removeLogo();
+      });
+
+      // Color picker live updates
+      document.getElementById('primaryColor').addEventListener('input', function () {
+        document.getElementById('primaryColorPreview').style.backgroundColor = this.value;
+      });
+
+      document.getElementById('secondaryColor').addEventListener('input', function () {
+        document.getElementById('secondaryColorPreview').style.backgroundColor = this.value;
+      });
+    }
+
+    // Initialize color pickers
+    function initializeColorPickers() {
+      // Color pickers are already initialized via HTML5 color input
+      // This function can be used for additional color picker functionality
+    }
+
+    // Load shop statistics
+    async function loadShopStatistics() {
+      try {
+        const response = await fetch('/api/shop/statistics');
+        const data = await response.json();
+
+        if (data.success) {
+          const stats = data.statistics;
+
+          // Format and display statistics
+          document.getElementById('registrationDate').textContent =
+            new Date(stats.registrationDate).toLocaleDateString();
+          document.getElementById('totalProducts').textContent = stats.totalProducts.toLocaleString();
+          document.getElementById('totalSales').textContent = formatCurrency(stats.totalSales);
+        }
+      } catch (error) {
+        console.error('Error loading shop statistics:', error);
+        showToast('Failed to load shop statistics', 'error');
+      }
+    }
+
+    // Load subscription information
+    async function loadSubscriptionInfo() {
+      try {
+        const response = await fetch('/api/shop/subscription');
+        const data = await response.json();
+
+        if (data.success) {
+          const subscription = data.subscription;
+
+          if (subscription) {
+            document.getElementById('currentPlan').textContent =
+              subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1) + ' Plan';
+            document.getElementById('planDescription').textContent =
+              `${subscription.duration} billing`;
+            document.getElementById('planPrice').textContent =
+              formatCurrency(subscription.price);
+            document.getElementById('billingCycle').textContent =
+              `Next billing: ${new Date(subscription.expiryDate).toLocaleDateString()}`;
+          } else {
+            document.getElementById('currentPlan').textContent = 'No Active Subscription';
+            document.getElementById('planDescription').textContent = 'Please subscribe to a plan';
+            document.getElementById('planPrice').textContent = '₨0';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading subscription info:', error);
+      }
+    }
+
+    // Load shop users
+    async function loadShopUsers() {
+      try {
+        const response = await fetch('/api/shop/users');
+        const data = await response.json();
+
+        const usersTable = document.getElementById('usersTable');
+
+        if (data.success && data.users.length > 0) {
+          let html = '';
+
+          data.users.forEach(user => {
+            html += `
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">${escapeHtml(user.name)}</div>
+                            <small class="text-muted">ID: ${user.id}</small>
+                        </td>
+                        <td>${escapeHtml(user.email)}</td>
+                        <td>
+                            <span class="badge ${getRoleBadgeClass(user.role)}">
+                                ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge ${user.status === 'active' ? 'bg-success' : 'bg-secondary'}">
+                                ${user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                            </span>
+                        </td>
+                        <td>${user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'Never'}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editUser(${user.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                ${user.role !== 'owner' ? `
+                                    <button class="btn btn-outline-danger" onclick="deleteUser(${user.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+          });
+
+          usersTable.innerHTML = html;
+        } else {
+          usersTable.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <div class="empty-state">
+                            <i class="fas fa-users fa-2x text-muted mb-3"></i>
+                            <h5>No Users Found</h5>
+                            <p class="text-muted">Add your first user to get started</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+      } catch (error) {
+        console.error('Error loading users:', error);
+        document.getElementById('usersTable').innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4 text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Failed to load users
+                </td>
+            </tr>
+        `;
+      }
+    }
+
+    // Update shop information
+    async function updateShopInfo() {
+      const form = document.getElementById('shopInfoForm');
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('/api/shop/update', {
+          method: 'PUT',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Shop information updated successfully!', 'success');
+          // Reload page to reflect changes
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          throw new Error(data.message || 'Failed to update shop information');
+        }
+      } catch (error) {
+        console.error('Error updating shop:', error);
+        showToast('Failed to update shop information', 'error');
+      }
+    }
+
+    // Update appearance
+    async function updateAppearance() {
+      const form = document.getElementById('appearanceForm');
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('/api/shop/appearance', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(Object.fromEntries(formData))
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Appearance settings updated successfully!', 'success');
+          // Reload page to apply new colors
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          throw new Error(data.message || 'Failed to update appearance');
+        }
+      } catch (error) {
+        console.error('Error updating appearance:', error);
+        showToast('Failed to update appearance settings', 'error');
+      }
+    }
+
+    // Remove shop logo
+    async function removeLogo() {
+      if (!confirm('Are you sure you want to remove the shop logo?')) return;
+
+      try {
+        const formData = new FormData();
+        formData.append('remove_logo', 'true');
+
+        const response = await fetch('/api/shop/update', {
+          method: 'PUT',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Logo removed successfully!', 'success');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          throw new Error(data.message || 'Failed to remove logo');
+        }
+      } catch (error) {
+        console.error('Error removing logo:', error);
+        showToast('Failed to remove logo', 'error');
+      }
+    }
+
+    // Add new user
+    function addUser() {
+      $('#addUserModal').modal('show');
+    }
+
+    // Submit add user form
+    async function submitAddUser() {
+      const form = document.getElementById('addUserForm');
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('/api/shop/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(Object.fromEntries(formData))
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('User added successfully!', 'success');
+          $('#addUserModal').modal('hide');
+          form.reset();
+          loadShopUsers(); // Reload users table
+
+          // Show temporary password (in production, send via email)
+          if (data.tempPassword) {
+            alert(`User created! Temporary password: ${data.tempPassword}\n\nPlease share this with the user and ask them to change it immediately.`);
+          }
+        } else {
+          throw new Error(data.message || 'Failed to add user');
+        }
+      } catch (error) {
+        console.error('Error adding user:', error);
+        showToast('Failed to add user', 'error');
+      }
+    }
+
+    // Edit user
+    function editUser(userId) {
+      // Implement edit user functionality
+      alert('Edit user: ' + userId);
+      // You would typically open a modal with user details for editing
+    }
+
+    // Delete user
+    async function deleteUser(userId) {
+      if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+
+      try {
+        const response = await fetch(`/api/shop/users/${userId}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('User deleted successfully!', 'success');
+          loadShopUsers(); // Reload users table
+        } else {
+          throw new Error(data.message || 'Failed to delete user');
+        }
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        showToast('Failed to delete user', 'error');
+      }
+    }
+
+    // Create backup
+    async function createBackup() {
+      if (!confirm('Create a backup of all shop data?')) return;
+
+      try {
+        showToast('Creating backup...', 'info');
+
+        const response = await fetch('/api/shop/backup', {
+          method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Backup created successfully!', 'success');
+
+          // Offer download
+          if (confirm('Backup created. Would you like to download it now?')) {
+            window.open(data.downloadUrl, '_blank');
+          }
+        } else {
+          throw new Error(data.message || 'Failed to create backup');
+        }
+      } catch (error) {
+        console.error('Error creating backup:', error);
+        showToast('Failed to create backup', 'error');
+      }
+    }
+
+    // Reset shop data
+    async function resetShopData() {
+      const confirmation = prompt('This will delete ALL shop data including products, sales, and user data. This action cannot be undone.\n\nType "DELETE_ALL_DATA" to confirm:');
+
+      if (confirmation !== 'DELETE_ALL_DATA') {
+        showToast('Reset cancelled', 'info');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/shop/reset', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ confirmation })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('All shop data has been reset', 'success');
+          setTimeout(() => location.reload(), 2000);
+        } else {
+          throw new Error(data.message || 'Failed to reset data');
+        }
+      } catch (error) {
+        console.error('Error resetting data:', error);
+        showToast('Failed to reset shop data', 'error');
+      }
+    }
+
+    // Utility functions
+    function formatCurrency(amount) {
+      const currency = window.shopData?.currency || 'PKR';
+      return new Intl.NumberFormat('en-PK', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount || 0);
+    }
+
+    function getRoleBadgeClass(role) {
+      const classes = {
+        'owner': 'bg-primary',
+        'manager': 'bg-success',
+        'cashier': 'bg-info',
+        'other': 'bg-secondary'
+      };
+      return classes[role] || 'bg-secondary';
+    }
+
+    function escapeHtml(unsafe) {
+      if (!unsafe) return '';
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function showToast(message, type = 'success') {
+      // Simple alert for now - replace with a proper toast notification if needed
+      alert(`${type.toUpperCase()}: ${message}`);
+
+      // In production, you can use:
+      // toastr[type](message);
+    }
+
+    // Placeholder functions for unimplemented features
+    function changePlan() { alert('Change plan functionality coming soon'); }
+    function backupData() { alert('Backup data functionality coming soon'); }
+    function exportReports() { alert('Export reports functionality coming soon'); }
+    function showApiSettings() { alert('API settings functionality coming soon'); }
+    function resetForm() { document.getElementById('shopInfoForm').reset(); }
+    function resetAppearance() {
+      document.getElementById('primaryColor').value = '#007bff';
+      document.getElementById('secondaryColor').value = '#6c757d';
+      document.getElementById('primaryColorPreview').style.backgroundColor = '#007bff';
+      document.getElementById('secondaryColorPreview').style.backgroundColor = '#6c757d';
+    }
+    function addPaymentMethod() { alert('Add payment method functionality coming soon'); }
+    function downloadInvoice(type) { alert('Download invoice functionality coming soon'); }
+    function viewAllInvoices() { alert('View all invoices functionality coming soon'); }
+    function generateApiKey() { alert('Generate API key functionality coming soon'); }
+    function viewBackups() { alert('View backups functionality coming soon'); }
+    function restoreBackup() { alert('Restore backup functionality coming soon'); }
+    function exportData() { alert('Export data functionality coming soon'); }
+    function deleteShop() {
+      if (confirm('This will permanently delete your shop and all associated data. This action cannot be undone. Are you absolutely sure?')) {
+        alert('Shop deletion functionality coming soon');
+      }
+    }
+  </script>
+</body>
+
+</html>

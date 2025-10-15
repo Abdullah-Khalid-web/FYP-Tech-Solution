@@ -14,6 +14,15 @@ const flash = require('express-flash');
 const registerRouter = require('./routes/auth/register');
 const productsRouter = require('./routes/products');
 const billsRouter = require('./routes/bills');
+const ALLbillsRouter = require('./routes/Allbills');
+const EmpMgmtRouter = require('./routes/EmpMgmt');
+const reportRouter = require('./routes/reports');
+const inventoryRouter = require('./routes/inventory');
+const userRouter = require('./routes/user');
+const shopRouter = require('./routes/shop');
+const alertRouter = require('./routes/alerts');
+const expenseRouter = require('./routes/expenses');
+const rawRouter = require('./routes/raw-materials');
 
 
 // Middleware setup - ORDER IS IMPORTANT
@@ -198,6 +207,15 @@ const getShopPrefix = async (req, res, next) => {
 app.use('/', registerRouter);
 app.use('/products', productsRouter);
 app.use('/bills', billsRouter);
+app.use('/Allbills', ALLbillsRouter);
+app.use('/EmpMgmt', EmpMgmtRouter);
+app.use('/reports', reportRouter);
+app.use('/inventory', inventoryRouter);
+app.use('/user_profile', userRouter);
+app.use('/shop_setting', shopRouter);
+app.use('/alerts', alertRouter);
+app.use('/expenses', expenseRouter);
+app.use('/raw', rawRouter);
 
 // Home 
 app.get('/', (req, res) => {
