@@ -23,6 +23,8 @@ const shopRouter = require('./routes/shop');
 const alertRouter = require('./routes/alerts');
 const expenseRouter = require('./routes/expenses');
 const rawRouter = require('./routes/raw-materials');
+const adminRoutes = require('./routes/admin');
+
 
 
 // Middleware setup - ORDER IS IMPORTANT
@@ -216,6 +218,8 @@ app.use('/shop_setting', shopRouter);
 app.use('/alerts', alertRouter);
 app.use('/expenses', expenseRouter);
 app.use('/raw', rawRouter);
+app.use('/admin', adminRoutes);
+app.use('/admin/login', adminRoutes);
 
 // Home 
 app.get('/', (req, res) => {

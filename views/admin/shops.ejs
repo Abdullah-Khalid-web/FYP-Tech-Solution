@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-header {
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        
+        .badge-active { background-color: #d1fae5; color: #065f46; }
+        .badge-inactive { background-color: #f3f4f6; color: #374151; }
+        .badge-blocked { background-color: #fee2e2; color: #dc2626; }
+        
+        .search-box {
+            max-width: 300px;
+        }
+        
+        .status-filter .btn-group .btn {
+            border-radius: 0.375rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-store me-2"></i><%= title %>
+                    </h1>
+                    <p class="mb-0 text-muted">Manage all shops in the system</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="/admin/dashboard" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Dashboard
+                    </a>
+                    <a href="/admin/users" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-users me-1"></i>Users
+                    </a>
+                    <a href="/admin/feedback" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-comments me-1"></i>Feedback
+                    </a>
+                    <a href="/admin/logout" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Filters and Search -->
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="status-filter">
+                            <label class="form-label me-2">Filter by Status:</label>
+                            <div class="btn-group" role="group">
+                                <a href="/admin/shops" class="btn <%= currentStatus === 'all' ? 'btn-primary' : 'btn-outline-primary' %>">All</a>
+                                <a href="/admin/shops?status=active" class="btn <%= currentStatus === 'active' ? 'btn-primary' : 'btn-outline-primary' %>">Active</a>
+                                <a href="/admin/sops?status=inactive" class="btn <%= currentStatus === 'inactive' ? 'btn-primary' : 'btn-outline-primary' %>">Inactive</a>
+                                <a href="/admin/shops?status=blocked" class="btn <%= currentStatus === 'blocked' ? 'btn-primary' : 'btn-outline-primary' %>">Blocked</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <form method="GET" class="d-flex">
+                            <input type="hidden" name="status" value="<%= currentStatus %>">
+                            <div class="input-group search-box">
+                                <input type="text" class="form-control" name="search" placeholder="Search shops..." value="<%= searchQuery %>">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shops Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Shops (<%= shops.length %> found)
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Shop Info</th>
+                                <th>Subscription</th>
+                                <th>Statistics</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% shops.forEach(shop => { %>
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold"><%= shop.name %></div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-envelope me-1"></i><%= shop.email %>
+                                        <% if (shop.phone) { %>
+                                        <br><i class="fas fa-phone me-1"></i><%= shop.phone %>
+                                        <% } %>
+                                    </small>
+                                    <div class="mt-1">
+                                        <small class="text-muted">ID: <%= shop.id %></small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <% if (shop.plan_name) { %>
+                                        <div class="fw-semibold"><%= shop.plan_name %></div>
+                                        <small class="text-muted">
+                                            Expires: <%= new Date(shop.expires_at).toLocaleDateString() %>
+                                        </small>
+                                        <div>
+                                            <span class="badge <%= shop.subscription_status === 'active' ? 'bg-success' : 'bg-warning' %>">
+                                                <%= shop.subscription_status %>
+                                            </span>
+                                        </div>
+                                    <% } else { %>
+                                        <span class="badge bg-secondary">No Subscription</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <div class="small">
+                                        <div><i class="fas fa-users me-1"></i> <%= shop.user_count || 0 %> Users</div>
+                                        <div><i class="fas fa-box me-1"></i> <%= shop.product_count || 0 %> Products</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-<%= shop.status %>">
+                                        <%= shop.status %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <%= new Date(shop.created_at).toLocaleDateString() %>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/admin/shops/<%= shop.id %>" class="btn btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <i class="fas fa-cog"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <% if (shop.status !== 'active') { %>
+                                                <li>
+                                                    <button class="dropdown-item" onclick="updateShopStatus('<%= shop.id %>', 'active')">
+                                                        <i class="fas fa-check text-success me-2"></i>Activate
+                                                    </button>
+                                                </li>
+                                                <% } %>
+                                                <% if (shop.status !== 'inactive') { %>
+                                                <li>
+                                                    <button class="dropdown-item" onclick="updateShopStatus('<%= shop.id %>', 'inactive')">
+                                                        <i class="fas fa-pause text-warning me-2"></i>Deactivate
+                                                    </button>
+                                                </li>
+                                                <% } %>
+                                                <% if (shop.status !== 'blocked') { %>
+                                                <li>
+                                                    <button class="dropdown-item" onclick="updateShopStatus('<%= shop.id %>', 'blocked')">
+                                                        <i class="fas fa-ban text-danger me-2"></i>Block
+                                                    </button>
+                                                </li>
+                                                <% } %>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <button class="dropdown-item text-info" onclick="extendSubscription('<%= shop.id %>', '<%= shop.name %>')">
+                                                        <i class="fas fa-plus-circle me-2"></i>Extend Subscription
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }); %>
+                            
+                            <% if (shops.length === 0) { %>
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="empty-state">
+                                        <i class="fas fa-store fa-3x text-muted mb-3"></i>
+                                        <h5>No Shops Found</h5>
+                                        <p class="text-muted">
+                                            <% if (currentStatus !== 'all' || searchQuery) { %>
+                                            Try changing your filters or search criteria
+                                            <% } else { %>
+                                            No shops have been registered yet
+                                            <% } %>
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extend Subscription Modal -->
+    <div class="modal fade" id="extendSubscriptionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Extend Subscription</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="extendSubscriptionForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Shop</label>
+                            <input type="text" class="form-control" id="extendShopName" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="extendDays" class="form-label">Number of Days</label>
+                            <input type="number" class="form-control" id="extendDays" name="days" min="1" max="365" value="30" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="extendReason" class="form-label">Reason (Optional)</label>
+                            <textarea class="form-control" id="extendReason" name="reason" rows="3" placeholder="Reason for extension..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Extend Subscription</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentShopId = null;
+        
+        function extendSubscription(shopId, shopName) {
+            currentShopId = shopId;
+            document.getElementById('extendShopName').value = shopName;
+            new bootstrap.Modal(document.getElementById('extendSubscriptionModal')).show();
+        }
+        
+        async function updateShopStatus(shopId, status) {
+            const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+            
+            if (!confirm(`Are you sure you want to ${status} this shop?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/admin/api/shops/${shopId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Shop ${status} successfully!`);
+                    location.reload();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        document.getElementById('extendSubscriptionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const days = formData.get('days');
+            const reason = formData.get('reason');
+            
+            try {
+                const response = await fetch(`/admin/api/shops/${currentShopId}/extend-subscription`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ days, reason })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Subscription extended successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('extendSubscriptionModal')).hide();
+                    location.reload();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-header {
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        
+        .search-box {
+            max-width: 300px;
+        }
+        
+        .role-badge {
+            font-size: 0.75rem;
+        }
+        
+        .badge-owner { background-color: #6366f1; color: white; }
+        .badge-manager { background-color: #10b981; color: white; }
+        .badge-cashier { background-color: #f59e0b; color: white; }
+        .badge-other { background-color: #6b7280; color: white; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-users me-2"></i><%= title %>
+                    </h1>
+                    <p class="mb-0 text-muted">Manage all users across all shops</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="/admin/dashboard" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Dashboard
+                    </a>
+                    <a href="/admin/shops" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-store me-1"></i>Shops
+                    </a>
+                    <a href="/admin/feedback" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-comments me-1"></i>Feedback
+                    </a>
+                    <a href="/admin/logout" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Filters and Search -->
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Filter by Shop</label>
+                        <select name="shop_id" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Shops</option>
+                            <% shops.forEach(shop => { %>
+                            <option value="<%= shop.id %>" <%= currentShopId == shop.id ? 'selected' : '' %>>
+                                <%= shop.name %>
+                            </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Filter by Status</label>
+                        <select name="status" class="form-select" onchange="this.form.submit()">
+                            <option value="all" <%= currentStatus === 'all' ? 'selected' : '' %>>All Status</option>
+                            <option value="active" <%= currentStatus === 'active' ? 'selected' : '' %>>Active</option>
+                            <option value="inactive" <%= currentStatus === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Search Users</label>
+                        <div class="input-group search-box">
+                            <input type="text" class="form-control" name="search" placeholder="Search users..." value="<%= searchQuery %>">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="/admin/users" class="btn btn-outline-secondary w-100">Clear Filters</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Users (<%= users.length %> found)
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>User Information</th>
+                                <th>Shop</th>
+                                <th>Role</th>
+                                <th>Salary</th>
+                                <th>Status</th>
+                                <th>Last Activity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% users.forEach(user => { %>
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold"><%= user.name %></div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-envelope me-1"></i><%= user.email %>
+                                    </small>
+                                    <div class="mt-1">
+                                        <small class="text-muted">ID: <%= user.id %></small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold"><%= user.shop_name %></div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-envelope me-1"></i><%= user.shop_email %>
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge role-badge badge-<%= user.role %>">
+                                        <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <% if (user.salary) { %>
+                                    $<%= user.salary %>
+                                    <% } else { %>
+                                    <span class="text-muted">-</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <span class="badge <%= user.status === 'active' ? 'bg-success' : 'bg-secondary' %>">
+                                        <%= user.status %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <%= user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'Never' %>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/admin/shops/<%= user.shop_id %>" class="btn btn-outline-info" title="View Shop">
+                                            <i class="fas fa-store"></i>
+                                        </a>
+                                        <button class="btn btn-outline-primary" onclick="editUser('<%= user.id %>')" title="Edit User">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <% if (user.status === 'active') { %>
+                                        <button class="btn btn-outline-warning" onclick="updateUserStatus('<%= user.id %>', 'inactive')" title="Deactivate">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                        <% } else { %>
+                                        <button class="btn btn-outline-success" onclick="updateUserStatus('<%= user.id %>', 'active')" title="Activate">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }); %>
+                            
+                            <% if (users.length === 0) { %>
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="empty-state">
+                                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                        <h5>No Users Found</h5>
+                                        <p class="text-muted">
+                                            <% if (currentShopId || currentStatus !== 'all' || searchQuery) { %>
+                                            Try changing your filters or search criteria
+                                            <% } else { %>
+                                            No users have been registered yet
+                                            <% } %>
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function updateUserStatus(userId, status) {
+            const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+            
+            if (!confirm(`Are you sure you want to ${status} this user?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/admin/api/users/${userId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`User ${status} successfully!`);
+                    location.reload();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function editUser(userId) {
+            alert('Edit user functionality for user ID: ' + userId);
+            // You can implement a modal for editing user details
+        }
+    </script>
+</body>
+</html>

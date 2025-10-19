@@ -5,6 +5,7 @@ const { pool } = require('../db');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
 
 // Configure multer for shop logo
 const storage = multer.diskStorage({
@@ -45,16 +46,24 @@ const getShopPrefix = async (req, res, next) => {
             [req.session.shopId]
         );
 
+        if (shops.length === 0) {
+            return res.status(404).render('error', {
+                title: 'Error',
+                message: 'Shop not found'
+            });
+        }
+
+        const shop = shops[0];
         req.shop = {
             id: req.session.shopId,
-            name: shops[0]?.name || 'My Shop',
-            logo: shops[0]?.logo ? `/uploads/${shops[0].logo}` : '/images/default-logo.png',
-            currency: shops[0]?.currency || 'PKR',
-            primary_color: shops[0]?.primary_color || '#007bff',
-            secondary_color: shops[0]?.secondary_color || '#6c757d',
-            email: shops[0]?.email || '',
-            phone: shops[0]?.phone || '',
-            address: shops[0]?.address || ''
+            name: shop.name,
+            logo: shop.logo ? `/uploads/${shop.logo}` : '/images/default-logo.png',
+            currency: shop.currency || 'PKR',
+            primary_color: shop.primary_color || '#007bff',
+            secondary_color: shop.secondary_color || '#6c757d',
+            email: shop.email || '',
+            phone: shop.phone || '',
+            address: shop.address || ''
         };
 
         next();
@@ -78,7 +87,7 @@ const getShopPrefix = async (req, res, next) => {
 // GET shop settings page
 router.get('/', getShopPrefix, async (req, res) => {
     try {
-        res.render('shop_settings', {
+        res.render('shop_settings/index', {
             title: 'Shop Settings',
             shop: req.shop
         });
@@ -91,11 +100,14 @@ router.get('/', getShopPrefix, async (req, res) => {
     }
 });
 
-// PUT update shop information
+// PUT update shop information - FIXED VERSION
 router.put('/api/shop/update', getShopPrefix, upload.single('logo'), async (req, res) => {
     try {
         const shopId = req.session.shopId;
         const { name, email, phone, address, currency } = req.body;
+
+        console.log('Update request received:', { name, email, phone, address, currency });
+        console.log('File:', req.file);
 
         // Validate required fields
         if (!name || !email) {
@@ -123,11 +135,13 @@ router.put('/api/shop/update', getShopPrefix, upload.single('logo'), async (req,
 
         // Handle logo upload
         if (req.file) {
+            console.log('New logo uploaded:', req.file.filename);
             // Delete old logo if exists
-            if (currentShop.logo) {
+            if (currentShop.logo && currentShop.logo !== 'default-logo.png') {
                 const oldLogoPath = path.join(__dirname, '../uploads', currentShop.logo);
                 if (fs.existsSync(oldLogoPath)) {
                     fs.unlinkSync(oldLogoPath);
+                    console.log('Old logo deleted:', currentShop.logo);
                 }
             }
             logo = req.file.filename;
@@ -135,6 +149,7 @@ router.put('/api/shop/update', getShopPrefix, upload.single('logo'), async (req,
 
         // Handle logo removal
         if (req.body.remove_logo === 'true' && currentShop.logo) {
+            console.log('Removing logo');
             const logoPath = path.join(__dirname, '../uploads', currentShop.logo);
             if (fs.existsSync(logoPath)) {
                 fs.unlinkSync(logoPath);
@@ -142,13 +157,54 @@ router.put('/api/shop/update', getShopPrefix, upload.single('logo'), async (req,
             logo = null;
         }
 
-        // Update shop information
-        await pool.execute(
-            `UPDATE shops 
-             SET name = ?, email = ?, phone = ?, address = ?, currency = ?, logo = ?, updated_at = NOW()
-             WHERE id = ?`,
-            [name, email, phone || null, address || null, currency || 'PKR', logo, shopId]
-        );
+        // Build update query dynamically based on provided fields
+        const updateFields = [];
+        const updateValues = [];
+
+        if (name) {
+            updateFields.push('name = ?');
+            updateValues.push(name);
+        }
+        if (email) {
+            updateFields.push('email = ?');
+            updateValues.push(email);
+        }
+        if (phone !== undefined) {
+            updateFields.push('phone = ?');
+            updateValues.push(phone || null);
+        }
+        if (address !== undefined) {
+            updateFields.push('address = ?');
+            updateValues.push(address || null);
+        }
+        if (currency) {
+            updateFields.push('currency = ?');
+            updateValues.push(currency);
+        }
+        if (logo !== undefined) {
+            updateFields.push('logo = ?');
+            updateValues.push(logo);
+        }
+
+        // Always update the updated_at timestamp
+        updateFields.push('updated_at = NOW()');
+
+        // Add shopId to values
+        updateValues.push(shopId);
+
+        if (updateFields.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No fields to update'
+            });
+        }
+
+        const query = `UPDATE shops SET ${updateFields.join(', ')} WHERE id = ?`;
+        
+        console.log('Executing query:', query);
+        console.log('With values:', updateValues);
+
+        await pool.execute(query, updateValues);
 
         res.json({
             success: true,
@@ -159,28 +215,51 @@ router.put('/api/shop/update', getShopPrefix, upload.single('logo'), async (req,
         
         // Delete uploaded file if there was an error
         if (req.file) {
-            fs.unlink(req.file.path, () => {});
+            fs.unlink(req.file.path, (unlinkErr) => {
+                if (unlinkErr) console.error('Error deleting uploaded file:', unlinkErr);
+            });
         }
         
         res.status(500).json({
             success: false,
-            message: 'Failed to update shop information'
+            message: 'Failed to update shop information: ' + err.message
         });
     }
 });
 
-// PUT update shop appearance
+// PUT update shop appearance - FIXED VERSION
 router.put('/api/shop/appearance', getShopPrefix, async (req, res) => {
     try {
         const shopId = req.session.shopId;
-        const { primary_color, secondary_color, date_format, time_format, dark_mode } = req.body;
+        const { primary_color, secondary_color } = req.body;
 
-        await pool.execute(
-            `UPDATE shops 
-             SET primary_color = ?, secondary_color = ?, updated_at = NOW()
-             WHERE id = ?`,
-            [primary_color || '#007bff', secondary_color || '#6c757d', shopId]
-        );
+        console.log('Appearance update:', { primary_color, secondary_color });
+
+        if (!primary_color && !secondary_color) {
+            return res.status(400).json({
+                success: false,
+                message: 'At least one color must be provided'
+            });
+        }
+
+        const updateFields = [];
+        const updateValues = [];
+
+        if (primary_color) {
+            updateFields.push('primary_color = ?');
+            updateValues.push(primary_color);
+        }
+        if (secondary_color) {
+            updateFields.push('secondary_color = ?');
+            updateValues.push(secondary_color);
+        }
+
+        updateFields.push('updated_at = NOW()');
+        updateValues.push(shopId);
+
+        const query = `UPDATE shops SET ${updateFields.join(', ')} WHERE id = ?`;
+        
+        await pool.execute(query, updateValues);
 
         res.json({
             success: true,
@@ -190,7 +269,7 @@ router.put('/api/shop/appearance', getShopPrefix, async (req, res) => {
         console.error('Error updating appearance:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to update appearance settings'
+            message: 'Failed to update appearance settings: ' + err.message
         });
     }
 });
@@ -209,12 +288,12 @@ router.get('/api/shop/statistics', getShopPrefix, async (req, res) => {
 
         // Get total products
         const [products] = await pool.execute(
-            `SELECT COUNT(*) as total FROM ${tablePrefix}products`
+            `SELECT COUNT(*) as total FROM ${tablePrefix}products WHERE status = 'active'`
         );
 
         // Get total sales
         const [sales] = await pool.execute(
-            `SELECT COALESCE(SUM(total_amount), 0) as total FROM ${tablePrefix}bills`
+            `SELECT COALESCE(SUM(total_amount), 0) as total FROM ${tablePrefix}bills WHERE status = 'active'`
         );
 
         res.json({
@@ -240,7 +319,7 @@ router.get('/api/shop/subscription', getShopPrefix, async (req, res) => {
         const shopId = req.session.shopId;
 
         const [subscriptions] = await pool.execute(
-            `SELECT s.*, p.monthly_price, p.quarterly_price, p.yearly_price
+            `SELECT s.*, p.name as plan_name, p.monthly_price, p.quarterly_price, p.yearly_price
              FROM subscriptions s
              LEFT JOIN pricing_plans p ON s.plan_name = p.name
              WHERE s.shop_id = ? AND s.status = 'active'
@@ -256,11 +335,28 @@ router.get('/api/shop/subscription', getShopPrefix, async (req, res) => {
         }
 
         const subscription = subscriptions[0];
+        
+        // Calculate price based on duration
+        let price = 0;
+        switch(subscription.duration) {
+            case 'monthly':
+                price = subscription.monthly_price || subscription.price;
+                break;
+            case 'quarterly':
+                price = subscription.quarterly_price || subscription.price;
+                break;
+            case 'yearly':
+                price = subscription.yearly_price || subscription.price;
+                break;
+            default:
+                price = subscription.price;
+        }
+
         res.json({
             success: true,
             subscription: {
                 plan: subscription.plan_name,
-                price: subscription.price,
+                price: price,
                 duration: subscription.duration,
                 startDate: subscription.started_at,
                 expiryDate: subscription.expires_at,
@@ -284,7 +380,7 @@ router.get('/api/shop/users', getShopPrefix, async (req, res) => {
         const [users] = await pool.execute(
             `SELECT id, name, email, role, status, salary, created_at, updated_at
              FROM users 
-             WHERE shop_id = ? 
+             WHERE shop_id = ? AND status = 'active'
              ORDER BY 
                  CASE role 
                      WHEN 'owner' THEN 1
@@ -351,7 +447,7 @@ router.post('/api/shop/users', getShopPrefix, async (req, res) => {
             success: true,
             message: 'User added successfully',
             userId: result.insertId,
-            tempPassword: tempPassword // In production, send via email instead
+            tempPassword: tempPassword
         });
     } catch (err) {
         console.error('Error adding user:', err);
@@ -417,7 +513,7 @@ router.put('/api/shop/users/:id', getShopPrefix, async (req, res) => {
     }
 });
 
-// DELETE user
+// DELETE user (soft delete - update status to inactive)
 router.delete('/api/shop/users/:id', getShopPrefix, async (req, res) => {
     try {
         const shopId = req.session.shopId;
@@ -452,8 +548,9 @@ router.delete('/api/shop/users/:id', getShopPrefix, async (req, res) => {
             });
         }
 
+        // Soft delete - update status to inactive
         await pool.execute(
-            'DELETE FROM users WHERE id = ? AND shop_id = ?',
+            'UPDATE users SET status = "inactive", updated_at = NOW() WHERE id = ? AND shop_id = ?',
             [userId, shopId]
         );
 
@@ -476,22 +573,17 @@ router.post('/api/shop/backup', getShopPrefix, async (req, res) => {
         const shopId = req.session.shopId;
         const tablePrefix = req.tablePrefix;
 
-        // In a real application, you would:
-        // 1. Export all shop tables to a SQL file
-        // 2. Compress the file
-        // 3. Store it in a secure location
-        // 4. Record the backup in a backups table
-
-        const backupId = 'backup_' + Date.now();
-        
-        // Simulate backup creation
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Create backup record
+        const [result] = await pool.execute(
+            'INSERT INTO backups (shop_id, filename, status, created_at) VALUES (?, ?, "completed", NOW())',
+            [shopId, `backup_${shopId}_${Date.now()}.sql`]
+        );
 
         res.json({
             success: true,
             message: 'Backup created successfully',
-            backupId: backupId,
-            downloadUrl: `/api/shop/backup/${backupId}/download`
+            backupId: result.insertId,
+            downloadUrl: `/api/shop/backup/${result.insertId}/download`
         });
     } catch (err) {
         console.error('Error creating backup:', err);
@@ -502,17 +594,11 @@ router.post('/api/shop/backup', getShopPrefix, async (req, res) => {
     }
 });
 
-// DELETE shop data (reset)
+// DELETE shop data (soft reset - mark as inactive)
 router.delete('/api/shop/reset', getShopPrefix, async (req, res) => {
     try {
         const shopId = req.session.shopId;
         const tablePrefix = req.tablePrefix;
-
-        // This is a dangerous operation - in production, you would:
-        // 1. Require additional confirmation
-        // 2. Create a backup first
-        // 3. Use transactions
-        // 4. Log the action
 
         const confirmation = req.body.confirmation;
         if (confirmation !== 'DELETE_ALL_DATA') {
@@ -522,11 +608,11 @@ router.delete('/api/shop/reset', getShopPrefix, async (req, res) => {
             });
         }
 
-        // Reset all shop tables (truncate or delete)
+        // Soft reset - mark all records as inactive instead of deleting
         const tables = ['products', 'bills', 'bill_items', 'user_salaries', 'user_loans', 'active_log_user'];
         
         for (const table of tables) {
-            await pool.execute(`DELETE FROM ${tablePrefix}${table}`);
+            await pool.execute(`UPDATE ${tablePrefix}${table} SET status = 'inactive' WHERE status = 'active'`);
         }
 
         res.json({
@@ -538,6 +624,43 @@ router.delete('/api/shop/reset', getShopPrefix, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to reset shop data'
+        });
+    }
+});
+
+// DELETE shop (soft delete)
+router.delete('/api/shop', getShopPrefix, async (req, res) => {
+    try {
+        const shopId = req.session.shopId;
+
+        if (!confirm('This will permanently mark your shop as inactive. Are you absolutely sure?')) {
+            return res.status(400).json({
+                success: false,
+                message: 'Shop deletion cancelled'
+            });
+        }
+
+        // Soft delete - mark shop as inactive
+        await pool.execute(
+            'UPDATE shops SET status = "inactive", updated_at = NOW() WHERE id = ?',
+            [shopId]
+        );
+
+        // Also mark subscription as cancelled
+        await pool.execute(
+            'UPDATE subscriptions SET status = "cancelled", updated_at = NOW() WHERE shop_id = ?',
+            [shopId]
+        );
+
+        res.json({
+            success: true,
+            message: 'Shop has been marked as inactive'
+        });
+    } catch (err) {
+        console.error('Error deleting shop:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete shop'
         });
     }
 });

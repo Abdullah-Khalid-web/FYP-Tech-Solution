@@ -1,439 +1,310 @@
-// routes/user_profile.js
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../db');
 const bcrypt = require('bcryptjs');
+const { pool } = require('../db');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
-// Middleware to get shop-specific table prefix and shop meta
-const getShopPrefix = async (req, res, next) => {
-  // Ensure shopId exists and is numeric
-  if (!req.session || !req.session.shopId) {
-    return res.status(403).json({ success: false, message: 'Shop not identified' });
+// Configure multer for user profile pictures
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../public/uploads/profiles');
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'profile-' + (req.session.userId || 'unknown') + '-' + uniqueSuffix + path.extname(file.originalname));
   }
+});
 
-  // sanitize/validate shopId to numeric to avoid injection
-  const shopId = Number(req.session.shopId);
-  if (!Number.isInteger(shopId) || shopId <= 0) {
-    return res.status(403).json({ success: false, message: 'Invalid shop identifier' });
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
   }
+});
 
-  // safe table prefix (only contains digits after validation)
-  req.tablePrefix = `shop_${shopId}_`;
-
+// GET /user - User Profile Page
+router.get('/', async (req, res) => {
   try {
-    const [shops] = await pool.execute('SELECT id, name, logo, currency, primary_color, secondary_color FROM shops WHERE id = ?', [shopId]);
+    if (!req.session.userId) {
+      return res.redirect('/login');
+    }
 
-    const s = shops[0] || {};
-    req.shop = {
-      id: shopId,
-      name: s.name || 'My Shop',
-      logo: s.logo ? `/uploads/${s.logo}` : '/images/default-logo.png',
-      currency: s.currency || 'PKR',
-      primary_color: s.primary_color || '#007bff',
-      secondary_color: s.secondary_color || '#6c757d'
-    };
+    const [users] = await pool.execute(
+      `SELECT u.*, s.name as shop_name, s.email as shop_email, s.phone as shop_phone, 
+              s.address as shop_address, s.logo as shop_logo, sub.plan_name, sub.expires_at
+       FROM users u 
+       LEFT JOIN shops s ON u.shop_id = s.id 
+       LEFT JOIN subscriptions sub ON s.id = sub.shop_id AND sub.status = 'active'
+       WHERE u.id = ?`,
+      [req.session.userId]
+    );
 
-    next();
-  } catch (err) {
-    console.error('Error fetching shop details:', err);
-    // fallback shop metadata
-    req.shop = {
-      id: shopId,
-      name: 'My Shop',
-      logo: '/images/default-logo.png',
-      currency: 'PKR',
-      primary_color: '#007bff',
-      secondary_color: '#6c757d'
-    };
-    next();
+    if (users.length === 0) {
+      return res.status(404).render('error', { 
+        title: 'User Not Found', 
+        error: 'User profile not found' 
+      });
+    }
+
+    const user = users[0];
+      
+    // Get user activity logs
+    let activities = [];
+    try {
+      const activityTable = `shop_${req.session.shopId}_active_log_user`;
+      const [activityRows] = await pool.execute(
+        `SELECT action, action_type, created_at 
+         FROM \`${activityTable}\` 
+         WHERE user_id = ? 
+         ORDER BY created_at DESC 
+         LIMIT 10`,
+        [req.session.userId]
+      );
+      activities = activityRows || [];
+    } catch (error) {
+      console.log('Activity table not found or error:', error.message);
+    }
+
+    // Get salary information
+    let salaryHistory = [];
+    try {
+      const salaryTable = `shop_${req.session.shopId}_user_salaries`;
+      const [salaryRows] = await pool.execute(
+        `SELECT month, amount, paid_on, status, notes 
+         FROM \`${salaryTable}\` 
+         WHERE user_id = ? 
+         ORDER BY month DESC 
+         LIMIT 6`,
+        [req.session.userId]
+      );
+      salaryHistory = salaryRows || [];
+    } catch (error) {
+      console.log('Salary table not found or error:', error.message);
+    }
+
+    // Get loan information
+    let loanHistory = [];
+    try {
+      const loanTable = `shop_${req.session.shopId}_user_loans`;
+      const [loanRows] = await pool.execute(
+        `SELECT amount, taken_on, status, due_amount, notes 
+         FROM \`${loanTable}\` 
+         WHERE user_id = ? 
+         ORDER BY taken_on DESC 
+         LIMIT 5`,
+        [req.session.userId]
+      );
+      loanHistory = loanRows || [];
+    } catch (error) {
+      console.log('Loan table not found or error:', error.message);
+    }
+
+    res.render('user_profile', {
+      title: 'My Profile',
+      user: user,
+      activities: activities,
+      salaryHistory: salaryHistory,
+      loanHistory: loanHistory,
+      success: req.query.success,
+      error: req.query.error
+    });
+
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).render('error', { 
+      title: 'Server Error', 
+      error: 'Failed to load user profile' 
+    });
   }
-};
-
-// GET user profile page
-router.get('/profile', getShopPrefix, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        
-        if (!userId) {
-            return res.status(401).render('error', {
-                title: 'Error',
-                message: 'Please login to access your profile'
-            });
-        }
-        
-        // Get user details
-        const [users] = await pool.execute(
-            'SELECT * FROM users WHERE id = ?',
-            [userId]
-        );
-        
-        if (users.length === 0) {
-            return res.status(404).render('error', {
-                title: 'Error',
-                message: 'User not found'
-            });
-        }
-        
-        res.render('users/profile', {
-            title: 'My Profile',
-            user: users[0],
-            shop: req.shop
-        });
-    } catch (err) {
-        console.error('Error loading user profile:', err);
-        res.status(500).render('error', {
-            title: 'Error',
-            message: 'Failed to load profile'
-        });
-    }
 });
 
-// GET user statistics
-router.get('/api/user/statistics', getShopPrefix, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        const tablePrefix = req.tablePrefix;
-        
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized'
-            });
-        }
-
-        // Get total bills and sales
-        const [bills] = await pool.execute(
-            `SELECT COUNT(*) as totalBills, COALESCE(SUM(total_amount), 0) as totalSales
-             FROM ${tablePrefix}bills 
-             WHERE created_by = ?`,
-            [userId]
-        );
-        
-        const totalBills = parseInt(bills[0].totalBills) || 0;
-        const totalSales = parseFloat(bills[0].totalSales) || 0;
-        const averageBill = totalBills > 0 ? totalSales / totalBills : 0;
-        
-        // Get this month's bills
-        const [monthBills] = await pool.execute(
-            `SELECT COUNT(*) as monthBills
-             FROM ${tablePrefix}bills 
-             WHERE created_by = ? AND MONTH(created_at) = MONTH(CURRENT_DATE()) 
-             AND YEAR(created_at) = YEAR(CURRENT_DATE())`,
-            [userId]
-        );
-        
-        const thisMonthBills = parseInt(monthBills[0].monthBills) || 0;
-        
-        res.json({
-            success: true,
-            statistics: {
-                totalBills,
-                totalSales,
-                averageBill,
-                thisMonthBills
-            }
-        });
-    } catch (err) {
-        console.error('Error fetching user statistics:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to load statistics'
-        });
+// POST /user - Update User Profile
+router.post('/', upload.single('profile_picture'), async (req, res) => {
+  const { name, email, phone, cnic, salary } = req.body;
+  
+  let connection;
+  try {
+    if (!req.session.userId) {
+      return res.redirect('/login');
     }
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    // Check if email already exists for other users
+    const [existingUsers] = await connection.execute(
+      `SELECT id FROM users WHERE email = ? AND id != ? AND shop_id = ?`,
+      [email, req.session.userId, req.session.shopId]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.redirect('/user_profile?error=Email already exists');
+    }
+
+    // First, check if profile_picture column exists, if not, add it
+    try {
+      await connection.execute('SELECT profile_picture FROM users LIMIT 1');
+    } catch (error) {
+      // Column doesn't exist, so add it
+      await connection.execute('ALTER TABLE users ADD COLUMN profile_picture VARCHAR(255) NULL');
+    }
+
+    // Update user data
+    const updateFields = ['name = ?', 'email = ?', 'phone = ?', 'cnic = ?', 'updated_at = NOW()'];
+    const updateValues = [name, email, phone || null, cnic || null];
+
+    // Add salary if user is owner/admin
+    if (req.session.role === 'owner' || req.session.role === 'admin') {
+      updateFields.push('salary = ?');
+      updateValues.push(salary ? parseFloat(salary) : null);
+    }
+
+    // Add profile picture if uploaded
+    if (req.file) {
+      updateFields.push('profile_picture = ?');
+      updateValues.push(req.file.filename);
+      
+      // Delete old profile picture if exists
+      const [oldUser] = await connection.execute(
+        'SELECT profile_picture FROM users WHERE id = ?',
+        [req.session.userId]
+      );
+      
+      if (oldUser[0]?.profile_picture) {
+        const oldPath = path.join(__dirname, '../public/uploads/profiles', oldUser[0].profile_picture);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+    }
+
+    updateValues.push(req.session.userId);
+
+    await connection.execute(
+      `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`,
+      updateValues
+    );
+
+    // Log the activity
+    try {
+      const activityTable = `shop_${req.session.shopId}_active_log_user`;
+      await connection.execute(
+        `INSERT INTO \`${activityTable}\` (user_id, action, action_type) 
+         VALUES (?, 'Updated profile information', 'profile_update')`,
+        [req.session.userId]
+      );
+    } catch (error) {
+      console.log('Could not log activity:', error.message);
+    }
+
+    await connection.commit();
+    connection.release();
+
+    // Update session data
+    req.session.username = name;
+
+    res.redirect('/user_profile?success=Profile updated successfully');
+
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+      connection.release();
+    }
+    
+    // Delete uploaded file if error occurred
+    if (req.file) {
+      fs.unlink(req.file.path, () => {});
+    }
+    
+    console.error('Error updating profile:', error);
+    res.redirect('/user_profile?error=Failed to update profile');
+  }
 });
 
-// GET salary history
-router.get('/api/user/salary-history', getShopPrefix, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        const tablePrefix = req.tablePrefix;
-        
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized'
-            });
-        }
-
-        const [salaries] = await pool.execute(
-            `SELECT * FROM ${tablePrefix}user_salaries 
-             WHERE user_id = ? 
-             ORDER BY month DESC 
-             LIMIT 12`,
-            [userId]
-        );
-        
-        res.json({
-            success: true,
-            salaries: salaries
-        });
-    } catch (err) {
-        console.error('Error fetching salary history:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to load salary history'
-        });
+// POST /user/change-password - Change Password
+router.post('/change-password', async (req, res) => {
+  const { current_password, new_password, confirm_password } = req.body;
+  
+  let connection;
+  try {
+    if (!req.session.userId) {
+      return res.redirect('/login');
     }
-});
 
-// GET work statistics
-router.get('/api/user/work-statistics', getShopPrefix, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        const tablePrefix = req.tablePrefix;
-        
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized'
-            });
-        }
-
-        // Current month statistics
-        const [currentMonth] = await pool.execute(
-            `SELECT COUNT(*) as bills, COALESCE(SUM(total_amount), 0) as sales
-             FROM ${tablePrefix}bills 
-             WHERE created_by = ? AND MONTH(created_at) = MONTH(CURRENT_DATE()) 
-             AND YEAR(created_at) = YEAR(CURRENT_DATE())`,
-            [userId]
-        );
-        
-        const currentMonthBills = parseInt(currentMonth[0].bills) || 0;
-        const currentMonthSales = parseFloat(currentMonth[0].sales) || 0;
-        const currentMonthAverage = currentMonthBills > 0 ? currentMonthSales / currentMonthBills : 0;
-        
-        // Last 6 months data for chart
-        const [monthlyData] = await pool.execute(
-            `SELECT 
-                DATE_FORMAT(created_at, '%Y-%m') as month,
-                COUNT(*) as bills,
-                COALESCE(SUM(total_amount), 0) as sales
-             FROM ${tablePrefix}bills 
-             WHERE created_by = ? AND created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
-             GROUP BY DATE_FORMAT(created_at, '%Y-%m')
-             ORDER BY month DESC
-             LIMIT 6`,
-            [userId]
-        );
-        
-        res.json({
-            success: true,
-            statistics: {
-                currentMonth: {
-                    bills: currentMonthBills,
-                    sales: currentMonthSales,
-                    averageBill: currentMonthAverage
-                },
-                monthlyData: monthlyData.reverse() // Reverse to show chronological order
-            }
-        });
-    } catch (err) {
-        console.error('Error fetching work statistics:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to load work statistics'
-        });
+    if (!current_password || !new_password || !confirm_password) {
+      return res.redirect('/user_profile?error=All password fields are required');
     }
-});
 
-// GET loan information
-router.get('/api/user/loans', getShopPrefix, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        const tablePrefix = req.tablePrefix;
-        
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized'
-            });
-        }
-
-        const [loans] = await pool.execute(
-            `SELECT * FROM ${tablePrefix}user_loans 
-             WHERE user_id = ? 
-             ORDER BY taken_on DESC`,
-            [userId]
-        );
-        
-        res.json({
-            success: true,
-            loans: loans
-        });
-    } catch (err) {
-        console.error('Error fetching loan information:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to load loan information'
-        });
+    if (new_password !== confirm_password) {
+      return res.redirect('/user_profile?error=New passwords do not match');
     }
-});
 
-// GET recent activity
-router.get('/api/user/recent-activity', getShopPrefix, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        const tablePrefix = req.tablePrefix;
-        
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized'
-            });
-        }
-
-        const [activities] = await pool.execute(
-            `SELECT * FROM ${tablePrefix}active_log_user 
-             WHERE user_id = ? 
-             ORDER BY created_at DESC 
-             LIMIT 10`,
-            [userId]
-        );
-        
-        res.json({
-            success: true,
-            activities: activities
-        });
-    } catch (err) {
-        console.error('Error fetching recent activity:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to load recent activity'
-        });
+    if (new_password.length < 6) {
+      return res.redirect('/user_profile?error=Password must be at least 6 characters long');
     }
-});
 
-// PUT update user profile
-router.put('/api/user/update-profile', getShopPrefix, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        const { name, email, phone, cnic, salary, notes } = req.body;
-        
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized'
-            });
-        }
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
 
-        // Validate required fields
-        if (!name || !email) {
-            return res.status(400).json({
-                success: false,
-                message: 'Name and email are required'
-            });
-        }
+    // Get current password hash
+    const [users] = await connection.execute(
+      'SELECT password FROM users WHERE id = ?',
+      [req.session.userId]
+    );
 
-        // Check if email already exists for other users
-        const [existingUsers] = await pool.execute(
-            'SELECT id FROM users WHERE email = ? AND id != ?',
-            [email, userId]
-        );
-
-        if (existingUsers.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email already exists'
-            });
-        }
-
-        await pool.execute(
-            `UPDATE users 
-             SET name = ?, email = ?, phone = ?, cnic = ?, salary = ?, notes = ?, updated_at = NOW()
-             WHERE id = ?`,
-            [name, email, phone || null, cnic || null, salary ? parseFloat(salary) : null, notes || null, userId]
-        );
-        
-        res.json({
-            success: true,
-            message: 'Profile updated successfully'
-        });
-    } catch (err) {
-        console.error('Error updating profile:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to update profile'
-        });
+    if (users.length === 0) {
+      return res.redirect('/user_profile?error=User not found');
     }
-});
 
-// POST change password
-router.post('/api/user/change-password', getShopPrefix, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        const { currentPassword, newPassword, confirmPassword } = req.body;
-        
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized'
-            });
-        }
-
-        // Validate input
-        if (!currentPassword || !newPassword || !confirmPassword) {
-            return res.status(400).json({
-                success: false,
-                message: 'All password fields are required'
-            });
-        }
-
-        if (newPassword !== confirmPassword) {
-            return res.status(400).json({
-                success: false,
-                message: 'New passwords do not match'
-            });
-        }
-
-        if (newPassword.length < 6) {
-            return res.status(400).json({
-                success: false,
-                message: 'Password must be at least 6 characters long'
-            });
-        }
-
-        // Get current password hash
-        const [users] = await pool.execute(
-            'SELECT password FROM users WHERE id = ?',
-            [userId]
-        );
-        
-        if (users.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
-        
-        // Verify current password
-        const isMatch = await bcrypt.compare(currentPassword, users[0].password);
-        if (!isMatch) {
-            return res.status(400).json({
-                success: false,
-                message: 'Current password is incorrect'
-            });
-        }
-        
-        // Hash new password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        
-        // Update password
-        await pool.execute(
-            'UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?',
-            [hashedPassword, userId]
-        );
-        
-        res.json({
-            success: true,
-            message: 'Password changed successfully'
-        });
-    } catch (err) {
-        console.error('Error changing password:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to change password'
-        });
+    const isMatch = await bcrypt.compare(current_password, users[0].password);
+    if (!isMatch) {
+      return res.redirect('/user_profile?error=Current password is incorrect');
     }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
+    // Update password
+    await connection.execute(
+      'UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?',
+      [hashedPassword, req.session.userId]
+    );
+
+    // Log the activity
+    try {
+      const activityTable = `shop_${req.session.shopId}_active_log_user`;
+      await connection.execute(
+        `INSERT INTO \`${activityTable}\` (user_id, action, action_type) 
+         VALUES (?, 'Changed password', 'security')`,
+        [req.session.userId]
+      );
+    } catch (error) {
+      console.log('Could not log activity:', error.message);
+    }
+
+    await connection.commit();
+    connection.release();
+
+    res.redirect('/user_profile?success=Password changed successfully');
+
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+      connection.release();
+    }
+    
+    console.error('Error changing password:', error);
+    res.redirect('/user_profile?error=Failed to change password');
+  }
 });
 
 module.exports = router;
