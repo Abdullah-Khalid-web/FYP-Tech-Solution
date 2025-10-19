@@ -6,8 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shop Settings - <%= (shop && shop.name) || 'My Shop' %>
   </title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     :root {
       --primary-color: <%=(shop && shop.primary_color) || '#007bff' %>;
@@ -388,7 +386,7 @@
                           <div class="input-group">
                             <span class="input-group-text">
                               <div class="color-preview" id="primaryColorPreview"
-                                style="background-color: <%= shop.primary_color %>"></div>
+                                style="background-color: '<%= shop.primary_color %>'"></div>
                             </span>
                             <input type="color" class="form-control form-control-color" id="primaryColor"
                               name="primary_color" value="<%= shop.primary_color %>" title="Choose primary color">
@@ -466,6 +464,7 @@
                 <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Preview</h5>
               </div>
               <div class="card-body">
+                <!-- In the appearance tab preview section -->
                 <div class="text-center p-4 border rounded"
                   style="background-color: <%= shop.primary_color %>; color: white;">
                   <h6 class="mb-2">Primary Color Preview</h6>
@@ -834,6 +833,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // Shop data for JavaScript
+    // Update the window.shopData initialization at the top of your script
     window.shopData = {
       currency: '<%= (shop && shop.currency) || "PKR" %>',
       name: '<%= (shop && shop.name) || "My Shop" %>',
@@ -841,6 +841,56 @@
       secondaryColor: '<%= (shop && shop.secondary_color) || "#6c757d" %>'
     };
 
+    // Fix the color picker initialization in setupEventListeners
+    function setupEventListeners() {
+      // Shop info form
+      document.getElementById('shopInfoForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        updateShopInfo();
+      });
+
+      // Appearance form
+      document.getElementById('appearanceForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        updateAppearance();
+      });
+
+      // Add user form
+      document.getElementById('addUserForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        submitAddUser();
+      });
+
+      // Remove logo button
+      const removeLogoBtn = document.getElementById('removeLogoBtn');
+      if (removeLogoBtn) {
+        removeLogoBtn.addEventListener('click', function () {
+          removeLogo();
+        });
+      }
+
+      // Color picker live updates
+      const primaryColor = document.getElementById('primaryColor');
+      const secondaryColor = document.getElementById('secondaryColor');
+
+      if (primaryColor) {
+        primaryColor.addEventListener('input', function () {
+          const preview = document.getElementById('primaryColorPreview');
+          if (preview) {
+            preview.style.backgroundColor = this.value;
+          }
+        });
+      }
+
+      if (secondaryColor) {
+        secondaryColor.addEventListener('input', function () {
+          const preview = document.getElementById('secondaryColorPreview');
+          if (preview) {
+            preview.style.backgroundColor = this.value;
+          }
+        });
+      }
+    }
     // Main initialization
     document.addEventListener('DOMContentLoaded', function () {
       console.log('Initializing shop settings...');
@@ -896,6 +946,46 @@
     function initializeColorPickers() {
       // Color pickers are already initialized via HTML5 color input
       // This function can be used for additional color picker functionality
+    }
+
+
+    // debug
+    // Update shop information - DEBUG VERSION
+    async function updateShopInfo() {
+      const form = document.getElementById('shopInfoForm');
+      const formData = new FormData(form);
+
+      console.log('Form data:', {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        address: formData.get('address'),
+        currency: formData.get('currency'),
+        logo: formData.get('logo')
+      });
+
+      try {
+        const response = await fetch('/api/shop/update', {
+          method: 'PUT',
+          body: formData
+        });
+
+        console.log('Response status:', response.status);
+
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+          showToast('Shop information updated successfully!', 'success');
+          // Reload page to reflect changes
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          throw new Error(data.message || 'Failed to update shop information');
+        }
+      } catch (error) {
+        console.error('Error updating shop:', error);
+        showToast('Failed to update shop information: ' + error.message, 'error');
+      }
     }
 
     // Load shop statistics

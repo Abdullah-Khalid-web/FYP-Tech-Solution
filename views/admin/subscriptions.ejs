@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-header {
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        
+        .pricing-card {
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .pricing-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+        }
+        
+        .pricing-card.popular {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        
+        .popular-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .price-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .price-period {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-list li i {
+            color: #10b981;
+            margin-right: 0.5rem;
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6b7280;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-credit-card me-2"></i><%= title %>
+                    </h1>
+                    <p class="mb-0 text-muted">Manage subscription plans and pricing</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="/admin/dashboard" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Dashboard
+                    </a>
+                    <a href="/admin/shops" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-store me-1"></i>Shops
+                    </a>
+                    <a href="/admin/users" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-users me-1"></i>Users
+                    </a>
+                    <a href="/admin/logout" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Navigation Tabs -->
+        <div class="card">
+            <div class="card-body p-0">
+                <ul class="nav nav-tabs" id="subscriptionTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="plans-tab" data-bs-toggle="tab" data-bs-target="#plans" type="button">
+                            <i class="fas fa-list me-2"></i>Subscription Plans
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="add-tab" data-bs-toggle="tab" data-bs-target="#add" type="button">
+                            <i class="fas fa-plus me-2"></i>Add New Plan
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="subscriptionTabsContent">
+            <!-- Plans Tab -->
+            <div class="tab-pane fade show active" id="plans" role="tabpanel">
+                <div class="row">
+                    <% plans.forEach((plan, index) => { 
+                        const features = typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features;
+                        const isPopular = index === 1; // Middle plan is popular
+                    %>
+                    <div class="col-xl-4 col-md-6 mb-4">
+                        <div class="card pricing-card <%= isPopular ? 'popular' : '' %> h-100">
+                            <% if (isPopular) { %>
+                            <div class="popular-badge">MOST POPULAR</div>
+                            <% } %>
+                            
+                            <div class="card-header text-center">
+                                <h4 class="mb-1"><%= plan.name %></h4>
+                                <% if (plan.description) { %>
+                                <p class="text-muted mb-0"><%= plan.description %></p>
+                                <% } %>
+                            </div>
+                            
+                            <div class="card-body">
+                                <!-- Monthly Price -->
+                                <div class="text-center mb-4">
+                                    <div class="price-amount">$<%= plan.monthly_price %></div>
+                                    <div class="price-period">per month</div>
+                                </div>
+                                
+                                <!-- Quarterly Price -->
+                                <div class="text-center mb-4">
+                                    <div class="h5">$<%= plan.quarterly_price %></div>
+                                    <div class="price-period">per quarter</div>
+                                    <small class="text-success">Save $<%= (plan.monthly_price * 3 - plan.quarterly_price).toFixed(2) %> vs monthly</small>
+                                </div>
+                                
+                                <!-- Yearly Price -->
+                                <div class="text-center mb-4">
+                                    <div class="h5">$<%= plan.yearly_price %></div>
+                                    <div class="price-period">per year</div>
+                                    <small class="text-success">Save $<%= (plan.monthly_price * 12 - plan.yearly_price).toFixed(2) %> vs monthly</small>
+                                </div>
+                                
+                                <!-- Features -->
+                                <% if (features && features.length > 0) { %>
+                                <ul class="feature-list">
+                                    <% features.forEach(feature => { %>
+                                    <li><i class="fas fa-check"></i><%= feature %></li>
+                                    <% }); %>
+                                </ul>
+                                <% } %>
+                            </div>
+                            
+                            <div class="card-footer bg-transparent">
+                                <div class="btn-group w-100">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="editPlan('<%= plan.id %>')">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="deletePlan('<%= plan.id %>', '<%= plan.name %>')">
+                                        <i class="fas fa-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                    
+                    <% if (plans.length === 0) { %>
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center py-5">
+                                <i class="fas fa-credit-card fa-3x text-muted mb-3"></i>
+                                <h5>No Subscription Plans</h5>
+                                <p class="text-muted">Create your first subscription plan to get started</p>
+                                <button class="btn btn-primary" onclick="switchToAddTab()">
+                                    <i class="fas fa-plus me-2"></i>Create First Plan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Add New Plan Tab -->
+            <div class="tab-pane fade" id="add" role="tabpanel">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Create New Subscription Plan</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="addPlanForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="planName" class="form-label">Plan Name *</label>
+                                                <input type="text" class="form-control" id="planName" name="name" required placeholder="e.g., Basic, Pro, Enterprise">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="planDescription" class="form-label">Description</label>
+                                                <input type="text" class="form-control" id="planDescription" name="description" placeholder="Short description of the plan">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="monthlyPrice" class="form-label">Monthly Price ($) *</label>
+                                                <input type="number" class="form-control" id="monthlyPrice" name="monthly_price" step="0.01" min="0" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="quarterlyPrice" class="form-label">Quarterly Price ($) *</label>
+                                                <input type="number" class="form-control" id="quarterlyPrice" name="quarterly_price" step="0.01" min="0" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="yearlyPrice" class="form-label">Yearly Price ($) *</label>
+                                                <input type="number" class="form-control" id="yearlyPrice" name="yearly_price" step="0.01" min="0" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Features</label>
+                                        <div id="featuresContainer">
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control feature-input" placeholder="Add a feature (e.g., 100 Products Limit)">
+                                                <button type="button" class="btn btn-outline-success" onclick="addFeature()">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="featuresList" class="mt-2"></div>
+                                        <small class="text-muted">Add features that describe what this plan includes</small>
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>Create Plan
+                                        </button>
+                                        <button type="button" class="btn btn-outline" onclick="resetForm()">
+                                            <i class="fas fa-undo me-2"></i>Reset
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Plan Modal -->
+    <div class="modal fade" id="editPlanModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Subscription Plan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editPlanForm">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editPlanName" class="form-label">Plan Name *</label>
+                                    <input type="text" class="form-control" id="editPlanName" name="name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editPlanDescription" class="form-label">Description</label>
+                                    <input type="text" class="form-control" id="editPlanDescription" name="description">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="editMonthlyPrice" class="form-label">Monthly Price ($) *</label>
+                                    <input type="number" class="form-control" id="editMonthlyPrice" name="monthly_price" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="editQuarterlyPrice" class="form-label">Quarterly Price ($) *</label>
+                                    <input type="number" class="form-control" id="editQuarterlyPrice" name="quarterly_price" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="editYearlyPrice" class="form-label">Yearly Price ($) *</label>
+                                    <input type="number" class="form-control" id="editYearlyPrice" name="yearly_price" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="editPlanStatus" name="status">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Features</label>
+                            <div id="editFeaturesContainer">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control edit-feature-input" placeholder="Add a feature">
+                                    <button type="button" class="btn btn-outline-success" onclick="addEditFeature()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="editFeaturesList" class="mt-2"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Plan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentPlanId = null;
+        let features = [];
+        let editFeatures = [];
+
+        // Feature management for add form
+        function addFeature() {
+            const input = document.querySelector('.feature-input');
+            const feature = input.value.trim();
+            
+            if (feature) {
+                features.push(feature);
+                updateFeaturesList();
+                input.value = '';
+            }
+        }
+
+        function removeFeature(index) {
+            features.splice(index, 1);
+            updateFeaturesList();
+        }
+
+        function updateFeaturesList() {
+            const container = document.getElementById('featuresList');
+            container.innerHTML = '';
+            
+            features.forEach((feature, index) => {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-primary me-2 mb-2';
+                badge.innerHTML = `${feature} <i class="fas fa-times ms-1" style="cursor:pointer;" onclick="removeFeature(${index})"></i>`;
+                container.appendChild(badge);
+            });
+        }
+
+        // Feature management for edit form
+        function addEditFeature() {
+            const input = document.querySelector('.edit-feature-input');
+            const feature = input.value.trim();
+            
+            if (feature) {
+                editFeatures.push(feature);
+                updateEditFeaturesList();
+                input.value = '';
+            }
+        }
+
+        function removeEditFeature(index) {
+            editFeatures.splice(index, 1);
+            updateEditFeaturesList();
+        }
+
+        function updateEditFeaturesList() {
+            const container = document.getElementById('editFeaturesList');
+            container.innerHTML = '';
+            
+            editFeatures.forEach((feature, index) => {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-primary me-2 mb-2';
+                badge.innerHTML = `${feature} <i class="fas fa-times ms-1" style="cursor:pointer;" onclick="removeEditFeature(${index})"></i>`;
+                container.appendChild(badge);
+            });
+        }
+
+        // Form handling
+        document.getElementById('addPlanForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {
+                name: formData.get('name'),
+                description: formData.get('description'),
+                monthly_price: parseFloat(formData.get('monthly_price')),
+                quarterly_price: parseFloat(formData.get('quarterly_price')),
+                yearly_price: parseFloat(formData.get('yearly_price')),
+                features: features
+            };
+
+            try {
+                const response = await fetch('/admin/api/subscriptions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Subscription plan created successfully!');
+                    resetForm();
+                    location.reload();
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        document.getElementById('editPlanForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {
+                name: formData.get('name'),
+                description: formData.get('description'),
+                monthly_price: parseFloat(formData.get('monthly_price')),
+                quarterly_price: parseFloat(formData.get('quarterly_price')),
+                yearly_price: parseFloat(formData.get('yearly_price')),
+                status: formData.get('status'),
+                features: editFeatures
+            };
+
+            try {
+                const response = await fetch(`/admin/api/subscriptions/${currentPlanId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Subscription plan updated successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('editPlanModal')).hide();
+                    location.reload();
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Plan management functions
+        async function editPlan(planId) {
+            try {
+                const response = await fetch(`/admin/api/subscriptions/${planId}`);
+                const plan = await response.json();
+
+                if (plan) {
+                    currentPlanId = planId;
+                    document.getElementById('editPlanName').value = plan.name;
+                    document.getElementById('editPlanDescription').value = plan.description || '';
+                    document.getElementById('editMonthlyPrice').value = plan.monthly_price;
+                    document.getElementById('editQuarterlyPrice').value = plan.quarterly_price;
+                    document.getElementById('editYearlyPrice').value = plan.yearly_price;
+                    document.getElementById('editPlanStatus').value = plan.status;
+                    
+                    editFeatures = typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features;
+                    updateEditFeaturesList();
+                    
+                    new bootstrap.Modal(document.getElementById('editPlanModal')).show();
+                }
+            } catch (error) {
+                alert('Error loading plan details: ' + error.message);
+            }
+        }
+
+        async function deletePlan(planId, planName) {
+            if (!confirm(`Are you sure you want to delete the "${planName}" plan? This will make it unavailable for new subscriptions.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/admin/api/subscriptions/${planId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Subscription plan deleted successfully!');
+                    location.reload();
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('addPlanForm').reset();
+            features = [];
+            updateFeaturesList();
+        }
+
+        function switchToAddTab() {
+            const addTab = new bootstrap.Tab(document.getElementById('add-tab'));
+            addTab.show();
+        }
+
+        // Allow pressing Enter to add features
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const activeElement = document.activeElement;
+                if (activeElement.classList.contains('feature-input')) {
+                    e.preventDefault();
+                    addFeature();
+                } else if (activeElement.classList.contains('edit-feature-input')) {
+                    e.preventDefault();
+                    addEditFeature();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

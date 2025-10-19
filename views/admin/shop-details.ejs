@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-header {
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6b7280;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            background: transparent;
+        }
+        
+        .info-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-store me-2"></i><%= shop.name %>
+                    </h1>
+                    <p class="mb-0 text-muted">
+                        Shop ID: <%= shop.id %> | 
+                        Created: <%= new Date(shop.created_at).toLocaleDateString() %> |
+                        Status: <span class="badge <%= shop.status === 'active' ? 'bg-success' : shop.status === 'blocked' ? 'bg-danger' : 'bg-secondary' %>"><%= shop.status %></span>
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="/admin/shops" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Shops
+                    </a>
+                    <a href="/admin/dashboard" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </a>
+                    <a href="/admin/logout" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Quick Stats -->
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number"><%= stats.totalProducts %></div>
+                    <div class="stat-label">Total Products</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number"><%= stats.totalBills %></div>
+                    <div class="stat-label">Total Bills</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number"><%= stats.totalRevenue %></div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number"><%= users.length %></div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-4">
+                <!-- Shop Information -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Shop Information</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <% if (shop.status !== 'active') { %>
+                                <li>
+                                    <button class="dropdown-item" onclick="updateShopStatus('active')">
+                                        <i class="fas fa-check text-success me-2"></i>Activate
+                                    </button>
+                                </li>
+                                <% } %>
+                                <% if (shop.status !== 'inactive') { %>
+                                <li>
+                                    <button class="dropdown-item" onclick="updateShopStatus('inactive')">
+                                        <i class="fas fa-pause text-warning me-2"></i>Deactivate
+                                    </button>
+                                </li>
+                                <% } %>
+                                <% if (shop.status !== 'blocked') { %>
+                                <li>
+                                    <button class="dropdown-item" onclick="updateShopStatus('blocked')">
+                                        <i class="fas fa-ban text-danger me-2"></i>Block
+                                    </button>
+                                </li>
+                                <% } %>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item">
+                            <strong>Name:</strong><br>
+                            <%= shop.name %>
+                        </div>
+                        <div class="info-item">
+                            <strong>Email:</strong><br>
+                            <%= shop.email %>
+                        </div>
+                        <% if (shop.phone) { %>
+                        <div class="info-item">
+                            <strong>Phone:</strong><br>
+                            <%= shop.phone %>
+                        </div>
+                        <% } %>
+                        <% if (shop.address) { %>
+                        <div class="info-item">
+                            <strong>Address:</strong><br>
+                            <%= shop.address %>
+                        </div>
+                        <% } %>
+                        <div class="info-item">
+                            <strong>Currency:</strong><br>
+                            <%= shop.currency %>
+                        </div>
+                        <div class="info-item">
+                            <strong>Created:</strong><br>
+                            <%= new Date(shop.created_at).toLocaleString() %>
+                        </div>
+                        <div class="info-item">
+                            <strong>Last Updated:</strong><br>
+                            <%= new Date(shop.updated_at).toLocaleString() %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subscription Information -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Subscription</h5>
+                        <% if (shop.plan_name) { %>
+                        <button class="btn btn-sm btn-outline-warning" onclick="extendSubscription()">
+                            <i class="fas fa-plus-circle me-1"></i>Extend
+                        </button>
+                        <% } %>
+                    </div>
+                    <div class="card-body">
+                        <% if (shop.plan_name) { %>
+                        <div class="info-item">
+                            <strong>Plan:</strong><br>
+                            <%= shop.plan_name %>
+                        </div>
+                        <div class="info-item">
+                            <strong>Price:</strong><br>
+                            $<%= shop.price %>
+                        </div>
+                        <div class="info-item">
+                            <strong>Duration:</strong><br>
+                            <%= shop.duration %>
+                        </div>
+                        <div class="info-item">
+                            <strong>Started:</strong><br>
+                            <%= new Date(shop.started_at).toLocaleDateString() %>
+                        </div>
+                        <div class="info-item">
+                            <strong>Expires:</strong><br>
+                            <%= new Date(shop.expires_at).toLocaleDateString() %>
+                            <% 
+                                const daysRemaining = Math.ceil((new Date(shop.expires_at) - new Date()) / (1000 * 60 * 60 * 24));
+                                if (daysRemaining <= 7) {
+                            %>
+                            <span class="badge bg-warning ms-1"><%= daysRemaining %> days left</span>
+                            <% } %>
+                        </div>
+                        <div class="info-item">
+                            <strong>Status:</strong><br>
+                            <span class="badge <%= shop.subscription_status === 'active' ? 'bg-success' : 'bg-warning' %>">
+                                <%= shop.subscription_status %>
+                            </span>
+                        </div>
+                        <% } else { %>
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-credit-card fa-2x mb-2"></i>
+                            <p>No active subscription</p>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <!-- Navigation Tabs -->
+                <div class="card">
+                    <div class="card-body p-0">
+                        <ul class="nav nav-tabs" id="shopTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button">
+                                    <i class="fas fa-users me-2"></i>Users (<%= users.length %>)
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="subscriptions-tab" data-bs-toggle="tab" data-bs-target="#subscriptions" type="button">
+                                    <i class="fas fa-history me-2"></i>Subscription History
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="shopTabsContent">
+                    <!-- Users Tab -->
+                    <div class="tab-pane fade show active" id="users" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>User</th>
+                                                <th>Role</th>
+                                                <th>Salary</th>
+                                                <th>Status</th>
+                                                <th>Last Login</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% users.forEach(user => { %>
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-semibold"><%= user.name %></div>
+                                                    <small class="text-muted"><%= user.email %></small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info">
+                                                        <%= user.role %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <% if (user.salary) { %>
+                                                    $<%= user.salary %>
+                                                    <% } else { %>
+                                                    <span class="text-muted">-</span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <span class="badge <%= user.status === 'active' ? 'bg-success' : 'bg-secondary' %>">
+                                                        <%= user.status %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <%= user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'Never' %>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-primary" onclick="editUser('<%= user.id %>')">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <% if (user.status === 'active') { %>
+                                                        <button class="btn btn-outline-warning" onclick="updateUserStatus('<%= user.id %>', 'inactive')">
+                                                            <i class="fas fa-pause"></i>
+                                                        </button>
+                                                        <% } else { %>
+                                                        <button class="btn btn-outline-success" onclick="updateUserStatus('<%= user.id %>', 'active')">
+                                                            <i class="fas fa-play"></i>
+                                                        </button>
+                                                        <% } %>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <% }); %>
+                                            
+                                            <% if (users.length === 0) { %>
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4 text-muted">
+                                                    <i class="fas fa-users fa-2x mb-3"></i>
+                                                    <p>No users found for this shop</p>
+                                                </td>
+                                            </tr>
+                                            <% } %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subscription History Tab -->
+                    <div class="tab-pane fade" id="subscriptions" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Plan</th>
+                                                <th>Price</th>
+                                                <th>Duration</th>
+                                                <th>Start Date</th>
+                                                <th>Expiry Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% subscriptions.forEach(sub => { %>
+                                            <tr>
+                                                <td class="fw-semibold"><%= sub.plan_name %></td>
+                                                <td>$<%= sub.price %></td>
+                                                <td><%= sub.duration %></td>
+                                                <td><%= new Date(sub.started_at).toLocaleDateString() %></td>
+                                                <td><%= new Date(sub.expires_at).toLocaleDateString() %></td>
+                                                <td>
+                                                    <span class="badge <%= sub.status === 'active' ? 'bg-success' : sub.status === 'expired' ? 'bg-warning' : 'bg-secondary' %>">
+                                                        <%= sub.status %>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <% }); %>
+                                            
+                                            <% if (subscriptions.length === 0) { %>
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4 text-muted">
+                                                    <i class="fas fa-credit-card fa-2x mb-3"></i>
+                                                    <p>No subscription history found</p>
+                                                </td>
+                                            </tr>
+                                            <% } %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extend Subscription Modal -->
+    <div class="modal fade" id="extendSubscriptionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Extend Subscription</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="extendSubscriptionForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Shop</label>
+                            <input type="text" class="form-control" value="<%= shop.name %>" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="extendDays" class="form-label">Number of Days</label>
+                            <input type="number" class="form-control" id="extendDays" name="days" min="1" max="365" value="30" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="extendReason" class="form-label">Reason (Optional)</label>
+                            <textarea class="form-control" id="extendReason" name="reason" rows="3" placeholder="Reason for extension..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Extend Subscription</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function extendSubscription() {
+            new bootstrap.Modal(document.getElementById('extendSubscriptionModal')).show();
+        }
+        
+        async function updateShopStatus(status) {
+            const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+            
+            if (!confirm(`Are you sure you want to ${status} this shop?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/admin/api/shops/<%= shop.id %>/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Shop ${status} successfully!`);
+                    location.reload();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        async function updateUserStatus(userId, status) {
+            const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+            
+            if (!confirm(`Are you sure you want to ${status} this user?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/admin/api/users/${userId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`User ${status} successfully!`);
+                    location.reload();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function editUser(userId) {
+            alert('Edit user functionality for user ID: ' + userId);
+            // You can implement a modal for editing user details
+        }
+        
+        document.getElementById('extendSubscriptionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const days = formData.get('days');
+            const reason = formData.get('reason');
+            
+            try {
+                const response = await fetch(`/admin/api/shops/<%= shop.id %>/extend-subscription`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ days, reason })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Subscription extended successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('extendSubscriptionModal')).hide();
+                    location.reload();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
