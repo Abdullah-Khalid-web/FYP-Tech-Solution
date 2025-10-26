@@ -205,7 +205,7 @@ router.get('/', getShopPrefix, async (req, res) => {
             );
 
             const [supplierCount] = await pool.execute(
-                `SELECT COUNT(*) as total FROM ${req.tablePrefix}suppliers WHERE is_active = TRUE`
+                `SELECT COUNT(*) as total FROM ${req.tablePrefix}raw_suppliers WHERE is_active = TRUE`
             );
 
             res.render('raw-materials/index', {
@@ -295,7 +295,7 @@ router.get('/materials', getShopPrefix, async (req, res) => {
                     ELSE 'normal'
                 END as stock_status
              FROM ${req.tablePrefix}raw_materials rm
-             LEFT JOIN ${req.tablePrefix}suppliers s ON rm.supplier_id = s.id
+             LEFT JOIN ${req.tablePrefix}raw_suppliers s ON rm.supplier_id = s.id
              ${whereClause}
              ORDER BY rm.name
              LIMIT ? OFFSET ?`,
@@ -306,7 +306,7 @@ router.get('/materials', getShopPrefix, async (req, res) => {
         const [countResult] = await pool.execute(
             `SELECT COUNT(*) as total 
              FROM ${req.tablePrefix}raw_materials rm
-             LEFT JOIN ${req.tablePrefix}suppliers s ON rm.supplier_id = s.id
+             LEFT JOIN ${req.tablePrefix}raw_suppliers s ON rm.supplier_id = s.id
              ${whereClause}`,
             queryParams
         );
@@ -781,7 +781,7 @@ router.get('/suppliers', getShopPrefix, async (req, res) => {
             `SELECT 
                 s.*,
                 COUNT(rm.id) as materials_count
-             FROM ${req.tablePrefix}suppliers s
+             FROM ${req.tablePrefix}raw_suppliers s
              LEFT JOIN ${req.tablePrefix}raw_materials rm ON s.id = rm.supplier_id
              ${whereClause}
              GROUP BY s.id
@@ -792,7 +792,7 @@ router.get('/suppliers', getShopPrefix, async (req, res) => {
 
         // Get total count for pagination
         const [countResult] = await pool.execute(
-            `SELECT COUNT(*) as total FROM ${req.tablePrefix}suppliers s ${whereClause}`,
+            `SELECT COUNT(*) as total FROM ${req.tablePrefix}raw_suppliers s ${whereClause}`,
             queryParams
         );
         const total = countResult[0].total;
@@ -841,7 +841,7 @@ router.post('/suppliers', getShopPrefix, async (req, res) => {
         }
 
         await pool.execute(
-            `INSERT INTO ${req.tablePrefix}suppliers 
+            `INSERT INTO ${req.tablePrefix}raw_suppliers 
              (shop_id, name, contact_person, email, phone, address, tax_number, 
               payment_terms, rating, notes, is_active, created_by)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -880,7 +880,7 @@ router.get('/suppliers/:id', getShopPrefix, async (req, res) => {
         const supplierId = req.params.id;
 
         const [suppliers] = await pool.execute(
-            `SELECT * FROM ${req.tablePrefix}suppliers WHERE id = ?`,
+            `SELECT * FROM ${req.tablePrefix}raw_suppliers WHERE id = ?`,
             [supplierId]
         );
 
@@ -933,7 +933,7 @@ router.put('/suppliers/:id', getShopPrefix, async (req, res) => {
 
         // Check if supplier exists
         const [existingSuppliers] = await pool.execute(
-            `SELECT id FROM ${req.tablePrefix}suppliers WHERE id = ?`,
+            `SELECT id FROM ${req.tablePrefix}raw_suppliers WHERE id = ?`,
             [supplierId]
         );
 
@@ -946,7 +946,7 @@ router.put('/suppliers/:id', getShopPrefix, async (req, res) => {
 
         // Update supplier
         await pool.execute(
-            `UPDATE ${req.tablePrefix}suppliers 
+            `UPDATE ${req.tablePrefix}raw_suppliers 
              SET name = ?, contact_person = ?, email = ?, phone = ?, address = ?,
                  tax_number = ?, payment_terms = ?, rating = ?, notes = ?, is_active = ?,
                  updated_at = NOW()
@@ -986,7 +986,7 @@ router.delete('/suppliers/:id', getShopPrefix, async (req, res) => {
 
         // Check if supplier exists
         const [existingSuppliers] = await pool.execute(
-            `SELECT name FROM ${req.tablePrefix}suppliers WHERE id = ?`,
+            `SELECT name FROM ${req.tablePrefix}raw_suppliers WHERE id = ?`,
             [supplierId]
         );
 
@@ -1017,7 +1017,7 @@ router.delete('/suppliers/:id', getShopPrefix, async (req, res) => {
 
         // Soft delete - set is_active to false
         await pool.execute(
-            `UPDATE ${req.tablePrefix}suppliers 
+            `UPDATE ${req.tablePrefix}raw_suppliers 
              SET is_active = FALSE, updated_at = NOW()
              WHERE id = ?`,
             [supplierId]

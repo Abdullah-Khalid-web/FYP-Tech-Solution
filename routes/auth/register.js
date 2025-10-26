@@ -187,6 +187,7 @@ async function createShopTables(connection, shopId) {
       brand VARCHAR(255),
       category VARCHAR(255),
       size VARCHAR(100),
+      supplier_id INT NULL,
       sku VARCHAR(100),
       image VARCHAR(100),
       barcode VARCHAR(100),
@@ -244,20 +245,43 @@ async function createShopTables(connection, shopId) {
     )
   `);
 
-  await connection.execute(`
-    CREATE TABLE ${prefix}user_salaries (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      user_id INT NOT NULL,
-      month VARCHAR(7) NOT NULL,
-      amount DECIMAL(10,2) NOT NULL,
-      paid_on DATE,
-      status ENUM('paid','unpaid') DEFAULT 'unpaid',
-      notes TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE (user_id, month),
-      INDEX (status)
-    )
-  `);
+  // await connection.execute(`
+  //   CREATE TABLE ${prefix}user_salaries (
+  //     id INT PRIMARY KEY AUTO_INCREMENT,
+  //     user_id INT NOT NULL,
+  //     month VARCHAR(7) NOT NULL,
+  //     amount DECIMAL(10,2) NOT NULL,
+  //     net_amount DECIMAL(12,2),
+  //     paid_on DATE,
+  //     status ENUM('paid','unpaid') DEFAULT 'unpaid',
+  //     notes TEXT,
+  //     loan_deductions JSON ;
+  //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  //     UNIQUE (user_id, month),
+  //     INDEX (status)
+  //   )
+  // `);
+
+    await connection.execute(`
+  CREATE TABLE ${prefix}user_salaries (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    month VARCHAR(7) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    net_amount DECIMAL(12,2),
+    bonus DECIMAL(10,2) DEFAULT 0,
+    fine DECIMAL(10,2) DEFAULT 0,
+    paid_on DATE,
+    status ENUM('paid','pending') DEFAULT 'pending',
+    notes TEXT,
+    loan_deductions JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE (user_id, month),
+    INDEX (status),
+    INDEX (user_id)
+  )
+`);
 
   await connection.execute(`
     CREATE TABLE ${prefix}user_loans (
@@ -332,7 +356,7 @@ id INT PRIMARY KEY AUTO_INCREMENT,
   );
   `);
   await connection.execute(`
-    CREATE TABLE ${prefix}suppliers (
+    CREATE TABLE ${prefix}raw_suppliers (
    id INT PRIMARY KEY AUTO_INCREMENT,
   shop_id INT NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -382,25 +406,119 @@ id INT PRIMARY KEY AUTO_INCREMENT,
 `);
   await connection.execute(`
     CREATE TABLE ${prefix}raw_material_alerts (
-   id INT PRIMARY KEY AUTO_INCREMENT,
-  shop_id INT NOT NULL,
-  raw_material_id INT NOT NULL,
-  alert_type ENUM('low_stock', 'expiry', 'over_stock') NOT NULL,
-  alert_message TEXT NOT NULL,
-  current_value DECIMAL(10,3),
-  threshold_value DECIMAL(10,3),
-  is_resolved BOOLEAN DEFAULT FALSE,
-  resolved_by INT,
-  resolved_at TIMESTAMP NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  
-  INDEX (shop_id),
-  INDEX (raw_material_id),
-  INDEX (is_resolved),
-  INDEX (alert_type),
-  FOREIGN KEY (raw_material_id) REFERENCES ${prefix}raw_materials(id) ON DELETE CASCADE
-  );
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      shop_id INT NOT NULL,
+      raw_material_id INT NOT NULL,
+      alert_type ENUM('low_stock', 'expiry', 'over_stock') NOT NULL,
+      alert_message TEXT NOT NULL,
+      current_value DECIMAL(10,3),
+      threshold_value DECIMAL(10,3),
+      is_resolved BOOLEAN DEFAULT FALSE,
+      resolved_by INT,
+      resolved_at TIMESTAMP NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      
+      INDEX (shop_id),
+      INDEX (raw_material_id),
+      INDEX (is_resolved),
+      INDEX (alert_type),
+      FOREIGN KEY (raw_material_id) REFERENCES ${prefix}raw_materials(id) ON DELETE CASCADE
+    );
+    `);
+    await connection.execute(`
+    -- Suppliers table
+CREATE TABLE ${prefix}_suppliers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    contact_person VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    address TEXT,
+    city VARCHAR(100),
+    country VARCHAR(100),
+    tax_number VARCHAR(100),
+    payment_terms VARCHAR(100),
+    account_number VARCHAR(100),
+    bank_name VARCHAR(255),
+    notes TEXT,
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+
+      `);
+
+    await connection.execute(`
+      -- Supplier products table (many-to-many relationship)
+      CREATE TABLE ${prefix}_supplier_products (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+    supplier_id INT NOT NULL,
+    product_id INT NOT NULL,
+    supplier_sku VARCHAR(100),
+    supplier_price DECIMAL(10,2),
+    min_order_quantity INT DEFAULT 1,
+    lead_time_days INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (supplier_id) REFERENCES ${prefix}_suppliers(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES ${prefix}_products(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_supplier_product (supplier_id, product_id)
+);
 `);
-}
+await connection.execute(`
+  -- Salary history table
+CREATE TABLE ${prefix}_salary_history (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    old_salary DECIMAL(10,2) NOT NULL,
+    new_salary DECIMAL(10,2) NOT NULL,
+    reason VARCHAR(255) NOT NULL,
+    effective_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+`);
+await connection.execute(`
+  -- Loan transactions table
+  CREATE TABLE  ${prefix}_loan_transactions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    loan_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    type ENUM('payment', 'salary_deduction') NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (loan_id) REFERENCES ${prefix}_user_loans(id) ON DELETE CASCADE
+  );
+  
+  `);
+  await connection.execute(`
+    -- Create salary history table
+CREATE TABLE ${prefix}_salary_history (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    old_salary DECIMAL(10,2) NOT NULL DEFAULT 0,
+    new_salary DECIMAL(10,2) NOT NULL,
+    reason VARCHAR(255) NOT NULL,
+    effective_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+`);
+await connection.execute(`
+  -- Create loan transactions table
+  CREATE TABLE IF NOT EXISTS ${prefix}_loan_transactions (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      loan_id INT NOT NULL,
+      amount DECIMAL(10,2) NOT NULL,
+      type ENUM('payment', 'salary_deduction') NOT NULL,
+      description TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+  
+      `);
+  }
 
 module.exports = router;

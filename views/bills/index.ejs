@@ -340,8 +340,11 @@
                                 </button>
                             </div>
                             <div class="col-12">
-                                <button class="btn btn-warning w-100" onclick="printReceipt()" id="printBtn"
+                                <!-- <button class="btn btn-warning w-100" onclick="printReceipt()" id="printBtn"
                                     style="display: none;">
+                                    <i class="fas fa-print me-1"></i>Print Receipt
+                                </button> -->
+                                <button type="button" class="btn btn-warning w-100" onclick="printReceipt()" id="printBtn" style="display: none;">
                                     <i class="fas fa-print me-1"></i>Print Receipt
                                 </button>
                             </div>
@@ -532,7 +535,7 @@
     <div id="receiptTemplate" style="display: none;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <!-- <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Initialize tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -935,4 +938,1120 @@
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
-    </script>
+    </script> -->
+
+<script>
+    // ===== GLOBAL VARIABLES =====
+window.transactionItems = [];
+window.shop = {
+    currency: '<%= shop.currency || "₹" %>',
+    name: '<%= shop.name || "My Shop" %>',
+    primary_color: '<%= shop.primary_color || "#007bff" %>'
+};
+
+// ===== DOM READY =====
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM loaded - Initializing transaction system');
+    
+    // Force initialization
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+    }
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Product Search
+    const productSearch = document.getElementById('productSearch');
+    const searchResults = document.getElementById('searchResults');
+
+    if (productSearch) {
+        productSearch.addEventListener('input', debounce(function (e) {
+            const searchTerm = e.target.value.trim();
+            if (searchTerm.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            searchProducts(searchTerm);
+        }, 300));
+
+        document.addEventListener('click', function (e) {
+            if (!productSearch.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    }
+
+    // View Products Modal
+    const viewProductsBtn = document.getElementById('viewProductsBtn');
+    if (viewProductsBtn) {
+        viewProductsBtn.addEventListener('click', function () {
+            const modal = new bootstrap.Modal(document.getElementById('productListModal'));
+            modal.show();
+        });
+    }
+
+    // Add Return Modal
+    const addReturnBtn = document.getElementById('addReturnBtn');
+    if (addReturnBtn) {
+        addReturnBtn.addEventListener('click', function () {
+            const modal = new bootstrap.Modal(document.getElementById('returnOptionsModal'));
+            modal.show();
+        });
+    }
+
+    // Return Options Selection
+    const returnWithBillCard = document.getElementById('returnWithBillCard');
+    const returnWithoutBillCard = document.getElementById('returnWithoutBillCard');
+    const returnWithBillSection = document.getElementById('returnWithBillSection');
+    const returnWithoutBillSection = document.getElementById('returnWithoutBillSection');
+
+    if (returnWithBillCard) {
+        returnWithBillCard.addEventListener('click', function () {
+            returnWithBillCard.classList.add('selected');
+            returnWithoutBillCard.classList.remove('selected');
+            returnWithBillSection.style.display = 'block';
+            returnWithoutBillSection.style.display = 'none';
+            document.getElementById('addSelectedReturnsBtn').style.display = 'none';
+            resetReturnSections();
+        });
+    }
+
+    if (returnWithoutBillCard) {
+        returnWithoutBillCard.addEventListener('click', function () {
+            returnWithoutBillCard.classList.add('selected');
+            returnWithBillCard.classList.remove('selected');
+            returnWithBillSection.style.display = 'none';
+            returnWithoutBillSection.style.display = 'block';
+            document.getElementById('addSelectedReturnsBtn').style.display = 'none';
+            resetReturnSections();
+        });
+    }
+
+    // Search Customer Bills for Return
+    const searchCustomerBillsBtn = document.getElementById('searchCustomerBillsBtn');
+    if (searchCustomerBillsBtn) {
+        searchCustomerBillsBtn.addEventListener('click', function () {
+            const customerSearch = document.getElementById('customerSearch').value.trim();
+            if (customerSearch.length < 2) {
+                alert('Please enter at least 2 characters to search');
+                return;
+            }
+            searchCustomerBillsForReturn(customerSearch);
+        });
+    }
+
+    // Search Products for Return without Bill
+    const returnSearchBtn = document.getElementById('returnSearchBtn');
+    if (returnSearchBtn) {
+        returnSearchBtn.addEventListener('click', function () {
+            const searchTerm = document.getElementById('returnProductSearch').value.trim();
+            if (searchTerm.length < 2) {
+                alert('Please enter at least 2 characters to search');
+                return;
+            }
+            searchProductsForReturn(searchTerm);
+        });
+    }
+
+    // Add products from modal to transaction
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('add-product-modal')) {
+            const productId = e.target.getAttribute('data-product-id');
+            const productName = e.target.getAttribute('data-product-name');
+            const productPrice = parseFloat(e.target.getAttribute('data-product-price'));
+            const productSku = e.target.getAttribute('data-product-sku');
+            const productStock = parseInt(e.target.getAttribute('data-product-stock'));
+            const productBrand = e.target.getAttribute('data-product-brand');
+
+            addProductToTransaction({
+                id: productId,
+                name: productName,
+                price: productPrice,
+                sku: productSku,
+                stock: productStock,
+                brand: productBrand,
+                type: 'sale'
+            });
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('productListModal'));
+            modal.hide();
+        }
+    });
+
+    // Clear Transaction
+    const clearTransactionBtn = document.getElementById('clearTransactionBtn');
+    if (clearTransactionBtn) {
+        clearTransactionBtn.addEventListener('click', function () {
+            if (window.transactionItems.length > 0 && confirm('Are you sure you want to clear the transaction?')) {
+                window.transactionItems = [];
+                updateTransactionTable();
+                updateSummary();
+                showToast('Transaction cleared', 'success');
+            }
+        });
+    }
+
+    // Finalize Transaction
+    const finalizeBtn = document.getElementById('finalizeBtn');
+    if (finalizeBtn) {
+        finalizeBtn.addEventListener('click', function () {
+            finalizeTransaction();
+        });
+    }
+
+    // Payment Amount Change
+    const paymentAmount = document.getElementById('paymentAmount');
+    if (paymentAmount) {
+        paymentAmount.addEventListener('input', function () {
+            updateSummary();
+        });
+    }
+
+    // Search Customer Button
+    const searchCustomerBtn = document.getElementById('searchCustomerBtn');
+    if (searchCustomerBtn) {
+        searchCustomerBtn.addEventListener('click', function () {
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+
+            if (!customerName && !customerPhone) {
+                alert('Please enter either customer name or phone number');
+                return;
+            }
+
+            searchCustomerBills(customerName, customerPhone);
+        });
+    }
+
+    // Initialize summary
+    updateSummary();
+        // Add enhanced search setup
+    setupEnhancedSearch();
+
+});
+
+// ===== TRANSACTION FUNCTIONS =====
+function addProductToTransaction(product) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+    }
+
+    const existingItemIndex = window.transactionItems.findIndex(item => 
+        item.id === product.id && item.type === product.type
+    );
+
+    if (existingItemIndex > -1) {
+        window.transactionItems[existingItemIndex].quantity += product.quantity || 1;
+    } else {
+        window.transactionItems.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            sku: product.sku,
+            type: product.type || 'sale',
+            quantity: product.quantity || 1,
+            discount: 0,
+            tax: 0
+        });
+    }
+
+    updateTransactionTable();
+    updateSummary();
+    showToast(`${product.type === 'return' ? 'Return' : 'Sale'} item added: ${product.name}`, 'success');
+}
+
+function updateTransactionTable() {
+    const tbody = document.getElementById('transactionItemsBody');
+    
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+    }
+    
+    if (window.transactionItems.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    <i class="fas fa-shopping-cart fa-2x mb-2 d-block"></i>
+                    No items added to transaction
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    let html = '';
+    window.transactionItems.forEach((item, index) => {
+        const itemTotal = (item.price * item.quantity) - item.discount;
+        html += `
+            <tr class="${item.type === 'return' ? 'return-item' : 'sale-item'}">
+                <td>
+                    <span class="badge ${item.type === 'return' ? 'bg-warning' : 'bg-success'}">
+                        ${item.type === 'return' ? 'RETURN' : 'SALE'}
+                    </span>
+                </td>
+                <td>
+                    <div class="fw-bold">${escapeHtml(item.name)}</div>
+                    <small class="text-muted">SKU: ${escapeHtml(item.sku)}</small>
+                </td>
+                <td>${window.shop.currency}${item.price.toFixed(2)}</td>
+                <td>
+                    <div class="quantity-controls">
+                        <div class="input-group input-group-sm">
+                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" 
+                                   value="${item.quantity}" min="1" 
+                                   onchange="updateQuantity(${index}, 0, this.value)">
+                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           value="${item.discount}" min="0" step="0.01"
+                           onchange="updateDiscount(${index}, this.value)">
+                </td>
+                <td>${window.shop.currency}${item.tax.toFixed(2)}</td>
+                <td class="fw-bold">${window.shop.currency}${itemTotal.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeItem(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+}
+
+function updateQuantity(index, change, directValue = null) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+        return;
+    }
+    
+    if (directValue !== null) {
+        window.transactionItems[index].quantity = parseInt(directValue) || 1;
+    } else {
+        window.transactionItems[index].quantity += change;
+        if (window.transactionItems[index].quantity < 1) {
+            window.transactionItems[index].quantity = 1;
+        }
+    }
+    updateTransactionTable();
+    updateSummary();
+}
+
+function updateDiscount(index, discount) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+        return;
+    }
+    
+    window.transactionItems[index].discount = parseFloat(discount) || 0;
+    updateTransactionTable();
+    updateSummary();
+}
+
+function removeItem(index) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+        return;
+    }
+    
+    if (confirm('Are you sure you want to remove this item?')) {
+        window.transactionItems.splice(index, 1);
+        updateTransactionTable();
+        updateSummary();
+        showToast('Item removed from transaction', 'success');
+    }
+}
+
+function updateSummary() {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+    }
+
+    const salesSubtotal = window.transactionItems
+        .filter(item => item.type === 'sale')
+        .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    const returnsSubtotal = window.transactionItems
+        .filter(item => item.type === 'return')
+        .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    const totalDiscount = window.transactionItems.reduce((sum, item) => sum + item.discount, 0);
+    const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
+    const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+
+    const netAmount = salesSubtotal - returnsSubtotal - totalDiscount + taxAmount;
+    const change = paymentAmount - netAmount;
+
+    // Update summary display
+    document.getElementById('summarySalesSubtotal').textContent = `${window.shop.currency}${salesSubtotal.toFixed(2)}`;
+    document.getElementById('summaryReturnsSubtotal').textContent = `${window.shop.currency}${returnsSubtotal.toFixed(2)}`;
+    document.getElementById('summaryDiscount').textContent = `-${window.shop.currency}${totalDiscount.toFixed(2)}`;
+    document.getElementById('summaryTax').textContent = `${window.shop.currency}${taxAmount.toFixed(2)}`;
+    document.getElementById('summaryTotal').textContent = `${window.shop.currency}${netAmount.toFixed(2)}`;
+    document.getElementById('summaryPaid').textContent = `${window.shop.currency}${paymentAmount.toFixed(2)}`;
+
+    // Show change or refund section
+    if (change >= 0) {
+        document.getElementById('changeSection').style.display = 'flex';
+        document.getElementById('refundSection').style.display = 'none';
+        document.getElementById('summaryChange').textContent = `${window.shop.currency}${change.toFixed(2)}`;
+    } else {
+        document.getElementById('changeSection').style.display = 'none';
+        document.getElementById('refundSection').style.display = 'flex';
+        document.getElementById('summaryRefund').textContent = `${window.shop.currency}${Math.abs(change).toFixed(2)}`;
+    }
+}
+
+// async function finalizeTransaction() {
+//     if (window.transactionItems.length === 0) {
+//         showToast('Please add items to the transaction', 'error');
+//         return;
+//     }
+
+//     const customerName = document.getElementById('customerName').value.trim() || 'Walk-in Customer';
+//     const customerPhone = document.getElementById('customerPhone').value.trim();
+//     const paymentMethod = document.getElementById('paymentMethod').value;
+//     const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+//     const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
+//     const notes = document.getElementById('transactionNotes').value.trim();
+
+//     const transactionData = {
+//         customer_name: customerName,
+//         customer_phone: customerPhone,
+//         payment_method: paymentMethod,
+//         paid_amount: paymentAmount,
+//         tax_amount: taxAmount,
+//         notes: notes,
+//         items: window.transactionItems
+//     };
+
+//     try {
+//         const response = await fetch('/bills', {
+//             method: 'POST',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//             },
+//             body: JSON.stringify(transactionData)
+//         });
+
+//         const data = await response.json();
+
+//         if (data.success) {
+//             showToast('Transaction completed successfully!', 'success');
+//             document.getElementById('printBtn').style.display = 'block';
+//             window.lastBillData = data;
+            
+//             // Reset transaction
+//             window.transactionItems = [];
+//             updateTransactionTable();
+//             updateSummary();
+            
+//             // Clear form
+//             document.getElementById('customerName').value = '';
+//             document.getElementById('customerPhone').value = '';
+//             document.getElementById('paymentAmount').value = '0.00';
+//             document.getElementById('transactionNotes').value = '';
+            
+//         } else {
+//             showToast(data.message || 'Error processing transaction', 'error');
+//         }
+//     } catch (error) {
+//         console.error('Error finalizing transaction:', error);
+//         showToast('Network error. Please try again.', 'error');
+//     }
+// }
+
+async function finalizeTransaction() {
+    if (window.transactionItems.length === 0) {
+        showToast('Please add items to the transaction', 'error');
+        return;
+    }
+
+    const customerName = document.getElementById('customerName').value.trim() || 'Walk-in Customer';
+    const customerPhone = document.getElementById('customerPhone').value.trim();
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+    const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
+    const notes = document.getElementById('transactionNotes').value.trim();
+
+    // Prepare transaction data
+    const transactionData = {
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        payment_method: paymentMethod,
+        paid_amount: paymentAmount,
+        tax_amount: taxAmount,
+        notes: notes,
+        items: window.transactionItems.map(item => ({
+            productId: parseInt(item.id),
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: parseInt(item.quantity),
+            discount: parseFloat(item.discount) || 0,
+            type: item.type
+        }))
+    };
+
+    console.log('Sending transaction data:', transactionData);
+
+    try {
+        const response = await fetch('/bills', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(transactionData)
+        });
+
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            // Try to get error message from response
+            const errorText = await response.text();
+            console.error('Server error response:', errorText);
+            throw new Error(`Server error: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Success response:', data);
+
+        if (data.success) {
+            showToast('Transaction completed successfully!', 'success');
+            document.getElementById('printBtn').style.display = 'block';
+            window.lastBillData = data;
+            
+            // Reset transaction
+            window.transactionItems = [];
+            updateTransactionTable();
+            updateSummary();
+            
+            // Clear form
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('paymentAmount').value = '0.00';
+            document.getElementById('transactionNotes').value = '';
+            
+        } else {
+            showToast(data.message || 'Error processing transaction', 'error');
+        }
+    } catch (error) {
+        console.error('Error finalizing transaction:', error);
+        showToast('Error: ' + error.message, 'error');
+    }
+}
+
+// ===== SEARCH FUNCTIONS =====
+async function searchProducts(searchTerm) {
+    try {
+        const response = await fetch(`/bills/api/products?search=${encodeURIComponent(searchTerm)}`);
+        const data = await response.json();
+
+        const searchResults = document.getElementById('searchResults');
+        
+        if (data.success && data.products.length > 0) {
+            let html = '';
+            data.products.forEach(product => {
+                html += `
+                    <div class="search-result-item p-2 border-bottom" 
+                         onclick="addProductToTransaction({
+                             id: ${product.id},
+                             name: '${escapeHtml(product.name)}',
+                             price: ${product.price},
+                             sku: '${escapeHtml(product.sku)}',
+                             stock: ${product.stock},
+                             brand: '${escapeHtml(product.brand || '')}',
+                             type: 'sale'
+                         })">
+                        <div class="fw-bold">${escapeHtml(product.name)}</div>
+                        <small class="text-muted">SKU: ${escapeHtml(product.sku)} | Brand: ${escapeHtml(product.brand || 'N/A')}</small>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span>${window.shop.currency}${product.price}</span>
+                            <span class="badge ${product.stock > 10 ? 'bg-success' : product.stock > 0 ? 'bg-warning' : 'bg-danger'}">
+                                Stock: ${product.stock}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            searchResults.innerHTML = html;
+            searchResults.style.display = 'block';
+        } else {
+            searchResults.innerHTML = '<div class="p-2 text-muted">No products found</div>';
+            searchResults.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error searching products:', error);
+        showToast('Error searching products', 'error');
+    }
+}
+
+
+
+
+async function searchCustomerBills(name, phone) {
+    try {
+        const params = new URLSearchParams();
+        if (name) params.append('name', name);
+        if (phone) params.append('phone', phone);
+
+        const response = await fetch(`/bills/api/customer-bills?${params}`);
+        const data = await response.json();
+
+        const customerBillsSection = document.getElementById('customerBillsSection');
+        const customerBillsList = document.getElementById('customerBillsList');
+
+        if (data.success && data.bills.length > 0) {
+            let html = '<div class="list-group">';
+            data.bills.forEach(bill => {
+                html += `
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">Bill #${bill.bill_number}</h6>
+                                <small class="text-muted">Date: ${new Date(bill.created_at).toLocaleDateString()}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">${window.shop.currency}${bill.total_amount}</div>
+                                <small class="badge bg-secondary">${bill.item_count} items</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            customerBillsList.innerHTML = html;
+            customerBillsSection.style.display = 'block';
+        } else {
+            customerBillsList.innerHTML = '<p class="text-muted">No previous bills found</p>';
+            customerBillsSection.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error searching customer bills:', error);
+        showToast('Error searching customer bills', 'error');
+    }
+}
+
+
+// ===== ENHANCED SEARCH FUNCTIONS =====
+
+// Enhanced product search for return without bill reference
+async function searchProductsForReturn(searchTerm) {
+    try {
+        const response = await fetch(`/bills/api/products?search=${encodeURIComponent(searchTerm)}`);
+        const data = await response.json();
+
+        const returnProductsList = document.getElementById('returnProductsList');
+        
+        if (data.success && data.products.length > 0) {
+            let html = '';
+            data.products.forEach(product => {
+                html += `
+                    <tr>
+                        <td>
+                            <div class="fw-bold">${escapeHtml(product.name)}</div>
+                            <small class="text-muted">
+                                SKU: ${escapeHtml(product.sku)} | 
+                                Brand: ${escapeHtml(product.brand || 'N/A')}
+                            </small>
+                        </td>
+                        <td>${window.shop.currency}${product.price}</td>
+                        <td>
+                            <span class="badge ${product.stock > 10 ? 'bg-success' : product.stock > 0 ? 'bg-warning' : 'bg-danger'}">
+                                ${product.stock}
+                            </span>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm quick-return-quantity" 
+                                   value="1" min="1" max="${product.stock}" 
+                                   data-product-id="${product.id}">
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-warning add-quick-return" 
+                                    data-product-id="${product.id}"
+                                    data-product-name="${escapeHtml(product.name)}"
+                                    data-product-price="${product.price}"
+                                    data-product-sku="${escapeHtml(product.sku)}">
+                                <i class="fas fa-undo"></i> Add
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            returnProductsList.innerHTML = html;
+
+            document.querySelectorAll('.add-quick-return').forEach(button => {
+                button.addEventListener('click', function () {
+                    const productId = this.getAttribute('data-product-id');
+                    const productName = this.getAttribute('data-product-name');
+                    const productPrice = parseFloat(this.getAttribute('data-product-price'));
+                    const productSku = this.getAttribute('data-product-sku');
+                    const quantityInput = document.querySelector(`.quick-return-quantity[data-product-id="${productId}"]`);
+                    const quantity = parseInt(quantityInput.value) || 1;
+
+                    addProductToTransaction({
+                        id: productId,
+                        name: productName,
+                        price: productPrice,
+                        sku: productSku,
+                        type: 'return',
+                        quantity: quantity
+                    });
+
+                    showToast('Return item added to transaction', 'success');
+                });
+            });
+        } else {
+            returnProductsList.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-3">
+                        <i class="fas fa-search fa-2x mb-2 d-block"></i>
+                        No products found matching "${searchTerm}"
+                    </td>
+                </tr>
+            `;
+        }
+    } catch (error) {
+        console.error('Error searching products for return:', error);
+        showToast('Error searching products', 'error');
+    }
+}
+
+// Enhanced customer bill search with suggestions
+async function searchCustomerBillsForReturn(searchTerm) {
+    try {
+        const response = await fetch(`/bills/api/customer-bills?search=${encodeURIComponent(searchTerm)}`);
+        const data = await response.json();
+
+        const customerBillsResults = document.getElementById('customerBillsResults');
+        const customerBillsListReturn = document.getElementById('customerBillsListReturn');
+
+        if (data.success && data.bills.length > 0) {
+            let html = `
+                <div class="alert alert-info mb-2">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Found ${data.bills.length} bill(s) matching "${searchTerm}"
+                </div>
+                <div class="list-group">
+            `;
+            
+            data.bills.forEach(bill => {
+                const billDate = new Date(bill.created_at).toLocaleDateString();
+                const billTime = new Date(bill.created_at).toLocaleTimeString();
+                
+                html += `
+                    <a href="#" class="list-group-item list-group-item-action select-bill-for-return" 
+                       data-bill-id="${bill.id}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">
+                                    <i class="fas fa-receipt me-2 text-primary"></i>
+                                    Bill #${bill.bill_number}
+                                </h6>
+                                <div class="small text-muted mb-2">
+                                    <div><i class="fas fa-user me-1"></i> ${bill.customer_name}</div>
+                                    <div><i class="fas fa-phone me-1"></i> ${bill.customer_phone || 'No phone'}</div>
+                                    <div><i class="fas fa-calendar me-1"></i> ${billDate} at ${billTime}</div>
+                                </div>
+                            </div>
+                            <div class="text-end ms-3">
+                                <div class="fw-bold text-success">${window.shop.currency}${bill.total_amount}</div>
+                                <small class="badge bg-primary">${bill.item_count} items</small>
+                                <div class="small text-muted mt-1">${bill.payment_method}</div>
+                            </div>
+                        </div>
+                    </a>
+                `;
+            });
+            html += '</div>';
+            customerBillsListReturn.innerHTML = html;
+            customerBillsResults.style.display = 'block';
+
+            document.querySelectorAll('.select-bill-for-return').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const billId = this.getAttribute('data-bill-id');
+                    loadBillItemsForReturn(billId);
+                });
+            });
+        } else {
+            customerBillsListReturn.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No bills found matching "${searchTerm}"
+                </div>
+                <div class="text-center text-muted">
+                    <i class="fas fa-search fa-2x mb-2 d-block"></i>
+                    Try searching by customer name, phone number, or bill number
+                </div>
+            `;
+            customerBillsResults.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error searching customer bills for return:', error);
+        showToast('Error searching customer bills', 'error');
+    }
+}
+
+// Enhanced bill search with auto-suggestions
+function setupEnhancedSearch() {
+    const customerSearch = document.getElementById('customerSearch');
+    const returnProductSearch = document.getElementById('returnProductSearch');
+    
+    // Customer search with debouncing
+    if (customerSearch) {
+        let customerSearchTimeout;
+        customerSearch.addEventListener('input', function(e) {
+            clearTimeout(customerSearchTimeout);
+            const searchTerm = e.target.value.trim();
+            
+            if (searchTerm.length < 2) {
+                document.getElementById('customerBillsResults').style.display = 'none';
+                return;
+            }
+            
+            customerSearchTimeout = setTimeout(() => {
+                searchCustomerBillsForReturn(searchTerm);
+            }, 500);
+        });
+    }
+    
+    // Product search with debouncing for return without bill
+    if (returnProductSearch) {
+        let productSearchTimeout;
+        returnProductSearch.addEventListener('input', function(e) {
+            clearTimeout(productSearchTimeout);
+            const searchTerm = e.target.value.trim();
+            
+            if (searchTerm.length < 2) {
+                return;
+            }
+            
+            productSearchTimeout = setTimeout(() => {
+                searchProductsForReturn(searchTerm);
+            }, 500);
+        });
+    }
+}
+
+// Add this to your DOMContentLoaded function
+
+async function loadBillItemsForReturn(billId) {
+    try {
+        const response = await fetch(`/bills/${billId}/items`);
+        const data = await response.json();
+
+        if (data.success) {
+            window.selectedBillForReturn = data.bill;
+            const billItemsListReturn = document.getElementById('billItemsListReturn');
+            
+            let html = `
+                <div class="alert alert-success mb-3">
+                    <h6 class="mb-1"><i class="fas fa-receipt me-2"></i>Bill #${data.bill.bill_number}</h6>
+                    <small class="text-muted">
+                        Customer: ${data.bill.customer_name} | 
+                        Date: ${new Date(data.bill.created_at).toLocaleDateString()} |
+                        Total: ${window.shop.currency}${data.bill.total_amount}
+                    </small>
+                </div>
+                <div class="list-group">
+            `;
+            
+            data.bill.items.forEach(item => {
+                const maxReturnQty = item.quantity;
+                const itemTotal = item.unit_price * item.quantity;
+                
+                html += `
+                    <div class="bill-item-card">
+                        <div class="form-check">
+                            <input class="form-check-input return-item-checkbox" 
+                                   type="checkbox" 
+                                   value="${item.id}"
+                                   data-product-id="${item.product_id}"
+                                   data-product-name="${escapeHtml(item.product_name)}"
+                                   data-unit-price="${item.unit_price}"
+                                   data-max-qty="${maxReturnQty}">
+                            <label class="form-check-label w-100">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">${escapeHtml(item.product_name)}</h6>
+                                        <small class="text-muted">
+                                            SKU: ${item.sku || 'N/A'} | 
+                                            Purchased: ${item.quantity} @ ${window.shop.currency}${item.unit_price} |
+                                            Total: ${window.shop.currency}${itemTotal.toFixed(2)}
+                                        </small>
+                                    </div>
+                                    <div class="text-end ms-3">
+                                        <div class="fw-bold text-success">${window.shop.currency}${itemTotal.toFixed(2)}</div>
+                                        <small class="badge bg-info">Max: ${maxReturnQty}</small>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="return-quantity-control mt-2" style="display: none;">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <label class="form-label mb-1">Return Quantity (Max: ${maxReturnQty})</label>
+                                    <input type="number" class="form-control return-quantity" 
+                                           value="1" min="1" max="${maxReturnQty}" 
+                                           data-item-id="${item.id}">
+                                </div>
+                                <div class="col-auto">
+                                    <small class="text-muted">
+                                        Refund: <span class="fw-bold" id="refund-amount-${item.id}">${window.shop.currency}${item.unit_price}</span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            billItemsListReturn.innerHTML = html;
+
+            document.getElementById('billItemsSection').style.display = 'block';
+            document.getElementById('addSelectedReturnsBtn').style.display = 'block';
+
+            // Add quantity change listeners for real-time refund calculation
+            document.querySelectorAll('.return-quantity').forEach(input => {
+                input.addEventListener('input', function() {
+                    const itemId = this.getAttribute('data-item-id');
+                    const unitPrice = parseFloat(document.querySelector(`.return-item-checkbox[value="${itemId}"]`).getAttribute('data-unit-price'));
+                    const quantity = parseInt(this.value) || 0;
+                    const refundAmount = unitPrice * quantity;
+                    document.getElementById(`refund-amount-${itemId}`).textContent = `${window.shop.currency}${refundAmount.toFixed(2)}`;
+                });
+            });
+
+            document.querySelectorAll('.return-item-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    const quantityControl = this.closest('.bill-item-card').querySelector('.return-quantity-control');
+                    quantityControl.style.display = this.checked ? 'block' : 'none';
+                    
+                    // Initialize refund amount
+                    if (this.checked) {
+                        const itemId = this.value;
+                        const unitPrice = parseFloat(this.getAttribute('data-unit-price'));
+                        const quantityInput = document.querySelector(`.return-quantity[data-item-id="${itemId}"]`);
+                        const quantity = parseInt(quantityInput.value) || 1;
+                        const refundAmount = unitPrice * quantity;
+                        document.getElementById(`refund-amount-${itemId}`).textContent = `${window.shop.currency}${refundAmount.toFixed(2)}`;
+                    }
+                });
+            });
+
+            const addSelectedReturnsBtn = document.getElementById('addSelectedReturnsBtn');
+            addSelectedReturnsBtn.onclick = addSelectedReturnItems;
+        }
+    } catch (error) {
+        console.error('Error loading bill items:', error);
+        showToast('Error loading bill items', 'error');
+    }
+}
+
+function addSelectedReturnItems() {
+    const selectedItems = document.querySelectorAll('.return-item-checkbox:checked');
+    
+    if (selectedItems.length === 0) {
+        showToast('Please select at least one item to return', 'error');
+        return;
+    }
+
+    selectedItems.forEach(checkbox => {
+        const productId = checkbox.getAttribute('data-product-id');
+        const productName = checkbox.getAttribute('data-product-name');
+        const unitPrice = parseFloat(checkbox.getAttribute('data-unit-price'));
+        const maxQty = parseInt(checkbox.getAttribute('data-max-qty'));
+        const quantityInput = checkbox.closest('.bill-item-card').querySelector('.return-quantity');
+        const quantity = Math.min(parseInt(quantityInput.value) || 1, maxQty);
+
+        addProductToTransaction({
+            id: productId,
+            name: productName,
+            price: unitPrice,
+            type: 'return',
+            quantity: quantity
+        });
+    });
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById('returnOptionsModal'));
+    modal.hide();
+    showToast('Return items added to transaction', 'success');
+}
+
+function resetReturnSections() {
+    document.getElementById('customerBillsResults').style.display = 'none';
+    document.getElementById('billItemsSection').style.display = 'none';
+    document.getElementById('addSelectedReturnsBtn').style.display = 'none';
+    window.selectedReturnItems = [];
+    window.selectedBillForReturn = null;
+}
+
+// ===== UTILITY FUNCTIONS =====
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function showToast(message, type = 'success') {
+    let toastContainer = document.querySelector('.custom-notification');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'custom-notification';
+        document.body.appendChild(toastContainer);
+    }
+
+    const toastId = 'toast-' + Date.now();
+    const toastHtml = `
+        <div id="${toastId}" class="alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'warning'} alert-dismissible fade show">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+
+    toastContainer.innerHTML = toastHtml;
+
+    setTimeout(() => {
+        const toast = document.getElementById(toastId);
+        if (toast) {
+            toast.remove();
+        }
+    }, 3000);
+}
+
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// ===== PRINT FUNCTION =====
+function printReceipt() {
+    if (!window.lastBillData) {
+        showToast('No transaction data available for printing', 'error');
+        return;
+    }
+
+    const receiptTemplate = document.getElementById('receiptTemplate');
+    const bill = window.lastBillData.billDetails;
+    const items = window.lastBillData.billItems;
+
+    let receiptHtml = `
+        <div style="font-family: 'Courier New', monospace; max-width: 300px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 24px;">${window.shop.name}</h2>
+                <p style="margin: 5px 0; font-size: 14px;">Thank you for your business!</p>
+            </div>
+            
+            <div style="border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: between;">
+                    <span>Bill #:</span>
+                    <span>${bill.bill_number}</span>
+                </div>
+                <div style="display: flex; justify-content: between;">
+                    <span>Date:</span>
+                    <span>${new Date(bill.created_at).toLocaleString()}</span>
+                </div>
+                <div style="display: flex; justify-content: between;">
+                    <span>Customer:</span>
+                    <span>${bill.customer_name}</span>
+                </div>
+            </div>
+
+            <div style="margin: 15px 0;">
+                ${items.map(item => `
+                    <div style="display: flex; justify-content: between; margin-bottom: 8px;">
+                        <div style="flex: 2;">
+                            <div>${item.product_name}</div>
+                            <small>${item.quantity} x ${window.shop.currency}${item.unit_price}</small>
+                        </div>
+                        <div style="flex: 1; text-align: right;">
+                            ${window.shop.currency}${item.total_price.toFixed(2)}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div style="border-top: 1px dashed #000; padding-top: 10px;">
+                <div style="display: flex; justify-content: between;">
+                    <span>Subtotal:</span>
+                    <span>${window.shop.currency}${bill.subtotal.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: between;">
+                    <span>Tax:</span>
+                    <span>${window.shop.currency}${bill.tax.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: between; font-weight: bold;">
+                    <span>Total:</span>
+                    <span>${window.shop.currency}${bill.total_amount.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: between;">
+                    <span>Paid:</span>
+                    <span>${window.shop.currency}${bill.paid_amount.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: between;">
+                    <span>Change:</span>
+                    <span>${window.shop.currency}${(bill.paid_amount - bill.total_amount).toFixed(2)}</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px; font-size: 12px;">
+                <p>Payment Method: ${bill.payment_method.toUpperCase()}</p>
+                <p>Thank you for your business!</p>
+                <p>Visit again!</p>
+            </div>
+        </div>
+    `;
+
+    receiptTemplate.innerHTML = receiptHtml;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Receipt - ${bill.bill_number}</title>
+                <style>
+                    body { margin: 0; padding: 20px; font-family: 'Courier New', monospace; }
+                    @media print { 
+                        body { margin: 0; padding: 0; }
+                        @page { margin: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${receiptHtml}
+            </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+}
+
+
+</script>

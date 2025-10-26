@@ -24,6 +24,7 @@ const alertRouter = require('./routes/alerts');
 const expenseRouter = require('./routes/expenses');
 const rawRouter = require('./routes/raw-materials');
 const adminRoutes = require('./routes/admin');
+const suppliersRouter = require('./routes/suppliers');
 
 
 
@@ -220,6 +221,7 @@ app.use('/expenses', expenseRouter);
 app.use('/raw', rawRouter);
 app.use('/admin', adminRoutes);
 app.use('/admin/login', adminRoutes);
+app.use('/suppliers', suppliersRouter);
 
 // Home 
 app.get('/', (req, res) => {
