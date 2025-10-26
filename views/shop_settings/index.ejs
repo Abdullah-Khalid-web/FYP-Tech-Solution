@@ -4,12 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shop Settings - <%= (shop && shop.name) || 'My Shop' %>
-  </title>
+  <title>Shop Settings - <%= (shop && shop.name) || 'My Shop' %></title>
   <style>
     :root {
-      --primary-color: <%=(shop && shop.primary_color) || '#007bff' %>;
-      --secondary-color: <%=(shop && shop.secondary_color) || '#6c757d' %>;
+      --primary-color: <%= (shop && shop.primary_color) || '#007bff' %>;
+      --secondary-color: <%= (shop && shop.secondary_color) || '#6c757d' %>;
     }
 
     body {
@@ -27,7 +26,7 @@
     .card {
       background: white;
       border-radius: 0.5rem;
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
       border: 1px solid #e5e7eb;
       margin-bottom: 1.5rem;
     }
@@ -50,6 +49,7 @@
       padding: 0.5rem 1rem;
       font-weight: 500;
       transition: all 0.2s ease;
+      color: #fff;
     }
 
     .btn-primary:hover {
@@ -64,6 +64,7 @@
       font-weight: 500;
       color: #374151;
       transition: all 0.2s ease;
+      background: transparent;
     }
 
     .btn-outline:hover {
@@ -148,7 +149,6 @@
         padding: 1rem 0;
         margin-bottom: 1rem;
       }
-
       .card-body {
         padding: 1rem;
       }
@@ -180,32 +180,27 @@
       <div class="card-body p-0">
         <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
           <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general"
-              type="button" role="tab">
+            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
               <i class="fas fa-store me-2"></i>General
             </button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="appearance-tab" data-bs-toggle="tab" data-bs-target="#appearance" type="button"
-              role="tab">
+            <button class="nav-link" id="appearance-tab" data-bs-toggle="tab" data-bs-target="#appearance" type="button" role="tab">
               <i class="fas fa-palette me-2"></i>Appearance
             </button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing" type="button"
-              role="tab">
-              <i class="fas fa-credit-card me-2"></i>Billing & Subscription
+            <button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing" type="button" role="tab">
+              <i class="fas fa-credit-card me-2"></i>Billing &amp; Subscription
             </button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button"
-              role="tab">
-              <i class="fas fa-users me-2"></i>Users & Permissions
+            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
+              <i class="fas fa-users me-2"></i>Users &amp; Permissions
             </button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button"
-              role="tab">
+            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab">
               <i class="fas fa-sliders-h me-2"></i>Advanced
             </button>
           </li>
@@ -231,15 +226,13 @@
                       <div class="col-md-6">
                         <div class="mb-3">
                           <label for="shopName" class="form-label">Shop Name *</label>
-                          <input type="text" class="form-control" id="shopName" name="name" value="<%= shop.name %>"
-                            required>
+                          <input type="text" class="form-control" id="shopName" name="name" value="<%= shop.name %>" required>
                         </div>
                       </div>
                       <div class="col-md-6">
                         <div class="mb-3">
                           <label for="shopEmail" class="form-label">Email Address *</label>
-                          <input type="email" class="form-control" id="shopEmail" name="email"
-                            value="<%= shop.email || '' %>" required>
+                          <input type="email" class="form-control" id="shopEmail" name="email" value="<%= shop.email || '' %>" required>
                         </div>
                       </div>
                     </div>
@@ -247,33 +240,27 @@
                       <div class="col-md-6">
                         <div class="mb-3">
                           <label for="shopPhone" class="form-label">Phone Number</label>
-                          <input type="tel" class="form-control" id="shopPhone" name="phone"
-                            value="<%= shop.phone || '' %>">
+                          <input type="tel" class="form-control" id="shopPhone" name="phone" value="<%= shop.phone || '' %>">
                         </div>
                       </div>
                       <div class="col-md-6">
                         <div class="mb-3">
                           <label for="shopCurrency" class="form-label">Currency</label>
                           <select class="form-select" id="shopCurrency" name="currency">
-                            <option value="PKR" <%=shop.currency==='PKR' ? 'selected' : '' %>>Pakistani Rupee (PKR)
-                            </option>
-                            <option value="USD" <%=shop.currency==='USD' ? 'selected' : '' %>>US Dollar (USD)</option>
-                            <option value="EUR" <%=shop.currency==='EUR' ? 'selected' : '' %>>Euro (EUR)</option>
-                            <option value="GBP" <%=shop.currency==='GBP' ? 'selected' : '' %>>British Pound (GBP)
-                            </option>
-                            <option value="INR" <%=shop.currency==='INR' ? 'selected' : '' %>>Indian Rupee (INR)
-                            </option>
+                            <option value="PKR" <%= shop.currency === 'PKR' ? 'selected' : '' %>>Pakistani Rupee (PKR)</option>
+                            <option value="USD" <%= shop.currency === 'USD' ? 'selected' : '' %>>US Dollar (USD)</option>
+                            <option value="EUR" <%= shop.currency === 'EUR' ? 'selected' : '' %>>Euro (EUR)</option>
+                            <option value="GBP" <%= shop.currency === 'GBP' ? 'selected' : '' %>>British Pound (GBP)</option>
+                            <option value="INR" <%= shop.currency === 'INR' ? 'selected' : '' %>>Indian Rupee (INR)</option>
                           </select>
                         </div>
                       </div>
                     </div>
                     <div class="mb-3">
                       <label for="shopAddress" class="form-label">Address</label>
-                      <textarea class="form-control" id="shopAddress" name="address"
-                        rows="3"><%= shop.address || '' %></textarea>
+                      <textarea class="form-control" id="shopAddress" name="address" rows="3"><%= shop.address || '' %></textarea>
                     </div>
                   </div>
-
                   <div class="setting-section">
                     <h6 class="fw-semibold mb-3">Shop Logo</h6>
                     <div class="row align-items-center">
@@ -285,7 +272,7 @@
                         </div>
                       </div>
                       <div class="col-md-6 text-center">
-                        <% if (shop.logo && shop.logo !=='/images/default-logo.png' ) { %>
+                        <% if (shop.logo && shop.logo !== '/images/default-logo.png') { %>
                           <div class="mb-3">
                             <img src="<%= shop.logo %>" alt="Current Logo" class="logo-preview">
                             <div class="mt-2">
@@ -294,16 +281,15 @@
                               </button>
                             </div>
                           </div>
-                          <% } else { %>
-                            <div class="text-muted">
-                              <i class="fas fa-store fa-3x mb-2"></i>
-                              <p>No logo uploaded</p>
-                            </div>
-                            <% } %>
+                        <% } else { %>
+                          <div class="text-muted">
+                            <i class="fas fa-store fa-3x mb-2"></i>
+                            <p>No logo uploaded</p>
+                          </div>
+                        <% } %>
                       </div>
                     </div>
                   </div>
-
                   <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
                       <i class="fas fa-save me-2"></i>Save Changes
@@ -325,9 +311,7 @@
               <div class="card-body">
                 <div class="mb-3">
                   <small class="text-muted">Shop ID</small>
-                  <div class="fw-semibold">
-                    <%= shop.id %>
-                  </div>
+                  <div class="fw-semibold"><%= shop.id %></div>
                 </div>
                 <div class="mb-3">
                   <small class="text-muted">Registration Date</small>
@@ -343,7 +327,6 @@
                 </div>
               </div>
             </div>
-
             <!-- Quick Actions -->
             <div class="card mt-4">
               <div class="card-header">
@@ -366,14 +349,13 @@
           </div>
         </div>
       </div>
-
-      <!-- Appearance Settings Tab -->
+      <!-- Appearance Tab -->
       <div class="tab-pane fade" id="appearance" role="tabpanel">
         <div class="row">
           <div class="col-lg-8">
             <div class="card">
               <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-paint-brush me-2"></i>Theme & Appearance</h5>
+                <h5 class="mb-0"><i class="fas fa-paint-brush me-2"></i>Theme &amp; Appearance</h5>
               </div>
               <div class="card-body">
                 <form id="appearanceForm">
@@ -385,11 +367,9 @@
                           <label for="primaryColor" class="form-label">Primary Color</label>
                           <div class="input-group">
                             <span class="input-group-text">
-                              <div class="color-preview" id="primaryColorPreview"
-                                style="background-color: '<%= shop.primary_color %>'"></div>
+                              <div class="color-preview" id="primaryColorPreview" style="background-color: <%= shop.primary_color %>"></div>
                             </span>
-                            <input type="color" class="form-control form-control-color" id="primaryColor"
-                              name="primary_color" value="<%= shop.primary_color %>" title="Choose primary color">
+                            <input type="color" class="form-control form-control-color" id="primaryColor" name="primary_color" value="<%= shop.primary_color %>" title="Choose primary color">
                           </div>
                         </div>
                       </div>
@@ -398,11 +378,9 @@
                           <label for="secondaryColor" class="form-label">Secondary Color</label>
                           <div class="input-group">
                             <span class="input-group-text">
-                              <div class="color-preview" id="secondaryColorPreview"
-                                style="background-color: <%= shop.secondary_color %>"></div>
+                              <div class="color-preview" id="secondaryColorPreview" style="background-color: <%= shop.secondary_color %>"></div>
                             </span>
-                            <input type="color" class="form-control form-control-color" id="secondaryColor"
-                              name="secondary_color" value="<%= shop.secondary_color %>" title="Choose secondary color">
+                            <input type="color" class="form-control form-control-color" id="secondaryColor" name="secondary_color" value="<%= shop.secondary_color %>" title="Choose secondary color">
                           </div>
                         </div>
                       </div>
@@ -414,7 +392,6 @@
                       </small>
                     </div>
                   </div>
-
                   <div class="setting-section">
                     <h6 class="fw-semibold mb-3">Display Settings</h6>
                     <div class="row">
@@ -445,7 +422,6 @@
                       </div>
                     </div>
                   </div>
-
                   <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
                       <i class="fas fa-save me-2"></i>Save Appearance
@@ -464,9 +440,7 @@
                 <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Preview</h5>
               </div>
               <div class="card-body">
-                <!-- In the appearance tab preview section -->
-                <div class="text-center p-4 border rounded"
-                  style="background-color: <%= shop.primary_color %>; color: white;">
+                <div class="text-center p-4 border rounded" style="background-color: <%= shop.primary_color %>; color: white;">
                   <h6 class="mb-2">Primary Color Preview</h6>
                   <p class="mb-3">This is how your primary color looks</p>
                   <button class="btn btn-light btn-sm">Example Button</button>
@@ -480,8 +454,7 @@
           </div>
         </div>
       </div>
-
-      <!-- Billing & Subscription Tab -->
+      <!-- Billing Tab -->
       <div class="tab-pane fade" id="billing" role="tabpanel">
         <div class="row">
           <div class="col-lg-8">
@@ -499,13 +472,10 @@
                     </div>
                     <div class="col-md-4 text-end">
                       <h3 class="mb-1" id="planPrice">Loading...</h3>
-                      <button class="btn btn-light btn-sm" onclick="changePlan()">
-                        Change Plan
-                      </button>
+                      <button class="btn btn-light btn-sm" onclick="changePlan()">Change Plan</button>
                     </div>
                   </div>
                 </div>
-
                 <div class="setting-section">
                   <h6 class="fw-semibold mb-3">Billing Information</h6>
                   <div id="billingInfo">
@@ -517,7 +487,6 @@
                     </div>
                   </div>
                 </div>
-
                 <div class="setting-section">
                   <h6 class="fw-semibold mb-3">Payment History</h6>
                   <div class="table-responsive">
@@ -566,7 +535,6 @@
                 </button>
               </div>
             </div>
-
             <div class="card mt-4">
               <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Invoices</h5>
@@ -585,8 +553,7 @@
           </div>
         </div>
       </div>
-
-      <!-- Users & Permissions Tab -->
+      <!-- Users Tab -->
       <div class="tab-pane fade" id="users" role="tabpanel">
         <div class="row">
           <div class="col-lg-8">
@@ -643,7 +610,6 @@
                 </div>
               </div>
             </div>
-
             <div class="card mt-4">
               <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-history me-2"></i>Login Activity</h5>
@@ -662,8 +628,7 @@
           </div>
         </div>
       </div>
-
-      <!-- Advanced Settings Tab -->
+      <!-- Advanced Tab -->
       <div class="tab-pane fade" id="advanced" role="tabpanel">
         <div class="row">
           <div class="col-lg-8">
@@ -673,7 +638,7 @@
               </div>
               <div class="card-body">
                 <div class="setting-section">
-                  <h6 class="fw-semibold mb-3">Backup & Restore</h6>
+                  <h6 class="fw-semibold mb-3">Backup &amp; Restore</h6>
                   <div class="row">
                     <div class="col-md-6">
                       <div class="d-grid gap-2">
@@ -697,13 +662,12 @@
                     </div>
                   </div>
                 </div>
-
                 <div class="setting-section">
                   <h6 class="fw-semibold mb-3">API Settings</h6>
                   <div class="mb-3">
                     <label for="apiKey" class="form-label">API Key</label>
                     <div class="input-group">
-                      <input type="text" class="form-control" id="apiKey" value="sk_****************" readonly>
+                      <input type="text" class="form-control" id="apiKey" value="sk_" readonly>
                       <button class="btn btn-outline-secondary" type="button" onclick="generateApiKey()">
                         <i class="fas fa-sync me-1"></i>Generate
                       </button>
@@ -714,14 +678,11 @@
                     <label class="form-check-label" for="apiEnabled">Enable API Access</label>
                   </div>
                 </div>
-
                 <div class="danger-zone">
                   <h6 class="fw-semibold mb-3 text-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>Danger Zone
                   </h6>
-                  <p class="text-muted mb-3">
-                    These actions are irreversible. Please proceed with caution.
-                  </p>
+                  <p class="text-muted mb-3">These actions are irreversible. Please proceed with caution.</p>
                   <div class="d-grid gap-2">
                     <button class="btn btn-outline-danger" onclick="resetShopData()">
                       <i class="fas fa-eraser me-2"></i>Reset All Data
@@ -754,13 +715,10 @@
                 </div>
                 <div class="mb-3">
                   <small class="text-muted">Server Status</small>
-                  <div class="fw-semibold text-success">
-                    <i class="fas fa-circle me-1"></i>Online
-                  </div>
+                  <div class="fw-semibold text-success"><i class="fas fa-circle me-1"></i>Online</div>
                 </div>
               </div>
             </div>
-
             <div class="card mt-4">
               <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notifications</h5>
@@ -789,7 +747,6 @@
       </div>
     </div>
   </div>
-
   <!-- Add User Modal -->
   <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -829,11 +786,9 @@
       </div>
     </div>
   </div>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Shop data for JavaScript
-    // Update the window.shopData initialization at the top of your script
+    // Provide shop data to the client-side script
     window.shopData = {
       currency: '<%= (shop && shop.currency) || "PKR" %>',
       name: '<%= (shop && shop.name) || "My Shop" %>',
@@ -841,26 +796,44 @@
       secondaryColor: '<%= (shop && shop.secondary_color) || "#6c757d" %>'
     };
 
-    // Fix the color picker initialization in setupEventListeners
+    // Initialize event listeners and load initial data
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log('Initializing shop settings...');
+      loadShopStatistics();
+      loadSubscriptionInfo();
+      loadShopUsers();
+      setupEventListeners();
+      initializeColorPickers();
+    });
+
+    /**
+     * Bind form submissions and other UI events once on page load.
+     */
     function setupEventListeners() {
-      // Shop info form
-      document.getElementById('shopInfoForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        updateShopInfo();
-      });
-
-      // Appearance form
-      document.getElementById('appearanceForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        updateAppearance();
-      });
-
-      // Add user form
-      document.getElementById('addUserForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        submitAddUser();
-      });
-
+      // Shop information form submission
+      const shopInfoForm = document.getElementById('shopInfoForm');
+      if (shopInfoForm) {
+        shopInfoForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          updateShopInfo();
+        });
+      }
+      // Appearance form submission
+      const appearanceForm = document.getElementById('appearanceForm');
+      if (appearanceForm) {
+        appearanceForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          updateAppearance();
+        });
+      }
+      // Add user form submission
+      const addUserForm = document.getElementById('addUserForm');
+      if (addUserForm) {
+        addUserForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          submitAddUser();
+        });
+      }
       // Remove logo button
       const removeLogoBtn = document.getElementById('removeLogoBtn');
       if (removeLogoBtn) {
@@ -868,22 +841,19 @@
           removeLogo();
         });
       }
-
-      // Color picker live updates
-      const primaryColor = document.getElementById('primaryColor');
-      const secondaryColor = document.getElementById('secondaryColor');
-
-      if (primaryColor) {
-        primaryColor.addEventListener('input', function () {
+      // Live color previews
+      const primaryColorInput = document.getElementById('primaryColor');
+      const secondaryColorInput = document.getElementById('secondaryColor');
+      if (primaryColorInput) {
+        primaryColorInput.addEventListener('input', function () {
           const preview = document.getElementById('primaryColorPreview');
           if (preview) {
             preview.style.backgroundColor = this.value;
           }
         });
       }
-
-      if (secondaryColor) {
-        secondaryColor.addEventListener('input', function () {
+      if (secondaryColorInput) {
+        secondaryColorInput.addEventListener('input', function () {
           const preview = document.getElementById('secondaryColorPreview');
           if (preview) {
             preview.style.backgroundColor = this.value;
@@ -891,115 +861,75 @@
         });
       }
     }
-    // Main initialization
-    document.addEventListener('DOMContentLoaded', function () {
-      console.log('Initializing shop settings...');
 
-      // Load initial data
-      loadShopStatistics();
-      loadSubscriptionInfo();
-      loadShopUsers();
-
-      // Setup event listeners
-      setupEventListeners();
-
-      // Initialize color pickers
-      initializeColorPickers();
-    });
-
-    // Setup event listeners
-    function setupEventListeners() {
-      // Shop info form
-      document.getElementById('shopInfoForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        updateShopInfo();
-      });
-
-      // Appearance form
-      document.getElementById('appearanceForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        updateAppearance();
-      });
-
-      // Add user form
-      document.getElementById('addUserForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        submitAddUser();
-      });
-
-      // Remove logo button
-      document.getElementById('removeLogoBtn')?.addEventListener('click', function () {
-        removeLogo();
-      });
-
-      // Color picker live updates
-      document.getElementById('primaryColor').addEventListener('input', function () {
-        document.getElementById('primaryColorPreview').style.backgroundColor = this.value;
-      });
-
-      document.getElementById('secondaryColor').addEventListener('input', function () {
-        document.getElementById('secondaryColorPreview').style.backgroundColor = this.value;
-      });
-    }
-
-    // Initialize color pickers
+    /**
+     * Placeholder for additional color picker initialization if needed.
+     */
     function initializeColorPickers() {
-      // Color pickers are already initialized via HTML5 color input
-      // This function can be used for additional color picker functionality
+      // Currently using native HTML color inputs; no additional initialization required.
     }
 
-
-    // debug
-    // Update shop information - DEBUG VERSION
-    async function updateShopInfo() {
-      const form = document.getElementById('shopInfoForm');
-      const formData = new FormData(form);
-
-      console.log('Form data:', {
-        name: formData.get('name'),
-        email: formData.get('email'),
-        phone: formData.get('phone'),
-        address: formData.get('address'),
-        currency: formData.get('currency'),
-        logo: formData.get('logo')
-      });
-
-      try {
-        const response = await fetch('/api/shop/update', {
-          method: 'PUT',
-          body: formData
-        });
-
-        console.log('Response status:', response.status);
-
-        const data = await response.json();
-        console.log('Response data:', data);
-
-        if (data.success) {
-          showToast('Shop information updated successfully!', 'success');
-          // Reload page to reflect changes
-          setTimeout(() => location.reload(), 1000);
-        } else {
-          throw new Error(data.message || 'Failed to update shop information');
-        }
-      } catch (error) {
-        console.error('Error updating shop:', error);
-        showToast('Failed to update shop information: ' + error.message, 'error');
-      }
+    /**
+     * Format currency values based on the shop's currency.
+     * @param {number} amount
+     */
+    function formatCurrency(amount) {
+      const currency = window.shopData?.currency || 'PKR';
+      return new Intl.NumberFormat('en-PK', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount || 0);
     }
 
-    // Load shop statistics
+    /**
+     * Escape HTML to prevent XSS when injecting user-provided values into the DOM.
+     * @param {string} unsafe
+     */
+    function escapeHtml(unsafe) {
+      if (!unsafe) return '';
+      return unsafe
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    /**
+     * Determine badge class for a given user role.
+     * @param {string} role
+     */
+    function getRoleBadgeClass(role) {
+      const classes = {
+        owner: 'bg-primary',
+        manager: 'bg-success',
+        cashier: 'bg-info',
+        other: 'bg-secondary'
+      };
+      return classes[role] || 'bg-secondary';
+    }
+
+    /**
+     * Display a toast message. For now this uses alert() as a placeholder.
+     * @param {string} message
+     * @param {string} type
+     */
+    function showToast(message, type = 'success') {
+      alert(`${type.toUpperCase()}: ${message}`);
+    }
+
+    /**
+     * Load basic shop statistics from the server and populate the dashboard.
+     */
     async function loadShopStatistics() {
       try {
-        const response = await fetch('/api/shop/statistics');
+        const response = await fetch('shop/statistics');
         const data = await response.json();
-
         if (data.success) {
           const stats = data.statistics;
-
-          // Format and display statistics
-          document.getElementById('registrationDate').textContent =
-            new Date(stats.registrationDate).toLocaleDateString();
+          document.getElementById('registrationDate').textContent = new Date(stats.registrationDate).toLocaleDateString();
           document.getElementById('totalProducts').textContent = stats.totalProducts.toLocaleString();
           document.getElementById('totalSales').textContent = formatCurrency(stats.totalSales);
         }
@@ -1009,24 +939,20 @@
       }
     }
 
-    // Load subscription information
+    /**
+     * Load current subscription information from the server.
+     */
     async function loadSubscriptionInfo() {
       try {
-        const response = await fetch('/api/shop/subscription');
+        const response = await fetch('/shop/subscription');
         const data = await response.json();
-
         if (data.success) {
           const subscription = data.subscription;
-
           if (subscription) {
-            document.getElementById('currentPlan').textContent =
-              subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1) + ' Plan';
-            document.getElementById('planDescription').textContent =
-              `${subscription.duration} billing`;
-            document.getElementById('planPrice').textContent =
-              formatCurrency(subscription.price);
-            document.getElementById('billingCycle').textContent =
-              `Next billing: ${new Date(subscription.expiryDate).toLocaleDateString()}`;
+            document.getElementById('currentPlan').textContent = subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1) + ' Plan';
+            document.getElementById('planDescription').textContent = `${subscription.duration} billing`;
+            document.getElementById('planPrice').textContent = formatCurrency(subscription.price);
+            document.getElementById('billingCycle').textContent = `Next billing: ${new Date(subscription.expiryDate).toLocaleDateString()}`;
           } else {
             document.getElementById('currentPlan').textContent = 'No Active Subscription';
             document.getElementById('planDescription').textContent = 'Please subscribe to a plan';
@@ -1038,95 +964,76 @@
       }
     }
 
-    // Load shop users
+    /**
+     * Fetch and display the list of users for the current shop.
+     */
     async function loadShopUsers() {
       try {
-        const response = await fetch('/api/shop/users');
+        const response = await fetch('/shop/users');
         const data = await response.json();
-
         const usersTable = document.getElementById('usersTable');
-
         if (data.success && data.users.length > 0) {
           let html = '';
-
           data.users.forEach(user => {
             html += `
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">${escapeHtml(user.name)}</div>
-                            <small class="text-muted">ID: ${user.id}</small>
-                        </td>
-                        <td>${escapeHtml(user.email)}</td>
-                        <td>
-                            <span class="badge ${getRoleBadgeClass(user.role)}">
-                                ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge ${user.status === 'active' ? 'bg-success' : 'bg-secondary'}">
-                                ${user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                            </span>
-                        </td>
-                        <td>${user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'Never'}</td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary" onclick="editUser(${user.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                ${user.role !== 'owner' ? `
-                                    <button class="btn btn-outline-danger" onclick="deleteUser(${user.id})">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </td>
-                    </tr>
-                `;
+              <tr>
+                <td>
+                  <div class="fw-semibold">${escapeHtml(user.name)}</div>
+                  <small class="text-muted">ID: ${user.id}</small>
+                </td>
+                <td>${escapeHtml(user.email)}</td>
+                <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span></td>
+                <td><span class="badge ${user.status === 'active' ? 'bg-success' : 'bg-secondary'}">${user.status.charAt(0).toUpperCase() + user.status.slice(1)}</span></td>
+                <td>${user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'Never'}</td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="editUser(${user.id})"><i class="fas fa-edit"></i></button>
+                    ${user.role !== 'owner' ? `<button class="btn btn-outline-danger" onclick="deleteUser(${user.id})"><i class="fas fa-trash"></i></button>` : ''}
+                  </div>
+                </td>
+              </tr>
+            `;
           });
-
           usersTable.innerHTML = html;
         } else {
           usersTable.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center py-4">
-                        <div class="empty-state">
-                            <i class="fas fa-users fa-2x text-muted mb-3"></i>
-                            <h5>No Users Found</h5>
-                            <p class="text-muted">Add your first user to get started</p>
-                        </div>
-                    </td>
-                </tr>
-            `;
+            <tr>
+              <td colspan="6" class="text-center py-4">
+                <div class="empty-state">
+                  <i class="fas fa-users fa-2x text-muted mb-3"></i>
+                  <h5>No Users Found</h5>
+                  <p class="text-muted">Add your first user to get started</p>
+                </div>
+              </td>
+            </tr>
+          `;
         }
       } catch (error) {
         console.error('Error loading users:', error);
         document.getElementById('usersTable').innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center py-4 text-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Failed to load users
-                </td>
-            </tr>
+          <tr>
+            <td colspan="6" class="text-center py-4 text-danger">
+              <i class="fas fa-exclamation-triangle me-2"></i>Failed to load users
+            </td>
+          </tr>
         `;
       }
     }
 
-    // Update shop information
+    /**
+     * Send form data to update shop information.
+     */
     async function updateShopInfo() {
       const form = document.getElementById('shopInfoForm');
       const formData = new FormData(form);
-
       try {
         const response = await fetch('/api/shop/update', {
           method: 'PUT',
           body: formData
         });
-
         const data = await response.json();
-
         if (data.success) {
           showToast('Shop information updated successfully!', 'success');
-          // Reload page to reflect changes
           setTimeout(() => location.reload(), 1000);
         } else {
           throw new Error(data.message || 'Failed to update shop information');
@@ -1137,25 +1044,21 @@
       }
     }
 
-    // Update appearance
+    /**
+     * Send form data to update appearance settings (colors).
+     */
     async function updateAppearance() {
       const form = document.getElementById('appearanceForm');
       const formData = new FormData(form);
-
       try {
         const response = await fetch('/api/shop/appearance', {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(Object.fromEntries(formData))
         });
-
         const data = await response.json();
-
         if (data.success) {
           showToast('Appearance settings updated successfully!', 'success');
-          // Reload page to apply new colors
           setTimeout(() => location.reload(), 1000);
         } else {
           throw new Error(data.message || 'Failed to update appearance');
@@ -1166,21 +1069,19 @@
       }
     }
 
-    // Remove shop logo
+    /**
+     * Remove the shop logo by sending a flag to the backend.
+     */
     async function removeLogo() {
       if (!confirm('Are you sure you want to remove the shop logo?')) return;
-
       try {
         const formData = new FormData();
         formData.append('remove_logo', 'true');
-
         const response = await fetch('/api/shop/update', {
           method: 'PUT',
           body: formData
         });
-
         const data = await response.json();
-
         if (data.success) {
           showToast('Logo removed successfully!', 'success');
           setTimeout(() => location.reload(), 1000);
@@ -1193,34 +1094,34 @@
       }
     }
 
-    // Add new user
+    /**
+     * Show the add user modal.
+     */
     function addUser() {
-      $('#addUserModal').modal('show');
+      const modalEl = document.getElementById('addUserModal');
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
     }
 
-    // Submit add user form
+    /**
+     * Handle submission of the add user form.
+     */
     async function submitAddUser() {
       const form = document.getElementById('addUserForm');
       const formData = new FormData(form);
-
       try {
         const response = await fetch('/api/shop/users', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(Object.fromEntries(formData))
         });
-
         const data = await response.json();
-
         if (data.success) {
           showToast('User added successfully!', 'success');
-          $('#addUserModal').modal('hide');
+          const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
+          modal.hide();
           form.reset();
-          loadShopUsers(); // Reload users table
-
-          // Show temporary password (in production, send via email)
+          loadShopUsers();
           if (data.tempPassword) {
             alert(`User created! Temporary password: ${data.tempPassword}\n\nPlease share this with the user and ask them to change it immediately.`);
           }
@@ -1233,27 +1134,27 @@
       }
     }
 
-    // Edit user
+    /**
+     * Placeholder for editing a user. Implement as needed.
+     * @param {number} userId
+     */
     function editUser(userId) {
-      // Implement edit user functionality
       alert('Edit user: ' + userId);
-      // You would typically open a modal with user details for editing
+      // Implementation would open an edit user modal
     }
 
-    // Delete user
+    /**
+     * Soft-delete a user via the API.
+     * @param {number} userId
+     */
     async function deleteUser(userId) {
       if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
-
       try {
-        const response = await fetch(`/api/shop/users/${userId}`, {
-          method: 'DELETE'
-        });
-
+        const response = await fetch(`/api/shop/users/${userId}`, { method: 'DELETE' });
         const data = await response.json();
-
         if (data.success) {
           showToast('User deleted successfully!', 'success');
-          loadShopUsers(); // Reload users table
+          loadShopUsers();
         } else {
           throw new Error(data.message || 'Failed to delete user');
         }
@@ -1263,23 +1164,17 @@
       }
     }
 
-    // Create backup
+    /**
+     * Trigger a backup creation and optionally offer to download it.
+     */
     async function createBackup() {
       if (!confirm('Create a backup of all shop data?')) return;
-
       try {
         showToast('Creating backup...', 'info');
-
-        const response = await fetch('/api/shop/backup', {
-          method: 'POST'
-        });
-
+        const response = await fetch('/api/shop/backup', { method: 'POST' });
         const data = await response.json();
-
         if (data.success) {
           showToast('Backup created successfully!', 'success');
-
-          // Offer download
           if (confirm('Backup created. Would you like to download it now?')) {
             window.open(data.downloadUrl, '_blank');
           }
@@ -1292,26 +1187,22 @@
       }
     }
 
-    // Reset shop data
+    /**
+     * Soft-reset shop data by marking all records inactive.
+     */
     async function resetShopData() {
       const confirmation = prompt('This will delete ALL shop data including products, sales, and user data. This action cannot be undone.\n\nType "DELETE_ALL_DATA" to confirm:');
-
       if (confirmation !== 'DELETE_ALL_DATA') {
         showToast('Reset cancelled', 'info');
         return;
       }
-
       try {
         const response = await fetch('/api/shop/reset', {
           method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ confirmation })
         });
-
         const data = await response.json();
-
         if (data.success) {
           showToast('All shop data has been reset', 'success');
           setTimeout(() => location.reload(), 2000);
@@ -1324,46 +1215,16 @@
       }
     }
 
-    // Utility functions
-    function formatCurrency(amount) {
-      const currency = window.shopData?.currency || 'PKR';
-      return new Intl.NumberFormat('en-PK', {
-        style: 'currency',
-        currency: currency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      }).format(amount || 0);
+    /**
+     * Soft-delete the entire shop via API. Confirmation is handled on the client.
+     */
+    function deleteShop() {
+      if (confirm('This will permanently delete your shop and all associated data. This action cannot be undone. Are you absolutely sure?')) {
+        alert('Shop deletion functionality coming soon');
+      }
     }
 
-    function getRoleBadgeClass(role) {
-      const classes = {
-        'owner': 'bg-primary',
-        'manager': 'bg-success',
-        'cashier': 'bg-info',
-        'other': 'bg-secondary'
-      };
-      return classes[role] || 'bg-secondary';
-    }
-
-    function escapeHtml(unsafe) {
-      if (!unsafe) return '';
-      return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function showToast(message, type = 'success') {
-      // Simple alert for now - replace with a proper toast notification if needed
-      alert(`${type.toUpperCase()}: ${message}`);
-
-      // In production, you can use:
-      // toastr[type](message);
-    }
-
-    // Placeholder functions for unimplemented features
+    // Placeholder functions for future features
     function changePlan() { alert('Change plan functionality coming soon'); }
     function backupData() { alert('Backup data functionality coming soon'); }
     function exportReports() { alert('Export reports functionality coming soon'); }
@@ -1382,11 +1243,6 @@
     function viewBackups() { alert('View backups functionality coming soon'); }
     function restoreBackup() { alert('Restore backup functionality coming soon'); }
     function exportData() { alert('Export data functionality coming soon'); }
-    function deleteShop() {
-      if (confirm('This will permanently delete your shop and all associated data. This action cannot be undone. Are you absolutely sure?')) {
-        alert('Shop deletion functionality coming soon');
-      }
-    }
   </script>
 </body>
 
