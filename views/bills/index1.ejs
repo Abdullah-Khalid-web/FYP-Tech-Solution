@@ -1,421 +1,155 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales & Returns - <%= (shop && shop.name) || 'My Shop' %></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #4e73df;
-            --success: #1cc88a;
-            --warning: #f6c23e;
-            --danger: #e74a3b;
-            --info: #36b9cc;
-            --secondary: #858796;
-            --dark: #5a5c69;
-            --light: #f8f9fc;
+<style>
+    :root {
+        --primary-color: <%=shop.primary_color || '#007bff' %>;
+        --danger-color: #dc3545;
+    }
+
+    .transaction-table th {
+        background-color: #e9ecef;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
+
+    .transaction-table td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+
+    .summary-card {
+        background-color: #f8f9fa;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .return-item {
+        background-color: #fff3cd;
+    }
+
+    .sale-item {
+        background-color: #f8f9fa;
+    }
+
+    .quantity-controls {
+        width: 120px;
+    }
+
+    .search-result-item {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .search-result-item:hover {
+        background-color: #e9ecef;
+    }
+
+    .product-search-input {
+        position: relative;
+    }
+
+    .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+
+    .return-option-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .return-option-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .return-option-card.selected {
+        border: 2px solid var(--primary-color);
+    }
+
+    .bill-item-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        margin-bottom: 0.5rem;
+        padding: 0.75rem;
+    }
+
+    .custom-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+    }
+
+    .return-option-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .return-option-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .return-option-card.selected {
+        border: 2px solid var(--primary-color);
+        background-color: #f8f9fa;
+    }
+
+    .return-quantity-control {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 0.375rem;
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .quick-return-quantity {
+        max-width: 60px;
+    }
+
+    @media print {
+        .no-print {
+            display: none !important;
         }
 
         body {
-            background-color: #f5f7fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white !important;
         }
 
-        .dashboard-container {
-            padding: 20px;
-            background-color: #f5f7fa;
-            min-height: calc(100vh - 70px);
+        .container {
+            max-width: none !important;
         }
-
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding: 15px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .dashboard-header h1 {
-            font-size: 1.8rem;
-            margin: 0;
-            color: var(--dark);
-        }
-
-        .username {
-            color: var(--primary);
-        }
-
-        .datetime {
-            color: var(--secondary);
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-
-        .shop-info {
-            text-align: right;
-        }
-
-        .shop-info p {
-            margin: 5px 0;
-            color: var(--dark);
-            font-size: 0.9rem;
-        }
-
-        .shop-info i {
-            margin-right: 5px;
-            color: var(--primary);
-        }
-
-        /* Card Styles */
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-            border: none;
-        }
-
-        .card-header {
-            background: transparent;
-            border-bottom: 1px solid #eee;
-            padding: 15px 20px;
-            margin: -20px -20px 20px -20px;
-            border-radius: 10px 10px 0 0;
-        }
-
-        .card-header.bg-primary {
-            background: linear-gradient(135deg, var(--primary), #2e59d9) !important;
-            color: white;
-            border: none;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .section-header h2 {
-            font-size: 1.2rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            color: var(--dark);
-        }
-
-        .section-header h2 i {
-            margin-right: 10px;
-            color: var(--primary);
-        }
-
-        /* Quick Actions */
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
-        }
-
-        .action-card {
-            background: white;
-            border-radius: 8px;
-            padding: 15px 10px;
-            text-align: center;
-            text-decoration: none;
-            color: var(--dark);
-            transition: all 0.3s;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            border: 1px solid #eee;
-        }
-
-        .action-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border-color: var(--primary);
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        .action-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 1.2rem;
-            color: white;
-        }
-
-        .action-card p {
-            margin: 0;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        /* Table Styles */
-        .table-responsive {
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #e5e7eb;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 0;
-        }
-
-        .table th {
-            font-weight: 600;
-            color: var(--secondary);
-            font-size: 0.85rem;
-            text-align: left;
-            padding: 15px;
-            background: #f8f9fc;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .table td {
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.9rem;
-            vertical-align: middle;
-        }
-
-        .table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .table tr:hover td {
-            background-color: #f8f9fc;
-        }
-
-        /* Badge Styles */
-        .badge {
-            font-size: 0.75rem;
-            font-weight: 500;
-            padding: 0.35em 0.65em;
-        }
-
-        /* Button Styles */
-        .btn {
-            border-radius: 6px;
-            font-weight: 500;
-            padding: 8px 16px;
-        }
-
-        .btn-group-sm .btn {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-        }
-
-        /* Form Controls */
-        .form-control, .form-select {
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
-            padding: 8px 12px;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
-        }
-
-        /* Search Results */
-        .search-results {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-top: none;
-            border-radius: 0 0 6px 6px;
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .search-result-item {
-            cursor: pointer;
-            transition: background-color 0.2s;
-            padding: 10px 15px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .search-result-item:hover {
-            background-color: #f8f9fc;
-        }
-
-        .search-result-item:last-child {
-            border-bottom: none;
-        }
-
-        /* Return Option Cards */
-        .return-option-card {
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            height: 100%;
-        }
-
-        .return-option-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .return-option-card.selected {
-            border: 2px solid var(--primary);
-            background-color: #f8f9fa;
-        }
-
-        /* Quantity Controls */
-        .quantity-controls {
-            width: 120px;
-        }
-
-        .quick-return-quantity {
-            max-width: 60px;
-        }
-
-        /* Summary Card */
-        .summary-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            border-left: 4px solid var(--primary);
-        }
-
-        .sticky-top {
-            position: sticky;
-            top: 20px;
-        }
-
-        /* Transaction Items */
-        .sale-item {
-            background-color: #f8f9fa;
-        }
-
-        .return-item {
-            background-color: #fff3cd;
-        }
-
-        /* Loading Spinner */
-        .loading-spinner {
-            padding: 20px;
-            text-align: center;
-            color: var(--secondary);
-        }
-
-        .loading-spinner i {
-            margin-right: 8px;
-        }
-
-        /* Color Classes */
-        .bg-primary { background-color: var(--primary); }
-        .bg-success { background-color: var(--success); }
-        .bg-warning { background-color: var(--warning); }
-        .bg-danger { background-color: var(--danger); }
-        .bg-info { background-color: var(--info); }
-        .bg-secondary { background-color: var(--secondary); }
-        .bg-dark { background-color: var(--dark); }
-
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
-
-        /* Print Styles */
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-
-            body {
-                background: white !important;
-            }
-
-            .container {
-                max-width: none !important;
-            }
-        }
-    </style>
+    }
+</style>
 </head>
 
 <body class="bg-light">
-    <div class="dashboard-container">
+    <div class="container-fluid py-3">
         <!-- Header -->
-        <div class="dashboard-header">
-            <div>
-                <h1><i class="fas fa-cash-register me-2"></i>Sales & Returns</h1>
-                <p class="datetime" id="datetime"></p>
-            </div>
-            <div class="shop-info">
-                <p><i class="fas fa-store"></i> <%= (shop && shop.name) || 'My Shop' %></p>
-                <p><i class="fas fa-map-marker-alt"></i> <%= (shop && shop.address) || 'Add shop address' %></p>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="quick-actions card">
-            <div class="section-header">
-                <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
-            </div>
-            <div class="action-grid">
-                <a href="/ALLbills" class="action-card">
-                    <div class="action-icon bg-primary">
-                        <i class="fas fa-list"></i>
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0"><i class="fas fa-cash-register me-2"></i>Sales & Returns</h2>
+                    <div>
+                        <a href="/ALLbills" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-list me-1"></i>All Bills
+                        </a>
+                        <!-- <button class="btn btn-success" onclick="printReceipt()" id="printBtn" style="display: none;">
+                            <i class="fas fa-print me-1"></i>Print Receipt
+                        </button> -->
                     </div>
-                    <p>All Bills</p>
-                </a>
-                
-                <a href="#" class="action-card" data-bs-toggle="modal" data-bs-target="#productListModal">
-                    <div class="action-icon bg-info">
-                        <i class="fas fa-boxes"></i>
-                    </div>
-                    <p>View Products</p>
-                </a>
-                
-                <a href="#" class="action-card" data-bs-toggle="modal" data-bs-target="#returnOptionsModal">
-                    <div class="action-icon bg-warning">
-                        <i class="fas fa-undo"></i>
-                    </div>
-                    <p>Add Return</p>
-                </a>
-                
-                <a href="/products" class="action-card">
-                    <div class="action-icon bg-success">
-                        <i class="fas fa-cubes"></i>
-                    </div>
-                    <p>Manage Products</p>
-                </a>
+                </div>
+                <p class="text-muted mb-0">Process sales and returns with complete transaction management</p>
             </div>
         </div>
 
@@ -426,7 +160,7 @@
                 <!-- Customer Information -->
                 <div class="card mb-3">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="fas fa-user me-2"></i>Customer Information</h5>
+                        <h5 class="mb-0">Customer Information</h5>
                         <button class="btn btn-sm btn-light" id="searchCustomerBtn">
                             <i class="fas fa-search me-1"></i>Find Previous Bills
                         </button>
@@ -434,16 +168,20 @@
                     <div class="card-body">
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <label class="form-label">Customer Name <small class="text-muted">(Optional)</small></label>
-                                <input type="text" class="form-control" id="customerName" placeholder="Walk-in Customer">
+                                <label class="form-label">Customer Name <small
+                                        class="text-muted">(Optional)</small></label>
+                                <input type="text" class="form-control" id="customerName"
+                                    placeholder="Walk-in Customer">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Phone Number <small class="text-muted">(Optional)</small></label>
-                                <input type="text" class="form-control" id="customerPhone" placeholder="Enter phone number">
+                                <label class="form-label">Phone Number <small
+                                        class="text-muted">(Optional)</small></label>
+                                <input type="text" class="form-control" id="customerPhone"
+                                    placeholder="Enter phone number">
                             </div>
                         </div>
                         <div id="customerBillsSection" class="mt-3" style="display: none;">
-                            <h6><i class="fas fa-history me-2"></i>Previous Bills</h6>
+                            <h6>Previous Bills</h6>
                             <div id="customerBillsList" class="small"></div>
                         </div>
                     </div>
@@ -452,7 +190,7 @@
                 <!-- Product Search and Selection -->
                 <div class="card mb-3">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="fas fa-search me-2"></i>Product Selection</h5>
+                        <h5 class="mb-0">Product Selection</h5>
                         <div>
                             <button class="btn btn-sm btn-light me-2" id="viewProductsBtn">
                                 <i class="fas fa-boxes me-1"></i>View All Products
@@ -463,10 +201,11 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3 product-search-input position-relative">
+                        <div class="mb-3 product-search-input">
                             <label class="form-label">Search Products</label>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="productSearch" placeholder="Search by product name, SKU, or brand">
+                                <input type="text" class="form-control" id="productSearch"
+                                    placeholder="Search by product name, SKU, or brand">
                                 <button class="btn btn-outline-secondary" type="button" id="scanBarcodeBtn">
                                     <i class="fas fa-barcode"></i>
                                 </button>
@@ -476,7 +215,7 @@
 
                         <!-- Transaction Items Table -->
                         <div class="table-responsive">
-                            <table class="table table-hover" id="transactionItems">
+                            <table class="table table-sm table-hover transaction-table" id="transactionItems">
                                 <thead class="table-light">
                                     <tr>
                                         <th width="5%">Type</th>
@@ -505,11 +244,11 @@
 
             <!-- Right Column - Summary -->
             <div class="col-lg-4">
-                <div class="summary-card sticky-top">
-                    <div class="section-header">
-                        <h2><i class="fas fa-receipt"></i> Transaction Summary</h2>
+                <div class="card summary-card sticky-top" style="top: 20px;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Transaction Summary</h5>
                     </div>
-                    <div class="card-body p-0">
+                    <div class="card-body">
                         <div class="row g-2 mb-3">
                             <div class="col-12">
                                 <label class="form-label">Payment Method</label>
@@ -522,26 +261,33 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Amount Paid</label>
-                                <input type="number" class="form-control" id="paymentAmount" value="0.00" min="0" step="0.01">
+                                <input type="number" class="form-control" id="paymentAmount" value="0.00" min="0"
+                                    step="0.01">
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Tax Amount (FBR)</label>
-                                <input type="number" class="form-control" id="taxAmount" value="1.00" min="0" step="0.01">
+                                <input type="number" class="form-control" id="taxAmount" value="1.00" min="0"
+                                    step="0.01">
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Additional Notes</label>
-                                <textarea class="form-control" id="transactionNotes" rows="2" placeholder="Any additional notes"></textarea>
+                                <textarea class="form-control" id="transactionNotes" rows="2"
+                                    placeholder="Any additional notes"></textarea>
                             </div>
                         </div>
 
                         <div class="transaction-summary">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal (Sales):</span>
-                                <span id="summarySalesSubtotal"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summarySalesSubtotal">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal (Returns):</span>
-                                <span id="summaryReturnsSubtotal"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryReturnsSubtotal">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Total Discount:</span>
@@ -549,31 +295,42 @@
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Total Tax:</span>
-                                <span id="summaryTax"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryTax">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
                                 <span>Net Amount:</span>
-                                <span id="summaryTotal"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryTotal">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Amount Paid:</span>
-                                <span id="summaryPaid"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryPaid">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
                             </div>
                             <div class="d-flex justify-content-between fw-bold text-success" id="changeSection">
                                 <span>Change:</span>
-                                <span id="summaryChange"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryChange">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
                             </div>
-                            <div class="d-flex justify-content-between fw-bold text-danger" id="refundSection" style="display: none;">
+                            <div class="d-flex justify-content-between fw-bold text-danger" id="refundSection"
+                                style="display: none;">
                                 <span>Refund Due:</span>
-                                <span id="summaryRefund"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryRefund">
+                                    <%= shop.currency || '₹' %>0.00
+                                </span>
                             </div>
                         </div>
 
                         <!-- Action Buttons -->
                         <div class="row g-2 mt-3 no-print">
                             <div class="col-12">
-                                <button class="btn btn-outline-secondary w-100" id="clearTransactionBtn">
+                                <button class="btn btn-secondary w-100" id="clearTransactionBtn">
                                     <i class="fas fa-times me-2"></i> Clear Transaction
                                 </button>
                             </div>
@@ -583,6 +340,10 @@
                                 </button>
                             </div>
                             <div class="col-12">
+                                <!-- <button class="btn btn-warning w-100" onclick="printReceipt()" id="printBtn"
+                                    style="display: none;">
+                                    <i class="fas fa-print me-1"></i>Print Receipt
+                                </button> -->
                                 <button type="button" class="btn btn-warning w-100" onclick="printReceipt()" id="printBtn" style="display: none;">
                                     <i class="fas fa-print me-1"></i>Print Receipt
                                 </button>
@@ -599,12 +360,13 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-boxes me-2"></i>Product Catalog</h5>
+                    <h5 class="modal-title">Product Catalog</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="input-group mb-3">
-                        <input type="text" class="form-control" placeholder="Search products..." id="modalProductSearch">
+                        <input type="text" class="form-control" placeholder="Search products..."
+                            id="modalProductSearch">
                         <button class="btn btn-outline-primary" type="button" id="modalSearchBtn">
                             <i class="fas fa-search"></i>
                         </button>
@@ -624,12 +386,22 @@
                             <tbody id="modalProductsList">
                                 <% products.forEach(product=> { %>
                                     <tr>
-                                        <td><%= product.name %></td>
-                                        <td><%= product.brand || 'N/A' %></td>
-                                        <td><%= product.sku %></td>
-                                        <td><%= shop.currency || '₹' %><%= product.selling_price %></td>
                                         <td>
-                                            <span class="badge <%= product.quantity > 10 ? 'bg-success' : product.quantity > 0 ? 'bg-warning' : 'bg-danger' %>">
+                                            <%= product.name %>
+                                        </td>
+                                        <td>
+                                            <%= product.brand || 'N/A' %>
+                                        </td>
+                                        <td>
+                                            <%= product.sku %>
+                                        </td>
+                                        <td>
+                                            <%= shop.currency || '₹' %>
+                                                <%= product.selling_price %>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge <%= product.quantity > 10 ? 'bg-success' : product.quantity > 0 ? 'bg-warning' : 'bg-danger' %>">
                                                 <%= product.quantity %>
                                             </span>
                                         </td>
@@ -645,7 +417,7 @@
                                             </button>
                                         </td>
                                     </tr>
-                                <% }); %>
+                                    <% }); %>
                             </tbody>
                         </table>
                     </div>
@@ -659,7 +431,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-undo me-2"></i>Add Return Item</h5>
+                    <h5 class="modal-title">Add Return Item</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -689,7 +461,8 @@
                         <div class="mb-3">
                             <label class="form-label">Search Customer Bills</label>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="customerSearch" placeholder="Enter customer name or phone">
+                                <input type="text" class="form-control" id="customerSearch"
+                                    placeholder="Enter customer name or phone">
                                 <button class="btn btn-outline-primary" type="button" id="searchCustomerBillsBtn">
                                     <i class="fas fa-search"></i> Search
                                 </button>
@@ -697,12 +470,12 @@
                         </div>
 
                         <div id="customerBillsResults" style="display: none;">
-                            <h6><i class="fas fa-receipt me-2"></i>Customer Bills</h6>
+                            <h6>Customer Bills</h6>
                             <div id="customerBillsListReturn" class="mb-3"></div>
                         </div>
 
                         <div id="billItemsSection" style="display: none;">
-                            <h6><i class="fas fa-list me-2"></i>Select Items to Return</h6>
+                            <h6>Select Items to Return</h6>
                             <div id="billItemsListReturn"></div>
                         </div>
                     </div>
@@ -717,7 +490,8 @@
                         <div class="mb-3">
                             <label class="form-label">Search Products</label>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="returnProductSearch" placeholder="Search products by name, SKU, or brand">
+                                <input type="text" class="form-control" id="returnProductSearch"
+                                    placeholder="Search products by name, SKU, or brand">
                                 <button class="btn btn-outline-primary" type="button" id="returnSearchBtn">
                                     <i class="fas fa-search"></i> Search
                                 </button>
@@ -761,218 +535,605 @@
     <div id="receiptTemplate" style="display: none;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // Update datetime every second
-        function updateDateTime() {
-            const now = new Date();
-            const options = { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            };
-            document.getElementById('datetime').textContent = now.toLocaleDateString('en-IN', options);
-        }
-        
-        setInterval(updateDateTime, 1000);
-        updateDateTime(); // Initial call
-
-        // Rest of your existing JavaScript code remains the same...
-        // ===== GLOBAL VARIABLES =====
-        window.transactionItems = [];
-        window.shop = {
-            currency: '<%= shop.currency || "₹" %>',
-            name: '<%= shop.name || "My Shop" %>',
-            primary_color: '<%= shop.primary_color || "#007bff" %>'
-        };
-
-        // ===== DOM READY =====
+    <!-- <script>
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('DOM loaded - Initializing transaction system');
-            
-            // Your existing JavaScript code continues here...
-            // (All the JavaScript from your original file remains unchanged)
-            
             // Initialize tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
 
-            // Product Search
-            const productSearch = document.getElementById('productSearch');
-            const searchResults = document.getElementById('searchResults');
-
-            if (productSearch) {
-                productSearch.addEventListener('input', debounce(function (e) {
-                    const searchTerm = e.target.value.trim();
-                    if (searchTerm.length < 2) {
-                        searchResults.style.display = 'none';
-                        return;
-                    }
-                    searchProducts(searchTerm);
-                }, 300));
-
-                document.addEventListener('click', function (e) {
-                    if (!productSearch.contains(e.target) && !searchResults.contains(e.target)) {
-                        searchResults.style.display = 'none';
-                    }
-                });
-            }
-
-            // View Products Modal
-            const viewProductsBtn = document.getElementById('viewProductsBtn');
-            if (viewProductsBtn) {
-                viewProductsBtn.addEventListener('click', function () {
-                    const modal = new bootstrap.Modal(document.getElementById('productListModal'));
-                    modal.show();
-                });
-            }
-
-            // Add Return Modal
-            const addReturnBtn = document.getElementById('addReturnBtn');
-            if (addReturnBtn) {
-                addReturnBtn.addEventListener('click', function () {
-                    const modal = new bootstrap.Modal(document.getElementById('returnOptionsModal'));
-                    modal.show();
-                });
-            }
-
-            // Return Options Selection
-            const returnWithBillCard = document.getElementById('returnWithBillCard');
-            const returnWithoutBillCard = document.getElementById('returnWithoutBillCard');
-            const returnWithBillSection = document.getElementById('returnWithBillSection');
-            const returnWithoutBillSection = document.getElementById('returnWithoutBillSection');
-
-            if (returnWithBillCard) {
-                returnWithBillCard.addEventListener('click', function () {
-                    returnWithBillCard.classList.add('selected');
-                    returnWithoutBillCard.classList.remove('selected');
-                    returnWithBillSection.style.display = 'block';
-                    returnWithoutBillSection.style.display = 'none';
-                    document.getElementById('addSelectedReturnsBtn').style.display = 'none';
-                    resetReturnSections();
-                });
-            }
-
-            if (returnWithoutBillCard) {
-                returnWithoutBillCard.addEventListener('click', function () {
-                    returnWithoutBillCard.classList.add('selected');
-                    returnWithBillCard.classList.remove('selected');
-                    returnWithBillSection.style.display = 'none';
-                    returnWithoutBillSection.style.display = 'block';
-                    document.getElementById('addSelectedReturnsBtn').style.display = 'none';
-                    resetReturnSections();
-                });
-            }
-
-            // Search Customer Bills for Return
-            const searchCustomerBillsBtn = document.getElementById('searchCustomerBillsBtn');
-            if (searchCustomerBillsBtn) {
-                searchCustomerBillsBtn.addEventListener('click', function () {
-                    const customerSearch = document.getElementById('customerSearch').value.trim();
-                    if (customerSearch.length < 2) {
-                        alert('Please enter at least 2 characters to search');
-                        return;
-                    }
-                    searchCustomerBillsForReturn(customerSearch);
-                });
-            }
-
-            // Search Products for Return without Bill
-            const returnSearchBtn = document.getElementById('returnSearchBtn');
-            if (returnSearchBtn) {
-                returnSearchBtn.addEventListener('click', function () {
-                    const searchTerm = document.getElementById('returnProductSearch').value.trim();
-                    if (searchTerm.length < 2) {
-                        alert('Please enter at least 2 characters to search');
-                        return;
-                    }
-                    searchProductsForReturn(searchTerm);
-                });
-            }
-
-            // Add products from modal to transaction
-            document.addEventListener('click', function (e) {
-                if (e.target.classList.contains('add-product-modal')) {
-                    const productId = e.target.getAttribute('data-product-id');
-                    const productName = e.target.getAttribute('data-product-name');
-                    const productPrice = parseFloat(e.target.getAttribute('data-product-price'));
-                    const productSku = e.target.getAttribute('data-product-sku');
-                    const productStock = parseInt(e.target.getAttribute('data-product-stock'));
-                    const productBrand = e.target.getAttribute('data-product-brand');
-
-                    addProductToTransaction({
-                        id: productId,
-                        name: productName,
-                        price: productPrice,
-                        sku: productSku,
-                        stock: productStock,
-                        brand: productBrand,
-                        type: 'sale'
-                    });
-
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('productListModal'));
-                    modal.hide();
+            // Image preview for add product form
+            document.getElementById('productImage').addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        document.getElementById('imagePreview').src = event.target.result;
+                        document.getElementById('imagePreviewContainer').style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    document.getElementById('imagePreviewContainer').style.display = 'none';
                 }
             });
 
-            // Clear Transaction
-            const clearTransactionBtn = document.getElementById('clearTransactionBtn');
-            if (clearTransactionBtn) {
-                clearTransactionBtn.addEventListener('click', function () {
-                    if (window.transactionItems.length > 0 && confirm('Are you sure you want to clear the transaction?')) {
-                        window.transactionItems = [];
-                        updateTransactionTable();
-                        updateSummary();
-                        showToast('Transaction cleared', 'success');
-                    }
+            // Handle add product form submission
+            document.getElementById('addProductForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+
+                fetch('/products', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Product added successfully!', 'success');
+                            $('#addProductModal').modal('hide');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast(data.message || 'Error adding product', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('An error occurred', 'error');
+                    });
+            });
+
+            // Handle edit product form submission
+            document.getElementById('editProductForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const productId = document.getElementById('editProductId').value;
+
+                fetch(`/products/${productId}`, {
+                    method: 'PUT',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Product updated successfully!', 'success');
+                            $('#editProductModal').modal('hide');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast(data.message || 'Error updating product', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('An error occurred', 'error');
+                    });
+            });
+
+            // Handle edit product clicks
+            document.querySelectorAll('.edit-product').forEach(button => {
+                button.addEventListener('click', function () {
+                    const productId = this.closest('tr').getAttribute('data-product-id');
+                    loadProductForEdit(productId);
                 });
-            }
+            });
 
-            // Finalize Transaction
-            const finalizeBtn = document.getElementById('finalizeBtn');
-            if (finalizeBtn) {
-                finalizeBtn.addEventListener('click', function () {
-                    finalizeTransaction();
+            // Handle add stock form submission
+            document.getElementById('addStockForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+
+                // Include selling price in the form data if provided
+                const newSellingPrice = document.getElementById('newSellingPrice').value;
+                if (newSellingPrice) {
+                    formData.append('selling_price', newSellingPrice);
+                }
+
+                fetch('/products/add-stock', {
+                    method: 'POST',
+                    body: new URLSearchParams(formData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Stock and prices updated successfully!', 'success');
+                            $('#addStockModal').modal('hide');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast(data.message || 'Error updating stock', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('An error occurred', 'error');
+                    });
+            });
+
+            // Handle add stock clicks
+            document.querySelectorAll('.add-stock').forEach(button => {
+                button.addEventListener('click', function () {
+                    const row = this.closest('tr');
+                    const productId = row.getAttribute('data-product-id');
+
+                    // Get all product data from the table row
+                    const productData = {
+                        id: productId,
+                        name: row.querySelector('td:nth-child(3)').textContent.trim(),
+                        brand: row.querySelector('td:nth-child(3)').getAttribute('data-brand') || '',
+                        category: row.querySelector('td:nth-child(5)').textContent.trim(),
+                        size: row.querySelector('td:nth-child(5)').getAttribute('data-size') || '',
+                        sku: row.querySelector('td:nth-child(4)').textContent.trim(),
+                        currentStock: row.querySelector('td:nth-child(6)').textContent.trim(),
+                        buyingPrice: row.querySelector('td:nth-child(7)').textContent.trim(),
+                        sellingPrice: row.querySelector('td:nth-child(8)').textContent.trim()
+                    };
+
+                    // Populate the modal with product information
+                    document.getElementById('stockProductId').value = productId;
+                    document.getElementById('stockProductName').textContent = productData.name;
+                    document.getElementById('stockProductBrand').textContent = productData.brand || 'N/A';
+                    document.getElementById('stockProductCategory').textContent = productData.category || 'N/A';
+                    document.getElementById('stockProductSize').textContent = productData.size || 'N/A';
+                    document.getElementById('stockProductSku').textContent = productData.sku || 'N/A';
+                    document.getElementById('currentStockBadge').textContent = productData.currentStock;
+                    document.getElementById('currentBuyingPrice').value = productData.buyingPrice;
+                    document.getElementById('currentSellingPrice').value = productData.sellingPrice;
+
+                    // Clear input fields
+                    document.getElementById('quantityToAdd').value = '';
+                    document.getElementById('newBuyingPrice').value = '';
+                    document.getElementById('newSellingPrice').value = '';
+
+                    $('#addStockModal').modal('show');
                 });
-            }
+            });
 
-            // Payment Amount Change
-            const paymentAmount = document.getElementById('paymentAmount');
-            if (paymentAmount) {
-                paymentAmount.addEventListener('input', function () {
-                    updateSummary();
+            // Handle toggle status clicks
+            document.querySelectorAll('.toggle-status').forEach(button => {
+                button.addEventListener('click', function () {
+                    const productId = this.closest('tr').getAttribute('data-product-id');
+                    toggleProductStatus(productId);
                 });
-            }
+            });
 
-            // Search Customer Button
-            const searchCustomerBtn = document.getElementById('searchCustomerBtn');
-            if (searchCustomerBtn) {
-                searchCustomerBtn.addEventListener('click', function () {
-                    const customerName = document.getElementById('customerName').value.trim();
-                    const customerPhone = document.getElementById('customerPhone').value.trim();
+            // Search functionality
+            document.getElementById('productSearch').addEventListener('input', function () {
+                filterProducts();
+            });
 
-                    if (!customerName && !customerPhone) {
-                        alert('Please enter either customer name or phone number');
-                        return;
-                    }
+            // Filter functionality
+            document.getElementById('categoryFilter').addEventListener('change', function () {
+                filterProducts();
+            });
 
-                    searchCustomerBills(customerName, customerPhone);
-                });
-            }
+            document.getElementById('statusFilter').addEventListener('change', function () {
+                filterProducts();
+            });
 
-            // Initialize summary
-            updateSummary();
-            // Add enhanced search setup
-            setupEnhancedSearch();
+            // Reset filters
+            document.getElementById('resetFilters').addEventListener('click', function () {
+                document.getElementById('productSearch').value = '';
+                document.getElementById('categoryFilter').value = '';
+                document.getElementById('statusFilter').value = '';
+                filterProducts();
+            });
         });
 
- 
+        function loadProductForEdit(productId) {
+            // Show loading state
+            const editModalBody = document.querySelector('#editProductModal .modal-body');
+            editModalBody.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading product details...</p>
+        </div>
+    `;
+
+            $('#editProductModal').modal('show');
+
+            fetch(`/products/${productId}/edit`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server returned ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.product) {
+                        const product = data.product;
+                        renderEditForm(product);
+                    } else {
+                        throw new Error(data.message || 'Error loading product');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    editModalBody.innerHTML = `
+                <div class="alert alert-danger">
+                    Failed to load product: ${error.message}
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-primary" onclick="loadProductForEdit('${productId}')">
+                        <i class="fas fa-sync-alt me-2"></i>Try Again
+                    </button>
+                </div>
+            `;
+                });
+        }
+
+        function renderEditForm(product) {
+            const editModalBody = document.querySelector('#editProductModal .modal-body');
+
+            editModalBody.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="editProductName" class="form-label">Product Name *</label>
+                    <input type="text" class="form-control" id="editProductName" name="name" value="${escapeHtml(product.name || '')}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="editProductBrand" class="form-label">Brand</label>
+                    <input type="text" class="form-control" id="editProductBrand" name="brand" value="${escapeHtml(product.brand || '')}">
+                </div>
+                <div class="mb-3">
+                    <label for="editProductCategory" class="form-label">Category</label>
+                    <input type="text" class="form-control" id="editProductCategory" name="category" value="${escapeHtml(product.category || '')}" list="categoryList">
+                </div>
+                <div class="mb-3">
+                    <label for="editProductSize" class="form-label">Size</label>
+                    <input type="text" class="form-control" id="editProductSize" name="size" value="${escapeHtml(product.size || '')}">
+                </div>
+                <div class="mb-3">
+                    <label for="editMinStockAlert" class="form-label">Low Stock Alert Level</label>
+                    <input type="number" class="form-control" id="editMinStockAlert" name="min_stock_alert" value="${product.min_stock_alert || 5}">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="editProductImage" class="form-label">Product Image</label>
+                    <input type="file" class="form-control" id="editProductImage" name="image" accept="image/*">
+                    ${product.image ? `
+                        <div class="mt-2">
+                            <img src="/uploads/${escapeHtml(product.image)}" alt="Current Image" style="max-height: 150px; max-width: 100%; border-radius: 0.375rem;">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="removeImage" name="remove_image">
+                                <label class="form-check-label" for="removeImage">Remove current image</label>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="mb-3">
+                    <label for="editProductSKU" class="form-label">SKU</label>
+                    <input type="text" class="form-control" id="editProductSKU" name="sku" value="${escapeHtml(product.sku || '')}">
+                </div>
+                <div class="mb-3">
+                    <label for="editProductBarcode" class="form-label">Barcode</label>
+                    <input type="text" class="form-control" id="editProductBarcode" name="barcode" value="${escapeHtml(product.barcode || '')}">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="editBuyingPrice" class="form-label">Buying Price *</label>
+                    <div class="input-group">
+                        <span class="input-group-text">${escapeHtml((shop && shop.currency) || 'PKR')}</span>
+                        <input type="number" step="0.01" class="form-control" id="editBuyingPrice" name="buying_price" value="${Number(product.buying_price || 0).toFixed(2)}" required>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="editSellingPrice" class="form-label">Selling Price *</label>
+                    <div class="input-group">
+                        <span class="input-group-text">${escapeHtml((shop && shop.currency) || 'PKR')}</span>
+                        <input type="number" step="0.01" class="form-control" id="editSellingPrice" name="selling_price" value="${Number(product.selling_price || 0).toFixed(2)}" required>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="editTaxPercent" class="form-label">Tax (%)</label>
+                    <input type="number" step="0.01" class="form-control" id="editTaxPercent" name="tax_percent" value="${product.tax_percent || 0}">
+                </div>
+            </div>
+        </div>
+    `;
+
+            // Set the product ID in the hidden field
+            document.getElementById('editProductId').value = product.id;
+
+            // Initialize image preview for edit form
+            document.getElementById('editProductImage')?.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        const previewContainer = document.createElement('div');
+                        previewContainer.className = 'mt-2';
+                        previewContainer.innerHTML = `<img src="${event.target.result}" alt="Preview" style="max-height: 150px; max-width: 100%; border-radius: 0.375rem;">`;
+                        this.parentNode.appendChild(previewContainer);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        function toggleProductStatus(productId) {
+            if (!confirm('Are you sure you want to change the status of this product?')) return;
+
+            fetch(`/products/${productId}/toggle-status`, {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Product status updated successfully!', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showToast(data.message || 'Error updating status', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('An error occurred', 'error');
+                });
+        }
+
+        function filterProducts() {
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+
+            document.querySelectorAll('#productsTable tbody tr').forEach(row => {
+                if (row.getAttribute('data-product-id') === null) return; // Skip the "no products" row
+
+                const name = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                const sku = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+                const category = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
+                const statusBadge = row.querySelector('td:nth-child(9) .badge');
+                const status = statusBadge ? statusBadge.textContent.trim().toLowerCase() : '';
+
+                // Search across multiple fields (name, SKU, category)
+                const matchesSearch = searchTerm === '' ||
+                    name.includes(searchTerm) ||
+                    sku.includes(searchTerm) ||
+                    category.includes(searchTerm);
+
+                const matchesCategory = categoryFilter === '' || category === categoryFilter;
+
+                // Fix status filter comparison
+                let statusMatch = true;
+                if (statusFilter !== '') {
+                    if (statusFilter === 'active') {
+                        statusMatch = status.includes('active');
+                    } else if (statusFilter === 'inactive') {
+                        statusMatch = status.includes('inactive');
+                    }
+                }
+
+                row.style.display = matchesSearch && matchesCategory && statusMatch ? '' : 'none';
+            });
+
+            // Show "no products" message if all rows are hidden
+            const visibleRows = document.querySelectorAll('#productsTable tbody tr[style=""]').length;
+            const noProductsRow = document.querySelector('#productsTable tbody tr[data-product-id=""]');
+            if (noProductsRow) {
+                noProductsRow.style.display = visibleRows === 0 ? '' : 'none';
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            // Simple alert for now - replace with a proper toast notification if needed
+            alert(`${type.toUpperCase()}: ${message}`);
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script> -->
+
+<script>
+    // ===== GLOBAL VARIABLES =====
+window.transactionItems = [];
+window.shop = {
+    currency: '<%= shop.currency || "₹" %>',
+    name: '<%= shop.name || "My Shop" %>',
+    primary_color: '<%= shop.primary_color || "#007bff" %>'
+};
+
+// ===== DOM READY =====
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM loaded - Initializing transaction system');
+    
+    // Force initialization
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+    }
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Product Search
+    const productSearch = document.getElementById('productSearch');
+    const searchResults = document.getElementById('searchResults');
+
+    if (productSearch) {
+        productSearch.addEventListener('input', debounce(function (e) {
+            const searchTerm = e.target.value.trim();
+            if (searchTerm.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            searchProducts(searchTerm);
+        }, 300));
+
+        document.addEventListener('click', function (e) {
+            if (!productSearch.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    }
+
+    // View Products Modal
+    const viewProductsBtn = document.getElementById('viewProductsBtn');
+    if (viewProductsBtn) {
+        viewProductsBtn.addEventListener('click', function () {
+            const modal = new bootstrap.Modal(document.getElementById('productListModal'));
+            modal.show();
+        });
+    }
+
+    // Add Return Modal
+    const addReturnBtn = document.getElementById('addReturnBtn');
+    if (addReturnBtn) {
+        addReturnBtn.addEventListener('click', function () {
+            const modal = new bootstrap.Modal(document.getElementById('returnOptionsModal'));
+            modal.show();
+        });
+    }
+
+    // Return Options Selection
+    const returnWithBillCard = document.getElementById('returnWithBillCard');
+    const returnWithoutBillCard = document.getElementById('returnWithoutBillCard');
+    const returnWithBillSection = document.getElementById('returnWithBillSection');
+    const returnWithoutBillSection = document.getElementById('returnWithoutBillSection');
+
+    if (returnWithBillCard) {
+        returnWithBillCard.addEventListener('click', function () {
+            returnWithBillCard.classList.add('selected');
+            returnWithoutBillCard.classList.remove('selected');
+            returnWithBillSection.style.display = 'block';
+            returnWithoutBillSection.style.display = 'none';
+            document.getElementById('addSelectedReturnsBtn').style.display = 'none';
+            resetReturnSections();
+        });
+    }
+
+    if (returnWithoutBillCard) {
+        returnWithoutBillCard.addEventListener('click', function () {
+            returnWithoutBillCard.classList.add('selected');
+            returnWithBillCard.classList.remove('selected');
+            returnWithBillSection.style.display = 'none';
+            returnWithoutBillSection.style.display = 'block';
+            document.getElementById('addSelectedReturnsBtn').style.display = 'none';
+            resetReturnSections();
+        });
+    }
+
+    // Search Customer Bills for Return
+    const searchCustomerBillsBtn = document.getElementById('searchCustomerBillsBtn');
+    if (searchCustomerBillsBtn) {
+        searchCustomerBillsBtn.addEventListener('click', function () {
+            const customerSearch = document.getElementById('customerSearch').value.trim();
+            if (customerSearch.length < 2) {
+                alert('Please enter at least 2 characters to search');
+                return;
+            }
+            searchCustomerBillsForReturn(customerSearch);
+        });
+    }
+
+    // Search Products for Return without Bill
+    const returnSearchBtn = document.getElementById('returnSearchBtn');
+    if (returnSearchBtn) {
+        returnSearchBtn.addEventListener('click', function () {
+            const searchTerm = document.getElementById('returnProductSearch').value.trim();
+            if (searchTerm.length < 2) {
+                alert('Please enter at least 2 characters to search');
+                return;
+            }
+            searchProductsForReturn(searchTerm);
+        });
+    }
+
+    // Add products from modal to transaction
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('add-product-modal')) {
+            const productId = e.target.getAttribute('data-product-id');
+            const productName = e.target.getAttribute('data-product-name');
+            const productPrice = parseFloat(e.target.getAttribute('data-product-price'));
+            const productSku = e.target.getAttribute('data-product-sku');
+            const productStock = parseInt(e.target.getAttribute('data-product-stock'));
+            const productBrand = e.target.getAttribute('data-product-brand');
+
+            addProductToTransaction({
+                id: productId,
+                name: productName,
+                price: productPrice,
+                sku: productSku,
+                stock: productStock,
+                brand: productBrand,
+                type: 'sale'
+            });
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('productListModal'));
+            modal.hide();
+        }
+    });
+
+    // Clear Transaction
+    const clearTransactionBtn = document.getElementById('clearTransactionBtn');
+    if (clearTransactionBtn) {
+        clearTransactionBtn.addEventListener('click', function () {
+            if (window.transactionItems.length > 0 && confirm('Are you sure you want to clear the transaction?')) {
+                window.transactionItems = [];
+                updateTransactionTable();
+                updateSummary();
+                showToast('Transaction cleared', 'success');
+            }
+        });
+    }
+
+    // Finalize Transaction
+    const finalizeBtn = document.getElementById('finalizeBtn');
+    if (finalizeBtn) {
+        finalizeBtn.addEventListener('click', function () {
+            finalizeTransaction();
+        });
+    }
+
+    // Payment Amount Change
+    const paymentAmount = document.getElementById('paymentAmount');
+    if (paymentAmount) {
+        paymentAmount.addEventListener('input', function () {
+            updateSummary();
+        });
+    }
+
+    // Search Customer Button
+    const searchCustomerBtn = document.getElementById('searchCustomerBtn');
+    if (searchCustomerBtn) {
+        searchCustomerBtn.addEventListener('click', function () {
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+
+            if (!customerName && !customerPhone) {
+                alert('Please enter either customer name or phone number');
+                return;
+            }
+
+            searchCustomerBills(customerName, customerPhone);
+        });
+    }
+
+    // Initialize summary
+    updateSummary();
+        // Add enhanced search setup
+    setupEnhancedSearch();
+
+});
+
 // ===== TRANSACTION FUNCTIONS =====
 function addProductToTransaction(product) {
     if (!Array.isArray(window.transactionItems)) {
@@ -1894,5 +2055,3 @@ function printReceipt() {
 
 
 </script>
-</body>
-</html>

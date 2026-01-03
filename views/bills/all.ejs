@@ -1,228 +1,584 @@
-   <style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Bills - <%= (shop && shop.name) || 'My Shop' %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
         :root {
-            --primary-color: <%=shop.primary_color || '#007bff' %>;
-            --danger-color: #dc3545;
+            --primary: #4e73df;
+            --success: #1cc88a;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --info: #36b9cc;
+            --secondary: #858796;
+            --dark: #5a5c69;
+            --light: #f8f9fc;
         }
 
-        .bill-card {
-            border-left: 4px solid var(--primary-color);
-            transition: all 0.3s ease;
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .bill-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        .dashboard-container {
+            padding: 20px;
+            background-color: #f5f7fa;
+            min-height: calc(100vh - 70px);
         }
 
-        .bill-status-paid {
-            border-left-color: #28a745;
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
-        .bill-status-pending {
-            border-left-color: #ffc107;
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--dark);
         }
 
-        .bill-status-refund {
-            border-left-color: #dc3545;
+        .datetime {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-top: 5px;
         }
 
-        .filter-section {
-            background-color: #f8f9fa;
-            border-radius: 0.5rem;
-            padding: 1.5rem;
+        .shop-info {
+            text-align: right;
         }
 
-        .stats-card {
-            background: linear-gradient(135deg, var(--primary-color), #0056b3);
+        .shop-info p {
+            margin: 5px 0;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .shop-info i {
+            margin-right: 5px;
+            color: var(--primary);
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eee;
+            padding: 15px 20px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section-header h2 {
+            font-size: 1.2rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            color: var(--dark);
+        }
+
+        .section-header h2 i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        /* Quick Actions */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px 10px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--dark);
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eee;
+        }
+
+        .action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .action-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 1.2rem;
             color: white;
-            border-radius: 0.5rem;
-            padding: 1.5rem;
         }
 
-        .table-hover tbody tr:hover {
-            background-color: rgba(0, 123, 255, 0.05);
+        .action-card p {
+            margin: 0;
+            font-size: 0.85rem;
+            font-weight: 500;
         }
 
-        .badge-paid {
-            background-color: #28a745;
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
-        .badge-pending {
-            background-color: #ffc107;
-            color: #000;
+        .stat-card {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .badge-refund {
-            background-color: #dc3545;
+        .stat-card:hover {
+            transform: translateY(-5px);
         }
 
-        .action-buttons .btn {
-            margin-right: 0.25rem;
-            margin-bottom: 0.25rem;
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .stat-card:hover::after {
+            opacity: 1;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-right: 20px;
+            z-index: 1;
+        }
+
+        .stat-info {
+            z-index: 1;
+        }
+
+        .stat-info h3 {
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .stat-info p {
+            margin: 5px 0 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .stat-trend {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.7rem;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Table Styles */
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+        }
+
+        .table th {
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 0.85rem;
+            text-align: left;
+            padding: 15px;
+            background: #f8f9fc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tr:hover td {
+            background-color: #f8f9fc;
+        }
+
+        /* Badge Styles */
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+        }
+
+        .badge-pill {
+            border-radius: 50px;
+        }
+
+        /* Button Styles */
+        .btn {
+            border-radius: 6px;
+            font-weight: 500;
+            padding: 8px 16px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+        }
+
+        .btn-outline {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            color: #374151;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: transparent;
+        }
+
+        .btn-outline-danger {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .btn-outline-danger:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        /* Form Controls */
+        .form-control, .form-select {
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            color: #d1d5db;
+            margin-bottom: 1rem;
+        }
+
+        /* Pagination */
+        .page-item.active .page-link {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .page-link {
+            color: var(--primary);
+        }
+
+        /* Color Classes */
+        .bg-primary { background-color: var(--primary); }
+        .bg-success { background-color: var(--success); }
+        .bg-warning { background-color: var(--warning); }
+        .bg-danger { background-color: var(--danger); }
+        .bg-info { background-color: var(--info); }
+        .bg-secondary { background-color: var(--secondary); }
+        .bg-dark { background-color: var(--dark); }
+
+        /* Status Colors */
+        .badge-paid { background-color: var(--success); }
+        .badge-pending { background-color: var(--warning); color: #000; }
+        .badge-refund { background-color: var(--danger); }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
 
         @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .shop-info {
+                text-align: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+            
             .action-buttons .btn {
                 width: 100%;
                 margin-right: 0;
+                margin-bottom: 5px;
             }
         }
     </style>
 </head>
 
-<body class="bg-light">
-    <div class="container-fluid py-3">
+<body>
+    <div class="dashboard-container">
         <!-- Header -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h2 class="mb-0"><i class="fas fa-receipt me-2"></i>All Bills</h2>
-                        <p class="text-muted mb-0">View and manage all transactions</p>
-                    </div>
-                    <div>
-                        <a href="/bills" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i>New Sale
-                        </a>
-                        <a href="/" class="btn btn-outline-secondary ms-2">
-                            <i class="fas fa-home me-1"></i>Dashboard
-                        </a>
-                    </div>
-                </div>
+        <div class="dashboard-header">
+            <div>
+                <h1><i class="fas fa-receipt me-2"></i>All Bills</h1>
+                <p class="datetime" id="datetime"></p>
+            </div>
+            <div class="shop-info">
+                <p><i class="fas fa-store"></i> <%= (shop && shop.name) || 'My Shop' %></p>
+                <p><i class="fas fa-map-marker-alt"></i> <%= (shop && shop.address) || 'Add shop address' %></p>
             </div>
         </div>
 
         <!-- Stats Cards -->
-        <div class="row mb-4">
-            <div class="col-xl-3 col-md-6 mb-3">
-                <div class="stats-card">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h4 class="mb-0">
-                                <%= shop.currency || '₹' %>
-                                    <%= totalStats.totalAmount.toLocaleString() %>
-                            </h4>
-                            <p class="mb-0">Total Revenue</p>
-                        </div>
-                        <i class="fas fa-chart-line fa-2x opacity-50"></i>
-                    </div>
+        <div class="stats-grid">
+            <div class="stat-card bg-primary">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= shop.currency || '₹' %> <%= totalStats.totalAmount.toLocaleString() %></h3>
+                    <p>Total Revenue</p>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-chart-line"></i> <span>All time</span>
                 </div>
             </div>
-            <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h4 class="text-success mb-0">
-                                    <%= totalStats.totalBills %>
-                                </h4>
-                                <p class="mb-0">Total Bills</p>
-                            </div>
-                            <i class="fas fa-receipt fa-2x text-success opacity-50"></i>
-                        </div>
-                    </div>
+
+            <div class="stat-card bg-success">
+                <div class="stat-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= totalStats.totalBills %></h3>
+                    <p>Total Bills</p>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-list"></i> <span>All bills</span>
                 </div>
             </div>
-            <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h4 class="text-warning mb-0">
-                                    <%= totalStats.pendingAmount.toLocaleString() %>
-                                </h4>
-                                <p class="mb-0">Pending Amount</p>
-                            </div>
-                            <i class="fas fa-clock fa-2x text-warning opacity-50"></i>
-                        </div>
-                    </div>
+
+            <div class="stat-card bg-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= shop.currency || '₹' %> <%= totalStats.pendingAmount.toLocaleString() %></h3>
+                    <p>Pending Amount</p>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-exclamation-circle"></i> <span>Pending</span>
                 </div>
             </div>
-            <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h4 class="text-info mb-0">
-                                    <%= totalStats.todayBills %>
-                                </h4>
-                                <p class="mb-0">Today's Bills</p>
-                            </div>
-                            <i class="fas fa-calendar-day fa-2x text-info opacity-50"></i>
-                        </div>
-                    </div>
+
+            <div class="stat-card bg-info">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= totalStats.todayBills %></h3>
+                    <p>Today's Bills</p>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-sun"></i> <span>Today</span>
                 </div>
             </div>
         </div>
 
-        <!-- Filters Section -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="filter-section">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Date Range</label>
-                            <select class="form-select" id="dateFilter">
-                                <option value="all">All Time</option>
-                                <option value="today">Today</option>
-                                <option value="yesterday">Yesterday</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="custom">Custom Range</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Customer</label>
-                            <input type="text" class="form-control" id="customerFilter"
-                                placeholder="Search customer...">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Bill Number</label>
-                            <input type="text" class="form-control" id="billNumberFilter" placeholder="Bill number...">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Status</label>
-                            <select class="form-select" id="statusFilter">
-                                <option value="all">All Status</option>
-                                <option value="paid">Paid</option>
-                                <option value="pending">Pending</option>
-                                <option value="refund">Refund</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Payment Method</label>
-                            <select class="form-select" id="paymentMethodFilter">
-                                <option value="all">All Methods</option>
-                                <option value="cash">Cash</option>
-                                <option value="card">Card</option>
-                                <option value="mobile">Mobile</option>
-                                <option value="bank">Bank Transfer</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6" id="customDateRange" style="display: none;">
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <label class="form-label">From Date</label>
-                                    <input type="date" class="form-control" id="fromDate">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">To Date</label>
-                                    <input type="date" class="form-control" id="toDate">
-                                </div>
+        <!-- Quick Actions -->
+        <div class="quick-actions card">
+            <div class="section-header">
+                <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+            </div>
+            <div class="action-grid">
+                <a href="/bills" class="action-card">
+                    <div class="action-icon bg-primary">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <p>New Sale</p>
+                </a>
+                
+                <a href="/" class="action-card">
+                    <div class="action-icon bg-success">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <p>Dashboard</p>
+                </a>
+                
+                <a href="/reports" class="action-card">
+                    <div class="action-icon bg-info">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <p>Sales Reports</p>
+                </a>
+                
+                <a href="/customers" class="action-card">
+                    <div class="action-icon bg-warning">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <p>Manage Customers</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card">
+            <div class="section-header">
+                <h2><i class="fas fa-filter"></i> Filter Bills</h2>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Date Range</label>
+                        <select class="form-select" id="dateFilter">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Customer</label>
+                        <input type="text" class="form-control" id="customerFilter" placeholder="Search customer...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Bill Number</label>
+                        <input type="text" class="form-control" id="billNumberFilter" placeholder="Bill number...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="all">All Status</option>
+                            <option value="paid">Paid</option>
+                            <option value="pending">Pending</option>
+                            <option value="refund">Refund</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" id="paymentMethodFilter">
+                            <option value="all">All Methods</option>
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="mobile">Mobile</option>
+                            <option value="bank">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6" id="customDateRange" style="display: none;">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label">From Date</label>
+                                <input type="date" class="form-control" id="fromDate">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">To Date</label>
+                                <input type="date" class="form-control" id="toDate">
                             </div>
                         </div>
-                        <div class="col-md-12">
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-primary" id="applyFilters">
-                                    <i class="fas fa-filter me-1"></i>Apply Filters
-                                </button>
-                                <button class="btn btn-outline-secondary" id="resetFilters">
-                                    <i class="fas fa-redo me-1"></i>Reset
-                                </button>
-                                <button class="btn btn-outline-success" id="exportBtn">
-                                    <i class="fas fa-download me-1"></i>Export
-                                </button>
-                            </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" id="applyFilters">
+                                <i class="fas fa-filter me-1"></i>Apply Filters
+                            </button>
+                            <button class="btn btn-outline" id="resetFilters">
+                                <i class="fas fa-redo me-1"></i>Reset
+                            </button>
+                            <button class="btn btn-outline-success" id="exportBtn">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -230,170 +586,140 @@
         </div>
 
         <!-- Bills Table -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Bills List</h5>
-                        <span class="badge bg-light text-dark">
-                            Showing <span id="showingCount">
-                                <%= bills.length %>
-                            </span> of <span id="totalCount">
-                                <%= totalStats.totalBills %>
-                            </span> bills
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <% if (bills.length> 0) { %>
-                            <div class="table-responsive">
-                                <table class="table table-hover table-sm">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Bill No.</th>
-                                            <th>Date & Time</th>
-                                            <th>Customer</th>
-                                            <th>Items</th>
-                                            <th class="text-end">Total Amount</th>
-                                            <th class="text-end">Paid</th>
-                                            <th class="text-end">Due</th>
-                                            <th>Payment Method</th>
-                                            <th>Status</th>
-                                            <th width="150px">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <% bills.forEach(bill=> {
-                                            const status = bill.due_amount > 0 ? 'pending' : (bill.total_amount < 0
-                                                ? 'refund' : 'paid' ); const statusClass=status==='paid' ? 'badge-paid'
-                                                : status==='pending' ? 'badge-pending' : 'badge-refund' ; %>
-                                                <tr class="bill-<%= status %>">
-                                                    <td>
-                                                        <strong>
-                                                            <%= bill.bill_number %>
-                                                        </strong>
-                                                    </td>
-                                                    <td>
-                                                        <small>
-                                                            <%= new Date(bill.created_at).toLocaleDateString() %>
-                                                        </small>
-                                                        <br><small class="text-muted">
-                                                            <%= new Date(bill.created_at).toLocaleTimeString() %>
-                                                        </small>
-                                                    </td>
-                                                    <td>
-                                                        <strong>
-                                                            <%= bill.customer_name %>
-                                                        </strong>
-                                                        <% if (bill.customer_phone) { %>
-                                                            <br><small class="text-muted">
-                                                                <%= bill.customer_phone %>
-                                                            </small>
-                                                            <% } %>
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge bg-secondary">
-                                                            <%= bill.item_count %> items
-                                                        </span>
-                                                    </td>
-                                                    <td class="text-end fw-bold">
-                                                        <%= shop.currency || '₹' %>
-                                                            <%= Math.abs(Number(bill.total_amount)).toFixed(2) %>
-                                                    </td>
-                                                    <td class="text-end">
-                                                        <%= shop.currency || '₹' %>
-                                                            <%= Number(bill.paid_amount).toFixed(2) %>
-                                                    </td>
-                                                    <td class="text-end">
-                                                        <% if (Number(bill.due_amount)> 0) { %>
-                                                            <span class="text-danger fw-bold">
-                                                                <%= shop.currency || '₹' %>
-                                                                    <%= Number(bill.due_amount).toFixed(2) %>
-                                                            </span>
-                                                            <% } else if (Number(bill.due_amount) < 0) { %>
-                                                                <span class="text-success fw-bold">
-                                                                    <%= shop.currency || '₹' %>
-                                                                        <%= Math.abs(Number(bill.due_amount)).toFixed(2)
-                                                                            %>
-                                                                </span>
-                                                                <% } else { %>
-                                                                    <span class="text-muted">-</span>
-                                                                    <% } %>
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge bg-info text-capitalize">
-                                                            <%= bill.payment_method %>
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge <%= statusClass %>">
-                                                            <%= status.toUpperCase() %>
-                                                        </span>
-                                                    </td>
-                                                    <td class="action-buttons">
-                                                        <button class="btn btn-sm btn-outline-primary view-bill"
-                                                            data-bill-id="<%= bill.id %>" title="View Bill">
-                                                            <i class="fas fa-eye"></i>
-                                                        </button>
-                                                        <button class="btn btn-sm btn-outline-success print-bill"
-                                                            data-bill-id="<%= bill.id %>" title="Print Bill">
-                                                            <i class="fas fa-print"></i>
-                                                        </button>
-                                                        <% if (status==='pending' ) { %>
-                                                            <button class="btn btn-sm btn-outline-warning add-payment"
-                                                                data-bill-id="<%= bill.id %>" title="Add Payment">
-                                                                <i class="fas fa-money-bill"></i>
-                                                            </button>
-                                                            <% } %>
-                                                                <button
-                                                                    class="btn btn-sm btn-outline-danger delete-bill"
-                                                                    data-bill-id="<%= bill.id %>" title="Delete Bill">
-                                                                    <i class="fas fa-trash"></i>
-                                                                </button>
-                                                    </td>
-                                                </tr>
-                                                <% }); %>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- Pagination -->
-                            <% if (totalPages> 1) { %>
-                                <nav aria-label="Page navigation" class="mt-4">
-                                    <ul class="pagination justify-content-center">
-                                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                                            <a class="page-link" href="/ALLbills?page=<%= currentPage - 1 %>">Previous</a>
-                                        </li>
-
-                                        <% for (let i=1; i <=totalPages; i++) { %>
-                                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                                                <a class="page-link" href="/ALLbills?page=<%= i %>">
-                                                    <%= i %>
-                                                </a>
-                                            </li>
-                                            <% } %>
-
-                                                <li
-                                                    class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                                                    <a class="page-link"
-                                                        href="/ALLbills?page=<%= currentPage + 1 %>">Next</a>
-                                                </li>
-                                    </ul>
-                                </nav>
-                                <% } %>
-
-                                    <% } else { %>
-                                        <div class="text-center py-5">
-                                            <i class="fas fa-receipt fa-4x text-muted mb-3"></i>
-                                            <h4 class="text-muted">No Bills Found</h4>
-                                            <p class="text-muted">No bills match your current filters.</p>
-                                            <a href="/bills" class="btn btn-primary">
-                                                <i class="fas fa-plus me-1"></i>Create New Bill
-                                            </a>
-                                        </div>
-                                        <% } %>
-                    </div>
-                </div>
+        <div class="card">
+            <div class="section-header">
+                <h2><i class="fas fa-list"></i> Bills</h2>
+                <span class="badge bg-primary">
+                    <span id="showingCount"><%= bills.length %></span> of 
+                    <span id="totalCount"><%= totalStats.totalBills %></span> bills
+                </span>
             </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Bill No.</th>
+                            <th>Date & Time</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th class="text-end">Total Amount</th>
+                            <th class="text-end">Paid</th>
+                            <th class="text-end">Due</th>
+                            <th>Payment Method</th>
+                            <th>Status</th>
+                            <th width="150px">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (bills.length > 0) { %>
+                            <% bills.forEach(bill => { 
+                                const status = bill.due_amount > 0 ? 'pending' : (bill.total_amount < 0 ? 'refund' : 'paid');
+                                const statusClass = status === 'paid' ? 'badge-paid' : status === 'pending' ? 'badge-pending' : 'badge-refund';
+                            %>
+                                <tr>
+                                    <td>
+                                        <strong><%= bill.bill_number %></strong>
+                                    </td>
+                                    <td>
+                                        <small><%= new Date(bill.created_at).toLocaleDateString() %></small>
+                                        <br><small class="text-muted"><%= new Date(bill.created_at).toLocaleTimeString() %></small>
+                                    </td>
+                                    <td>
+                                        <strong><%= bill.customer_name %></strong>
+                                        <% if (bill.customer_phone) { %>
+                                            <br><small class="text-muted"><%= bill.customer_phone %></small>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary"><%= bill.item_count %> items</span>
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        <%= shop.currency || '₹' %> <%= Math.abs(Number(bill.total_amount)).toFixed(2) %>
+                                    </td>
+                                    <td class="text-end">
+                                        <%= shop.currency || '₹' %> <%= Number(bill.paid_amount).toFixed(2) %>
+                                    </td>
+                                    <td class="text-end">
+                                        <% if (Number(bill.due_amount) > 0) { %>
+                                            <span class="text-danger fw-bold">
+                                                <%= shop.currency || '₹' %> <%= Number(bill.due_amount).toFixed(2) %>
+                                            </span>
+                                        <% } else if (Number(bill.due_amount) < 0) { %>
+                                            <span class="text-success fw-bold">
+                                                <%= shop.currency || '₹' %> <%= Math.abs(Number(bill.due_amount)).toFixed(2) %>
+                                            </span>
+                                        <% } else { %>
+                                            <span class="text-muted">-</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info text-capitalize"><%= bill.payment_method %></span>
+                                    </td>
+                                    <td>
+                                        <span class="badge <%= statusClass %>"><%= status.toUpperCase() %></span>
+                                    </td>
+                                    <td class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary view-bill" data-bill-id="<%= bill.id %>" title="View Bill">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success print-bill" data-bill-id="<%= bill.id %>" title="Print Bill">
+                                            <i class="fas fa-print"></i>
+                                        </button>
+                                        <% if (status === 'pending') { %>
+                                            <button class="btn btn-sm btn-outline-warning add-payment" data-bill-id="<%= bill.id %>" title="Add Payment">
+                                                <i class="fas fa-money-bill"></i>
+                                            </button>
+                                        <% } %>
+                                        <button class="btn btn-sm btn-outline-danger delete-bill" data-bill-id="<%= bill.id %>" title="Delete Bill">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="10" class="text-center py-4">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-receipt"></i>
+                                        </div>
+                                        <h5>No bills found</h5>
+                                        <p class="text-muted mb-3">No bills match your current filters.</p>
+                                        <a href="/bills" class="btn btn-primary">
+                                            <i class="fas fa-plus me-1"></i>Create New Bill
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <div class="card-footer border-top">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                                <a class="page-link" href="/ALLbills?page=<%= currentPage - 1 %>" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            <% for (let i = 1; i <= totalPages; i++) { %>
+                                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                    <a class="page-link" href="/ALLbills?page=<%= i %>"><%= i %></a>
+                                </li>
+                            <% } %>
+                            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                <a class="page-link" href="/ALLbills?page=<%= currentPage + 1 %>" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            <% } %>
         </div>
     </div>
 
@@ -414,6 +740,24 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Update datetime every second
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-IN', options);
+        }
+        
+        setInterval(updateDateTime, 1000);
+        updateDateTime(); // Initial call
+
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function () {
             initializeFilters();
@@ -532,65 +876,65 @@
             });
         }
 
-function applyFilters() {
-    const filters = {
-        date: document.getElementById('dateFilter').value,
-        customer: document.getElementById('customerFilter').value,
-        billNumber: document.getElementById('billNumberFilter').value,
-        status: document.getElementById('statusFilter').value,
-        paymentMethod: document.getElementById('paymentMethodFilter').value,
-        fromDate: document.getElementById('fromDate').value,
-        toDate: document.getElementById('toDate').value
-    };
+        function applyFilters() {
+            const filters = {
+                date: document.getElementById('dateFilter').value,
+                customer: document.getElementById('customerFilter').value,
+                billNumber: document.getElementById('billNumberFilter').value,
+                status: document.getElementById('statusFilter').value,
+                paymentMethod: document.getElementById('paymentMethodFilter').value,
+                fromDate: document.getElementById('fromDate').value,
+                toDate: document.getElementById('toDate').value
+            };
 
-    // Build query string
-    const params = new URLSearchParams();
-    
-    // Always include page
-    params.append('page', '1');
-    
-    if (filters.date && filters.date !== 'all') {
-        if (filters.date === 'custom') {
-            if (filters.fromDate) params.append('fromDate', filters.fromDate);
-            if (filters.toDate) params.append('toDate', filters.toDate);
-        } else {
-            params.append('date', filters.date);
+            // Build query string
+            const params = new URLSearchParams();
+            
+            // Always include page
+            params.append('page', '1');
+            
+            if (filters.date && filters.date !== 'all') {
+                if (filters.date === 'custom') {
+                    if (filters.fromDate) params.append('fromDate', filters.fromDate);
+                    if (filters.toDate) params.append('toDate', filters.toDate);
+                } else {
+                    params.append('date', filters.date);
+                }
+            }
+            
+            if (filters.customer) params.append('customer', filters.customer);
+            if (filters.billNumber) params.append('billNumber', filters.billNumber);
+            if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+            if (filters.paymentMethod && filters.paymentMethod !== 'all') params.append('paymentMethod', filters.paymentMethod);
+
+            console.log('Applying filters:', params.toString());
+            
+            // Use the correct base URL - detect current path
+            const currentPath = window.location.pathname;
+            const basePath = currentPath.includes('/ALLbills') ? '/ALLbills' : '/bills';
+            
+            // Reload page with filters
+            window.location.href = `${basePath}?${params.toString()}`;
         }
-    }
-    
-    if (filters.customer) params.append('customer', filters.customer);
-    if (filters.billNumber) params.append('billNumber', filters.billNumber);
-    if (filters.status && filters.status !== 'all') params.append('status', filters.status);
-    if (filters.paymentMethod && filters.paymentMethod !== 'all') params.append('paymentMethod', filters.paymentMethod);
 
-    console.log('Applying filters:', params.toString());
-    
-    // Use the correct base URL - detect current path
-    const currentPath = window.location.pathname;
-    const basePath = currentPath.includes('/ALLbills') ? '/ALLbills' : '/bills';
-    
-    // Reload page with filters
-    window.location.href = `${basePath}?${params.toString()}`;
-}
-
-function resetFilters() {
-    // Reset all filter values
-    document.getElementById('dateFilter').value = 'all';
-    document.getElementById('customerFilter').value = '';
-    document.getElementById('billNumberFilter').value = '';
-    document.getElementById('statusFilter').value = 'all';
-    document.getElementById('paymentMethodFilter').value = 'all';
-    document.getElementById('customDateRange').style.display = 'none';
-    document.getElementById('fromDate').value = '';
-    document.getElementById('toDate').value = '';
-    
-    // Use the correct base URL
-    const currentPath = window.location.pathname;
-    const basePath = currentPath.includes('/ALLbills') ? '/ALLbills' : '/bills';
-    
-    // Reload without filters
-    window.location.href = `${basePath}?page=1`;
-}
+        function resetFilters() {
+            // Reset all filter values
+            document.getElementById('dateFilter').value = 'all';
+            document.getElementById('customerFilter').value = '';
+            document.getElementById('billNumberFilter').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('paymentMethodFilter').value = 'all';
+            document.getElementById('customDateRange').style.display = 'none';
+            document.getElementById('fromDate').value = '';
+            document.getElementById('toDate').value = '';
+            
+            // Use the correct base URL
+            const currentPath = window.location.pathname;
+            const basePath = currentPath.includes('/ALLbills') ? '/ALLbills' : '/bills';
+            
+            // Reload without filters
+            window.location.href = `${basePath}?page=1`;
+        }
 
         function exportBills() {
             // Get current filters
@@ -641,7 +985,7 @@ function resetFilters() {
                     <h6>Bill Information</h6>
                     <p><strong>Bill Number:</strong> ${bill.bill_number}</p>
                     <p><strong>Date:</strong> ${new Date(bill.created_at).toLocaleString()}</p>
-                    <p><strong>Status:</strong> <span class="badge ${status === 'paid' ? 'bg-success' : status === 'pending' ? 'bg-warning' : 'bg-danger'}">${status.toUpperCase()}</span></p>
+                    <p><strong>Status:</strong> <span class="badge ${status === 'paid' ? 'badge-paid' : status === 'pending' ? 'badge-pending' : 'badge-refund'}">${status.toUpperCase()}</span></p>
                 </div>
                 <div class="col-md-6">
                     <h6>Customer Information</h6>
@@ -751,3 +1095,5 @@ function resetFilters() {
             }
         }
     </script>
+</body>
+</html>

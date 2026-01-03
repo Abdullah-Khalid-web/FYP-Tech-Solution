@@ -8,353 +8,253 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary: #4e73df;
-            --success: #1cc88a;
-            --warning: #f6c23e;
-            --danger: #e74a3b;
-            --info: #36b9cc;
-            --secondary: #858796;
-            --dark: #5a5c69;
-            --light: #f8f9fc;
+            --primary-color: <%= (shop && shop.primary_color) || '#007bff' %>;
+            --secondary-color: <%= (shop && shop.secondary_color) || '#6c757d' %>;
+            --info-color: #0dcaf0;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
         }
 
         body {
-            background-color: #f5f7fa;
+            background-color: #f8fafc;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .dashboard-container {
-            padding: 20px;
-            background-color: #f5f7fa;
-            min-height: calc(100vh - 70px);
-        }
-
         .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding: 15px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem 0;
+            margin-bottom: 1.5rem;
         }
 
-        .dashboard-header h1 {
-            font-size: 1.8rem;
-            margin: 0;
-            color: var(--dark);
-        }
-
-        .username {
-            color: var(--primary);
-        }
-
-        .datetime {
-            color: var(--secondary);
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-
-        .shop-info {
-            text-align: right;
-        }
-
-        .shop-info p {
-            margin: 5px 0;
-            color: var(--dark);
-            font-size: 0.9rem;
-        }
-
-        .shop-info i {
-            margin-right: 5px;
-            color: var(--primary);
-        }
-
-        /* Enhanced Stats Cards */
-        .stats-grid {
+        /* Enhanced Quick Stats Styles */
+        .stats-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .stat-card {
-            display: flex;
-            align-items: center;
-            padding: 20px;
-            border-radius: 10px;
-            color: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            transition: transform 0.3s;
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+            height: 100%;
             position: relative;
             overflow: hidden;
         }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-card::after {
+        .stat-card::before {
             content: '';
             position: absolute;
             top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            opacity: 0;
-            transition: opacity 0.3s;
+            right: 0;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 0 1rem 0 0;
         }
 
-        .stat-card:hover::after {
-            opacity: 1;
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card.products {
+            border-left-color: var(--info-color);
+        }
+
+        .stat-card.stock {
+            border-left-color: var(--success-color);
+        }
+
+        .stat-card.investment {
+            border-left-color: var(--warning-color);
+        }
+
+        .stat-card.low-stock {
+            border-left-color: var(--danger-color);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
         }
 
         .stat-icon {
-            font-size: 2rem;
-            margin-right: 20px;
-            z-index: 1;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
         }
 
-        .stat-info {
-            z-index: 1;
+        .stat-card.products .stat-icon {
+            background-color: rgba(13, 202, 240, 0.1);
+            color: var(--info-color);
         }
 
-        .stat-info h3 {
-            font-size: 1.8rem;
-            margin: 0;
+        .stat-card.stock .stat-icon {
+            background-color: rgba(25, 135, 84, 0.1);
+            color: var(--success-color);
         }
 
-        .stat-info p {
-            margin: 5px 0 0;
-            opacity: 0.9;
+        .stat-card.investment .stat-icon {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: var(--warning-color);
+        }
+
+        .stat-card.low-stock .stat-icon {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: #6b7280;
             font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
         }
 
         .stat-trend {
-            position: absolute;
-            bottom: 10px;
-            right: 15px;
-            font-size: 0.7rem;
-            opacity: 0.9;
             display: flex;
             align-items: center;
+            font-size: 0.875rem;
+            margin-top: 0.75rem;
         }
 
-        .stat-trend i {
-            margin-right: 3px;
+        .trend-up {
+            color: var(--success-color);
         }
 
-        /* Card Styles */
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
+        .trend-down {
+            color: var(--danger-color);
         }
 
-        .section-header {
+        .trend-neutral {
+            color: var(--secondary-color);
+        }
+
+        .trend-icon {
+            margin-right: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .stat-details {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            margin-top: 0.5rem;
+        }
+
+        .stat-card-footer {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #f3f4f6;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
         }
 
-        .section-header h2 {
-            font-size: 1.2rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            color: var(--dark);
+        .stat-action {
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: color 0.2s;
         }
 
-        .section-header h2 i {
-            margin-right: 10px;
-            color: var(--primary);
+        .stat-action:hover {
+            color: #1e429f;
         }
 
-        .view-all {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.85rem;
+        .stat-progress {
+            height: 4px;
+            background-color: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 0.5rem;
         }
 
-        .view-all:hover {
-            text-decoration: underline;
+        .stat-progress-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
         }
 
-        /* Quick Actions */
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
+        .stat-card.products .stat-progress-bar {
+            background-color: var(--info-color);
         }
 
-        .action-card {
-            background: white;
-            border-radius: 8px;
-            padding: 15px 10px;
-            text-align: center;
-            text-decoration: none;
-            color: var(--dark);
-            transition: all 0.3s;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            border: 1px solid #eee;
+        .stat-card.stock .stat-progress-bar {
+            background-color: var(--success-color);
         }
 
-        .action-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border-color: var(--primary);
-            color: var(--primary);
+        .stat-card.investment .stat-progress-bar {
+            background-color: var(--warning-color);
         }
 
-        .action-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 1.2rem;
-            color: white;
+        .stat-card.low-stock .stat-progress-bar {
+            background-color: var(--danger-color);
         }
 
-        .action-card p {
-            margin: 0;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        /* Table Styles */
-        .table-responsive {
-            border-radius: 10px;
+        /* Loading animation for stats */
+        .stat-loading {
+            position: relative;
             overflow: hidden;
         }
 
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 0;
-        }
-
-        .table th {
-            font-weight: 600;
-            color: var(--secondary);
-            font-size: 0.85rem;
-            text-align: left;
-            padding: 15px;
-            background: #f8f9fc;
-            position: sticky;
+        .stat-loading::after {
+            content: '';
+            position: absolute;
             top: 0;
-            border-bottom: 1px solid #e5e7eb;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            transform: translateX(-100%);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 1.5s infinite;
         }
 
-        .table td {
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.9rem;
-            vertical-align: middle;
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
         }
 
-        .table tr:last-child td {
-            border-bottom: none;
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1.25rem;
+            }
+            
+            .stat-value {
+                font-size: 1.75rem;
+            }
         }
 
-        .table tr:hover td {
-            background-color: #f8f9fc;
-        }
-
-        /* Badge Styles */
-        .badge {
-            font-size: 0.75rem;
-            font-weight: 500;
-            padding: 0.35em 0.65em;
-        }
-
-        /* Button Styles */
-        .btn-group-sm .btn {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-        }
-
-        /* Loading Spinner */
-        .loading-spinner {
-            padding: 20px;
-            text-align: center;
-            color: var(--secondary);
-        }
-
-        .loading-spinner i {
-            margin-right: 8px;
-        }
-
-        /* Search and Filter Section */
-        .search-filter-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-        }
-
-        /* Color Classes */
-        .bg-primary { background-color: var(--primary); }
-        .bg-success { background-color: var(--success); }
-        .bg-warning { background-color: var(--warning); }
-        .bg-danger { background-color: var(--danger); }
-        .bg-info { background-color: var(--info); }
-        .bg-secondary { background-color: var(--secondary); }
-        .bg-dark { background-color: var(--dark); }
-
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
-
-        /* Image placeholder */
-        .no-image-placeholder {
-            width: 50px;
-            height: 50px;
-            background-color: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.375rem;
-        }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 2rem 0;
-        }
-
-        .empty-state-icon {
-            font-size: 3rem;
-            color: var(--secondary);
-            margin-bottom: 1rem;
-        }
+        /* Rest of your existing CSS styles... */
     </style>
 </head>
 
@@ -369,310 +269,353 @@
         };
     </script>
 
-    <div class="dashboard-container">
-        <!-- Header -->
-        <div class="dashboard-header">
-            <div>
-                <h1><i class="fas fa-boxes me-2"></i>Product Management</h1>
-                <p class="datetime" id="datetime"></p>
-            </div>
-            <div class="shop-info">
-                <p><i class="fas fa-store"></i> <%= (shop && shop.name) || 'My Shop' %></p>
-                <p><i class="fas fa-map-marker-alt"></i> <%= (shop && shop.address) || 'Add shop address' %></p>
-            </div>
-        </div>
-
-        <!-- Quick Stats -->
-        <div class="stats-grid">
-            <div class="stat-card bg-primary" onclick="window.location.href='/products'">
-                <div class="stat-icon">
-                    <i class="fas fa-box"></i>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h3 mb-2"><i class="fas fa-boxes me-2"></i>Product Management</h1>
+                    <p class="mb-0 text-muted">Manage your inventory efficiently</p>
                 </div>
-                <div class="stat-info">
-                    <h3 id="totalProducts">0</h3>
-                    <p>Total Products</p>
-                </div>
-                <div class="stat-trend">
-                    <i class="fas fa-arrow-up"></i> <span>Active in inventory</span>
-                </div>
-            </div>
-
-            <div class="stat-card bg-success" onclick="window.location.href='/products'">
-                <div class="stat-icon">
-                    <i class="fas fa-cubes"></i>
-                </div>
-                <div class="stat-info">
-                    <h3 id="totalStock">0</h3>
-                    <p>Total Stock</p>
-                </div>
-                <div class="stat-trend">
-                    <i class="fas fa-arrow-up"></i> <span>Units available</span>
-                </div>
-            </div>
-
-            <div class="stat-card bg-warning" onclick="window.location.href='/products'">
-                <div class="stat-icon">
-                    <i class="fas fa-money-bill-wave"></i>
-                </div>
-                <div class="stat-info">
-                    <h3 id="totalInvestment">₨0</h3>
-                    <p>Total Investment</p>
-                </div>
-                <div class="stat-trend">
-                    <i class="fas fa-arrow-up"></i> <span>In inventory</span>
-                </div>
-            </div>
-
-            <div class="stat-card bg-danger" onclick="window.location.href='/products/alerts'">
-                <div class="stat-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div class="stat-info">
-                    <h3 id="lowStockCount">0</h3>
-                    <p>Low Stock Items</p>
-                </div>
-                <div class="stat-trend">
-                    <i class="fas fa-arrow-up"></i> <span>Need restocking</span>
+                <div class="col-md-4 text-md-end">
+                    <a href="/" class="btn btn-outline btn-sm me-2">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        <i class="fas fa-plus me-2"></i>Add Product
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions card">
-            <div class="section-header">
-                <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
-            </div>
-            <div class="action-grid">
-                <a href="#" class="action-card" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                    <div class="action-icon bg-primary">
-                        <i class="fas fa-plus"></i>
+    <div class="container-fluid">
+        <!-- Enhanced Quick Stats -->
+        <div class="stats-container" id="quickStats">
+            <div class="stat-card products">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-label">Total Products</div>
+                        <div class="stat-value" id="totalProducts">0</div>
                     </div>
-                    <p>Add Product</p>
-                </a>
-                
-                <a href="/products/alerts" class="action-card">
-                    <div class="action-icon bg-danger">
+                    <div class="stat-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                </div>
+                <div class="stat-trend">
+                    <span class="trend-neutral" id="productsTrend">
+                        <i class="fas fa-minus trend-icon"></i>
+                        <span>No change</span>
+                    </span>
+                </div>
+                <div class="stat-details" id="productsDetails">Active in inventory</div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" id="productsProgress" style="width: 0%"></div>
+                </div>
+                <div class="stat-card-footer">
+                    <span id="productsStatus">Loading...</span>
+                    <span class="stat-action" onclick="refreshStats()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </span>
+                </div>
+            </div>
+            
+            <div class="stat-card stock">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-label">Total Stock</div>
+                        <div class="stat-value" id="totalStock">0</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-cubes"></i>
+                    </div>
+                </div>
+                <div class="stat-trend">
+                    <span class="trend-neutral" id="stockTrend">
+                        <i class="fas fa-minus trend-icon"></i>
+                        <span>No change</span>
+                    </span>
+                </div>
+                <div class="stat-details" id="stockDetails">Units available</div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" id="stockProgress" style="width: 0%"></div>
+                </div>
+                <div class="stat-card-footer">
+                    <span id="stockStatus">Loading...</span>
+                    <span class="stat-action" onclick="viewStockAlerts()">
+                        <i class="fas fa-chart-bar me-1"></i>View Details
+                    </span>
+                </div>
+            </div>
+            
+            <div class="stat-card investment">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-label">Total Investment</div>
+                        <div class="stat-value" id="totalInvestment">₨0</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                </div>
+                <div class="stat-trend">
+                    <span class="trend-neutral" id="investmentTrend">
+                        <i class="fas fa-minus trend-icon"></i>
+                        <span>No change</span>
+                    </span>
+                </div>
+                <div class="stat-details" id="investmentDetails">In inventory</div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" id="investmentProgress" style="width: 0%"></div>
+                </div>
+                <div class="stat-card-footer">
+                    <span id="investmentStatus">Loading...</span>
+                    <span class="stat-action" onclick="viewInvestmentReport()">
+                        <i class="fas fa-chart-line me-1"></i>View Report
+                    </span>
+                </div>
+            </div>
+            
+            <div class="stat-card low-stock">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-label">Low Stock</div>
+                        <div class="stat-value" id="lowStockCount">0</div>
+                    </div>
+                    <div class="stat-icon">
                         <i class="fas fa-exclamation-triangle"></i>
                     </div>
-                    <p>Stock Alerts</p>
-                </a>
-                
-                <a href="/suppliers" class="action-card">
-                    <div class="action-icon bg-info">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <p>Manage Suppliers</p>
-                </a>
-                
-                <a href="/reports" class="action-card">
-                    <div class="action-icon bg-secondary">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                    <p>Inventory Report</p>
-                </a>
+                </div>
+                <div class="stat-trend">
+                    <span class="trend-neutral" id="lowStockTrend">
+                        <i class="fas fa-minus trend-icon"></i>
+                        <span>No change</span>
+                    </span>
+                </div>
+                <div class="stat-details" id="lowStockDetails">Need restocking</div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" id="lowStockProgress" style="width: 0%"></div>
+                </div>
+                <div class="stat-card-footer">
+                    <span id="lowStockStatus">Loading...</span>
+                    <span class="stat-action" onclick="viewStockAlerts()">
+                        <i class="fas fa-bell me-1"></i>View Alerts
+                    </span>
+                </div>
             </div>
         </div>
 
         <!-- Search and Filter Section -->
-        <div class="search-filter-card">
-            <div class="section-header">
-                <h2><i class="fas fa-filter"></i> Filter Products</h2>
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Products</h5>
             </div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" id="productSearch" class="form-control" placeholder="Search products...">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="productSearch" class="form-control" placeholder="Search products...">
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <select id="categoryFilter" class="form-select">
-                        <option value="">All Categories</option>
-                        <% if (categories && categories.length) { %>
-                            <% categories.forEach(category=> { %>
-                                <option value="<%= category %>">
-                                    <%= category %>
-                                </option>
-                                <% }); %>
-                                    <% } %>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select id="statusFilter" class="form-select">
-                        <option value="">All Statuses</option>
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button id="resetFilters" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-sync-alt me-1"></i> Reset
-                    </button>
+                    <div class="col-md-3">
+                        <select id="categoryFilter" class="form-select">
+                            <option value="">All Categories</option>
+                            <% if (categories && categories.length) { %>
+                                <% categories.forEach(category=> { %>
+                                    <option value="<%= category %>">
+                                        <%= category %>
+                                    </option>
+                                    <% }); %>
+                                        <% } %>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select id="statusFilter" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="resetFilters" class="btn btn-outline w-100">
+                            <i class="fas fa-sync-alt me-1"></i> Reset
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Products Table -->
+        <!-- Products Table -->
         <div class="card">
-            <div class="section-header">
-                <h2><i class="fas fa-list"></i> Products</h2>
-                <span class="badge bg-primary">
-                    <%= products && products.length ? products.length : '0' %> products
-                </span>
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Products</h5>
+                    <span class="badge bg-primary badge-pill">
+                        <%= products && products.length ? products.length : '0' %> products
+                    </span>
+                </div>
             </div>
-            <div class="table-responsive">
-                <table class="table" id="productsTable">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Image</th>
-                            <th>Name</th>
-                            <th>SKU</th>
-                            <th>Category</th>
-                            <th>Stock</th>
-                            <th>Buying Price</th>
-                            <th>Selling Price</th>
-                            <th>Suppliers</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (products && products.length) { %>
-                            <% products.forEach(product=> { %>
-                                <tr data-product-id="<%= product.id %>"
-                                    data-category="<%= product.category || '' %>"
-                                    data-status="<%= product.status %>">
-                                    <td>
-                                        <%= product.id %>
-                                    </td>
-                                    <td>
-                                        <% if (product.image) { %>
-                                            <img src="/uploads/<%= product.image %>" alt="<%= product.name %>"
-                                                class="img-thumbnail"
-                                                style="width: 50px; height: 50px; object-fit: cover;">
-                                            <% } else { %>
-                                                <div class="no-image-placeholder">
-                                                    <i class="fas fa-box-open text-muted"></i>
-                                                </div>
-                                                <% } %>
-                                    </td>
-                                    <td data-brand="<%= product.brand || '' %>">
-                                        <div class="fw-semibold">
-                                            <%= product.name %>
-                                        </div>
-                                        <% if (product.brand) { %>
-                                            <small class="text-muted">
-                                                <%= product.brand %>
-                                            </small>
-                                            <% } %>
-                                    </td>
-                                    <td>
-                                        <%= product.sku || 'N/A' %>
-                                    </td>
-                                    <td data-size="<%= product.size || '' %>">
-                                        <%= product.category || 'Uncategorized' %>
-                                    </td>
-                                    <td>
-                                        <span
-                                            class="badge <%= product.quantity <= product.min_stock_alert ? 'bg-warning' : 'bg-success' %>">
-                                            <%= product.quantity %>
-                                                <% if (product.quantity <=product.min_stock_alert) { %>
-                                                    <i class="fas fa-exclamation-triangle ms-1"></i>
-                                                    <% } %>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <%= Number(product.buying_price || 0).toFixed(2) %>
-                                    </td>
-                                    <td>
-                                        <%= Number(product.selling_price || 0).toFixed(2) %>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">
-                                            <%= product.supplier_count || 0 %>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span
-                                            class="badge <%= product.status === 'active' ? 'bg-success' : 'bg-secondary' %>">
-                                            <%= product.status.charAt(0).toUpperCase() + product.status.slice(1) %>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <button class="btn btn-outline-primary edit-product"
-                                                data-bs-toggle="tooltip" title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-outline-success add-stock"
-                                                data-bs-toggle="tooltip" title="Add Stock">
-                                                <i class="fas fa-plus-circle"></i>
-                                            </button>
-                                            <button class="btn btn-outline-secondary toggle-status"
-                                                data-bs-toggle="tooltip"
-                                                title="<%= product.status === 'active' ? 'Deactivate' : 'Activate' %>">
-                                                <i
-                                                    class="fas <%= product.status === 'active' ? 'fa-toggle-on' : 'fa-toggle-off' %>"></i>
-                                            </button>
-                                            <button class="btn btn-outline-info manage-suppliers"
-                                                data-bs-toggle="tooltip" title="Manage Suppliers">
-                                                <i class="fas fa-truck"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <% }); %>
-                                    <% } else { %>
-                                        <tr>
-                                            <td colspan="11" class="text-center py-4">
-                                                <div class="empty-state">
-                                                    <div class="empty-state-icon">
-                                                        <i class="fas fa-box-open"></i>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="productsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Stock</th>
+                                <th>Buying Price</th>
+                                <th>Selling Price</th>
+                                <th>Suppliers</th> <!-- Add this column -->
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (products && products.length) { %>
+                                <% products.forEach(product=> { %>
+                                    <tr data-product-id="<%= product.id %>"
+                                        data-category="<%= product.category || '' %>"
+                                        data-status="<%= product.status %>">
+                                        <td>
+                                            <%= product.id %>
+                                        </td>
+                                        <td>
+                                            <% if (product.image) { %>
+                                                <img src="/uploads/<%= product.image %>" alt="<%= product.name %>"
+                                                    class="img-thumbnail"
+                                                    style="width: 50px; height: 50px; object-fit: cover;">
+                                                <% } else { %>
+                                                    <div class="no-image-placeholder"
+                                                        style="width: 50px; height: 50px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem;">
+                                                        <i class="fas fa-box-open text-muted"></i>
                                                     </div>
-                                                    <h5>No products found</h5>
-                                                    <p class="text-muted mb-3">Add your first product to get started</p>
-                                                    <button class="btn btn-primary" data-bs-toggle="modal"
-                                                        data-bs-target="#addProductModal">
-                                                        <i class="fas fa-plus me-2"></i>Add Product
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <% } %>
-                    </tbody>
-                </table>
-            </div>
+                                                    <% } %>
+                                        </td>
+                                        <td data-brand="<%= product.brand || '' %>">
+                                            <div class="fw-semibold">
+                                                <%= product.name %>
+                                            </div>
+                                            <% if (product.brand) { %>
+                                                <small class="text-muted">
+                                                    <%= product.brand %>
+                                                </small>
+                                                <% } %>
+                                        </td>
+                                        <td>
+                                            <%= product.sku || 'N/A' %>
+                                        </td>
+                                        <td data-size="<%= product.size || '' %>">
+                                            <%= product.category || 'Uncategorized' %>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge <%= product.quantity <= product.min_stock_alert ? 'bg-warning' : 'bg-success' %>">
+                                                <%= product.quantity %>
+                                                    <% if (product.quantity <=product.min_stock_alert) { %>
+                                                        <i class="fas fa-exclamation-triangle ms-1"></i>
+                                                        <% } %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <%= Number(product.buying_price || 0).toFixed(2) %>
+                                        </td>
+                                        <td>
+                                            <%= Number(product.selling_price || 0).toFixed(2) %>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info badge-pill">
+                                                <%= product.supplier_count || 0 %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge <%= product.status === 'active' ? 'bg-success' : 'bg-secondary' %>">
+                                                <%= product.status.charAt(0).toUpperCase() + product.status.slice(1) %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button class="btn btn-outline-primary edit-product"
+                                                    data-bs-toggle="tooltip" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-success add-stock"
+                                                    data-bs-toggle="tooltip" title="Add Stock">
+                                                    <i class="fas fa-plus-circle"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary toggle-status"
+                                                    data-bs-toggle="tooltip"
+                                                    title="<%= product.status === 'active' ? 'Deactivate' : 'Activate' %>">
+                                                    <i
+                                                        class="fas <%= product.status === 'active' ? 'fa-toggle-on' : 'fa-toggle-off' %>"></i>
+                                                </button>
+                                                <!-- In the actions button group, add this button after the existing ones -->
+                                                <button class="btn btn-outline-info manage-suppliers"
+                                                    data-bs-toggle="tooltip" title="Manage Suppliers">
+                                                    <i class="fas fa-truck"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                        <% } else { %>
+                                            <tr>
+                                                <td colspan="10" class="text-center py-4">
+                                                    <div class="empty-state">
+                                                        <div class="empty-state-icon">
+                                                            <i class="fas fa-box-open"></i>
+                                                        </div>
+                                                        <h5>No products found</h5>
+                                                        <p class="text-muted mb-3">Add your first product to get started
+                                                        </p>
+                                                        <button class="btn btn-primary" data-bs-toggle="modal"
+                                                            data-bs-target="#addProductModal">
+                                                            <i class="fas fa-plus me-2"></i>Add Product
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
 
-            <!-- Pagination -->
-            <% if (totalPages> 1) { %>
-                <div class="card-footer border-top">
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center mb-0">
-                            <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                                <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                            <% for (let i=1; i <=totalPages; i++) { %>
-                                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                    <a class="page-link" href="?page=<%= i %>">
-                                        <%= i %>
+                <!-- Pagination -->
+                <% if (totalPages> 1) { %>
+                    <div class="card-header border-top">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
-                                <% } %>
-                                    <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                                        <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
-                                            <span aria-hidden="true">&raquo;</span>
+                                <% for (let i=1; i <=totalPages; i++) { %>
+                                    <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                        <a class="page-link" href="?page=<%= i %>">
+                                            <%= i %>
                                         </a>
                                     </li>
-                        </ul>
-                    </nav>
-                </div>
-                <% } %>
+                                    <% } %>
+                                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                            <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <% } %>
+            </div>
         </div>
     </div>
 
+    <!-- Add Product Modal -->
     <!-- Add Product Modal -->
     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
         aria-hidden="true">
@@ -691,10 +634,12 @@
                                     <input type="text" class="form-control" id="productName" name="name" required>
                                 </div>
 
+                                <!-- ADD SUPPLIER FIELD -->
                                 <div class="mb-3">
                                     <label for="productSupplier" class="form-label">Supplier</label>
                                     <select class="form-select" id="productSupplier" name="supplier_id">
                                         <option value="">Select Supplier</option>
+                                        <!-- Suppliers will be loaded dynamically -->
                                     </select>
                                 </div>
 
@@ -858,7 +803,7 @@
                             <div class="col-md-4 text-end">
                                 <div class="d-flex align-items-center justify-content-end">
                                     <span class="me-2">Current Stock:</span>
-                                    <span class="badge bg-primary" id="currentStockBadge">0</span>
+                                    <span class="badge bg-primary badge-pill" id="currentStockBadge">0</span>
                                 </div>
                             </div>
                         </div>
@@ -941,7 +886,6 @@
             </div>
         </div>
     </div>
-
     <!-- Manage Suppliers Modal -->
     <div class="modal fade" id="manageSuppliersModal" tabindex="-1" aria-labelledby="manageSuppliersModalLabel"
         aria-hidden="true">
@@ -966,24 +910,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Update datetime every second
-        function updateDateTime() {
-            const now = new Date();
-            const options = { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            };
-            document.getElementById('datetime').textContent = now.toLocaleDateString('en-IN', options);
-        }
-        
-        setInterval(updateDateTime, 1000);
-        updateDateTime(); // Initial call
-
         // Helper function to get shop currency
         function getShopCurrency() {
             if (window.shopData && window.shopData.currency) {
@@ -1321,7 +1247,7 @@
                 noProductsRow.style.display = visibleCount === 0 ? '' : 'none';
             }
 
-            const countBadge = document.querySelector('.section-header .badge');
+            const countBadge = document.querySelector('.card-header .badge');
             if (countBadge) {
                 countBadge.textContent = `${visibleCount} products`;
             }
@@ -1611,29 +1537,6 @@
             filterTimeout = setTimeout(filterProducts, 300);
         }
 
-        // Fetch stats data
-        async function fetchStats() {
-            try {
-                const response = await fetch('/products/stats');
-                if (!response.ok) {
-                    throw new Error(`Server returned ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    document.getElementById('totalProducts').textContent = data.stats.totalProducts || 0;
-                    document.getElementById('totalStock').textContent = data.stats.totalStock || 0;
-                    document.getElementById('totalInvestment').textContent = '₨' + (data.stats.totalInvestment || 0).toLocaleString('en-IN');
-                    document.getElementById('lowStockCount').textContent = data.stats.lowStockCount || 0;
-                } else {
-                    throw new Error(data.message || 'Failed to fetch stats');
-                }
-            } catch (error) {
-                console.error('Error fetching stats:', error);
-            }
-        }
-
         // Main DOM content loaded - SINGLE EVENT LISTENER
         document.addEventListener('DOMContentLoaded', function () {
             console.log('DOM loaded - initializing product management');
@@ -1646,9 +1549,6 @@
 
             // Load suppliers when page loads
             loadSuppliers();
-
-            // Fetch stats
-            fetchStats();
 
             // Load suppliers when add product modal opens
             document.getElementById('addProductModal').addEventListener('show.bs.modal', function () {
@@ -1837,6 +1737,243 @@
             // Initial filter to handle any pre-selected filters
             setTimeout(filterProducts, 100);
         });
+        // Stats data management
+        let statsData = {
+            totalProducts: 0,
+            totalStock: 0,
+            totalInvestment: 0,
+            lowStockCount: 0,
+            previousStats: null
+        };
+
+        // Format currency based on shop settings
+        function formatCurrency(amount) {
+            const currency = getShopCurrency();
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currency === 'PKR' ? 'PKR' : 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+            
+            // For PKR, we'll manually format since Intl doesn't support it well
+            if (currency === 'PKR') {
+                return '₨' + amount.toLocaleString('en-US');
+            }
+            
+            return formatter.format(amount);
+        }
+
+        // Format large numbers with K, M suffixes
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        // Calculate trend (up, down, or neutral)
+        function calculateTrend(current, previous) {
+            if (!previous) return { direction: 'neutral', value: 0 };
+            
+            const change = current - previous;
+            const percentage = previous > 0 ? (change / previous) * 100 : 0;
+            
+            if (change > 0) {
+                return { direction: 'up', value: Math.abs(percentage.toFixed(1)) };
+            } else if (change < 0) {
+                return { direction: 'down', value: Math.abs(percentage.toFixed(1)) };
+            } else {
+                return { direction: 'neutral', value: 0 };
+            }
+        }
+
+        // Update trend display
+        function updateTrendDisplay(elementId, trend) {
+            const element = document.getElementById(elementId);
+            const icon = element.querySelector('.trend-icon');
+            const text = element.querySelector('span:last-child');
+            
+            element.className = `trend-${trend.direction}`;
+            
+            if (trend.direction === 'up') {
+                icon.className = 'fas fa-arrow-up trend-icon';
+                text.textContent = `${trend.value}% increase`;
+            } else if (trend.direction === 'down') {
+                icon.className = 'fas fa-arrow-down trend-icon';
+                text.textContent = `${trend.value}% decrease`;
+            } else {
+                icon.className = 'fas fa-minus trend-icon';
+                text.textContent = 'No change';
+            }
+        }
+
+        // Update progress bars based on data
+        function updateProgressBars() {
+            // For demo purposes, we'll set progress based on some arbitrary targets
+            // In a real app, these would be based on your business metrics
+            const productsProgress = Math.min((statsData.totalProducts / 100) * 100, 100);
+            const stockProgress = Math.min((statsData.totalStock / 1000) * 100, 100);
+            const investmentProgress = Math.min((statsData.totalInvestment / 50000) * 100, 100);
+            const lowStockProgress = Math.min((statsData.lowStockCount / 20) * 100, 100);
+            
+            document.getElementById('productsProgress').style.width = `${productsProgress}%`;
+            document.getElementById('stockProgress').style.width = `${stockProgress}%`;
+            document.getElementById('investmentProgress').style.width = `${investmentProgress}%`;
+            document.getElementById('lowStockProgress').style.width = `${lowStockProgress}%`;
+        }
+
+        // Update status messages
+        function updateStatusMessages() {
+            // Products status
+            if (statsData.totalProducts === 0) {
+                document.getElementById('productsStatus').textContent = 'No products yet';
+            } else if (statsData.totalProducts < 10) {
+                document.getElementById('productsStatus').textContent = 'Getting started';
+            } else if (statsData.totalProducts < 50) {
+                document.getElementById('productsStatus').textContent = 'Good variety';
+            } else {
+                document.getElementById('productsStatus').textContent = 'Excellent selection';
+            }
+            
+            // Stock status
+            if (statsData.totalStock === 0) {
+                document.getElementById('stockStatus').textContent = 'No stock available';
+            } else if (statsData.totalStock < 100) {
+                document.getElementById('stockStatus').textContent = 'Limited stock';
+            } else if (statsData.totalStock < 500) {
+                document.getElementById('stockStatus').textContent = 'Adequate stock';
+            } else {
+                document.getElementById('stockStatus').textContent = 'Plenty in stock';
+            }
+            
+            // Investment status
+            if (statsData.totalInvestment === 0) {
+                document.getElementById('investmentStatus').textContent = 'No investment';
+            } else if (statsData.totalInvestment < 10000) {
+                document.getElementById('investmentStatus').textContent = 'Low investment';
+            } else if (statsData.totalInvestment < 50000) {
+                document.getElementById('investmentStatus').textContent = 'Moderate investment';
+            } else {
+                document.getElementById('investmentStatus').textContent = 'High investment';
+            }
+            
+            // Low stock status
+            if (statsData.lowStockCount === 0) {
+                document.getElementById('lowStockStatus').textContent = 'All items stocked';
+            } else if (statsData.lowStockCount < 5) {
+                document.getElementById('lowStockStatus').textContent = 'Few items low';
+            } else if (statsData.lowStockCount < 15) {
+                document.getElementById('lowStockStatus').textContent = 'Several items low';
+            } else {
+                document.getElementById('lowStockStatus').textContent = 'Many items low';
+            }
+        }
+
+        // Update all stats displays
+        function updateStatsDisplay() {
+            // Update main values
+            document.getElementById('totalProducts').textContent = formatNumber(statsData.totalProducts);
+            document.getElementById('totalStock').textContent = formatNumber(statsData.totalStock);
+            document.getElementById('totalInvestment').textContent = formatCurrency(statsData.totalInvestment);
+            document.getElementById('lowStockCount').textContent = formatNumber(statsData.lowStockCount);
+            
+            // Update trends if we have previous data
+            if (statsData.previousStats) {
+                updateTrendDisplay('productsTrend', calculateTrend(statsData.totalProducts, statsData.previousStats.totalProducts));
+                updateTrendDisplay('stockTrend', calculateTrend(statsData.totalStock, statsData.previousStats.totalStock));
+                updateTrendDisplay('investmentTrend', calculateTrend(statsData.totalInvestment, statsData.previousStats.totalInvestment));
+                updateTrendDisplay('lowStockTrend', calculateTrend(statsData.lowStockCount, statsData.previousStats.lowStockCount));
+            }
+            
+            // Update progress bars and status messages
+            updateProgressBars();
+            updateStatusMessages();
+        }
+
+        // Fetch stats from server
+        async function fetchStats() {
+            try {
+                // Show loading state
+                document.getElementById('quickStats').classList.add('stat-loading');
+                
+                const response = await fetch('/products/stats');
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store previous stats for trend calculation
+                    statsData.previousStats = { ...statsData };
+                    
+                    // Update current stats
+                    statsData.totalProducts = data.stats.totalProducts || 0;
+                    statsData.totalStock = data.stats.totalStock || 0;
+                    statsData.totalInvestment = data.stats.totalInvestment || 0;
+                    statsData.lowStockCount = data.stats.lowStockCount || 0;
+                    
+                    // Update the display
+                    updateStatsDisplay();
+                    
+                    // Remove loading state
+                    document.getElementById('quickStats').classList.remove('stat-loading');
+                } else {
+                    throw new Error(data.message || 'Failed to fetch stats');
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                // Remove loading state even on error
+                document.getElementById('quickStats').classList.remove('stat-loading');
+                
+                // Show error in stats
+                document.querySelectorAll('.stat-value').forEach(el => {
+                    el.textContent = 'Error';
+                });
+            }
+        }
+
+        // Refresh stats manually
+        function refreshStats() {
+            // Add a quick visual feedback
+            const refreshBtn = event.target.closest('.stat-action');
+            const originalHtml = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing';
+            
+            fetchStats().finally(() => {
+                // Restore original button content after a delay
+                setTimeout(() => {
+                    refreshBtn.innerHTML = originalHtml;
+                }, 1000);
+            });
+        }
+
+        // Navigate to stock alerts
+        function viewStockAlerts() {
+            window.location.href = '/products/alerts';
+        }
+
+        // Navigate to investment report (placeholder)
+        function viewInvestmentReport() {
+            alert('Investment report feature coming soon!');
+            // In a real app: window.location.href = '/reports/investment';
+        }
+
+        // Initialize stats when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch initial stats
+            fetchStats();
+            
+            // Set up auto-refresh every 5 minutes
+            setInterval(fetchStats, 5 * 60 * 1000);
+            
+            // Rest of your existing DOMContentLoaded code...
+        });
+
     </script>
 </body>
+
 </html>
