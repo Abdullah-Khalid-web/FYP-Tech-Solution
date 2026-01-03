@@ -1,9 +1,0 @@
-Logs recent activity
-dyanamic processing of the prices in the index.js
-dyanamic processing of the prices in the registeration
-header problem in the user js and make it not edit able
-    --> add the 4 section in product management
-    --> Billing page is not Working
-Shop Setting page is not Working
---> Working on the Loan and salary system in the manage Employee
-Multiple problems in the raw problems

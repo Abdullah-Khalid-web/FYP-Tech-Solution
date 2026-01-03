@@ -495,6 +495,139 @@ router.get('/api/EmpMgmt/:id/loans/active', getShopPrefix, async (req, res) => {
 });
 
 // POST simplified salary payment with installment support
+// router.post('/api/EmpMgmt/:id/salary/simple', getShopPrefix, async (req, res) => {
+//     let connection;
+//     try {
+//         const employeeId = req.params.id;
+//         const { month, amount, bonus, fine, loan_deductions, notes } = req.body;
+
+//         if (!month || !amount) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Month and amount are required'
+//             });
+//         }
+
+//         // Check if employee exists
+//         const [[employee]] = await pool.execute(`
+//             SELECT id, salary FROM users WHERE id = ? AND shop_id = ?
+//         `, [employeeId, req.session.shopId]);
+
+//         if (!employee) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: 'Employee not found'
+//             });
+//         }
+
+//         connection = await pool.getConnection();
+//         await connection.beginTransaction();
+
+//         // Calculate net amount
+//         let netAmount = parseFloat(amount) + (parseFloat(bonus) || 0) - (parseFloat(fine) || 0);
+//         let totalLoanDeductions = 0;
+//         let processedLoans = [];
+
+//         // Process loan deductions
+//         if (loan_deductions && loan_deductions.length > 0) {
+//             for (const deduction of loan_deductions) {
+//                 const [loan] = await connection.execute(
+//                     `SELECT * FROM ${req.tablePrefix}user_loans WHERE id = ? AND user_id = ? AND status = 'active'`,
+//                     [deduction.loan_id, employeeId]
+//                 );
+
+//                 if (loan.length > 0) {
+//                     const currentLoan = loan[0];
+//                     let actualDeduction = 0;
+                    
+//                     // If loan has installment amount, use that, otherwise use the requested amount
+//                     if (currentLoan.installment && currentLoan.installment > 0) {
+//                         // Use installment amount, but don't exceed due amount
+//                         actualDeduction = Math.min(currentLoan.installment, currentLoan.due_amount);
+//                     } else {
+//                         // Use the manually entered amount, but don't exceed due amount
+//                         actualDeduction = Math.min(deduction.amount, currentLoan.due_amount);
+//                     }
+                    
+//                     const newDueAmount = currentLoan.due_amount - actualDeduction;
+//                     const newStatus = newDueAmount <= 0 ? 'paid' : 'active';
+
+//                     await connection.execute(`
+//                         UPDATE ${req.tablePrefix}user_loans 
+//                         SET due_amount = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+//                         WHERE id = ?
+//                     `, [newDueAmount, newStatus, deduction.loan_id]);
+
+//                     totalLoanDeductions += actualDeduction;
+//                     processedLoans.push({
+//                         loan_id: deduction.loan_id,
+//                         amount: actualDeduction,
+//                         previous_due: currentLoan.due_amount,
+//                         new_due: newDueAmount
+//                     });
+                    
+//                     // Record transaction
+//                     await connection.execute(`
+//                         INSERT INTO ${req.tablePrefix}loan_transactions 
+//                         (loan_id, amount, type, description) 
+//                         VALUES (?, ?, 'salary_deduction', ?)
+//                     `, [deduction.loan_id, actualDeduction, `Salary deduction for ${month} - ${currentLoan.reason}`]);
+//                 }
+//             }
+//             netAmount -= totalLoanDeductions;
+//         }
+
+//         // Ensure net amount is not negative
+//         if (netAmount < 0) {
+//             netAmount = 0;
+//         }
+
+//         // Save salary record
+//         const [existing] = await connection.execute(`
+//             SELECT id FROM ${req.tablePrefix}user_salaries 
+//             WHERE user_id = ? AND month = ?
+//         `, [employeeId, month]);
+
+//         const bonusValue = parseFloat(bonus) || 0;
+//         const fineValue = parseFloat(fine) || 0;
+
+//         if (existing.length > 0) {
+//             await connection.execute(`
+//                 UPDATE ${req.tablePrefix}user_salaries 
+//                 SET amount = ?, net_amount = ?, bonus = ?, fine = ?, 
+//                     status = 'paid', paid_on = CURRENT_DATE, notes = ?
+//                 WHERE user_id = ? AND month = ?
+//             `, [amount, netAmount, bonusValue, fineValue, notes, employeeId, month]);
+//         } else {
+//             await connection.execute(`
+//                 INSERT INTO ${req.tablePrefix}user_salaries 
+//                 (user_id, month, amount, net_amount, bonus, fine, status, paid_on, notes)
+//                 VALUES (?, ?, ?, ?, ?, ?, 'paid', CURRENT_DATE, ?)
+//             `, [employeeId, month, amount, netAmount, bonusValue, fineValue, notes]);
+//         }
+
+//         await connection.commit();
+
+//         res.json({
+//             success: true,
+//             message: 'Salary paid successfully',
+//             netAmount: netAmount,
+//             totalDeductions: totalLoanDeductions,
+//             processedLoans: processedLoans
+//         });
+
+//     } catch (err) {
+//         if (connection) await connection.rollback();
+//         console.error('Error processing salary:', err);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Failed to process salary payment'
+//         });
+//     } finally {
+//         if (connection) connection.release();
+//     }
+// });
+// POST simplified salary payment with installment support
 router.post('/api/EmpMgmt/:id/salary/simple', getShopPrefix, async (req, res) => {
     let connection;
     try {
@@ -523,7 +656,7 @@ router.post('/api/EmpMgmt/:id/salary/simple', getShopPrefix, async (req, res) =>
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        // Calculate net amount
+        // Calculate net amount with proper null handling
         let netAmount = parseFloat(amount) + (parseFloat(bonus) || 0) - (parseFloat(fine) || 0);
         let totalLoanDeductions = 0;
         let processedLoans = [];
@@ -546,7 +679,7 @@ router.post('/api/EmpMgmt/:id/salary/simple', getShopPrefix, async (req, res) =>
                         actualDeduction = Math.min(currentLoan.installment, currentLoan.due_amount);
                     } else {
                         // Use the manually entered amount, but don't exceed due amount
-                        actualDeduction = Math.min(deduction.amount, currentLoan.due_amount);
+                        actualDeduction = Math.min(deduction.amount || 0, currentLoan.due_amount);
                     }
                     
                     const newDueAmount = currentLoan.due_amount - actualDeduction;
@@ -582,14 +715,16 @@ router.post('/api/EmpMgmt/:id/salary/simple', getShopPrefix, async (req, res) =>
             netAmount = 0;
         }
 
-        // Save salary record
+        // Save salary record with proper null handling
         const [existing] = await connection.execute(`
             SELECT id FROM ${req.tablePrefix}user_salaries 
             WHERE user_id = ? AND month = ?
         `, [employeeId, month]);
 
-        const bonusValue = parseFloat(bonus) || 0;
-        const fineValue = parseFloat(fine) || 0;
+        // Handle null values properly
+        const bonusValue = bonus !== undefined ? parseFloat(bonus) : 0;
+        const fineValue = fine !== undefined ? parseFloat(fine) : 0;
+        const notesValue = notes || null;
 
         if (existing.length > 0) {
             await connection.execute(`
@@ -597,13 +732,13 @@ router.post('/api/EmpMgmt/:id/salary/simple', getShopPrefix, async (req, res) =>
                 SET amount = ?, net_amount = ?, bonus = ?, fine = ?, 
                     status = 'paid', paid_on = CURRENT_DATE, notes = ?
                 WHERE user_id = ? AND month = ?
-            `, [amount, netAmount, bonusValue, fineValue, notes, employeeId, month]);
+            `, [amount, netAmount, bonusValue, fineValue, notesValue, employeeId, month]);
         } else {
             await connection.execute(`
                 INSERT INTO ${req.tablePrefix}user_salaries 
                 (user_id, month, amount, net_amount, bonus, fine, status, paid_on, notes)
                 VALUES (?, ?, ?, ?, ?, ?, 'paid', CURRENT_DATE, ?)
-            `, [employeeId, month, amount, netAmount, bonusValue, fineValue, notes]);
+            `, [employeeId, month, amount, netAmount, bonusValue, fineValue, notesValue]);
         }
 
         await connection.commit();
@@ -621,12 +756,13 @@ router.post('/api/EmpMgmt/:id/salary/simple', getShopPrefix, async (req, res) =>
         console.error('Error processing salary:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to process salary payment'
+            message: 'Failed to process salary payment: ' + err.message
         });
     } finally {
         if (connection) connection.release();
     }
 });
+
 
 // POST simplified loan with installment support
 router.post('/api/EmpMgmt/:id/loan/simple', getShopPrefix, async (req, res) => {

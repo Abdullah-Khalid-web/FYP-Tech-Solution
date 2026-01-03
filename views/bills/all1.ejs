@@ -1,0 +1,753 @@
+   <style>
+        :root {
+            --primary-color: <%=shop.primary_color || '#007bff' %>;
+            --danger-color: #dc3545;
+        }
+
+        .bill-card {
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .bill-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .bill-status-paid {
+            border-left-color: #28a745;
+        }
+
+        .bill-status-pending {
+            border-left-color: #ffc107;
+        }
+
+        .bill-status-refund {
+            border-left-color: #dc3545;
+        }
+
+        .filter-section {
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, var(--primary-color), #0056b3);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+        .badge-paid {
+            background-color: #28a745;
+        }
+
+        .badge-pending {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .badge-refund {
+            background-color: #dc3545;
+        }
+
+        .action-buttons .btn {
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .action-buttons .btn {
+                width: 100%;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div class="container-fluid py-3">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0"><i class="fas fa-receipt me-2"></i>All Bills</h2>
+                        <p class="text-muted mb-0">View and manage all transactions</p>
+                    </div>
+                    <div>
+                        <a href="/bills" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>New Sale
+                        </a>
+                        <a href="/" class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-home me-1"></i>Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-3">
+                <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">
+                                <%= shop.currency || '₹' %>
+                                    <%= totalStats.totalAmount.toLocaleString() %>
+                            </h4>
+                            <p class="mb-0">Total Revenue</p>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="text-success mb-0">
+                                    <%= totalStats.totalBills %>
+                                </h4>
+                                <p class="mb-0">Total Bills</p>
+                            </div>
+                            <i class="fas fa-receipt fa-2x text-success opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="text-warning mb-0">
+                                    <%= totalStats.pendingAmount.toLocaleString() %>
+                                </h4>
+                                <p class="mb-0">Pending Amount</p>
+                            </div>
+                            <i class="fas fa-clock fa-2x text-warning opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="text-info mb-0">
+                                    <%= totalStats.todayBills %>
+                                </h4>
+                                <p class="mb-0">Today's Bills</p>
+                            </div>
+                            <i class="fas fa-calendar-day fa-2x text-info opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="filter-section">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Date Range</label>
+                            <select class="form-select" id="dateFilter">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Customer</label>
+                            <input type="text" class="form-control" id="customerFilter"
+                                placeholder="Search customer...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Bill Number</label>
+                            <input type="text" class="form-control" id="billNumberFilter" placeholder="Bill number...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="all">All Status</option>
+                                <option value="paid">Paid</option>
+                                <option value="pending">Pending</option>
+                                <option value="refund">Refund</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select" id="paymentMethodFilter">
+                                <option value="all">All Methods</option>
+                                <option value="cash">Cash</option>
+                                <option value="card">Card</option>
+                                <option value="mobile">Mobile</option>
+                                <option value="bank">Bank Transfer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="customDateRange" style="display: none;">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="fromDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="toDate">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary" id="applyFilters">
+                                    <i class="fas fa-filter me-1"></i>Apply Filters
+                                </button>
+                                <button class="btn btn-outline-secondary" id="resetFilters">
+                                    <i class="fas fa-redo me-1"></i>Reset
+                                </button>
+                                <button class="btn btn-outline-success" id="exportBtn">
+                                    <i class="fas fa-download me-1"></i>Export
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bills Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Bills List</h5>
+                        <span class="badge bg-light text-dark">
+                            Showing <span id="showingCount">
+                                <%= bills.length %>
+                            </span> of <span id="totalCount">
+                                <%= totalStats.totalBills %>
+                            </span> bills
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <% if (bills.length> 0) { %>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Bill No.</th>
+                                            <th>Date & Time</th>
+                                            <th>Customer</th>
+                                            <th>Items</th>
+                                            <th class="text-end">Total Amount</th>
+                                            <th class="text-end">Paid</th>
+                                            <th class="text-end">Due</th>
+                                            <th>Payment Method</th>
+                                            <th>Status</th>
+                                            <th width="150px">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% bills.forEach(bill=> {
+                                            const status = bill.due_amount > 0 ? 'pending' : (bill.total_amount < 0
+                                                ? 'refund' : 'paid' ); const statusClass=status==='paid' ? 'badge-paid'
+                                                : status==='pending' ? 'badge-pending' : 'badge-refund' ; %>
+                                                <tr class="bill-<%= status %>">
+                                                    <td>
+                                                        <strong>
+                                                            <%= bill.bill_number %>
+                                                        </strong>
+                                                    </td>
+                                                    <td>
+                                                        <small>
+                                                            <%= new Date(bill.created_at).toLocaleDateString() %>
+                                                        </small>
+                                                        <br><small class="text-muted">
+                                                            <%= new Date(bill.created_at).toLocaleTimeString() %>
+                                                        </small>
+                                                    </td>
+                                                    <td>
+                                                        <strong>
+                                                            <%= bill.customer_name %>
+                                                        </strong>
+                                                        <% if (bill.customer_phone) { %>
+                                                            <br><small class="text-muted">
+                                                                <%= bill.customer_phone %>
+                                                            </small>
+                                                            <% } %>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-secondary">
+                                                            <%= bill.item_count %> items
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-end fw-bold">
+                                                        <%= shop.currency || '₹' %>
+                                                            <%= Math.abs(Number(bill.total_amount)).toFixed(2) %>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <%= shop.currency || '₹' %>
+                                                            <%= Number(bill.paid_amount).toFixed(2) %>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <% if (Number(bill.due_amount)> 0) { %>
+                                                            <span class="text-danger fw-bold">
+                                                                <%= shop.currency || '₹' %>
+                                                                    <%= Number(bill.due_amount).toFixed(2) %>
+                                                            </span>
+                                                            <% } else if (Number(bill.due_amount) < 0) { %>
+                                                                <span class="text-success fw-bold">
+                                                                    <%= shop.currency || '₹' %>
+                                                                        <%= Math.abs(Number(bill.due_amount)).toFixed(2)
+                                                                            %>
+                                                                </span>
+                                                                <% } else { %>
+                                                                    <span class="text-muted">-</span>
+                                                                    <% } %>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-info text-capitalize">
+                                                            <%= bill.payment_method %>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge <%= statusClass %>">
+                                                            <%= status.toUpperCase() %>
+                                                        </span>
+                                                    </td>
+                                                    <td class="action-buttons">
+                                                        <button class="btn btn-sm btn-outline-primary view-bill"
+                                                            data-bill-id="<%= bill.id %>" title="View Bill">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-success print-bill"
+                                                            data-bill-id="<%= bill.id %>" title="Print Bill">
+                                                            <i class="fas fa-print"></i>
+                                                        </button>
+                                                        <% if (status==='pending' ) { %>
+                                                            <button class="btn btn-sm btn-outline-warning add-payment"
+                                                                data-bill-id="<%= bill.id %>" title="Add Payment">
+                                                                <i class="fas fa-money-bill"></i>
+                                                            </button>
+                                                            <% } %>
+                                                                <button
+                                                                    class="btn btn-sm btn-outline-danger delete-bill"
+                                                                    data-bill-id="<%= bill.id %>" title="Delete Bill">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                    </td>
+                                                </tr>
+                                                <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <% if (totalPages> 1) { %>
+                                <nav aria-label="Page navigation" class="mt-4">
+                                    <ul class="pagination justify-content-center">
+                                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                                            <a class="page-link" href="/ALLbills?page=<%= currentPage - 1 %>">Previous</a>
+                                        </li>
+
+                                        <% for (let i=1; i <=totalPages; i++) { %>
+                                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                                <a class="page-link" href="/ALLbills?page=<%= i %>">
+                                                    <%= i %>
+                                                </a>
+                                            </li>
+                                            <% } %>
+
+                                                <li
+                                                    class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                                    <a class="page-link"
+                                                        href="/ALLbills?page=<%= currentPage + 1 %>">Next</a>
+                                                </li>
+                                    </ul>
+                                </nav>
+                                <% } %>
+
+                                    <% } else { %>
+                                        <div class="text-center py-5">
+                                            <i class="fas fa-receipt fa-4x text-muted mb-3"></i>
+                                            <h4 class="text-muted">No Bills Found</h4>
+                                            <p class="text-muted">No bills match your current filters.</p>
+                                            <a href="/bills" class="btn btn-primary">
+                                                <i class="fas fa-plus me-1"></i>Create New Bill
+                                            </a>
+                                        </div>
+                                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bill Details Modal -->
+    <div class="modal fade" id="billDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Bill Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="billDetailsContent">
+                    <!-- Bill details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeFilters();
+            initializeEventListeners();
+            prefillFilters();
+        });
+
+        function prefillFilters() {
+            // Get URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Pre-fill date filter
+            if (urlParams.get('date')) {
+                document.getElementById('dateFilter').value = urlParams.get('date');
+            }
+
+            // Pre-fill customer filter
+            if (urlParams.get('customer')) {
+                document.getElementById('customerFilter').value = urlParams.get('customer');
+            }
+
+            // Pre-fill bill number filter
+            if (urlParams.get('billNumber')) {
+                document.getElementById('billNumberFilter').value = urlParams.get('billNumber');
+            }
+
+            // Pre-fill status filter
+            if (urlParams.get('status')) {
+                document.getElementById('statusFilter').value = urlParams.get('status');
+            }
+
+            // Pre-fill payment method filter
+            if (urlParams.get('paymentMethod')) {
+                document.getElementById('paymentMethodFilter').value = urlParams.get('paymentMethod');
+            }
+
+            // Pre-fill custom date range
+            if (urlParams.get('fromDate') || urlParams.get('toDate')) {
+                document.getElementById('dateFilter').value = 'custom';
+                document.getElementById('customDateRange').style.display = 'block';
+                if (urlParams.get('fromDate')) {
+                    document.getElementById('fromDate').value = urlParams.get('fromDate');
+                }
+                if (urlParams.get('toDate')) {
+                    document.getElementById('toDate').value = urlParams.get('toDate');
+                }
+            }
+        }
+
+        function initializeFilters() {
+            // Date filter toggle
+            const dateFilter = document.getElementById('dateFilter');
+            const customDateRange = document.getElementById('customDateRange');
+
+            dateFilter.addEventListener('change', function () {
+                if (this.value === 'custom') {
+                    customDateRange.style.display = 'block';
+                } else {
+                    customDateRange.style.display = 'none';
+                    // Clear custom date inputs when not in custom mode
+                    document.getElementById('fromDate').value = '';
+                    document.getElementById('toDate').value = '';
+                }
+            });
+
+            // Set today's date as default for custom range
+            const today = new Date().toISOString().split('T')[0];
+            if (!document.getElementById('fromDate').value) {
+                document.getElementById('fromDate').value = today;
+            }
+            if (!document.getElementById('toDate').value) {
+                document.getElementById('toDate').value = today;
+            }
+        }
+
+        function initializeEventListeners() {
+            // Apply filters
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+
+            // Reset filters
+            document.getElementById('resetFilters').addEventListener('click', resetFilters);
+
+            // Export functionality
+            document.getElementById('exportBtn').addEventListener('click', exportBills);
+
+            // View bill details
+            document.querySelectorAll('.view-bill').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const billId = this.getAttribute('data-bill-id');
+                    viewBillDetails(billId);
+                });
+            });
+
+            // Print bill
+            document.querySelectorAll('.print-bill').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const billId = this.getAttribute('data-bill-id');
+                    printBill(billId);
+                });
+            });
+
+            // Add payment
+            document.querySelectorAll('.add-payment').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const billId = this.getAttribute('data-bill-id');
+                    addPayment(billId);
+                });
+            });
+
+            // Delete bill
+            document.querySelectorAll('.delete-bill').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const billId = this.getAttribute('data-bill-id');
+                    deleteBill(billId);
+                });
+            });
+        }
+
+function applyFilters() {
+    const filters = {
+        date: document.getElementById('dateFilter').value,
+        customer: document.getElementById('customerFilter').value,
+        billNumber: document.getElementById('billNumberFilter').value,
+        status: document.getElementById('statusFilter').value,
+        paymentMethod: document.getElementById('paymentMethodFilter').value,
+        fromDate: document.getElementById('fromDate').value,
+        toDate: document.getElementById('toDate').value
+    };
+
+    // Build query string
+    const params = new URLSearchParams();
+    
+    // Always include page
+    params.append('page', '1');
+    
+    if (filters.date && filters.date !== 'all') {
+        if (filters.date === 'custom') {
+            if (filters.fromDate) params.append('fromDate', filters.fromDate);
+            if (filters.toDate) params.append('toDate', filters.toDate);
+        } else {
+            params.append('date', filters.date);
+        }
+    }
+    
+    if (filters.customer) params.append('customer', filters.customer);
+    if (filters.billNumber) params.append('billNumber', filters.billNumber);
+    if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+    if (filters.paymentMethod && filters.paymentMethod !== 'all') params.append('paymentMethod', filters.paymentMethod);
+
+    console.log('Applying filters:', params.toString());
+    
+    // Use the correct base URL - detect current path
+    const currentPath = window.location.pathname;
+    const basePath = currentPath.includes('/ALLbills') ? '/ALLbills' : '/bills';
+    
+    // Reload page with filters
+    window.location.href = `${basePath}?${params.toString()}`;
+}
+
+function resetFilters() {
+    // Reset all filter values
+    document.getElementById('dateFilter').value = 'all';
+    document.getElementById('customerFilter').value = '';
+    document.getElementById('billNumberFilter').value = '';
+    document.getElementById('statusFilter').value = 'all';
+    document.getElementById('paymentMethodFilter').value = 'all';
+    document.getElementById('customDateRange').style.display = 'none';
+    document.getElementById('fromDate').value = '';
+    document.getElementById('toDate').value = '';
+    
+    // Use the correct base URL
+    const currentPath = window.location.pathname;
+    const basePath = currentPath.includes('/ALLbills') ? '/ALLbills' : '/bills';
+    
+    // Reload without filters
+    window.location.href = `${basePath}?page=1`;
+}
+
+        function exportBills() {
+            // Get current filters
+            const filters = {
+                date: document.getElementById('dateFilter').value,
+                customer: document.getElementById('customerFilter').value,
+                billNumber: document.getElementById('billNumberFilter').value,
+                status: document.getElementById('statusFilter').value,
+                paymentMethod: document.getElementById('paymentMethodFilter').value
+            };
+
+            // Build export URL
+            const params = new URLSearchParams();
+            params.append('export', 'true');
+
+            if (filters.date && filters.date !== 'all') params.append('date', filters.date);
+            if (filters.customer) params.append('customer', filters.customer);
+            if (filters.billNumber) params.append('billNumber', filters.billNumber);
+            if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+            if (filters.paymentMethod && filters.paymentMethod !== 'all') params.append('paymentMethod', filters.paymentMethod);
+
+            window.open(`/Allbills/export?${params.toString()}`, '_blank');
+        }
+
+        function viewBillDetails(billId) {
+            fetch(`/bills/${billId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayBillDetails(data.bill, data.items);
+                    } else {
+                        alert('Error loading bill details');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading bill details');
+                });
+        }
+
+        function displayBillDetails(bill, items) {
+            const modalContent = document.getElementById('billDetailsContent');
+            const status = Number(bill.due_amount) > 0 ? 'pending' : (Number(bill.total_amount) < 0 ? 'refund' : 'paid');
+
+            modalContent.innerHTML = `
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6>Bill Information</h6>
+                    <p><strong>Bill Number:</strong> ${bill.bill_number}</p>
+                    <p><strong>Date:</strong> ${new Date(bill.created_at).toLocaleString()}</p>
+                    <p><strong>Status:</strong> <span class="badge ${status === 'paid' ? 'bg-success' : status === 'pending' ? 'bg-warning' : 'bg-danger'}">${status.toUpperCase()}</span></p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Customer Information</h6>
+                    <p><strong>Name:</strong> ${bill.customer_name}</p>
+                    ${bill.customer_phone ? `<p><strong>Phone:</strong> ${bill.customer_phone}</p>` : ''}
+                    <p><strong>Payment Method:</strong> ${bill.payment_method}</p>
+                </div>
+            </div>
+
+            <h6>Items</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Type</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${items.map(item => `
+                            <tr>
+                                <td>${item.product_name}</td>
+                                <td><span class="badge ${item.item_type === 'sale' ? 'bg-success' : 'bg-danger'}">${item.item_type.toUpperCase()}</span></td>
+                                <td>${item.quantity}</td>
+                                <td>${bill.currency || '₹'}${Number(item.unit_price).toFixed(2)}</td>
+                                <td>${bill.currency || '₹'}${Number(item.total_price).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6 offset-md-6">
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Subtotal:</strong></td>
+                            <td class="text-end">${bill.currency || '₹'}${Number(bill.subtotal).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tax:</strong></td>
+                            <td class="text-end">${bill.currency || '₹'}${Number(bill.tax).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Amount:</strong></td>
+                            <td class="text-end"><strong>${bill.currency || '₹'}${Number(bill.total_amount).toFixed(2)}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Paid Amount:</strong></td>
+                            <td class="text-end">${bill.currency || '₹'}${Number(bill.paid_amount).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Due Amount:</strong></td>
+                            <td class="text-end ${Number(bill.due_amount) > 0 ? 'text-danger' : 'text-success'}">
+                                <strong>${bill.currency || '₹'}${Math.abs(Number(bill.due_amount)).toFixed(2)}</strong>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            ${bill.notes ? `
+                <div class="mt-3">
+                    <h6>Notes</h6>
+                    <p>${bill.notes}</p>
+                </div>
+            ` : ''}
+        `;
+
+            // Show modal
+            new bootstrap.Modal(document.getElementById('billDetailsModal')).show();
+        }
+
+        function printBill(billId) {
+            window.open(`/bills/${billId}/print`, '_blank');
+        }
+
+        function addPayment(billId) {
+            const amount = prompt('Enter payment amount:');
+            if (amount && !isNaN(amount) && parseFloat(amount) > 0) {
+                // Implement payment addition logic here
+                alert(`Payment of ${amount} added to bill ${billId}`);
+            }
+        }
+
+        function deleteBill(billId) {
+            if (confirm('Are you sure you want to delete this bill? This action cannot be undone.')) {
+                fetch(`/bills/${billId}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Bill deleted successfully');
+                            location.reload();
+                        } else {
+                            alert('Error deleting bill: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error deleting bill');
+                    });
+            }
+        }
+    </script>
