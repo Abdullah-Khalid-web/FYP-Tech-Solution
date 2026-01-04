@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Ledger Report - <%= (shop && shop.name) || 'My Shop' %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4e73df;
+            --success: #1cc88a;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --info: #36b9cc;
+            --secondary: #858796;
+            --dark: #5a5c69;
+            --light: #f8f9fc;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 20px;
+            background-color: #f5f7fa;
+            min-height: calc(100vh - 70px);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--dark);
+        }
+
+        .datetime {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .shop-info {
+            text-align: right;
+        }
+
+        .shop-info p {
+            margin: 5px 0;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .shop-info i {
+            margin-right: 5px;
+            color: var(--primary);
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eee;
+            padding: 15px 20px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section-header h2 {
+            font-size: 1.2rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            color: var(--dark);
+        }
+
+        .section-header h2 i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        /* Form Styles */
+        .form-control, .form-select {
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        .btn {
+            border-radius: 6px;
+            font-weight: 500;
+            padding: 8px 16px;
+        }
+
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Report Summary Cards */
+        .summary-card {
+            background: linear-gradient(135deg, var(--primary), #2e59d9);
+            color: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            height: 100%;
+        }
+
+        .summary-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .summary-card .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .summary-card.danger {
+            background: linear-gradient(135deg, var(--danger), #c53030);
+        }
+
+        .summary-card.success {
+            background: linear-gradient(135deg, var(--success), #0d9b6c);
+        }
+
+        .summary-card.warning {
+            background: linear-gradient(135deg, var(--warning), #d8a01a);
+        }
+
+        /* Table Styles */
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+        }
+
+        .table th {
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 0.85rem;
+            text-align: left;
+            padding: 15px;
+            background: #f8f9fc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tr:hover td {
+            background-color: #f8f9fc;
+        }
+
+        /* Badge Styles */
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+        }
+
+        /* Balance Styles */
+        .balance-positive {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .balance-negative {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        .balance-zero {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        /* Print Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printSection, #printSection * {
+                visibility: visible;
+            }
+            #printSection {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                background: white;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .table {
+                font-size: 12px;
+            }
+            .table th, .table td {
+                padding: 8px;
+            }
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner i {
+            margin-right: 10px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            color: #d1d5db;
+            margin-bottom: 1rem;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .shop-info {
+                text-align: center;
+            }
+            
+            .summary-card .value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body data-shop-currency="<%= (shop && shop.currency) || 'PKR' %>">
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div>
+                <h1><i class="fas fa-file-invoice-dollar me-2"></i>Supplier Ledger Report</h1>
+                <p class="datetime" id="datetime"></p>
+            </div>
+            <div class="shop-info">
+                <p><i class="fas fa-store"></i> <%= (shop && shop.name) || 'My Shop' %></p>
+                <p><i class="fas fa-map-marker-alt"></i> <%= (shop && shop.address) || 'Add shop address' %></p>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card">
+            <div class="section-header">
+                <h2><i class="fas fa-filter"></i> Report Filters</h2>
+            </div>
+            <div class="card-body">
+                <form id="reportFilterForm">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="supplierFilter" class="form-label">Supplier</label>
+                            <select class="form-select" id="supplierFilter" name="supplier_id">
+                                <option value="all">All Suppliers</option>
+                                <% if (suppliers && suppliers.length) { %>
+                                    <% suppliers.forEach(supplier=> { %>
+                                        <option value="<%= supplier.id %>">
+                                            <%= supplier.name %> (<%= supplier.contact_person || supplier.phone %>)
+                                        </option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="startDate" class="form-label">From Date</label>
+                            <input type="date" class="form-control" id="startDate" name="start_date">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="endDate" class="form-label">To Date</label>
+                            <input type="date" class="form-control" id="endDate" name="end_date">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="reportType" class="form-label">Report Type</label>
+                            <select class="form-select" id="reportType" name="report_type">
+                                <option value="detailed">Detailed Report</option>
+                                <option value="summary">Summary Report</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100" id="generateReport">
+                                <i class="fas fa-play me-2"></i>Generate
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- No Suppliers Message -->
+        <% if (suppliers && suppliers.length === 0) { %>
+            <div class="card mb-3">
+                <div class="card-body text-center">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-users-slash"></i>
+                        </div>
+                        <h5>No Suppliers Found</h5>
+                        <p class="text-muted mb-3">You need to add suppliers first to generate ledger reports.</p>
+                        <div class="mt-3">
+                            <a href="/suppliers" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add Suppliers
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- Loading Spinner -->
+        <div class="card" id="loadingSpinner" style="display: none;">
+            <div class="loading-spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Generating report...</p>
+            </div>
+        </div>
+
+        <!-- Report Results -->
+        <div id="reportResults" style="display: none;">
+            <!-- Report Header -->
+            <div class="card mb-3 no-print">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">Report Generated</h5>
+                            <p class="text-muted mb-0" id="reportInfo"></p>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary" id="printReport">
+                                <i class="fas fa-print me-2"></i>Print Report
+                            </button>
+                            <button class="btn btn-outline-success" id="exportPDF">
+                                <i class="fas fa-file-pdf me-2"></i>Export PDF
+                            </button>
+                            <button class="btn btn-outline-info" id="exportExcel">
+                                <i class="fas fa-file-excel me-2"></i>Export Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Print Section -->
+            <div id="printSection">
+                <!-- Report Header for Print -->
+                <div class="card mb-3">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1"><%= (shop && shop.name) || 'My Shop' %></h3>
+                        <h4 class="mb-2">Supplier Ledger Report</h4>
+                        <p class="text-muted mb-0" id="printReportInfo"></p>
+                        <p class="text-muted mb-0">Generated on: <span id="printDate"></span></p>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="row mb-4" id="summaryCards">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Supplier Balances (for all suppliers) -->
+                <div class="card mb-4" id="supplierBalancesSection" style="display: none;">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-balance-scale me-2"></i>Supplier Balances</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table" id="supplierBalancesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Supplier Name</th>
+                                        <th>Total Debit</th>
+                                        <th>Total Credit</th>
+                                        <th>Net Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="supplierBalancesBody">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Transaction Details</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table" id="transactionsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Supplier</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Description</th>
+                                        <th>Reference</th>
+                                        <th>Recorded By</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionsTableBody">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Footer -->
+                <div class="card mt-4 no-print">
+                    <div class="card-body text-center">
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            This report was generated by the Inventory Management System
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="card" id="emptyState">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h5>No Report Generated Yet</h5>
+                <p class="text-muted mb-3">Select filters and click "Generate" to view supplier ledger report</p>
+                <div class="mt-3">
+                    <button class="btn btn-primary" onclick="generateSampleReport()">
+                        <i class="fas fa-eye me-2"></i>View Sample Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Suppliers Button -->
+    <div class="position-fixed bottom-3 end-3 no-print">
+        <a href="/suppliers" class="btn btn-primary shadow-lg">
+            <i class="fas fa-arrow-left me-2"></i>Back to Suppliers
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+
+    <script>
+        // Update datetime
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-IN', options);
+            document.getElementById('printDate').textContent = now.toLocaleDateString('en-IN', options);
+        }
+        
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Set default dates (last 30 days)
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const lastMonth = new Date();
+            lastMonth.setDate(today.getDate() - 30);
+            
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            document.getElementById('startDate').value = lastMonth.toISOString().split('T')[0];
+        });
+
+        // Helper function to escape HTML
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            const currency = window.shopData?.currency || 'PKR';
+            return `${currency} ${parseFloat(amount || 0).toFixed(2)}`;
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        }
+
+        // Generate report
+        document.getElementById('reportFilterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            generateReport();
+        });
+
+        function generateReport() {
+            const formData = new FormData(document.getElementById('reportFilterForm'));
+            
+            // Show loading
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('reportResults').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
+            
+            fetch('/suppliers/reports/ledger/generate', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderReport(data);
+                } else {
+                    throw new Error(data.message || 'Error generating report');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error generating report: ' + error.message);
+            })
+            .finally(() => {
+                document.getElementById('loadingSpinner').style.display = 'none';
+            });
+        }
+
+        function renderReport(data) {
+            const currency = window.shopData?.currency || 'PKR';
+            
+            // Update report info
+            const supplierFilter = document.getElementById('supplierFilter');
+            const selectedSupplier = supplierFilter.options[supplierFilter.selectedIndex].text;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            let reportInfo = '';
+            if (data.filters.supplier_id === 'all') {
+                reportInfo = `All Suppliers`;
+            } else {
+                reportInfo = `Supplier: ${selectedSupplier}`;
+            }
+            
+            if (startDate && endDate) {
+                reportInfo += ` | Period: ${formatDate(startDate)} to ${formatDate(endDate)}`;
+            }
+            
+            document.getElementById('reportInfo').textContent = reportInfo;
+            document.getElementById('printReportInfo').textContent = reportInfo;
+            
+            // Render summary cards
+            const summaryCards = document.getElementById('summaryCards');
+            summaryCards.innerHTML = `
+                <div class="col-md-3">
+                    <div class="summary-card">
+                        <div class="value">${data.summary.total_transactions || 0}</div>
+                        <div class="label">Total Transactions</div>
+                        <i class="fas fa-exchange-alt fa-2x mt-3"></i>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card danger">
+                        <div class="value">${formatCurrency(data.summary.total_debit || 0)}</div>
+                        <div class="label">Total Debit (We Owe)</div>
+                        <i class="fas fa-arrow-up fa-2x mt-3"></i>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card success">
+                        <div class="value">${formatCurrency(data.summary.total_credit || 0)}</div>
+                        <div class="label">Total Credit (Received)</div>
+                        <i class="fas fa-arrow-down fa-2x mt-3"></i>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card warning">
+                        <div class="value">${formatCurrency(data.summary.net_balance || 0)}</div>
+                        <div class="label">Net Balance</div>
+                        <i class="fas fa-balance-scale fa-2x mt-3"></i>
+                    </div>
+                </div>
+            `;
+            
+            // Render supplier balances (if all suppliers)
+            if (data.filters.supplier_id === 'all' && data.supplierBalances.length > 0) {
+                const supplierBalancesSection = document.getElementById('supplierBalancesSection');
+                const supplierBalancesBody = document.getElementById('supplierBalancesBody');
+                
+                supplierBalancesSection.style.display = 'block';
+                supplierBalancesBody.innerHTML = '';
+                
+                data.supplierBalances.forEach(balance => {
+                    const balanceAmount = parseFloat(balance.balance || 0);
+                    const balanceClass = balanceAmount > 0 ? 'balance-negative' : 
+                                       (balanceAmount < 0 ? 'balance-positive' : 'balance-zero');
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${escapeHtml(balance.supplier_name)}</td>
+                        <td>${formatCurrency(balance.total_debit)}</td>
+                        <td>${formatCurrency(balance.total_credit)}</td>
+                        <td class="${balanceClass}">
+                            ${formatCurrency(Math.abs(balanceAmount))}
+                            ${balanceAmount > 0 ? '<small class="text-danger d-block">(We owe)</small>' : 
+                              balanceAmount < 0 ? '<small class="text-success d-block">(They owe)</small>' : ''}
+                        </td>
+                    `;
+                    supplierBalancesBody.appendChild(row);
+                });
+            } else {
+                document.getElementById('supplierBalancesSection').style.display = 'none';
+            }
+            
+            // Render transactions table
+            const transactionsTableBody = document.getElementById('transactionsTableBody');
+            transactionsTableBody.innerHTML = '';
+            
+            if (data.transactions && data.transactions.length > 0) {
+                data.transactions.forEach(transaction => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formatDate(transaction.date)} ${transaction.time}</td>
+                        <td>${escapeHtml(transaction.supplier_name)}</td>
+                        <td>
+                            <span class="badge ${transaction.type === 'credit' ? 'bg-success' : 'bg-danger'}">
+                                ${transaction.type.toUpperCase()}
+                            </span>
+                        </td>
+                        <td>${formatCurrency(transaction.amount)}</td>
+                        <td>${escapeHtml(transaction.description || '-')}</td>
+                        <td>${escapeHtml(transaction.reference_type || '-')}</td>
+                        <td>${escapeHtml(transaction.created_by_name || '-')}</td>
+                    `;
+                    transactionsTableBody.appendChild(row);
+                });
+            } else {
+                transactionsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <h5>No transactions found</h5>
+                                <p class="text-muted">No transactions match the selected filters</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // Show results
+            document.getElementById('reportResults').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+        }
+
+        // Print report
+        document.getElementById('printReport').addEventListener('click', function() {
+            window.print();
+        });
+
+        // Export PDF
+        document.getElementById('exportPDF').addEventListener('click', function() {
+            exportToPDF();
+        });
+
+        // Export Excel
+        document.getElementById('exportExcel').addEventListener('click', function() {
+            exportToExcel();
+        });
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Report title
+            doc.setFontSize(18);
+            doc.text("Supplier Ledger Report", 105, 20, { align: 'center' });
+            
+            // Shop info
+            doc.setFontSize(12);
+            doc.text(`${window.shopData?.name || 'My Shop'}`, 105, 30, { align: 'center' });
+            
+            // Report info
+            const reportInfo = document.getElementById('printReportInfo').textContent;
+            doc.text(reportInfo, 105, 40, { align: 'center' });
+            
+            // Summary section
+            doc.setFontSize(14);
+            doc.text("Summary", 20, 55);
+            
+            // Summary table
+            const summaryData = [];
+            const summaryCards = document.querySelectorAll('.summary-card .value, .summary-card .label');
+            
+            for (let i = 0; i < summaryCards.length; i += 2) {
+                if (summaryCards[i] && summaryCards[i + 1]) {
+                    summaryData.push([
+                        summaryCards[i + 1].textContent,
+                        summaryCards[i].textContent
+                    ]);
+                }
+            }
+            
+            doc.autoTable({
+                startY: 60,
+                head: [['Item', 'Value']],
+                body: summaryData,
+                theme: 'grid',
+                headStyles: { fillColor: [78, 115, 223] }
+            });
+            
+            // Supplier balances (if available)
+            const supplierBalancesTable = document.getElementById('supplierBalancesTable');
+            if (supplierBalancesTable && supplierBalancesTable.style.display !== 'none') {
+                const balanceData = [];
+                const rows = supplierBalancesTable.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 4) {
+                        balanceData.push([
+                            cells[0].textContent,
+                            cells[1].textContent,
+                            cells[2].textContent,
+                            cells[3].textContent.replace(/\n/g, ' ')
+                        ]);
+                    }
+                });
+                
+                if (balanceData.length > 0) {
+                    doc.addPage();
+                    doc.setFontSize(14);
+                    doc.text("Supplier Balances", 20, 20);
+                    
+                    doc.autoTable({
+                        startY: 25,
+                        head: [['Supplier', 'Total Debit', 'Total Credit', 'Net Balance']],
+                        body: balanceData,
+                        theme: 'grid',
+                        headStyles: { fillColor: [78, 115, 223] }
+                    });
+                }
+            }
+            
+            // Transactions table
+            doc.addPage();
+            doc.setFontSize(14);
+            doc.text("Transaction Details", 20, 20);
+            
+            const transactionData = [];
+            const transactionRows = document.querySelectorAll('#transactionsTable tbody tr');
+            
+            transactionRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 7) {
+                    transactionData.push([
+                        cells[0].textContent,
+                        cells[1].textContent,
+                        cells[2].textContent,
+                        cells[3].textContent,
+                        cells[4].textContent,
+                        cells[5].textContent,
+                        cells[6].textContent
+                    ]);
+                }
+            });
+            
+            doc.autoTable({
+                startY: 25,
+                head: [['Date', 'Supplier', 'Type', 'Amount', 'Description', 'Reference', 'Recorded By']],
+                body: transactionData,
+                theme: 'grid',
+                headStyles: { fillColor: [78, 115, 223] },
+                pageBreak: 'auto'
+            });
+            
+            // Save PDF
+            const fileName = `Supplier_Ledger_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+        }
+
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            
+            // Summary sheet
+            const summaryData = [];
+            const summaryCards = document.querySelectorAll('.summary-card .value, .summary-card .label');
+            
+            for (let i = 0; i < summaryCards.length; i += 2) {
+                if (summaryCards[i] && summaryCards[i + 1]) {
+                    summaryData.push([
+                        summaryCards[i + 1].textContent,
+                        summaryCards[i].textContent
+                    ]);
+                }
+            }
+            
+            const summarySheet = XLSX.utils.aoa_to_sheet([
+                ['Supplier Ledger Report'],
+                [window.shopData?.name || 'My Shop'],
+                [document.getElementById('printReportInfo').textContent],
+                [''],
+                ['Summary'],
+                ['Item', 'Value'],
+                ...summaryData
+            ]);
+            
+            XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+            
+            // Supplier balances sheet (if available)
+            const supplierBalancesTable = document.getElementById('supplierBalancesTable');
+            if (supplierBalancesTable && supplierBalancesTable.style.display !== 'none') {
+                const balanceData = [['Supplier Name', 'Total Debit', 'Total Credit', 'Net Balance']];
+                const rows = supplierBalancesTable.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 4) {
+                        balanceData.push([
+                            cells[0].textContent,
+                            cells[1].textContent,
+                            cells[2].textContent,
+                            cells[3].textContent.replace(/\n/g, ' ')
+                        ]);
+                    }
+                });
+                
+                const balanceSheet = XLSX.utils.aoa_to_sheet(balanceData);
+                XLSX.utils.book_append_sheet(wb, balanceSheet, "Supplier Balances");
+            }
+            
+            // Transactions sheet
+            const transactionData = [['Date', 'Supplier', 'Type', 'Amount', 'Description', 'Reference', 'Recorded By']];
+            const transactionRows = document.querySelectorAll('#transactionsTable tbody tr');
+            
+            transactionRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 7) {
+                    transactionData.push([
+                        cells[0].textContent,
+                        cells[1].textContent,
+                        cells[2].textContent,
+                        cells[3].textContent,
+                        cells[4].textContent,
+                        cells[5].textContent,
+                        cells[6].textContent
+                    ]);
+                }
+            });
+            
+            const transactionSheet = XLSX.utils.aoa_to_sheet(transactionData);
+            XLSX.utils.book_append_sheet(wb, transactionSheet, "Transactions");
+            
+            // Save Excel file
+            const fileName = `Supplier_Ledger_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // Sample report (for demo)
+        function generateSampleReport() {
+            document.getElementById('supplierFilter').value = 'all';
+            document.getElementById('generateReport').click();
+        }
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+</body>
+</html>

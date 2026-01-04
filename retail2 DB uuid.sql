@@ -342,6 +342,7 @@ CREATE TABLE products (
     size VARCHAR(100),
     sku VARCHAR(100),
     barcode VARCHAR(100),
+    active VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
@@ -529,6 +530,54 @@ CREATE TABLE user_cash_submission (
     INDEX idx_user_id (`user_id`),
     INDEX idx_submission_date (`submission_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- Add new columns to stock_in table
+ALTER TABLE stock_in 
+ADD COLUMN buying_price DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER unit_price,
+ADD COLUMN selling_price DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER buying_price,
+ADD COLUMN total_buying_value DECIMAL(12,2) NOT NULL DEFAULT 0.00 AFTER selling_price,
+ADD COLUMN transaction_type ENUM('credit', 'cash', 'partial') DEFAULT 'credit' AFTER supplier_id,
+ADD COLUMN payment_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00 AFTER transaction_type,
+ADD COLUMN notes TEXT AFTER payment_amount;
+
+-- Update existing records (copy unit_price to buying_price for existing data)
+UPDATE stock_in SET 
+    buying_price = unit_price,
+    selling_price = ROUND(unit_price * 1.3, 2),
+    total_buying_value = ROUND(quantity * unit_price, 2)
+WHERE buying_price = 0;
+
+-- Add reference fields to supplier_transactions
+ALTER TABLE supplier_transactions 
+ADD COLUMN reference_type ENUM('stock_in', 'payment', 'adjustment', 'other') DEFAULT 'stock_in' AFTER description,
+ADD COLUMN reference_id BINARY(16) AFTER reference_type,
+ADD COLUMN created_by BINARY(16) AFTER reference_id,
+ADD FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+ADD INDEX idx_reference_type (`reference_type`),
+ADD INDEX idx_reference_id (`reference_id`);
+
+-- Add total_debit and total_credit for easier balance calculation
+ALTER TABLE supplier_balance
+ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER balance;
+
+-- Add selling_price to inventory table
+ALTER TABLE inventory 
+ADD COLUMN selling_price DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER avg_cost,
+ADD COLUMN last_buying_price DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER selling_price;
+
+ALTER TABLE products 
+ADD COLUMN status ENUM('active', 'inactive') DEFAULT 'active';
+
+ALTER TABLE `suppliers` 
+ADD `account_number` VARCHAR(50) NULL , 
+ADD `bank_name` VARCHAR(50) NULL,
+ADD `notes` VARCHAR(100) NULL ,
+ADD `city` VARCHAR(50) NULL ,
+ ADD `country` VARCHAR(50) NULL;
+
+
+
 
 -- Reset modes
 SET SQL_MODE=@OLD_SQL_MODE;

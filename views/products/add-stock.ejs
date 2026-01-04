@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Stock - <%= shop.name %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <style>
+        :root {
+            --primary: #4e73df;
+            --success: #1cc88a;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --info: #36b9cc;
+            --secondary: #858796;
+            --dark: #5a5c69;
+            --light: #f8f9fc;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 20px;
+            background-color: #f5f7fa;
+            min-height: calc(100vh - 70px);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--dark);
+        }
+
+        .datetime {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .shop-info {
+            text-align: right;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section-header h2 {
+            font-size: 1.2rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            color: var(--dark);
+        }
+
+        .section-header h2 i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        .stock-row {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s;
+        }
+
+        .stock-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .remove-row {
+            color: var(--danger);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .remove-row:hover {
+            color: #c82333;
+        }
+
+        .total-card {
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .total-card h4 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .total-card .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-box .form-control {
+            padding-left: 40px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary);
+        }
+
+        .product-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-top: 10px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+            display: none;
+        }
+
+        .product-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .product-item:hover {
+            background: #f8f9fa;
+        }
+
+        .product-item:last-child {
+            border-bottom: none;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+        }
+
+        .stock-badge {
+            min-width: 70px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 0;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px 10px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--dark);
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .action-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 8px 20px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2e59d9;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+
+        .btn-outline-secondary {
+            color: var(--secondary);
+            border-color: var(--secondary);
+        }
+
+        .price-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 5px;
+            border-left: 3px solid var(--success);
+        }
+
+        .price-info small {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .buying-price-input {
+            border-left: 3px solid var(--warning) !important;
+        }
+
+        .supplier-balance-card {
+            background: linear-gradient(135deg, var(--info) 0%, #17a2b8 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .supplier-balance-card .label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .supplier-balance-card h5 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .optional-field {
+            opacity: 0.8;
+        }
+
+        .optional-field label:after {
+            content: " (Optional)";
+            font-size: 0.8em;
+            color: var(--secondary);
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body {
+                font-size: 12pt;
+                padding: 0;
+            }
+            
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div>
+                <h1><i class="fas fa-plus-circle me-2"></i>Add Stock</h1>
+                <p class="datetime" id="datetime"></p>
+            </div>
+            <div class="shop-info">
+                <p><i class="fas fa-store"></i> <%= shop.name %></p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="section-header">
+                <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+            </div>
+            <div class="action-grid">
+                <a href="/products" class="action-card">
+                    <div class="action-icon bg-primary">
+                        <i class="fas fa-arrow-left"></i>
+                    </div>
+                    <p>Back to Products</p>
+                </a>
+                
+                <div class="action-card" onclick="document.getElementById('productSearch').focus()">
+                    <div class="action-icon bg-success">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <p>Search Products</p>
+                </div>
+                
+                <a href="/raw" class="action-card">
+                    <div class="action-icon bg-info">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <p>Raw Materials</p>
+                </a>
+                
+                <a href="/suppliers" class="action-card">
+                    <div class="action-icon bg-warning">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <p>Suppliers</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- Stock Information Card -->
+        <div class="card">
+            <div class="section-header">
+                <h2><i class="fas fa-info-circle"></i> Stock Information</h2>
+            </div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Batch Number</label>
+                    <input type="text" class="form-control" id="batchNumber" 
+                           placeholder="Optional - for batch tracking">
+                    <small class="text-muted">Leave empty for auto-generated batch</small>
+                </div>
+                <div class="col-md-3 optional-field">
+                    <label class="form-label">Supplier</label>
+                    <select class="form-select" id="supplierSelect">
+                        <option value="">No Supplier (Self Purchase)</option>
+                        <% suppliers.forEach(function(supplier) { %>
+                            <option value="<%= supplier.id %>">
+                                <%= supplier.name %> <% if(supplier.contact_person) { %>(<%= supplier.contact_person %>)<% } %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Transaction Type</label>
+                    <select class="form-select" id="transactionType">
+                        <option value="cash">Cash Purchase</option>
+                        <option value="credit">Credit Purchase</option>
+                        <option value="partial">Partial Payment</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Payment Amount (₨)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₨</span>
+                        <input type="number" step="0.01" class="form-control" id="paymentAmount" 
+                               value="0" min="0" placeholder="Amount paid now">
+                    </div>
+                    <small class="text-muted">For partial or cash payments</small>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" rows="2" 
+                              placeholder="Any special notes about this stock addition"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <!-- Supplier Balance Display (Only shown when supplier is selected) -->
+                    <div id="supplierBalanceContainer" class="supplier-balance-card" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="label">Supplier Balance</div>
+                                <h5 id="supplierBalance">₨0.00</h5>
+                            </div>
+                            <div id="balanceStatus" class="badge bg-info">Neutral</div>
+                        </div>
+                        <div class="small mt-2">
+                            <span id="totalPurchaseAmount">Total Purchase: ₨0.00</span>
+                        </div>
+                        <div class="small">
+                            <span id="newBalance">New Balance: ₨0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Search Card -->
+        <div class="card">
+            <div class="section-header">
+                <h2><i class="fas fa-search"></i> Search & Add Products</h2>
+                <span class="badge bg-primary" id="entryCount">0 items</span>
+            </div>
+            
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" class="form-control" id="productSearch" 
+                       placeholder="Type product name, SKU, or category to search...">
+                <div class="product-list" id="productList">
+                    <!-- Products will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Entries Card -->
+        <div class="card">
+            <div class="section-header">
+                <h2><i class="fas fa-list"></i> Stock Entries</h2>
+                <button class="btn btn-outline-primary btn-sm" onclick="addEmptyRow()">
+                    <i class="fas fa-plus me-1"></i>Add Empty Row
+                </button>
+            </div>
+            
+            <div id="stockEntriesContainer">
+                <!-- Stock entries will be added here -->
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <h5>No products added yet</h5>
+                    <p class="text-muted mb-3">Search and add products above or use the "Add Empty Row" button</p>
+                    <button class="btn btn-primary" onclick="document.getElementById('productSearch').focus()">
+                        <i class="fas fa-search me-2"></i>Search Products
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Totals Card -->
+        <div class="total-card">
+            <div class="row">
+                <div class="col-md-2">
+                    <div class="label">Total Products</div>
+                    <h4 id="totalProducts">0</h4>
+                </div>
+                <div class="col-md-2">
+                    <div class="label">Total Quantity</div>
+                    <h4 id="totalQuantity">0</h4>
+                </div>
+                <div class="col-md-2">
+                    <div class="label">Buying Value</div>
+                    <h4 id="totalBuyingValue">₨0.00</h4>
+                </div>
+                <div class="col-md-2">
+                    <div class="label">Selling Value</div>
+                    <h4 id="totalSellingValue">₨0.00</h4>
+                </div>
+                <div class="col-md-2">
+                    <div class="label">Total Value</div>
+                    <h4 id="totalValue">₨0.00</h4>
+                </div>
+                <div class="col-md-2">
+                    <div class="label">Profit Margin</div>
+                    <h4 id="profitMargin">0%</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card no-print">
+            <div class="d-flex justify-content-between">
+                <button class="btn btn-outline-secondary" onclick="window.location.href='/products'">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <div>
+                    <button class="btn btn-outline-primary me-2" onclick="clearAllEntries()">
+                        <i class="fas fa-trash-alt me-2"></i>Clear All
+                    </button>
+                    <button class="btn btn-success" id="submitStock">
+                        <i class="fas fa-check me-2"></i>Submit Stock
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-body text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p>Processing stock addition...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products data container -->
+    <div id="productsData" data-products='<%= JSON.stringify(products || []) %>'></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        // Toastr configuration
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+
+        // Update datetime
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-IN', options);
+        }
+        setInterval(updateDateTime, 60000);
+        updateDateTime();
+
+        // Initialize global variables
+        let products = [];
+        let stockEntries = [];
+        let entryCounter = 0;
+        let supplierBalance = 0;
+        let totalBuyingValue = 0;
+        let totalSellingValue = 0;
+
+        // Helper function to parse numeric values safely
+        function parseNumber(value, defaultValue = 0) {
+            if (value === null || value === undefined || value === '') {
+                return defaultValue;
+            }
+            const num = parseFloat(value);
+            return isNaN(num) ? defaultValue : num;
+        }
+
+        // Helper function to format currency
+        function formatCurrency(value) {
+            return parseNumber(value).toFixed(2);
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(unsafe) {
+            if (unsafe === null || unsafe === undefined) return '';
+            return String(unsafe)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Load products data
+        function loadProducts() {
+            console.log('Loading products data...');
+            
+            // Method 1: Try to get from data attribute
+            try {
+                const productsDataElement = document.getElementById('productsData');
+                if (productsDataElement) {
+                    const productsData = productsDataElement.getAttribute('data-products');
+                    if (productsData && productsData !== 'undefined' && productsData !== 'null' && productsData !== '[]') {
+                        products = JSON.parse(productsData);
+                        console.log('Products loaded from server data:', products.length);
+                        if (products.length > 0) return; // Successfully loaded
+                    }
+                }
+            } catch (error) {
+                console.warn('Could not parse products from server data:', error);
+            }
+
+            // Method 2: If no products, fetch from API
+            console.log('No products in initial load, fetching from API...');
+            fetch('/products/list/active', {
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && Array.isArray(data.products)) {
+                    products = data.products;
+                    console.log('Products loaded via API:', products.length);
+                    
+                    // Cache for next time
+                    try {
+                        localStorage.setItem('cachedProducts', JSON.stringify(products));
+                    } catch (e) {
+                        console.warn('Could not cache products:', e);
+                    }
+                } else {
+                    console.error('API returned error:', data.message);
+                    loadFromCache();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading products:', error);
+                loadFromCache();
+            });
+        }
+
+        // Load from cache as fallback
+        function loadFromCache() {
+            try {
+                const cached = localStorage.getItem('cachedProducts');
+                if (cached) {
+                    products = JSON.parse(cached);
+                    console.log('Loaded products from cache:', products.length);
+                } else {
+                    console.warn('No cached products available');
+                }
+            } catch (e) {
+                console.error('Error loading from cache:', e);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+            
+            // Set up event listeners
+            const searchInput = document.getElementById('productSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', searchProducts);
+            }
+            
+            const supplierSelect = document.getElementById('supplierSelect');
+            if (supplierSelect) {
+                supplierSelect.addEventListener('change', updateSupplierBalance);
+            }
+            
+            const transactionType = document.getElementById('transactionType');
+            if (transactionType) {
+                transactionType.addEventListener('change', updatePaymentField);
+            }
+            
+            const paymentAmount = document.getElementById('paymentAmount');
+            if (paymentAmount) {
+                paymentAmount.addEventListener('input', updateBalanceDisplay);
+            }
+            
+            const submitBtn = document.getElementById('submitStock');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', submitStock);
+            }
+            
+            // Close search results when clicking outside
+            document.addEventListener('click', function(e) {
+                const productList = document.getElementById('productList');
+                const searchInput = document.getElementById('productSearch');
+                
+                if (productList && searchInput && 
+                    !searchInput.contains(e.target) && !productList.contains(e.target)) {
+                    productList.style.display = 'none';
+                }
+            });
+            
+            // Initialize payment field
+            updatePaymentField();
+        });
+
+        // Update payment field based on transaction type
+        function updatePaymentField() {
+            const transactionType = document.getElementById('transactionType').value;
+            const paymentAmountInput = document.getElementById('paymentAmount');
+            const supplierSelect = document.getElementById('supplierSelect');
+            const hasSupplier = supplierSelect.value !== '';
+            
+            if (transactionType === 'cash') {
+                paymentAmountInput.value = totalBuyingValue;
+                paymentAmountInput.readOnly = false;
+            } else if (transactionType === 'credit') {
+                paymentAmountInput.value = '0';
+                paymentAmountInput.readOnly = true;
+                if (!hasSupplier) {
+                    // If credit but no supplier, change to cash
+                    document.getElementById('transactionType').value = 'cash';
+                    paymentAmountInput.value = totalBuyingValue;
+                    paymentAmountInput.readOnly = false;
+                    toastr.info('Credit purchase requires a supplier. Changed to cash purchase.');
+                }
+            } else {
+                paymentAmountInput.value = '0';
+                paymentAmountInput.readOnly = false;
+                paymentAmountInput.placeholder = 'Enter partial payment amount';
+            }
+            
+            if (supplierSelect.value) {
+                updateBalanceDisplay();
+            }
+        }
+
+        // Search products function
+        function searchProducts() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const productList = document.getElementById('productList');
+            
+            if (!productList) return;
+            
+            if (searchTerm.length < 2) {
+                productList.style.display = 'none';
+                productList.innerHTML = '';
+                return;
+            }
+
+            console.log('Searching for:', searchTerm);
+            
+            if (!Array.isArray(products) || products.length === 0) {
+                productList.innerHTML = '<div class="p-3 text-center text-muted">Loading products...</div>';
+                productList.style.display = 'block';
+                
+                loadProducts();
+                setTimeout(() => searchProducts(), 500);
+                return;
+            }
+
+            const filteredProducts = products.filter(product => {
+                if (!product || typeof product !== 'object') return false;
+                
+                const name = (product.name || '').toLowerCase();
+                const sku = (product.sku || '').toLowerCase();
+                const category = (product.category || '').toLowerCase();
+                const brand = (product.brand || '').toLowerCase();
+                
+                return name.includes(searchTerm) || 
+                       sku.includes(searchTerm) || 
+                       category.includes(searchTerm) || 
+                       brand.includes(searchTerm);
+            });
+
+            console.log('Found products:', filteredProducts.length);
+
+            if (filteredProducts.length > 0) {
+                productList.innerHTML = filteredProducts.map(product => {
+                    const name = escapeHtml(product.name || 'Unnamed Product');
+                    const sku = product.sku ? escapeHtml(product.sku) : '';
+                    const category = product.category ? escapeHtml(product.category) : '';
+                    const currentStock = parseNumber(product.current_stock);
+                    const stockBadgeClass = currentStock <= 5 ? 'bg-warning' : 'bg-info';
+                    
+                    return `
+                        <div class="product-item" onclick="addProductToStock('${product.id}')">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${name}</strong>
+                                    ${sku ? `<small class="text-muted ms-2">SKU: ${sku}</small>` : ''}
+                                    ${category ? `<div class="small text-muted">${category}</div>` : ''}
+                                </div>
+                                <div>
+                                    <span class="badge stock-badge ${stockBadgeClass}">
+                                        <i class="fas fa-cube me-1"></i>${currentStock}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                productList.style.display = 'block';
+            } else {
+                productList.innerHTML = '<div class="p-3 text-center text-muted">No products found. Try a different search term.</div>';
+                productList.style.display = 'block';
+            }
+        }
+
+        // Add product to stock entries
+        window.addProductToStock = async function(productId) {
+            console.log('Adding product to stock:', productId);
+            
+            try {
+                // Hide search results
+                const searchInput = document.getElementById('productSearch');
+                const productList = document.getElementById('productList');
+                if (searchInput) searchInput.value = '';
+                if (productList) {
+                    productList.style.display = 'none';
+                    productList.innerHTML = '';
+                }
+
+                // Check if product already exists in entries
+                const existingEntry = stockEntries.find(entry => entry.product_id === productId);
+                if (existingEntry) {
+                    const input = document.querySelector(`[data-product-id="${productId}"] .stock-quantity`);
+                    if (input) {
+                        input.focus();
+                        input.select();
+                    }
+                    toastr.info('Product already in list. You can update the quantity.');
+                    return;
+                }
+
+                // Fetch product details
+                console.log('Fetching product details for:', productId);
+                const response = await fetch(`/products/${productId}/details`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+
+                if (!data.success) {
+                    toastr.error(data.message || 'Failed to load product details');
+                    return;
+                }
+
+                const product = data.product;
+                
+                // Get selling price (you might need to add this to your API response)
+                const sellingPrice = parseNumber(product.selling_price) || 
+                                   (parseNumber(product.avg_cost) * 1.3); // 30% markup if no selling price
+                
+                // Use last purchase price if available, otherwise use avg cost
+                const lastPurchasePrice = parseNumber(product.last_purchase_price);
+                const avgCost = parseNumber(product.avg_cost);
+                const currentStock = parseNumber(product.current_stock);
+                
+                // Buying price starts as last purchase price or avg cost
+                const buyingPrice = lastPurchasePrice > 0 ? lastPurchasePrice : (avgCost > 0 ? avgCost : 0);
+                
+                // Create new entry
+                entryCounter++;
+                const entryId = `entry-${entryCounter}`;
+                
+                const entry = {
+                    id: entryId,
+                    product_id: productId,
+                    product_name: product.name,
+                    product_sku: product.sku,
+                    product_category: product.category,
+                    current_stock: currentStock,
+                    buying_price: buyingPrice,
+                    selling_price: sellingPrice,
+                    quantity: 1,
+                    buying_total: buyingPrice,
+                    selling_total: sellingPrice
+                };
+
+                stockEntries.push(entry);
+                console.log('Added entry:', entry);
+
+                // Hide empty state if shown
+                const emptyState = document.getElementById('emptyState');
+                if (emptyState) emptyState.style.display = 'none';
+
+                // Add to DOM
+                const entryElement = document.createElement('div');
+                entryElement.className = 'stock-row';
+                entryElement.id = entryId;
+                entryElement.setAttribute('data-product-id', productId);
+                entryElement.innerHTML = `
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-box text-primary" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <div>
+                                    <strong>${escapeHtml(product.name || '')}</strong>
+                                    ${product.sku ? `<div class="small text-muted">SKU: ${escapeHtml(product.sku)}</div>` : ''}
+                                    ${product.category ? `<div class="small text-muted">${escapeHtml(product.category)}</div>` : ''}
+                                    <div class="small text-muted">
+                                        <i class="fas fa-cube me-1"></i>Current Stock: 
+                                        <span class="badge bg-secondary ms-1">${currentStock}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small mb-1">Quantity *</label>
+                            <input type="number" step="0.001" class="form-control stock-quantity" 
+                                   value="1" min="0.001" onchange="updateEntry('${entryId}')" 
+                                   oninput="updateEntry('${entryId}')">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small mb-1">Buying Price (₨) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₨</span>
+                                <input type="number" step="0.01" class="form-control stock-buying-price buying-price-input" 
+                                       value="${formatCurrency(buyingPrice)}" min="0" onchange="updateEntry('${entryId}')" 
+                                       oninput="updateEntry('${entryId}')">
+                            </div>
+                            <small class="text-muted">Cost price</small>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small mb-1">Selling Price (₨)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₨</span>
+                                <input type="number" step="0.01" class="form-control stock-selling-price" 
+                                       value="${formatCurrency(sellingPrice)}" min="0" onchange="updateEntry('${entryId}')" 
+                                       oninput="updateEntry('${entryId}')">
+                            </div>
+                            <small class="text-muted">Selling price to customers</small>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="small mb-1">Buying Total</div>
+                            <div class="fw-bold fs-5 text-warning" id="${entryId}-buying-total">₨${formatCurrency(buyingPrice)}</div>
+                        </div>
+                        <div class="col-md-1 text-end">
+                            <button class="btn btn-sm btn-outline-danger remove-row" onclick="removeEntry('${entryId}')" 
+                                    title="Remove this product">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                const container = document.getElementById('stockEntriesContainer');
+                if (container) {
+                    container.appendChild(entryElement);
+                }
+                
+                // Update totals
+                updateTotals();
+                updateEntryCount();
+
+            } catch (error) {
+                console.error('Error adding product to stock:', error);
+                toastr.error('Failed to add product. Please try again. Error: ' + error.message);
+            }
+        }
+
+        // Add empty row
+        window.addEmptyRow = function() {
+            entryCounter++;
+            const entryId = `entry-${entryCounter}`;
+            
+            const entry = {
+                id: entryId,
+                product_id: '',
+                product_name: '',
+                product_sku: '',
+                current_stock: 0,
+                buying_price: 0,
+                selling_price: 0,
+                quantity: 0,
+                buying_total: 0,
+                selling_total: 0,
+                is_empty: true
+            };
+
+            stockEntries.push(entry);
+
+            // Hide empty state if shown
+            const emptyState = document.getElementById('emptyState');
+            if (emptyState) emptyState.style.display = 'none';
+
+            // Create product options HTML
+            const productOptions = Array.isArray(products) && products.length > 0 ? products.map(product => 
+                `<option value="${product.id}">
+                    ${escapeHtml(product.name || '')} ${product.sku ? `(${escapeHtml(product.sku)})` : ''}
+                </option>`
+            ).join('') : '<option value="">No products available</option>';
+
+            // Add to DOM
+            const entryElement = document.createElement('div');
+            entryElement.className = 'stock-row';
+            entryElement.id = entryId;
+            entryElement.innerHTML = `
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="fas fa-question-circle text-warning" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <select class="form-select select-product" onchange="selectProduct('${entryId}', this.value)" 
+                                        style="width: 100%;">
+                                    <option value="">Select Product...</option>
+                                    ${productOptions}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-1">Quantity *</label>
+                        <input type="number" step="0.001" class="form-control stock-quantity" 
+                               value="0" min="0.001" onchange="updateEntry('${entryId}')" 
+                               oninput="updateEntry('${entryId}')" disabled>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-1">Buying Price (₨) *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₨</span>
+                            <input type="number" step="0.01" class="form-control stock-buying-price buying-price-input" 
+                                   value="0" min="0" onchange="updateEntry('${entryId}')" 
+                                   oninput="updateEntry('${entryId}')" disabled>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-1">Selling Price (₨)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₨</span>
+                            <input type="number" step="0.01" class="form-control stock-selling-price" 
+                                   value="0" min="0" onchange="updateEntry('${entryId}')" 
+                                   oninput="updateEntry('${entryId}')" disabled>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="small mb-1">Buying Total</div>
+                        <div class="fw-bold fs-5 text-warning" id="${entryId}-buying-total">₨0.00</div>
+                    </div>
+                    <div class="col-md-1 text-end">
+                        <button class="btn btn-sm btn-outline-danger remove-row" onclick="removeEntry('${entryId}')" 
+                                title="Remove this row">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const container = document.getElementById('stockEntriesContainer');
+            if (container) {
+                container.appendChild(entryElement);
+            }
+            updateEntryCount();
+        }
+
+        // Select product in empty row
+        window.selectProduct = async function(entryId, productId) {
+            console.log('Selecting product:', productId, 'for entry:', entryId);
+            const entry = stockEntries.find(e => e.id === entryId);
+            if (!entry || !productId) return;
+
+            try {
+                // Fetch product details
+                const response = await fetch(`/products/${productId}/details`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+
+                if (!data.success) {
+                    toastr.error(data.message || 'Failed to load product details');
+                    return;
+                }
+
+                const product = data.product;
+                
+                // Get selling price
+                const sellingPrice = parseNumber(product.selling_price) || 
+                                   (parseNumber(product.avg_cost) * 1.3);
+                
+                // Get buying price
+                const lastPurchasePrice = parseNumber(product.last_purchase_price);
+                const avgCost = parseNumber(product.avg_cost);
+                const currentStock = parseNumber(product.current_stock);
+                const buyingPrice = lastPurchasePrice > 0 ? lastPurchasePrice : (avgCost > 0 ? avgCost : 0);
+
+                entry.product_id = productId;
+                entry.product_name = product.name;
+                entry.product_sku = product.sku;
+                entry.product_category = product.category;
+                entry.current_stock = currentStock;
+                entry.buying_price = buyingPrice;
+                entry.selling_price = sellingPrice;
+                entry.quantity = 1;
+                entry.buying_total = buyingPrice;
+                entry.selling_total = sellingPrice;
+                entry.is_empty = false;
+
+                const element = document.getElementById(entryId);
+                if (!element) return;
+                
+                const productSelect = element.querySelector('.select-product');
+                const quantityInput = element.querySelector('.stock-quantity');
+                const buyingPriceInput = element.querySelector('.stock-buying-price');
+                const sellingPriceInput = element.querySelector('.stock-selling-price');
+
+                // Replace select with product info
+                productSelect.style.display = 'none';
+                
+                const productInfo = document.createElement('div');
+                productInfo.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-box text-primary" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <strong>${escapeHtml(product.name || '')}</strong>
+                            ${product.sku ? `<div class="small text-muted">SKU: ${escapeHtml(product.sku)}</div>` : ''}
+                            ${product.category ? `<div class="small text-muted">${escapeHtml(product.category)}</div>` : ''}
+                            <div class="small text-muted">
+                                <i class="fas fa-cube me-1"></i>Current Stock: 
+                                <span class="badge bg-secondary ms-1">${currentStock}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                productSelect.parentElement.appendChild(productInfo);
+                
+                // Enable inputs and set values
+                quantityInput.disabled = false;
+                quantityInput.value = 1;
+                buyingPriceInput.disabled = false;
+                buyingPriceInput.value = formatCurrency(buyingPrice);
+                sellingPriceInput.disabled = false;
+                sellingPriceInput.value = formatCurrency(sellingPrice);
+                
+                updateEntry(entryId);
+
+            } catch (error) {
+                console.error('Error selecting product:', error);
+                toastr.error('Failed to load product details: ' + error.message);
+            }
+        }
+
+        // Update entry
+        window.updateEntry = function(entryId) {
+            const entry = stockEntries.find(e => e.id === entryId);
+            if (!entry) return;
+
+            const element = document.getElementById(entryId);
+            if (!element) return;
+            
+            const quantity = parseNumber(element.querySelector('.stock-quantity').value);
+            const buyingPrice = parseNumber(element.querySelector('.stock-buying-price').value);
+            const sellingPrice = parseNumber(element.querySelector('.stock-selling-price').value);
+            const buyingTotal = quantity * buyingPrice;
+            const sellingTotal = quantity * sellingPrice;
+
+            entry.quantity = quantity;
+            entry.buying_price = buyingPrice;
+            entry.selling_price = sellingPrice;
+            entry.buying_total = buyingTotal;
+            entry.selling_total = sellingTotal;
+
+            // Update display
+            const buyingTotalElement = document.getElementById(`${entryId}-buying-total`);
+            if (buyingTotalElement) {
+                buyingTotalElement.textContent = `₨${formatCurrency(buyingTotal)}`;
+            }
+            
+            // Update totals
+            updateTotals();
+        }
+
+        // Remove entry
+        window.removeEntry = function(entryId) {
+            // Remove from array
+            stockEntries = stockEntries.filter(entry => entry.id !== entryId);
+            
+            // Remove from DOM
+            const element = document.getElementById(entryId);
+            if (element) element.remove();
+            
+            // Show empty state if no entries
+            if (stockEntries.length === 0) {
+                const emptyState = document.getElementById('emptyState');
+                if (emptyState) emptyState.style.display = 'block';
+            }
+            
+            // Update counts
+            updateTotals();
+            updateEntryCount();
+        }
+
+        // Clear all entries
+        window.clearAllEntries = function() {
+            if (stockEntries.length === 0) return;
+            
+            if (!confirm('Are you sure you want to clear all entries?')) return;
+            
+            stockEntries = [];
+            entryCounter = 0;
+            const container = document.getElementById('stockEntriesContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                        <h5>No products added yet</h5>
+                        <p class="text-muted mb-3">Search and add products above or use the "Add Empty Row" button</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('productSearch').focus()">
+                            <i class="fas fa-search me-2"></i>Search Products
+                        </button>
+                    </div>
+                `;
+            }
+            
+            updateTotals();
+            updateEntryCount();
+        }
+
+        // Update totals
+        function updateTotals() {
+            let totalProducts = 0;
+            let totalQuantity = 0;
+            totalBuyingValue = 0;
+            totalSellingValue = 0;
+
+            stockEntries.forEach(entry => {
+                if (entry.product_id && entry.quantity > 0 && entry.buying_price > 0) {
+                    totalProducts++;
+                    totalQuantity += entry.quantity || 0;
+                    totalBuyingValue += entry.buying_total || 0;
+                    totalSellingValue += entry.selling_total || 0;
+                }
+            });
+
+            const totalValue = totalBuyingValue; // For backward compatibility
+            const profitMargin = totalBuyingValue > 0 ? 
+                ((totalSellingValue - totalBuyingValue) / totalBuyingValue * 100) : 0;
+
+            const totalProductsEl = document.getElementById('totalProducts');
+            const totalQuantityEl = document.getElementById('totalQuantity');
+            const totalBuyingValueEl = document.getElementById('totalBuyingValue');
+            const totalSellingValueEl = document.getElementById('totalSellingValue');
+            const totalValueEl = document.getElementById('totalValue');
+            const profitMarginEl = document.getElementById('profitMargin');
+
+            if (totalProductsEl) totalProductsEl.textContent = totalProducts;
+            if (totalQuantityEl) totalQuantityEl.textContent = totalQuantity.toFixed(3);
+            if (totalBuyingValueEl) totalBuyingValueEl.textContent = `₨${formatCurrency(totalBuyingValue)}`;
+            if (totalSellingValueEl) totalSellingValueEl.textContent = `₨${formatCurrency(totalSellingValue)}`;
+            if (totalValueEl) totalValueEl.textContent = `₨${formatCurrency(totalValue)}`;
+            if (profitMarginEl) profitMarginEl.textContent = `${profitMargin.toFixed(1)}%`;
+            
+            // Update supplier balance display
+            updateBalanceDisplay();
+            updatePaymentField();
+        }
+
+        // Update entry count
+        function updateEntryCount() {
+            const validEntries = stockEntries.filter(entry => 
+                entry.product_id && entry.quantity > 0 && entry.buying_price > 0
+            );
+            const entryCountEl = document.getElementById('entryCount');
+            if (entryCountEl) {
+                entryCountEl.textContent = `${validEntries.length} items`;
+            }
+        }
+
+        // Supplier balance check
+        async function updateSupplierBalance() {
+            const supplierId = document.getElementById('supplierSelect').value;
+            const balanceContainer = document.getElementById('supplierBalanceContainer');
+            
+            if (!balanceContainer) return;
+            
+            if (!supplierId) {
+                balanceContainer.style.display = 'none';
+                updatePaymentField();
+                return;
+            }
+
+            try {
+                const response = await fetch(`/products/suppliers/${supplierId}/balance`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    supplierBalance = parseNumber(data.balance.balance);
+                    balanceContainer.style.display = 'block';
+                    
+                    updateBalanceDisplay();
+                    updatePaymentField();
+                }
+            } catch (error) {
+                console.error('Error fetching supplier balance:', error);
+                balanceContainer.style.display = 'none';
+            }
+        }
+
+        // Update balance display
+        function updateBalanceDisplay() {
+            const supplierId = document.getElementById('supplierSelect').value;
+            const balanceContainer = document.getElementById('supplierBalanceContainer');
+            
+            if (!supplierId) {
+                if (balanceContainer) balanceContainer.style.display = 'none';
+                return;
+            }
+            
+            const paymentAmount = parseNumber(document.getElementById('paymentAmount').value);
+            const newBalance = supplierBalance + totalBuyingValue - paymentAmount;
+            
+            const balanceElement = document.getElementById('supplierBalance');
+            const balanceStatus = document.getElementById('balanceStatus');
+            const totalPurchaseElement = document.getElementById('totalPurchaseAmount');
+            const newBalanceElement = document.getElementById('newBalance');
+            
+            if (balanceContainer) balanceContainer.style.display = 'block';
+            if (balanceElement) balanceElement.textContent = `₨${formatCurrency(supplierBalance)}`;
+            if (totalPurchaseElement) totalPurchaseElement.textContent = `Total Purchase: ₨${formatCurrency(totalBuyingValue)}`;
+            if (newBalanceElement) newBalanceElement.textContent = `New Balance: ₨${formatCurrency(newBalance)}`;
+            
+            // Update status badge
+            if (balanceStatus) {
+                if (newBalance > 0) {
+                    balanceStatus.textContent = 'You Owe';
+                    balanceStatus.className = 'badge bg-danger';
+                } else if (newBalance < 0) {
+                    balanceStatus.textContent = 'Supplier Owes';
+                    balanceStatus.className = 'badge bg-success';
+                } else {
+                    balanceStatus.textContent = 'Neutral';
+                    balanceStatus.className = 'badge bg-info';
+                }
+            }
+        }
+
+        // Submit stock
+    // Submit stock
+    async function submitStock() {
+    // Validate entries
+    const validEntries = stockEntries.filter(entry => 
+        entry.product_id && entry.quantity > 0 && entry.buying_price > 0
+    );
+
+    if (validEntries.length === 0) {
+        toastr.error('Please add at least one product with valid quantity and price');
+        return;
+    }
+
+    // Get supplier and payment details
+    const supplierId = document.getElementById('supplierSelect').value;
+    const transactionType = document.getElementById('transactionType').value;
+    const paymentAmount = parseNumber(document.getElementById('paymentAmount').value);
+    
+    // Validate transaction type based on supplier selection
+    if (transactionType === 'credit' && !supplierId) {
+        toastr.error('Credit purchase requires a supplier selection');
+        return;
+    }
+    
+    // Validate payment amount based on transaction type
+    if (transactionType === 'cash') {
+        if (paymentAmount <= 0) {
+            toastr.error('Please enter a valid cash payment amount');
+            return;
+        }
+        // For cash purchase, allow partial payments with warning
+        if (paymentAmount < totalBuyingValue) {
+            const confirmMessage = `Cash payment (₨${formatCurrency(paymentAmount)}) is less than total buying value (₨${formatCurrency(totalBuyingValue)}). This will be recorded as partial payment. Continue?`;
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+        }
+    }
+    
+    if (transactionType === 'partial') {
+        if (!supplierId) {
+            toastr.error('Partial payment requires a supplier selection');
+            return;
+        }
+        if (paymentAmount <= 0) {
+            toastr.error('Please enter a valid partial payment amount');
+            return;
+        }
+        if (paymentAmount >= totalBuyingValue) {
+            toastr.error('Partial payment must be less than total buying value');
+            return;
+        }
+    }
+
+    // Prepare data - Supplier is optional now
+    const stockData = {
+        stock_entries: validEntries.map(entry => ({
+            product_id: entry.product_id,
+            quantity: entry.quantity,
+            buying_price: entry.buying_price,
+            selling_price: entry.selling_price,
+            buying_total: entry.buying_total,
+            selling_total: entry.selling_total
+        })),
+        supplier_id: supplierId || null,  // Can be null
+        batch_number: document.getElementById('batchNumber')?.value || null,
+        transaction_type: transactionType,
+        payment_amount: paymentAmount,
+        total_buying_value: totalBuyingValue,
+        total_selling_value: totalSellingValue,
+        notes: document.getElementById('notes')?.value || null
+    };
+
+    console.log('Submitting stock data:', stockData);
+
+    // Show loading
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    loadingModal.show();
+
+    try {
+        const response = await fetch('/products/stock/bulk', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(stockData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            loadingModal.hide();
+            
+            // Generate receipt URL
+            const receiptUrl = `/products/stock/receipt/${data.receipt_id}?` + 
+                `batch_number=${encodeURIComponent(data.batch_number || '')}&` +
+                `supplier_id=${encodeURIComponent(stockData.supplier_id || '')}&` +
+                `total_buying_value=${encodeURIComponent(totalBuyingValue || 0)}&` +
+                `payment_amount=${encodeURIComponent(paymentAmount || 0)}&` +
+                `transaction_type=${encodeURIComponent(transactionType || '')}&` +
+                `results=${encodeURIComponent(JSON.stringify(data.results || []))}`;
+            
+            // Show success and open receipt in new tab
+            toastr.success(data.message);
+            
+            setTimeout(() => {
+                window.open(receiptUrl, '_blank');
+                
+                // Reset form after delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }, 1000);
+            
+        } else {
+            loadingModal.hide();
+            toastr.error(data.message);
+        }
+    } catch (error) {
+        loadingModal.hide();
+        console.error('Error:', error);
+        toastr.error('An error occurred while adding stock: ' + error.message);
+    }
+    }
+        // Debug: Log initialization
+        console.log('Add Stock page initialized');
+    </script>
+</body>
+</html>

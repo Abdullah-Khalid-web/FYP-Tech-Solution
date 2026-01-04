@@ -352,6 +352,22 @@
             background: #a8a8a8;
         }
 
+        /* Balance Styles */
+        .balance-positive {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .balance-negative {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        .balance-zero {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
         @media (max-width: 768px) {
             .dashboard-header {
                 flex-direction: column;
@@ -421,11 +437,11 @@
                     <p>Manage Products</p>
                 </a>
                 
-                <a href="/reports" class="action-card">
+                <a href="/suppliers/reports/ledger" class="action-card">
                     <div class="action-icon bg-warning">
-                        <i class="fas fa-chart-bar"></i>
+                        <i class="fas fa-file-invoice-dollar"></i>
                     </div>
-                    <p>Supplier Reports</p>
+                    <p>Ledger Report</p>
                 </a>
             </div>
         </div>
@@ -487,7 +503,7 @@
                             <th>Supplier Name</th>
                             <th>Contact Info</th>
                             <th>Location</th>
-                            <th>Products</th>
+                            <th>Balance</th>
                             <th>Payment Terms</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -500,7 +516,7 @@
                                     data-city="<%= supplier.city || '' %>"
                                     data-status="<%= supplier.status %>">
                                     <td>
-                                        <%= supplier.id %>
+                                        <%= supplier.id.substring(0, 8) %>...
                                     </td>
                                     <td>
                                         <div class="fw-semibold">
@@ -535,15 +551,20 @@
                                         <% } else { %>N/A<% } %>
                                     </td>
                                     <td>
-                                        <span class="badge bg-info">
-                                            <%= supplier.product_count || 0 %> products
+                                        <% 
+                                            const balance = supplier.balance || 0;
+                                            let balanceClass = 'balance-zero';
+                                            if (balance > 0) balanceClass = 'balance-positive';
+                                            if (balance < 0) balanceClass = 'balance-negative';
+                                        %>
+                                        <span class="<%= balanceClass %>">
+                                            <%= shop.currency %> <%= Math.abs(balance).toFixed(2) %>
+                                            <% if (balance > 0) { %>
+                                                <small class="text-success d-block">(We owe)</small>
+                                            <% } else if (balance < 0) { %>
+                                                <small class="text-danger d-block">(They owe)</small>
+                                            <% } %>
                                         </span>
-                                        <% if (supplier.active_product_count> 0) { %>
-                                            <br>
-                                            <small class="text-success">
-                                                <%= supplier.active_product_count %> active
-                                            </small>
-                                        <% } %>
                                     </td>
                                     <td>
                                         <%= supplier.payment_terms || 'N/A' %>
@@ -559,9 +580,9 @@
                                                 data-bs-toggle="tooltip" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button class="btn btn-outline-success manage-products"
-                                                data-bs-toggle="tooltip" title="Manage Products">
-                                                <i class="fas fa-boxes"></i>
+                                            <button class="btn btn-outline-info view-ledger"
+                                                data-bs-toggle="tooltip" title="View Ledger">
+                                                <i class="fas fa-book"></i>
                                             </button>
                                             <button class="btn btn-outline-secondary toggle-status"
                                                 data-bs-toggle="tooltip"
@@ -622,7 +643,7 @@
         </div>
     </div>
 
-    <!-- Add Supplier Modal -->
+    <!-- Add Supplier Modal (Same as before) -->
     <div class="modal fade" id="addSupplierModal" tabindex="-1" aria-labelledby="addSupplierModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -706,6 +727,16 @@
                                     <input type="text" class="form-control" id="bankName" name="bank_name">
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="supplierType" class="form-label">Supplier Type</label>
+                                    <select class="form-select" id="supplierType" name="type">
+                                        <option value="both">Both Products & Raw Materials</option>
+                                        <option value="product">Products Only</option>
+                                        <option value="raw_material">Raw Materials Only</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="supplierNotes" class="form-label">Notes</label>
@@ -749,23 +780,70 @@
         </div>
     </div>
 
-    <!-- Manage Products Modal -->
-    <div class="modal fade" id="manageProductsModal" tabindex="-1" aria-labelledby="manageProductsModalLabel"
+    <!-- Supplier Ledger Modal (Simple Version) -->
+    <div class="modal fade" id="supplierLedgerModal" tabindex="-1" aria-labelledby="supplierLedgerModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="manageProductsModalLabel"><i class="fas fa-boxes me-2"></i>Manage Supplier Products</h5>
+                    <h5 class="modal-title" id="supplierLedgerModalLabel"><i class="fas fa-book me-2"></i>Supplier Ledger</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="text-center py-4">
+                    <div class="text-center py-4" id="ledgerLoading">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p>Loading supplier products...</p>
+                        <p>Loading supplier ledger...</p>
+                    </div>
+                    
+                    <!-- Ledger content will be loaded here -->
+                    <div id="ledgerContent" style="display: none;">
+                        <!-- Ledger content will be dynamically loaded -->
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal (Simple Version) -->
+    <div class="modal fade" id="addTransactionModal" tabindex="-1" aria-labelledby="addTransactionModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTransactionModalLabel">Add Transaction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="addTransactionForm">
+                    <input type="hidden" id="transactionSupplierId">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="transactionType" class="form-label">Transaction Type *</label>
+                            <select class="form-select" id="transactionType" name="type" required>
+                                <option value="">Select Type</option>
+                                <option value="debit">Debit (We owe money)</option>
+                                <option value="credit">Credit (Payment received)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transactionAmount" class="form-label">Amount *</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="currencySymbol">PKR</span>
+                                <input type="number" step="0.01" class="form-control" id="transactionAmount" 
+                                       name="amount" placeholder="0.00" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transactionDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="transactionDescription" name="description" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Transaction</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -791,7 +869,6 @@
         setInterval(updateDateTime, 1000);
         updateDateTime(); // Initial call
 
-        // All your existing JavaScript functions remain exactly the same...
         // Helper function to escape HTML
         function escapeHtml(unsafe) {
             if (!unsafe) return '';
@@ -805,7 +882,20 @@
 
         // Show toast notification
         function showToast(message, type = 'success') {
-            alert(`${type.toUpperCase()}: ${message}`);
+            // Create a simple toast notification
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(toast);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
         }
 
         // Load supplier for editing
@@ -930,6 +1020,16 @@
                             <input type="text" class="form-control" id="editBankName" name="bank_name" value="${escapeHtml(supplier.bank_name || '')}">
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="editSupplierType" class="form-label">Supplier Type</label>
+                            <select class="form-select" id="editSupplierType" name="type">
+                                <option value="both" ${supplier.type === 'both' ? 'selected' : ''}>Both Products & Raw Materials</option>
+                                <option value="product" ${supplier.type === 'product' ? 'selected' : ''}>Products Only</option>
+                                <option value="raw_material" ${supplier.type === 'raw_material' ? 'selected' : ''}>Raw Materials Only</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="editSupplierNotes" class="form-label">Notes</label>
@@ -962,274 +1062,137 @@
                 });
         }
 
-        // Load supplier products
-        function loadSupplierProducts(supplierId) {
-            const modalBody = document.querySelector('#manageProductsModal .modal-body');
-            modalBody.innerHTML = `
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p>Loading supplier products...</p>
-                </div>
-            `;
+        // Load supplier ledger
+        function loadSupplierLedger(supplierId) {
+            const ledgerModal = document.getElementById('supplierLedgerModal');
+            const loadingDiv = document.getElementById('ledgerLoading');
+            const contentDiv = document.getElementById('ledgerContent');
             
-            $('#manageProductsModal').modal('show');
-
-            fetch(`/suppliers/${supplierId}/products`)
+            loadingDiv.style.display = 'block';
+            contentDiv.style.display = 'none';
+            
+            // Set supplier ID for transaction form
+            document.getElementById('transactionSupplierId').value = supplierId;
+            
+            $('#supplierLedgerModal').modal('show');
+            
+            fetch(`/suppliers/${supplierId}/ledger`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        renderSupplierProducts(supplierId, data.products, data.availableProducts);
+                        renderLedger(data);
                     } else {
-                        throw new Error(data.message || 'Error loading products');
+                        throw new Error(data.message || 'Error loading ledger');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    modalBody.innerHTML = `
+                    loadingDiv.innerHTML = `
                         <div class="alert alert-danger">
-                            Failed to load supplier products: ${error.message}
+                            Failed to load ledger: ${error.message}
+                        </div>
+                        <div class="text-center mt-3">
+                            <button class="btn btn-primary" onclick="loadSupplierLedger('${supplierId}')">
+                                <i class="fas fa-sync-alt me-2"></i>Try Again
+                            </button>
                         </div>
                     `;
                 });
         }
 
-        // Render supplier products
-        function renderSupplierProducts(supplierId, products, availableProducts) {
-            const modalBody = document.querySelector('#manageProductsModal .modal-body');
+        // Render ledger data (simple version)
+        function renderLedger(data) {
+            const loadingDiv = document.getElementById('ledgerLoading');
+            const contentDiv = document.getElementById('ledgerContent');
             const currency = window.shopData?.currency || 'PKR';
             
-            modalBody.innerHTML = `
-                <div class="row mb-4">
-                    <div class="col-md-8">
-                        <h5>Manage Supplier Products</h5>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                            <i class="fas fa-plus me-1"></i>Add Product
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Current Products -->
-                <div class="card mb-4">
+            loadingDiv.style.display = 'none';
+            contentDiv.style.display = 'block';
+            
+            let ledgerHTML = `
+                <div class="card mb-3">
                     <div class="card-header">
-                        <h6 class="mb-0">Current Products (${products.length})</h6>
+                        <h6 class="mb-0">Supplier: ${escapeHtml(data.supplier.name)}</h6>
                     </div>
                     <div class="card-body">
-                        ${products.length > 0 ? `
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Product</th>
-                                            <th>Supplier SKU</th>
-                                            <th>Supplier Price</th>
-                                            <th>Min Order Qty</th>
-                                            <th>Lead Time (Days)</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${products.map(product => `
-                                            <tr data-product-id="${product.product_id}">
-                                                <td>
-                                                    <div class="fw-semibold">${escapeHtml(product.product_name)}</div>
-                                                    <small class="text-muted">${escapeHtml(product.product_sku)}</small>
-                                                </td>
-                                                <td>
-                                                    <input type="text" class="form-control form-control-sm supplier-sku" 
-                                                           value="${escapeHtml(product.supplier_sku || '')}" 
-                                                           placeholder="Supplier SKU">
-                                                </td>
-                                                <td>
-                                                    <div class="input-group input-group-sm">
-                                                        <span class="input-group-text">${currency}</span>
-                                                        <input type="number" step="0.01" class="form-control supplier-price" 
-                                                               value="${product.supplier_price || ''}">
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <input type="number" class="form-control form-control-sm min-order-qty" 
-                                                           value="${product.min_order_quantity || 1}" min="1">
-                                                </td>
-                                                <td>
-                                                    <input type="number" class="form-control form-control-sm lead-time" 
-                                                           value="${product.lead_time_days || ''}" placeholder="Days">
-                                                </td>
-                                                <td>
-                                                    <button class="btn btn-success btn-sm update-product" title="Update">
-                                                        <i class="fas fa-save"></i>
-                                                    </button>
-                                                    <button class="btn btn-danger btn-sm remove-product" title="Remove">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Contact:</strong> ${escapeHtml(data.supplier.phone || 'N/A')}</p>
+                                <p class="mb-1"><strong>Email:</strong> ${escapeHtml(data.supplier.email || 'N/A')}</p>
                             </div>
-                        ` : `
-                            <div class="text-center py-3">
-                                <p class="text-muted">No products added to this supplier yet.</p>
+                            <div class="col-md-6 text-end">
+                                <h5>Current Balance</h5>
+                                <h3 class="${data.balance.balance > 0 ? 'text-danger' : (data.balance.balance < 0 ? 'text-success' : 'text-secondary')}">
+                                    ${currency} ${Math.abs(data.balance.balance || 0).toFixed(2)}
+                                </h3>
+                                <p class="text-muted">
+                                    ${data.balance.balance > 0 ? 'You owe to supplier' : 
+                                      data.balance.balance < 0 ? 'Supplier owes to you' : 'Balance settled'}
+                                </p>
                             </div>
-                        `}
-                    </div>
-                </div>
-            `;
-
-            // Add event listeners for product management
-            modalBody.querySelectorAll('.update-product').forEach(button => {
-                button.addEventListener('click', function() {
-                    const row = this.closest('tr');
-                    const productId = row.getAttribute('data-product-id');
-                    updateSupplierProduct(supplierId, productId, row);
-                });
-            });
-
-            modalBody.querySelectorAll('.remove-product').forEach(button => {
-                button.addEventListener('click', function() {
-                    const row = this.closest('tr');
-                    const productId = row.getAttribute('data-product-id');
-                    removeSupplierProduct(supplierId, productId);
-                });
-            });
-
-            // Add product modal content
-            const addProductModal = document.createElement('div');
-            addProductModal.className = 'modal fade';
-            addProductModal.id = 'addProductModal';
-            addProductModal.innerHTML = `
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Add Product to Supplier</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <form id="addProductForm">
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="productSelect" class="form-label">Select Product</label>
-                                    <select class="form-select" id="productSelect" name="product_id" required>
-                                        <option value="">Choose a product...</option>
-                                        ${availableProducts.map(product => `
-                                            <option value="${product.id}">
-                                                ${escapeHtml(product.name)} - ${escapeHtml(product.sku)} (${escapeHtml(product.brand || 'No Brand')})
-                                            </option>
-                                        `).join('')}
-                                    </select>
+                        
+                        <div class="text-end mb-3">
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+                                <i class="fas fa-plus me-1"></i>Add Transaction
+                            </button>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Description</th>
+                                        <th>Recorded By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
+            
+            if (data.transactions && data.transactions.length > 0) {
+                data.transactions.forEach(transaction => {
+                    ledgerHTML += `
+                        <tr>
+                            <td>${new Date(transaction.date).toLocaleDateString()} ${transaction.time}</td>
+                            <td>
+                                <span class="badge ${transaction.type === 'credit' ? 'bg-success' : 'bg-danger'}">
+                                    ${transaction.type.toUpperCase()}
+                                </span>
+                            </td>
+                            <td>${currency} ${parseFloat(transaction.amount).toFixed(2)}</td>
+                            <td>${escapeHtml(transaction.description || '-')}</td>
+                            <td>${escapeHtml(transaction.created_by_name || '-')}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                ledgerHTML += `
+                    <tr>
+                        <td colspan="5" class="text-center py-3">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-exchange-alt"></i>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="newSupplierSku" class="form-label">Supplier SKU</label>
-                                    <input type="text" class="form-control" id="newSupplierSku" name="supplier_sku">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="newSupplierPrice" class="form-label">Supplier Price</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">${currency}</span>
-                                        <input type="number" step="0.01" class="form-control" id="newSupplierPrice" name="supplier_price">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="newMinOrderQty" class="form-label">Min Order Quantity</label>
-                                            <input type="number" class="form-control" id="newMinOrderQty" name="min_order_quantity" value="1" min="1">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="newLeadTime" class="form-label">Lead Time (Days)</label>
-                                            <input type="number" class="form-control" id="newLeadTime" name="lead_time_days" min="1">
-                                        </div>
-                                    </div>
-                                </div>
+                                <h5>No transactions found</h5>
+                                <p class="text-muted">No transactions recorded for this supplier yet.</p>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-primary">Add Product</button>
-                            </div>
-                        </form>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            ledgerHTML += `
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             `;
-
-            document.body.appendChild(addProductModal);
-
-            // Add product form submission
-            document.getElementById('addProductForm')?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const formData = new FormData(this);
-                
-                fetch(`/suppliers/${supplierId}/products`, {
-                    method: 'POST',
-                    body: new URLSearchParams(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showToast('Product added to supplier successfully!', 'success');
-                        $('#addProductModal').modal('hide');
-                        loadSupplierProducts(supplierId); // Reload the products
-                    } else {
-                        showToast(data.message || 'Error adding product', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showToast('An error occurred', 'error');
-                });
-            });
-        }
-
-        // Update supplier product
-        function updateSupplierProduct(supplierId, productId, row) {
-            const formData = new URLSearchParams();
-            formData.append('supplier_sku', row.querySelector('.supplier-sku').value);
-            formData.append('supplier_price', row.querySelector('.supplier-price').value);
-            formData.append('min_order_quantity', row.querySelector('.min-order-qty').value);
-            formData.append('lead_time_days', row.querySelector('.lead-time').value);
-
-            fetch(`/suppliers/${supplierId}/products/${productId}`, {
-                method: 'PUT',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Product updated successfully!', 'success');
-                } else {
-                    showToast(data.message || 'Error updating product', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred', 'error');
-            });
-        }
-
-        // Remove supplier product
-        function removeSupplierProduct(supplierId, productId) {
-            if (!confirm('Are you sure you want to remove this product from the supplier?')) return;
-
-            fetch(`/suppliers/${supplierId}/products/${productId}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Product removed from supplier successfully!', 'success');
-                    loadSupplierProducts(supplierId); // Reload the products
-                } else {
-                    showToast(data.message || 'Error removing product', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred', 'error');
-            });
+            
+            contentDiv.innerHTML = ledgerHTML;
         }
 
         // Filter suppliers
@@ -1352,6 +1315,33 @@
                 });
             });
 
+            // Handle add transaction form submission
+            document.getElementById('addTransactionForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const supplierId = document.getElementById('transactionSupplierId').value;
+                const formData = new FormData(this);
+                
+                fetch(`/suppliers/${supplierId}/transactions`, {
+                    method: 'POST',
+                    body: new URLSearchParams(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Transaction added successfully!', 'success');
+                        $('#addTransactionModal').modal('hide');
+                        // Reload the ledger to show new transaction
+                        loadSupplierLedger(supplierId);
+                    } else {
+                        showToast(data.message || 'Error adding transaction', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('An error occurred', 'error');
+                });
+            });
+
             // Handle edit supplier clicks
             document.querySelectorAll('.edit-supplier').forEach(button => {
                 button.addEventListener('click', function() {
@@ -1360,11 +1350,11 @@
                 });
             });
 
-            // Handle manage products clicks
-            document.querySelectorAll('.manage-products').forEach(button => {
+            // Handle view ledger clicks
+            document.querySelectorAll('.view-ledger').forEach(button => {
                 button.addEventListener('click', function() {
                     const supplierId = this.closest('tr').getAttribute('data-supplier-id');
-                    loadSupplierProducts(supplierId);
+                    loadSupplierLedger(supplierId);
                 });
             });
 
