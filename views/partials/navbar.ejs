@@ -1,9 +1,11 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
-            <img src="<%= shop.logo %>" alt="<%= shop.name %>"
-                style="height:30px; margin-right:10px; border-radius:5px;">
-            <%= shop.name %>
+            <% if (shop && shop.logo) { %>
+                <img src="<%= shop.logo %>" alt="<%= shop.name %>"
+                    style="height:30px; margin-right:10px; border-radius:5px;">
+            <% } %>
+            <%= shop ? shop.name : 'Manage Hub' %>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>

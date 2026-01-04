@@ -42,7 +42,7 @@ exports.register = async (req, res) => {
   const {
     shopName, plan, subscriptionDuration,
     email, phone, address, currency,
-    ownerName, ownerEmail, ownerPassword, confirmPassword
+    ownerName, ownerEmail,ownerphone , cnic, ownerPassword, confirmPassword, paymentMethod, paymentDetails
   } = req.body;
 
   if (!shopName || !plan || !ownerName || !ownerEmail || !ownerPassword) {
@@ -95,13 +95,33 @@ exports.register = async (req, res) => {
     const conn = await pool.getConnection();
     await conn.beginTransaction();
 
-    // Insert Shop
-    const [shopResult] = await conn.execute(
-      `INSERT INTO shops (id, name, email, phone, address, currency)
-       VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?)`,
-      [shopName, email, phone, address, currency]
-    );
+    // // Insert Shop
+    // const [shopResult] = await conn.execute(
+    //   `INSERT INTO shops (id, name, email, phone, address, currency)
+    //    VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?)`,
+    //   [shopName, email, phone, address, currency]
+    // );
     
+    // Determine logo path (if uploaded)
+      let logo = req.file ? req.file.filename : null;
+
+      // Default colors
+      let primaryColor = '#007bff';
+      let secondaryColor = '#6c757d';
+
+      // Insert Shop
+      const [shopResult] = await conn.execute(
+        `INSERT INTO shops 
+          (id, name, email, phone, address, currency, logo, plan, primary_color, secondary_color, status)
+        VALUES 
+          (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+        [
+          shopName, email, phone, address, currency,
+          logo, plan, primaryColor, secondaryColor
+        ]
+      );
+
+
     const [[{ shop_id }]] = await conn.execute(
       'SELECT id AS shop_id FROM shops WHERE name = ? ORDER BY created_at DESC LIMIT 1',
       [shopName]
@@ -110,31 +130,55 @@ exports.register = async (req, res) => {
     const shopId = shop_id;
 
     // Insert Owner
-    await conn.execute(
-      `INSERT INTO users (id, shop_id, name, email, password, role)
-       VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, 'Shop Owner')`,
-      [shopId, ownerName, ownerEmail, hashedPassword]
+    // await conn.execute(
+    //   `INSERT INTO users (id, shop_id, name, email, password, role)
+    //    VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, 'Shop Owner')`,
+    //   [shopId, ownerName, ownerEmail, hashedPassword]
+    // );
+    // Get Shop Owner role ID
+    const [[shopOwnerRole]] = await conn.execute(
+      `SELECT id FROM roles WHERE role_name = 'Shop Owner' LIMIT 1`
     );
 
-    // Insert Subscription
+    if (!shopOwnerRole) {
+      throw new Error('Shop Owner role not found in roles table');
+    }
+
+    const roleId = shopOwnerRole.id;
+
+    // Insert Owner
     await conn.execute(
-      `INSERT INTO subscriptions
-       (id, shop_id, plan_name, price, duration, started_at, expires_at)
-       VALUES (
-         UUID_TO_BIN(UUID()), ?, ?, ?, ?, CURDATE(),
-         DATE_ADD(CURDATE(),
-           INTERVAL CASE
-             WHEN ? = 'monthly' THEN 1
-             WHEN ? = 'quarterly' THEN 3
-             WHEN ? = 'yearly' THEN 12
-           END MONTH
-         )
-       )`,
-      [
-        shopId, pricingPlan.name, price, subscriptionDuration,
-        subscriptionDuration, subscriptionDuration, subscriptionDuration
-      ]
+      `INSERT INTO users (id, shop_id, name, email, password, role_id,phone,cnic status)
+      VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?,?, ?, 'active')`,
+      [shopId, ownerName, ownerEmail, hashedPassword, roleId, ownerphone , cnic,]
     );
+
+
+      // Calculate subscription expiry date
+      let expiresAt = new Date();
+      if (subscriptionDuration === 'monthly') expiresAt.setMonth(expiresAt.getMonth() + 1);
+      if (subscriptionDuration === 'quarterly') expiresAt.setMonth(expiresAt.getMonth() + 3);
+      if (subscriptionDuration === 'yearly') expiresAt.setMonth(expiresAt.getMonth() + 12);
+
+      // Format as YYYY-MM-DD
+      const pad = (n) => n.toString().padStart(2, '0');
+      const expiresAtStr = `${expiresAt.getFullYear()}-${pad(expiresAt.getMonth() + 1)}-${pad(expiresAt.getDate())}`;
+
+      // Insert Subscription
+      await conn.execute(
+        `INSERT INTO subscriptions
+        (id, shop_id, plan_name, price, duration, payment_method, payment_details, started_at, expires_at, status)
+        VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, ?, CURDATE(), ?, 'active')`,
+        [
+          shopId,
+          pricingPlan.name,
+          price,
+          subscriptionDuration,
+          paymentMethod || null,
+          paymentDetails || null,
+          expiresAtStr
+        ]
+      );
 
     await conn.commit();
     conn.release();

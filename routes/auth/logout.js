@@ -1,5 +1,7 @@
+
 const express = require('express');
 const router = express.Router();
+const registerController = require('../../controllers/authController');
 
 router.get('/logout', (req, res) => {
   req.session.destroy(err => {

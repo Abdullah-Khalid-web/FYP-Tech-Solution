@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <!-- dashboard.ejs -->
 <div class="p-5 dashboard-container">
   <!-- Welcome Header with Date/Time -->
@@ -218,7 +220,42 @@
       </div>
     </div>
   </div>
+  
+
+  <div class="card">
+    <h3>Sales (Last 7 Days)</h3>
+    <canvas id="salesChart" height="100"></canvas>
+  </div>
+
+
 </div>
+
+<script>
+async function loadSalesGraph() {
+  const res = await fetch('/api/dashboard/sales-graph');
+  const data = await res.json();
+
+  const labels = data.map(d => d.date);
+  const values = data.map(d => d.total);
+
+  new Chart(document.getElementById('salesChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Sales',
+        data: values,
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      }]
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', loadSalesGraph);
+</script>
+
 
 <style>
   /* Dashboard Styles */
@@ -671,7 +708,7 @@
       .then(response => response.json())
       .then(data => {
         document.getElementById('totalProducts').textContent = data.totalProducts.toLocaleString();
-        document.getElementById('todaySales').textContent = '₹' + data.todaySales.toLocaleString('en-IN');
+        document.getElementById('todaySales').textContent = data.todaySales.toLocaleString('en-IN');
         document.getElementById('totalEmployees').textContent = data.totalEmployees;
         document.getElementById('lowStockItems').textContent = data.lowStockItems;
       })
