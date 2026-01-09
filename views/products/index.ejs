@@ -271,6 +271,17 @@
                 font-size: 10pt;
             }
         }
+
+        .price-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .price-label {
+            font-size: 0.75rem;
+            color: var(--secondary);
+        }
     </style>
 </head>
 
@@ -428,6 +439,8 @@
                             <th>Category</th>
                             <th>Stock</th>
                             <th>Avg Cost</th>
+                            <th>Selling Price</th>
+                            <th>Last Purchase</th>
                             <th>Ingredients</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -460,7 +473,22 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="fw-semibold">₨<%= Number(product.avg_cost || 0).toFixed(2) %></span>
+                                        <div class="price-info">
+                                            <span class="fw-semibold">₨<%= Number(product.avg_cost || 0).toFixed(2) %></span>
+                                            <span class="price-label">Avg Cost</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="price-info">
+                                            <span class="fw-semibold">₨<%= Number(product.selling_price || 0).toFixed(2) %></span>
+                                            <span class="price-label">Selling</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="price-info">
+                                            <span class="fw-semibold">₨<%= Number(product.last_purchase_price || product.avg_cost || 0).toFixed(2) %></span>
+                                            <span class="price-label">Last Purchase</span>
+                                        </div>
                                     </td>
                                     <td>
                                         <% if (product.ingredient_count > 0) { %>
@@ -502,7 +530,7 @@
                             <% }); %>
                         <% } else { %>
                             <tr>
-                                <td colspan="7" class="text-center py-4">
+                                <td colspan="9" class="text-center py-4">
                                     <div class="empty-state">
                                         <div class="empty-state-icon">
                                             <i class="fas fa-box-open"></i>
@@ -593,6 +621,20 @@
                                 <div class="mb-3">
                                     <label for="productBarcode" class="form-label">Barcode</label>
                                     <input type="text" class="form-control" id="productBarcode" name="barcode">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prices Section -->
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Initial Selling Price (Optional)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₨</span>
+                                        <input type="number" step="0.01" class="form-control" name="initial_selling_price" min="0">
+                                    </div>
+                                    <small class="text-muted">Can be set when adding first stock</small>
                                 </div>
                             </div>
                         </div>
@@ -691,6 +733,15 @@
                                     <div class="col-md-4">
                                         <strong>Current Stock:</strong> <span id="currentStock" class="badge bg-primary"></span>
                                     </div>
+                                    <div class="col-md-4">
+                                        <strong>Avg Cost:</strong> <span id="avgCost">₨0</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Selling Price:</strong> <span id="currentSellingPrice">₨0</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Last Purchase:</strong> <span id="lastPurchasePrice">₨0</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -708,10 +759,17 @@
                                         <input type="number" step="0.001" class="form-control stock-quantity" required min="0.001">
                                     </div>
                                     <div class="col-md-2">
-                                        <label class="form-label">Unit Price *</label>
+                                        <label class="form-label">Buying Price *</label>
                                         <div class="input-group">
                                             <span class="input-group-text">₨</span>
-                                            <input type="number" step="0.01" class="form-control stock-price" required min="0">
+                                            <input type="number" step="0.01" class="form-control stock-buying-price" required min="0" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Selling Price *</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₨</span>
+                                            <input type="number" step="0.01" class="form-control stock-selling-price" required min="0" value="0">
                                         </div>
                                     </div>
                                     <div class="col-md-2">
@@ -753,10 +811,10 @@
                                         <h6>Total Quantity: <span id="totalQuantity" class="fw-bold">0</span></h6>
                                     </div>
                                     <div class="col-md-4">
-                                        <h6>Total Value: <span id="totalValue" class="fw-bold">₨0.00</span></h6>
+                                        <h6>Total Buying Value: <span id="totalBuyingValue" class="fw-bold">₨0.00</span></h6>
                                     </div>
                                     <div class="col-md-4">
-                                        <h6>Average Price: <span id="averagePrice" class="fw-bold">₨0.00</span></h6>
+                                        <h6>Average Buying Price: <span id="averageBuyingPrice" class="fw-bold">₨0.00</span></h6>
                                     </div>
                                 </div>
                             </div>
@@ -1096,10 +1154,6 @@
                                         <p><strong>Current Stock:</strong> ${product.current_quantity}</p>
                                         <p><strong>Average Cost:</strong> ₨${Number(product.avg_cost).toFixed(2)}</p>
                                     </div>
-                                    <div class="col-md-6">
-                                        <p><strong>Total Value:</strong> ₨${Number(product.current_quantity * product.avg_cost).toFixed(2)}</p>
-                                        <p><small class="text-muted">To update stock, use the "Add Stock" button</small></p>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1236,12 +1290,20 @@
             const productSKU = row.querySelector('td:nth-child(1) .text-muted.d-block')?.textContent?.replace('SKU: ', '') || 'N/A';
             const category = row.querySelector('td:nth-child(2)').textContent;
             const currentStock = row.querySelector('td:nth-child(3) .badge').textContent;
+            
+            // Get price information from the table
+            const avgCostText = row.querySelector('td:nth-child(4) .fw-semibold').textContent.replace('₨', '');
+            const sellingPriceText = row.querySelector('td:nth-child(5) .fw-semibold').textContent.replace('₨', '');
+            const lastPurchaseText = row.querySelector('td:nth-child(6) .fw-semibold').textContent.replace('₨', '');
 
             // Populate modal
             document.getElementById('stockProductName').textContent = productName;
             document.getElementById('stockProductSKU').textContent = productSKU;
             document.getElementById('stockProductCategory').textContent = category;
             document.getElementById('currentStock').textContent = currentStock;
+            document.getElementById('avgCost').textContent = '₨' + parseFloat(avgCostText || 0).toFixed(2);
+            document.getElementById('currentSellingPrice').textContent = '₨' + parseFloat(sellingPriceText || 0).toFixed(2);
+            document.getElementById('lastPurchasePrice').textContent = '₨' + parseFloat(lastPurchaseText || avgCostText || 0).toFixed(2);
             document.getElementById('stockProductId').value = productId;
 
             // Load suppliers
@@ -1260,10 +1322,17 @@
                             <input type="number" step="0.001" class="form-control stock-quantity" required min="0.001">
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label">Unit Price *</label>
+                            <label class="form-label">Buying Price *</label>
                             <div class="input-group">
                                 <span class="input-group-text">₨</span>
-                                <input type="number" step="0.01" class="form-control stock-price" required min="0">
+                                <input type="number" step="0.01" class="form-control stock-buying-price" required min="0" value="${parseFloat(lastPurchaseText || avgCostText || 0).toFixed(2)}">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Selling Price *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₨</span>
+                                <input type="number" step="0.01" class="form-control stock-selling-price" required min="0" value="${parseFloat(sellingPriceText || (avgCostText * 1.3) || 0).toFixed(2)}">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -1343,32 +1412,40 @@
                         <input type="number" step="0.001" class="form-control stock-quantity" required min="0.001">
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Unit Price *</label>
+                        <label class="form-label">Buying Price *</label>
                         <div class="input-group">
                             <span class="input-group-text">₨</span>
-                            <input type="number" step="0.01" class="form-control stock-price" required min="0">
+                            <input type="number" step="0.01" class="form-control stock-buying-price" required min="0" value="0">
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Supplier</label>
-                        <select class="form-select stock-supplier">
-                            <option value="">Select Supplier</option>
-                        </select>
+                        <label class="form-label">Selling Price *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₨</span>
+                                <input type="number" step="0.01" class="form-control stock-selling-price" required min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Supplier</label>
+                            <select class="form-select stock-supplier">
+                                <option value="">Select Supplier</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Expiry Date</label>
+                            <input type="date" class="form-control stock-expiry">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removeStockEntry(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Expiry Date</label>
-                        <input type="date" class="form-control stock-expiry">
-                    </div>
-                    <div class="col-md-1 d-flex align-items-end">
-                        <button type="button" class="btn btn-danger btn-sm" onclick="removeStockEntry(this)">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <label class="form-label">Notes</label>
-                        <textarea class="form-control stock-notes" rows="1" placeholder="Optional notes"></textarea>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control stock-notes" rows="1" placeholder="Optional notes"></textarea>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1408,8 +1485,8 @@
 
         function addStockEntryListeners(entry = null) {
             const elements = entry ? 
-                entry.querySelectorAll('.stock-quantity, .stock-price') :
-                document.querySelectorAll('.stock-quantity, .stock-price');
+                entry.querySelectorAll('.stock-quantity, .stock-buying-price') :
+                document.querySelectorAll('.stock-quantity, .stock-buying-price');
             
             elements.forEach(element => {
                 element.addEventListener('input', calculateStockTotals);
@@ -1418,21 +1495,21 @@
 
         function calculateStockTotals() {
             let totalQuantity = 0;
-            let totalValue = 0;
+            let totalBuyingValue = 0;
             
             document.querySelectorAll('.stock-entry').forEach(entry => {
                 const quantity = parseFloat(entry.querySelector('.stock-quantity').value) || 0;
-                const price = parseFloat(entry.querySelector('.stock-price').value) || 0;
+                const buyingPrice = parseFloat(entry.querySelector('.stock-buying-price').value) || 0;
                 
                 totalQuantity += quantity;
-                totalValue += quantity * price;
+                totalBuyingValue += quantity * buyingPrice;
             });
             
-            const averagePrice = totalQuantity > 0 ? totalValue / totalQuantity : 0;
+            const averageBuyingPrice = totalQuantity > 0 ? totalBuyingValue / totalQuantity : 0;
             
             document.getElementById('totalQuantity').textContent = totalQuantity.toFixed(3);
-            document.getElementById('totalValue').textContent = '₨' + totalValue.toFixed(2);
-            document.getElementById('averagePrice').textContent = '₨' + averagePrice.toFixed(2);
+            document.getElementById('totalBuyingValue').textContent = '₨' + totalBuyingValue.toFixed(2);
+            document.getElementById('averageBuyingPrice').textContent = '₨' + averageBuyingPrice.toFixed(2);
         }
 
         // Handle add stock form
@@ -1444,9 +1521,11 @@
             
             document.querySelectorAll('.stock-entry').forEach(entry => {
                 const quantity = entry.querySelector('.stock-quantity').value;
-                const price = entry.querySelector('.stock-price').value;
+                const buyingPrice = entry.querySelector('.stock-buying-price').value;
+                const sellingPrice = entry.querySelector('.stock-selling-price').value;
                 
-                if (!quantity || !price || parseFloat(quantity) <= 0 || parseFloat(price) <= 0) {
+                if (!quantity || !buyingPrice || !sellingPrice || 
+                    parseFloat(quantity) <= 0 || parseFloat(buyingPrice) <= 0 || parseFloat(sellingPrice) <= 0) {
                     isValid = false;
                     toastr.error('Please fill all required fields with valid values');
                     return;
@@ -1455,7 +1534,8 @@
                 stockEntries.push({
                     batch_number: entry.querySelector('.stock-batch').value,
                     quantity: parseFloat(quantity),
-                    unit_price: parseFloat(price),
+                    buying_price: parseFloat(buyingPrice), // FIXED: Changed from unit_price to buying_price
+                    selling_price: parseFloat(sellingPrice), // FIXED: Ensure selling_price is included
                     expiry_date: entry.querySelector('.stock-expiry').value || null,
                     supplier_id: entry.querySelector('.stock-supplier').value || null,
                     notes: entry.querySelector('.stock-notes').value
@@ -1490,7 +1570,7 @@
             }
         });
 
-        // View ingredients
+// View ingredients
         async function viewIngredients(productId) {
             try {
                 const response = await fetch(`/products/${productId}/edit`);
@@ -1582,7 +1662,8 @@
                                             <th>Date</th>
                                             <th>Batch</th>
                                             <th>Quantity</th>
-                                            <th>Unit Price</th>
+                                            <th>Buying Price</th>
+                                            <th>Selling Price</th>
                                             <th>Total Value</th>
                                             <th>Supplier</th>
                                             <th>Received By</th>
@@ -1596,7 +1677,8 @@
                                                 <td>${new Date(entry.date_added).toLocaleDateString()}</td>
                                                 <td>${escapeHtml(entry.batch_number || 'N/A')}</td>
                                                 <td>${entry.quantity}</td>
-                                                <td>₨${Number(entry.unit_price).toFixed(2)}</td>
+                                                <td>₨${Number(entry.buying_price).toFixed(2)}</td>
+                                                <td>₨${Number(entry.selling_price).toFixed(2)}</td>
                                                 <td>₨${Number(entry.total_value).toFixed(2)}</td>
                                                 <td>${escapeHtml(entry.supplier_name || 'N/A')}</td>
                                                 <td>${escapeHtml(entry.received_by || 'N/A')}</td>

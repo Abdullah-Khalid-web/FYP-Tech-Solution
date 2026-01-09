@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const expenseController = require('../controllers/expenseController');
+const rawController = require('../controllers/rawController');
 
 // Apply all routes from the controller
-router.use('/', expenseController);
+router.use('/', rawController);
 
 module.exports = router;

@@ -89,6 +89,8 @@ router.get('/', getShopInfo, async (req, res) => {
         const offset = (page - 1) * limit;
 
         // Get products with stock info from inventory table
+        // Get products with stock info from inventory table
+        // In GET products listing route, update the query to include last_purchase_price:
         const [products] = await pool.execute(
             `SELECT 
                 BIN_TO_UUID(p.id) as id,
@@ -100,18 +102,27 @@ router.get('/', getShopInfo, async (req, res) => {
                 p.barcode,
                 COALESCE(i.current_quantity, 0) as total_stock,
                 COALESCE(i.avg_cost, 0) as avg_cost,
+                COALESCE(i.selling_price, 0) as selling_price,
+                COALESCE(i.avg_cost, 0) as buying_price,
+                COALESCE((
+                    SELECT si.unit_price 
+                    FROM stock_in si 
+                    WHERE si.product_id = p.id 
+                    ORDER BY si.created_at DESC 
+                    LIMIT 1
+                ), i.avg_cost, 0) as last_purchase_price, -- ADD THIS
                 COUNT(DISTINCT ing.raw_material_id) as ingredient_count,
                 p.created_at,
                 p.status
-             FROM products p
-             LEFT JOIN inventory i ON p.id = i.product_id
-             LEFT JOIN ingredients ing ON p.id = ing.main_product_id
-             WHERE p.shop_id = UUID_TO_BIN(?)
-             GROUP BY p.id, p.name, p.brand, p.category, p.size, 
-                      p.sku, p.barcode, p.created_at, p.status,
-                      i.current_quantity, i.avg_cost
-             ORDER BY p.created_at DESC 
-             LIMIT ? OFFSET ?`,
+            FROM products p
+            LEFT JOIN inventory i ON p.id = i.product_id
+            LEFT JOIN ingredients ing ON p.id = ing.main_product_id
+            WHERE p.shop_id = UUID_TO_BIN(?)
+            GROUP BY p.id, p.name, p.brand, p.category, p.size, 
+                    p.sku, p.barcode, p.created_at, p.status,
+                    i.current_quantity, i.avg_cost, i.selling_price
+            ORDER BY p.created_at DESC 
+            LIMIT ? OFFSET ?`,
             [req.shopId, limit, offset]
         );
 
@@ -428,10 +439,13 @@ router.put('/:id', getShopInfo, async (req, res) => {
 });
 
 // POST add stock to product (batch operation)
+// POST add stock to product (batch operation) - FIXED VERSION
 router.post('/:id/stock', getShopInfo, async (req, res) => {
     try {
         const { stock_entries } = req.body;
         const productId = req.params.id;
+
+        console.log('Received stock entries:', JSON.stringify(stock_entries, null, 2)); // Debug log
 
         if (!stock_entries || !Array.isArray(stock_entries) || stock_entries.length === 0) {
             return res.status(400).json({
@@ -463,29 +477,44 @@ router.post('/:id/stock', getShopInfo, async (req, res) => {
 
             // Process each stock entry
             for (const entry of stock_entries) {
-                const { batch_number, quantity, unit_price, expiry_date, supplier_id, notes } = entry;
+                const { 
+                    batch_number, 
+                    quantity, 
+                    buying_price, 
+                    selling_price, 
+                    expiry_date, 
+                    supplier_id, 
+                    notes 
+                } = entry;
 
-                if (!quantity || !unit_price) {
-                    throw new Error('Quantity and unit price are required for each entry');
+                console.log('Processing entry:', entry); // Debug log
+
+                if (!quantity || !buying_price) {
+                    throw new Error('Quantity and buying price are required for each entry');
                 }
 
                 const qty = parseFloat(quantity);
-                const price = parseFloat(unit_price);
-                const entryValue = qty * price;
+                const buyingPrice = parseFloat(buying_price);
+                const sellingPrice = parseFloat(selling_price) || buyingPrice * 1.3; // Default markup
+                const entryValue = qty * buyingPrice;
 
-                // Insert stock entry into stock_in table
+                console.log(`Quantities: qty=${qty}, buying=${buyingPrice}, selling=${sellingPrice}`); // Debug
+
+                // FIXED: Correct insert query with proper field order
                 await pool.execute(
                     `INSERT INTO stock_in 
                      (id, shop_id, product_id, batch_number, quantity, unit_price, 
-                      expiry_date, supplier_id, notes, received_by)
+                      buying_price, selling_price, expiry_date, supplier_id, notes, received_by)
                      VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, 
-                             ?, UUID_TO_BIN(?), ?, UUID_TO_BIN(?))`,
+                             ?, ?, ?, UUID_TO_BIN(?), ?, UUID_TO_BIN(?))`,
                     [
                         req.shopId,
                         productId,
                         batch_number || null,
                         qty,
-                        price,
+                        buyingPrice, // unit_price
+                        buyingPrice, // buying_price (same as unit_price)
+                        sellingPrice, // selling_price
                         expiry_date || null,
                         supplier_id || null,
                         notes || null,
@@ -498,7 +527,7 @@ router.post('/:id/stock', getShopInfo, async (req, res) => {
                     supplierTransactions.push({
                         supplier_id,
                         amount: entryValue,
-                        description: `Stock purchase for ${entry.batch_number || 'N/A'}`
+                        description: `Stock purchase for ${batch_number || 'N/A'}`
                     });
                 }
 
@@ -594,33 +623,56 @@ router.post('/:id/stock', getShopInfo, async (req, res) => {
                 }
             }
 
-            // Update inventory
+            // Update inventory with selling price
             const [inventoryCheck] = await pool.execute(
-                `SELECT current_quantity, avg_cost FROM inventory 
+                `SELECT current_quantity, avg_cost, selling_price FROM inventory 
                  WHERE product_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
                 [productId, req.shopId]
             );
 
             if (inventoryCheck.length === 0) {
-                // Insert new inventory record
+                // Get average selling price from entries
+                const avgSellingPrice = stock_entries.reduce((sum, entry) => {
+                    return sum + (parseFloat(entry.selling_price) || parseFloat(entry.buying_price) * 1.3);
+                }, 0) / stock_entries.length;
+
+                // Insert new inventory record with selling price
                 await pool.execute(
-                    `INSERT INTO inventory (id, shop_id, product_id, current_quantity, avg_cost)
-                     VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?)`,
-                    [req.shopId, productId, totalQuantity, totalValue / totalQuantity]
+                    `INSERT INTO inventory (id, shop_id, product_id, current_quantity, avg_cost, selling_price)
+                     VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?)`,
+                    [req.shopId, productId, totalQuantity, totalValue / totalQuantity, avgSellingPrice]
                 );
             } else {
                 const currentQty = parseFloat(inventoryCheck[0].current_quantity);
                 const currentAvg = parseFloat(inventoryCheck[0].avg_cost);
                 const newAvg = ((currentQty * currentAvg) + totalValue) / (currentQty + totalQuantity);
 
-                await pool.execute(
-                    `UPDATE inventory 
-                     SET current_quantity = current_quantity + ?,
-                         avg_cost = ?,
-                         updated_at = NOW()
-                     WHERE product_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
-                    [totalQuantity, newAvg, productId, req.shopId]
-                );
+                // Update selling price if new entries have selling prices
+                const hasNewSellingPrices = stock_entries.some(entry => entry.selling_price);
+                let updateQuery = `UPDATE inventory 
+                                  SET current_quantity = current_quantity + ?,
+                                      avg_cost = ?,
+                                      updated_at = NOW()`;
+                
+                const queryParams = [totalQuantity, newAvg];
+                
+                if (hasNewSellingPrices) {
+                    // Calculate weighted average selling price
+                    let totalSellingValue = 0;
+                    stock_entries.forEach(entry => {
+                        const sellingPrice = parseFloat(entry.selling_price) || parseFloat(entry.buying_price) * 1.3;
+                        totalSellingValue += parseFloat(entry.quantity) * sellingPrice;
+                    });
+                    const weightedSellingPrice = totalSellingValue / totalQuantity;
+                    
+                    updateQuery += `, selling_price = ?`;
+                    queryParams.push(weightedSellingPrice);
+                }
+                
+                updateQuery += ` WHERE product_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`;
+                queryParams.push(productId, req.shopId);
+                
+                await pool.execute(updateQuery, queryParams);
             }
 
             // Commit transaction
@@ -678,6 +730,8 @@ router.get('/:id/ledger', getShopInfo, async (req, res) => {
                 si.id,
                 si.batch_number,
                 si.quantity,
+                si.selling_price,
+                si.buying_price,
                 CAST(si.unit_price AS DECIMAL(10,2)) as unit_price,
                 CAST((si.quantity * si.unit_price) AS DECIMAL(12,2)) as total_value,
                 si.expiry_date,
@@ -724,6 +778,8 @@ router.delete('/stock/:stockId', getShopInfo, async (req, res) => {
                     BIN_TO_UUID(product_id) as product_id,
                     quantity,
                     unit_price,
+                    buying_price,
+                    selling_price,
                     supplier_id
                  FROM stock_in 
                  WHERE id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
@@ -974,267 +1030,14 @@ router.get('/stock/add', getShopInfo, async (req, res) => {
     }
 });
 
-// POST bulk stock addition with buying prices and supplier transactions
-// router.post('/stock/bulk', getShopInfo, async (req, res) => {
-//     try {
-//         const { 
-//             stock_entries, 
-//             supplier_id, 
-//             batch_number, 
-//             transaction_type,
-//             payment_amount,
-//             total_buying_value,
-//             total_selling_value,
-//             notes 
-//         } = req.body;
-
-//         if (!stock_entries || !Array.isArray(stock_entries) || stock_entries.length === 0) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Please add at least one product with quantity'
-//             });
-//         }
-
-//         if (!supplier_id) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Please select a supplier'
-//             });
-//         }
-
-//         let totalBuyingValue = 0;
-//         const results = [];
-
-//         // Start transaction
-//         await pool.query('START TRANSACTION');
-
-//         try {
-//             // Process each stock entry
-//             for (const entry of stock_entries) {
-//                 const { product_id, quantity, buying_price, selling_price } = entry;
-
-//                 if (!product_id || !quantity || !buying_price || 
-//                     parseFloat(quantity) <= 0 || parseFloat(buying_price) <= 0) {
-//                     continue;
-//                 }
-
-//                 const qty = parseFloat(quantity);
-//                 const buyingPrice = parseFloat(buying_price);
-//                 const sellingPrice = parseFloat(selling_price) || buyingPrice * 1.3; // Default 30% markup
-//                 const entryBuyingValue = qty * buyingPrice;
-//                 const entrySellingValue = qty * sellingPrice;
-//                 totalBuyingValue += entryBuyingValue;
-
-//                 // Insert stock entry with buying price
-//                 await pool.execute(
-//                     `INSERT INTO stock_in 
-//                      (id, shop_id, product_id, batch_number, quantity, 
-//                       buying_price, selling_price, total_buying_value, total_selling_value,
-//                       supplier_id, notes, received_by)
-//                      VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, 
-//                              ?, ?, ?, ?, UUID_TO_BIN(?), ?, UUID_TO_BIN(?))`,
-//                     [
-//                         req.shopId,
-//                         product_id,
-//                         batch_number || null,
-//                         qty,
-//                         buyingPrice,
-//                         sellingPrice,
-//                         entryBuyingValue,
-//                         entrySellingValue,
-//                         supplier_id,
-//                         notes || null,
-//                         req.session.userId
-//                     ]
-//                 );
-
-//                 // Update inventory with buying price for avg cost calculation
-//                 const [inventoryCheck] = await pool.execute(
-//                     `SELECT current_quantity, avg_cost 
-//                      FROM inventory 
-//                      WHERE product_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
-//                     [product_id, req.shopId]
-//                 );
-
-//                 if (inventoryCheck.length === 0) {
-//                     // Insert new inventory record with buying price as avg_cost
-//                     await pool.execute(
-//                         `INSERT INTO inventory (id, shop_id, product_id, current_quantity, avg_cost, selling_price)
-//                          VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?)`,
-//                         [req.shopId, product_id, qty, buyingPrice, sellingPrice]
-//                     );
-//                 } else {
-//                     const currentQty = parseFloat(inventoryCheck[0].current_quantity);
-//                     const currentAvg = parseFloat(inventoryCheck[0].avg_cost);
-//                     const newAvg = ((currentQty * currentAvg) + entryBuyingValue) / (currentQty + qty);
-
-//                     // Update selling price if provided
-//                     if (sellingPrice > 0) {
-//                         await pool.execute(
-//                             `UPDATE inventory 
-//                              SET current_quantity = current_quantity + ?,
-//                                  avg_cost = ?,
-//                                  selling_price = ?,
-//                                  updated_at = NOW()
-//                              WHERE product_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
-//                             [qty, newAvg, sellingPrice, product_id, req.shopId]
-//                         );
-//                     } else {
-//                         await pool.execute(
-//                             `UPDATE inventory 
-//                              SET current_quantity = current_quantity + ?,
-//                                  avg_cost = ?,
-//                                  updated_at = NOW()
-//                              WHERE product_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
-//                             [qty, newAvg, product_id, req.shopId]
-//                         );
-//                     }
-//                 }
-
-//                 // Check and consume ingredients if needed
-//                 const [ingredients] = await pool.execute(
-//                     `SELECT 
-//                         BIN_TO_UUID(i.raw_material_id) as raw_material_id,
-//                         rm.name,
-//                         rm.current_stock,
-//                         i.quantity_required,
-//                         i.unit
-//                      FROM ingredients i
-//                      JOIN raw_materials rm ON i.raw_material_id = rm.id
-//                      WHERE i.main_product_id = UUID_TO_BIN(?) AND i.shop_id = UUID_TO_BIN(?)`,
-//                     [product_id, req.shopId]
-//                 );
-
-//                 for (const ingredient of ingredients) {
-//                     const requiredQuantity = parseFloat(ingredient.quantity_required) * qty;
-                    
-//                     if (ingredient.current_stock < requiredQuantity) {
-//                         throw new Error(`Insufficient raw material: ${ingredient.name}. Required: ${requiredQuantity}, Available: ${ingredient.current_stock}`);
-//                     }
-
-//                     // Deduct raw material stock
-//                     await pool.execute(
-//                         `UPDATE raw_materials 
-//                          SET current_stock = current_stock - ?
-//                          WHERE id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
-//                         [requiredQuantity, ingredient.raw_material_id, req.shopId]
-//                     );
-
-//                     // Record raw material movement
-//                     await pool.execute(
-//                         `INSERT INTO raw_material_stock_movements 
-//                          (id, shop_id, raw_material_id, batch_number, movement_type, quantity, 
-//                           unit_cost, reference_type, reference_id, movement_date, created_by)
-//                          VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, 'out', ?, 
-//                                  (SELECT cost_price FROM raw_materials WHERE id = UUID_TO_BIN(?)),
-//                                  'production', UUID_TO_BIN(?), CURDATE(), UUID_TO_BIN(?))`,
-//                         [
-//                             req.shopId,
-//                             ingredient.raw_material_id,
-//                             batch_number || `PROD-${product_id.slice(0, 8)}`,
-//                             requiredQuantity,
-//                             ingredient.raw_material_id,
-//                             product_id,
-//                             req.session.userId
-//                         ]
-//                     );
-//                 }
-
-//                 // Get product info for response
-//                 const [productInfo] = await pool.execute(
-//                     `SELECT name FROM products WHERE id = UUID_TO_BIN(?)`,
-//                     [product_id]
-//                 );
-
-//                 results.push({
-//                     product_id,
-//                     product_name: productInfo[0]?.name || 'Unknown',
-//                     quantity: qty,
-//                     buying_price: buyingPrice,
-//                     selling_price: sellingPrice,
-//                     buying_total: entryBuyingValue,
-//                     selling_total: entrySellingValue
-//                 });
-//             }
-
-//             // Handle supplier transactions based on transaction type
-//             const paymentAmount = parseFloat(payment_amount) || 0;
-//             const transactionAmount = totalBuyingValue;
-
-//             if (transaction_type === 'credit') {
-//                 // For credit purchase, add to supplier balance
-//                 await recordSupplierTransaction(supplier_id, 'debit', transactionAmount, 
-//                     `Credit purchase - Batch: ${batch_number || 'No batch'}`, req);
-                
-//             } else if (transaction_type === 'cash') {
-//                 // For cash purchase, record full payment
-//                 await recordSupplierTransaction(supplier_id, 'debit', transactionAmount, 
-//                     `Cash purchase - Batch: ${batch_number || 'No batch'}`, req);
-                
-//                 // Record cash payment
-//                 await recordSupplierTransaction(supplier_id, 'credit', paymentAmount, 
-//                     `Cash payment for batch: ${batch_number || 'No batch'}`, req);
-                
-//             } else if (transaction_type === 'partial') {
-//                 // For partial payment, record purchase and partial payment
-//                 await recordSupplierTransaction(supplier_id, 'debit', transactionAmount, 
-//                     `Purchase with partial payment - Batch: ${batch_number || 'No batch'}`, req);
-                
-//                 // Record partial payment
-//                 await recordSupplierTransaction(supplier_id, 'credit', paymentAmount, 
-//                     `Partial payment for batch: ${batch_number || 'No batch'}`, req);
-//             }
-
-//             // Get supplier info
-//             const [supplierInfo] = await pool.execute(
-//                 `SELECT name FROM suppliers WHERE id = UUID_TO_BIN(?)`,
-//                 [supplier_id]
-//             );
-
-//             results.push({
-//                 supplier: supplierInfo[0]?.name || 'Unknown',
-//                 transaction_type: transaction_type,
-//                 total_purchase: totalBuyingValue,
-//                 payment_made: paymentAmount,
-//                 balance_after: (await getSupplierBalance(supplier_id, req)).balance
-//             });
-
-//             // Commit transaction
-//             await pool.query('COMMIT');
-
-//             res.json({
-//                 success: true,
-//                 message: `Stock added successfully for ${results.length - 1} products`,
-//                 results: results,
-//                 total_buying_value: totalBuyingValue,
-//                 total_selling_value: total_selling_value,
-//                 batch_number: batch_number,
-//                 receipt_id: Date.now().toString()
-//             });
-
-//         } catch (error) {
-//             // Rollback on error
-//             await pool.query('ROLLBACK');
-//             throw error;
-//         }
-//     } catch (err) {
-//         console.error('Error adding bulk stock:', err);
-//         res.status(500).json({
-//             success: false,
-//             message: err.message || 'Error adding stock'
-//         });
-//     }
-// });
-// POST bulk stock addition with optional supplier
 router.post('/stock/bulk', getShopInfo, async (req, res) => {
     try {
         const { 
             stock_entries, 
-            supplier_id,  // Can be null
+            supplier_id,
             batch_number, 
             transaction_type,
             payment_amount,
-            total_buying_value,
             notes 
         } = req.body;
 
@@ -1245,6 +1048,24 @@ router.post('/stock/bulk', getShopInfo, async (req, res) => {
             });
         }
 
+        // Validate supplier_id if provided
+        let validatedSupplierId = null;
+        if (supplier_id && supplier_id.trim() !== '') {
+            const [supplierCheck] = await pool.execute(
+                `SELECT id FROM suppliers 
+                 WHERE id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
+                [supplier_id, req.shopId]
+            );
+            
+            if (supplierCheck.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid supplier selected. Please select a valid supplier.'
+                });
+            }
+            validatedSupplierId = supplier_id;
+        }
+
         let totalBuyingValue = 0;
         const results = [];
 
@@ -1252,6 +1073,65 @@ router.post('/stock/bulk', getShopInfo, async (req, res) => {
         await pool.query('START TRANSACTION');
 
         try {
+            // Define helper functions inside the route scope
+            async function recordSupplierTransaction(supplierId, type, amount, description) {
+                // Record transaction
+                await pool.execute(
+                    `INSERT INTO supplier_transactions 
+                     (id, shop_id, supplier_id, type, amount, description, created_by)
+                     VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, UUID_TO_BIN(?))`,
+                    [req.shopId, supplierId, type, amount, description, req.session.userId]
+                );
+
+                // Update supplier balance
+                const [balanceCheck] = await pool.execute(
+                    `SELECT id FROM supplier_balance 
+                     WHERE shop_id = UUID_TO_BIN(?) AND supplier_id = UUID_TO_BIN(?)`,
+                    [req.shopId, supplierId]
+                );
+
+                if (balanceCheck.length === 0) {
+                    await pool.execute(
+                        `INSERT INTO supplier_balance (id, shop_id, supplier_id, total_debit, total_credit)
+                         VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?)`,
+                        [req.shopId, supplierId, 
+                         type === 'debit' ? amount : 0,
+                         type === 'credit' ? amount : 0]
+                    );
+                } else {
+                    if (type === 'debit') {
+                        await pool.execute(
+                            `UPDATE supplier_balance 
+                             SET total_debit = total_debit + ?, 
+                                 updated_at = NOW()
+                             WHERE shop_id = UUID_TO_BIN(?) AND supplier_id = UUID_TO_BIN(?)`,
+                            [amount, req.shopId, supplierId]
+                        );
+                    } else {
+                        await pool.execute(
+                            `UPDATE supplier_balance 
+                             SET total_credit = total_credit + ?, 
+                                 updated_at = NOW()
+                             WHERE shop_id = UUID_TO_BIN(?) AND supplier_id = UUID_TO_BIN(?)`,
+                            [amount, req.shopId, supplierId]
+                        );
+                    }
+                }
+            }
+
+            async function getSupplierBalance(supplierId) {
+                const [balance] = await pool.execute(
+                    `SELECT 
+                        total_debit,
+                        total_credit,
+                        (total_debit - total_credit) as balance
+                     FROM supplier_balance 
+                     WHERE supplier_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
+                    [supplierId, req.shopId]
+                );
+                return balance[0] || { total_debit: 0, total_credit: 0, balance: 0 };
+            }
+
             // Process each stock entry
             for (const entry of stock_entries) {
                 const { product_id, quantity, buying_price, selling_price } = entry;
@@ -1263,32 +1143,53 @@ router.post('/stock/bulk', getShopInfo, async (req, res) => {
 
                 const qty = parseFloat(quantity);
                 const buyingPrice = parseFloat(buying_price);
-                const sellingPrice = parseFloat(selling_price) || buyingPrice * 1.3; // Default 30% markup
+                const sellingPrice = parseFloat(selling_price) || buyingPrice * 1.3;
                 const entryBuyingValue = qty * buyingPrice;
-                const entrySellingValue = qty * sellingPrice;
                 totalBuyingValue += entryBuyingValue;
 
-                // Insert stock entry - supplier_id can be null
-                await pool.execute(
-                    `INSERT INTO stock_in 
-                    (id, shop_id, product_id, batch_number, quantity, 
-                    buying_price, selling_price, total_buying_value,
-                    supplier_id, notes, received_by)
-                    VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, 
-                            ?, ?, ?, ?, ?, UUID_TO_BIN(?))`,
-                    [
-                        req.shopId,
-                        product_id,
-                        batch_number || null,
-                        qty,
-                        buyingPrice,
-                        sellingPrice,
-                        entryBuyingValue,  // total_buying_value
-                        supplier_id || null,
-                        notes || null,
-                        req.session.userId
-                    ]
-                );
+                // Insert stock entry
+                if (validatedSupplierId) {
+                    await pool.execute(
+                        `INSERT INTO stock_in 
+                        (id, shop_id, product_id, batch_number, quantity, 
+                        buying_price, selling_price, total_buying_value,
+                        supplier_id, notes, received_by)
+                        VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, 
+                                ?, ?, ?, UUID_TO_BIN(?), ?, UUID_TO_BIN(?))`,
+                        [
+                            req.shopId,
+                            product_id,
+                            batch_number || null,
+                            qty,
+                            buyingPrice,
+                            sellingPrice,
+                            entryBuyingValue,
+                            validatedSupplierId,
+                            notes || null,
+                            req.session.userId
+                        ]
+                    );
+                } else {
+                    await pool.execute(
+                        `INSERT INTO stock_in 
+                        (id, shop_id, product_id, batch_number, quantity, 
+                        buying_price, selling_price, total_buying_value,
+                        supplier_id, notes, received_by)
+                        VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, 
+                                ?, ?, ?, NULL, ?, UUID_TO_BIN(?))`,
+                        [
+                            req.shopId,
+                            product_id,
+                            batch_number || null,
+                            qty,
+                            buyingPrice,
+                            sellingPrice,
+                            entryBuyingValue,
+                            notes || null,
+                            req.session.userId
+                        ]
+                    );
+                }
 
                 // Update inventory
                 const [inventoryCheck] = await pool.execute(
@@ -1299,7 +1200,6 @@ router.post('/stock/bulk', getShopInfo, async (req, res) => {
                 );
 
                 if (inventoryCheck.length === 0) {
-                    // Insert new inventory record
                     await pool.execute(
                         `INSERT INTO inventory (id, shop_id, product_id, current_quantity, avg_cost, selling_price)
                          VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?)`,
@@ -1310,27 +1210,15 @@ router.post('/stock/bulk', getShopInfo, async (req, res) => {
                     const currentAvg = parseFloat(inventoryCheck[0].avg_cost);
                     const newAvg = ((currentQty * currentAvg) + entryBuyingValue) / (currentQty + qty);
 
-                    // Update selling price if provided
-                    if (sellingPrice > 0) {
-                        await pool.execute(
-                            `UPDATE inventory 
-                             SET current_quantity = current_quantity + ?,
-                                 avg_cost = ?,
-                                 selling_price = ?,
-                                 updated_at = NOW()
-                             WHERE product_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
-                            [qty, newAvg, sellingPrice, product_id, req.shopId]
-                        );
-                    } else {
-                        await pool.execute(
-                            `UPDATE inventory 
-                             SET current_quantity = current_quantity + ?,
-                                 avg_cost = ?,
-                                 updated_at = NOW()
-                             WHERE product_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
-                            [qty, newAvg, product_id, req.shopId]
-                        );
-                    }
+                    await pool.execute(
+                        `UPDATE inventory 
+                         SET current_quantity = current_quantity + ?,
+                             avg_cost = ?,
+                             selling_price = COALESCE(?, selling_price),
+                             updated_at = NOW()
+                         WHERE product_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
+                        [qty, newAvg, sellingPrice > 0 ? sellingPrice : null, product_id, req.shopId]
+                    );
                 }
 
                 // Get product info for response
@@ -1349,39 +1237,35 @@ router.post('/stock/bulk', getShopInfo, async (req, res) => {
                 });
             }
 
-            // Handle supplier transactions ONLY if supplier exists
+            // Handle supplier transactions
             const paymentAmount = parseFloat(payment_amount) || 0;
             
-            if (supplier_id) {
-                // Only process supplier transactions if supplier is selected
+            if (validatedSupplierId) {
+                const transactionAmount = totalBuyingValue;
+                
                 if (transaction_type === 'credit') {
-                    // For credit purchase, add to supplier balance
-                    await recordSupplierTransaction(supplier_id, 'debit', totalBuyingValue, 
-                        `Credit purchase - Batch: ${batch_number || 'No batch'}`, req);
+                    await recordSupplierTransaction(validatedSupplierId, 'debit', transactionAmount, 
+                        `Credit purchase - Batch: ${batch_number || 'No batch'}`);
                     
                 } else if (transaction_type === 'cash') {
-                    // For cash purchase with supplier, record purchase and payment
-                    await recordSupplierTransaction(supplier_id, 'debit', totalBuyingValue, 
-                        `Cash purchase - Batch: ${batch_number || 'No batch'}`, req);
+                    await recordSupplierTransaction(validatedSupplierId, 'debit', transactionAmount, 
+                        `Cash purchase - Batch: ${batch_number || 'No batch'}`);
                     
-                    // Record cash payment
-                    await recordSupplierTransaction(supplier_id, 'credit', paymentAmount, 
-                        `Cash payment for batch: ${batch_number || 'No batch'}`, req);
+                    await recordSupplierTransaction(validatedSupplierId, 'credit', paymentAmount, 
+                        `Cash payment for batch: ${batch_number || 'No batch'}`);
                     
                 } else if (transaction_type === 'partial') {
-                    // For partial payment
-                    await recordSupplierTransaction(supplier_id, 'debit', totalBuyingValue, 
-                        `Purchase with partial payment - Batch: ${batch_number || 'No batch'}`, req);
+                    await recordSupplierTransaction(validatedSupplierId, 'debit', transactionAmount, 
+                        `Purchase with partial payment - Batch: ${batch_number || 'No batch'}`);
                     
-                    // Record partial payment
-                    await recordSupplierTransaction(supplier_id, 'credit', paymentAmount, 
-                        `Partial payment for batch: ${batch_number || 'No batch'}`, req);
+                    await recordSupplierTransaction(validatedSupplierId, 'credit', paymentAmount, 
+                        `Partial payment for batch: ${batch_number || 'No batch'}`);
                 }
 
                 // Get supplier info
                 const [supplierInfo] = await pool.execute(
                     `SELECT name FROM suppliers WHERE id = UUID_TO_BIN(?)`,
-                    [supplier_id]
+                    [validatedSupplierId]
                 );
 
                 results.push({
@@ -1389,19 +1273,17 @@ router.post('/stock/bulk', getShopInfo, async (req, res) => {
                     transaction_type: transaction_type,
                     total_purchase: totalBuyingValue,
                     payment_made: paymentAmount,
-                    balance_after: (await getSupplierBalance(supplier_id, req)).balance
+                    balance_after: (await getSupplierBalance(validatedSupplierId)).balance
                 });
             } else {
-                // No supplier - just log it
                 results.push({
                     supplier: 'No Supplier (Self Purchase)',
-                    transaction_type: transaction_type,
+                    transaction_type: 'cash',
                     total_purchase: totalBuyingValue,
                     payment_made: paymentAmount
                 });
             }
 
-            // Commit transaction
             await pool.query('COMMIT');
 
             res.json({
@@ -1414,8 +1296,8 @@ router.post('/stock/bulk', getShopInfo, async (req, res) => {
             });
 
         } catch (error) {
-            // Rollback on error
             await pool.query('ROLLBACK');
+            console.error('Transaction error:', error);
             throw error;
         }
     } catch (err) {
@@ -1428,8 +1310,8 @@ router.post('/stock/bulk', getShopInfo, async (req, res) => {
 });
 
 // Helper function to record supplier transaction
-async function recordSupplierTransaction(supplierId, type, amount, description, req) {
-    const { pool, shopId } = req;
+async function recordSupplierTransaction(supplierId, type, amount, description, req, pool) {
+    const { shopId } = req;
     
     // Record transaction
     await pool.execute(
@@ -1475,6 +1357,23 @@ async function recordSupplierTransaction(supplierId, type, amount, description, 
             );
         }
     }
+}
+
+// Helper function to get supplier balance
+async function getSupplierBalance(supplierId, req, pool) {
+    const { shopId } = req;
+    
+    const [balance] = await pool.execute(
+        `SELECT 
+            total_debit,
+            total_credit,
+            (total_debit - total_credit) as balance
+         FROM supplier_balance 
+         WHERE supplier_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
+        [supplierId, shopId]
+    );
+
+    return balance[0] || { total_debit: 0, total_credit: 0, balance: 0 };
 }
 
 // Helper function to get supplier balance
