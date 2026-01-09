@@ -150,10 +150,13 @@ router.post('/', getShopData, async (req, res) => {
             ]
         );
 
-        // Initialize supplier balance
+        // Initialize supplier balance with ON DUPLICATE KEY UPDATE
         await pool.execute(
             `INSERT INTO supplier_balance (shop_id, supplier_id, total_debit, total_credit)
-             VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), 0, 0)`,
+            VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), 0, 0)
+            ON DUPLICATE KEY UPDATE 
+            shop_id = VALUES(shop_id),
+            supplier_id = VALUES(supplier_id)`,
             [req.session.shopId, supplierId]
         );
 
@@ -683,29 +686,26 @@ router.post('/reports/ledger/generate', getShopData, async (req, res) => {
 });
 
 // Add a debug route to check your database
-router.get('/debug/db-check', async (req, res) => {
-    try {
-        // Check shops table
-        const [shops] = await pool.execute('SELECT BIN_TO_UUID(id) as id, name FROM shops LIMIT 5');
+// router.get('/debug/db-check', async (req, res) => {
+//     try {
+//         // Check shops table
+//         const [shops] = await pool.execute('SELECT BIN_TO_UUID(id) as id, name FROM shops LIMIT 5');
         
-        // Check suppliers table
-        const [suppliers] = await pool.execute('SELECT BIN_TO_UUID(id) as id, BIN_TO_UUID(shop_id) as shop_id, name FROM suppliers LIMIT 5');
+//         // Check suppliers table
+//         const [suppliers] = await pool.execute('SELECT BIN_TO_UUID(id) as id, BIN_TO_UUID(shop_id) as shop_id, name FROM suppliers LIMIT 5');
         
-        // Check supplier_transactions table
-        const [transactions] = await pool.execute('SELECT COUNT(*) as count FROM supplier_transactions');
+//         // Check supplier_transactions table
+//         const [transactions] = await pool.execute('SELECT COUNT(*) as count FROM supplier_transactions');
         
-        res.json({
-            shops: shops,
-            suppliers: suppliers,
-            transaction_count: transactions[0].count,
-            session_shopId: req.session.shopId
-        });
-    } catch (err) {
-        res.json({ error: err.message });
-    }
-});
-
-// Keep all your other routes the same...
-// [All your existing routes for /, /:id/edit, /:id, etc.]
+//         res.json({
+//             shops: shops,
+//             suppliers: suppliers,
+//             transaction_count: transactions[0].count,
+//             session_shopId: req.session.shopId
+//         });
+//     } catch (err) {
+//         res.json({ error: err.message });
+//     }
+// });
 
 module.exports = router;

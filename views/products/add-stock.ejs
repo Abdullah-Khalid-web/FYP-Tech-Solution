@@ -1385,99 +1385,119 @@
             }
         }
 
-        // Submit stock
-    // Submit stock
+    // Validate before submitting
+    function validateBeforeSubmit() {
+        const supplierId = document.getElementById('supplierSelect').value;
+        const transactionType = document.getElementById('transactionType').value;
+        const paymentAmount = parseNumber(document.getElementById('paymentAmount').value);
+        
+        // If supplier is selected but empty (like when placeholder is selected)
+        if (supplierId === '' && transactionType !== 'cash') {
+            toastr.error('Please select a valid supplier for credit/partial transactions');
+            return false;
+        }
+        
+        return true;
+    }
+
+    // Update the submitStock function to include validation
     async function submitStock() {
-    // Validate entries
-    const validEntries = stockEntries.filter(entry => 
-        entry.product_id && entry.quantity > 0 && entry.buying_price > 0
-    );
+        // Validate entries
+        const validEntries = stockEntries.filter(entry => 
+            entry.product_id && entry.quantity > 0 && entry.buying_price > 0
+        );
 
-    if (validEntries.length === 0) {
-        toastr.error('Please add at least one product with valid quantity and price');
-        return;
-    }
-
-    // Get supplier and payment details
-    const supplierId = document.getElementById('supplierSelect').value;
-    const transactionType = document.getElementById('transactionType').value;
-    const paymentAmount = parseNumber(document.getElementById('paymentAmount').value);
-    
-    // Validate transaction type based on supplier selection
-    if (transactionType === 'credit' && !supplierId) {
-        toastr.error('Credit purchase requires a supplier selection');
-        return;
-    }
-    
-    // Validate payment amount based on transaction type
-    if (transactionType === 'cash') {
-        if (paymentAmount <= 0) {
-            toastr.error('Please enter a valid cash payment amount');
+        if (validEntries.length === 0) {
+            toastr.error('Please add at least one product with valid quantity and price');
             return;
         }
-        // For cash purchase, allow partial payments with warning
-        if (paymentAmount < totalBuyingValue) {
-            const confirmMessage = `Cash payment (₨${formatCurrency(paymentAmount)}) is less than total buying value (₨${formatCurrency(totalBuyingValue)}). This will be recorded as partial payment. Continue?`;
-            if (!confirm(confirmMessage)) {
+
+        // Validate form
+        if (!validateBeforeSubmit()) {
+            return;
+        }
+    
+
+        // Get supplier and payment details
+        const supplierId = document.getElementById('supplierSelect').value;
+        const transactionType = document.getElementById('transactionType').value;
+        const paymentAmount = parseNumber(document.getElementById('paymentAmount').value);
+        
+        // Validate transaction type based on supplier selection
+        if (transactionType === 'credit' && !supplierId) {
+            toastr.error('Credit purchase requires a supplier selection');
+            return;
+        }
+        
+        // Validate payment amount based on transaction type
+        if (transactionType === 'cash') {
+            if (paymentAmount <= 0) {
+                toastr.error('Please enter a valid cash payment amount');
+                return;
+            }
+            // For cash purchase, allow partial payments with warning
+            if (paymentAmount < totalBuyingValue) {
+                const confirmMessage = `Cash payment (₨${formatCurrency(paymentAmount)}) is less than total buying value (₨${formatCurrency(totalBuyingValue)}). This will be recorded as partial payment. Continue?`;
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+            }
+        }
+        
+        if (transactionType === 'partial') {
+            if (!supplierId) {
+                toastr.error('Partial payment requires a supplier selection');
+                return;
+            }
+            if (paymentAmount <= 0) {
+                toastr.error('Please enter a valid partial payment amount');
+                return;
+            }
+            if (paymentAmount >= totalBuyingValue) {
+                toastr.error('Partial payment must be less than total buying value');
                 return;
             }
         }
-    }
-    
-    if (transactionType === 'partial') {
-        if (!supplierId) {
-            toastr.error('Partial payment requires a supplier selection');
-            return;
-        }
-        if (paymentAmount <= 0) {
-            toastr.error('Please enter a valid partial payment amount');
-            return;
-        }
-        if (paymentAmount >= totalBuyingValue) {
-            toastr.error('Partial payment must be less than total buying value');
-            return;
-        }
-    }
 
-    // Prepare data - Supplier is optional now
-    const stockData = {
-        stock_entries: validEntries.map(entry => ({
-            product_id: entry.product_id,
-            quantity: entry.quantity,
-            buying_price: entry.buying_price,
-            selling_price: entry.selling_price,
-            buying_total: entry.buying_total,
-            selling_total: entry.selling_total
-        })),
-        supplier_id: supplierId || null,  // Can be null
-        batch_number: document.getElementById('batchNumber')?.value || null,
-        transaction_type: transactionType,
-        payment_amount: paymentAmount,
-        total_buying_value: totalBuyingValue,
-        total_selling_value: totalSellingValue,
-        notes: document.getElementById('notes')?.value || null
-    };
+        // Prepare data - Supplier is optional now
+        const stockData = {
+            stock_entries: validEntries.map(entry => ({
+                product_id: entry.product_id,
+                quantity: entry.quantity,
+                buying_price: entry.buying_price,
+                selling_price: entry.selling_price,
+                buying_total: entry.buying_total,
+                selling_total: entry.selling_total
+            })),
+            supplier_id: supplierId || null,  // Can be null
+            batch_number: document.getElementById('batchNumber')?.value || null,
+            transaction_type: transactionType,
+            payment_amount: paymentAmount,
+            total_buying_value: totalBuyingValue,
+            total_selling_value: totalSellingValue,
+            notes: document.getElementById('notes')?.value || null
+        };
 
-    console.log('Submitting stock data:', stockData);
+        console.log('Submitting stock data:', stockData);
 
-    // Show loading
-    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-    loadingModal.show();
+        // Show loading
+        const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        loadingModal.show();
 
-    try {
-        const response = await fetch('/products/stock/bulk', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify(stockData)
-        });
+        try {
+            const response = await fetch('/products/stock/bulk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(stockData)
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (data.success) {
-            loadingModal.hide();
+            if (data.success) {
+                loadingModal.hide();
             
             // Generate receipt URL
             const receiptUrl = `/products/stock/receipt/${data.receipt_id}?` + 

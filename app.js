@@ -65,128 +65,6 @@ app.use((req, res, next) => {
 });
 
 /* ------------------ LOAD USER + SHOP ------------------ */
-// app.use(async (req, res, next) => {
-//   try {
-//     if (req.session.userId) {
-//       const [[user]] = await pool.execute(
-//         `SELECT 
-//           BIN_TO_UUID(u.id) AS id,
-//           u.name,
-//           u.role_id,
-//           BIN_TO_UUID(u.shop_id) AS shop_id
-//         FROM users u
-//         WHERE u.id = UUID_TO_BIN(?)`,
-//         [req.session.userId]
-//       );
-
-
-
-//       if (users.length > 0) {
-//         const user = users[0];
-//         res.locals.user = {
-//           id: user.id,
-//           username: user.name,
-//           role: user.role,
-//           shopId: user.shop_id
-//         };
-
-//         if (user.shop_id) {
-//           const [shops] = await pool.execute(
-//             'SELECT * FROM shops WHERE id = ?',
-//             [user.shop_id]
-//           );
-
-//           if (shops.length > 0) {
-//             const shop = shops[0];
-//             // Override default shop data with actual shop data
-//             res.locals.shop = {
-//               id: shop.id,
-//               name: shop.name || 'Manage Hub',
-//               logo: shop.logo ? `/uploads/${shop.logo}` : '/images/default-logo.png',
-//               phone: shop.phone || '+92 000000000',
-//               address: shop.address || 'NextGenTech Solution, Quetta, Pakistan',
-//               email: shop.email || 'NextGenTechSolution@gmail.com',
-//               currency: shop.currency || 'PKR',
-//               primary_color: shop.primary_color || '#007bff',
-//               secondary_color: shop.secondary_color || '#6c757d'
-//             };
-//           }
-//         }
-//       }
-//     }
-//     next();
-//   } catch (err) {
-//     console.error('Error loading user/shop:', err);
-//     next();
-//   }
-// });
-
-/* ------------------ LOAD USER + SHOP ------------------ */
-// app.use(async (req, res, next) => {
-//   try {
-//     if (req.session.userId) {
-//       const [[user]] = await pool.execute(
-//         `SELECT 
-//           BIN_TO_UUID(u.id) AS id,
-//           u.name,
-//           u.role_id,
-//           BIN_TO_UUID(u.shop_id) AS shop_id
-//         FROM users u
-//         WHERE u.id = UUID_TO_BIN(?)`,
-//         [req.session.userId]
-//       );
-
-//       // FIX THIS PART - The variable name is wrong
-//       if (user) { // Changed from 'users' to 'user'
-//         res.locals.user = {
-//           id: user.id,
-//           username: user.name,
-//           role: user.role_id,
-//           shopId: user.shop_id
-//         };
-
-//         if (user.shop_id) {
-//           const [shops] = await pool.execute(
-//             `SELECT 
-//               BIN_TO_UUID(id) AS id,
-//               name,
-//               logo,
-//               phone,
-//               address,
-//               email,
-//               currency,
-//               primary_color,
-//               secondary_color
-//             FROM shops WHERE id = UUID_TO_BIN(?)`,
-//             [user.shop_id]
-//           );
-
-//           if (shops.length > 0) {
-//             const shop = shops[0];
-//             // Override default shop data with actual shop data
-//             res.locals.shop = {
-//               id: shop.id,
-//               name: shop.name || 'Manage Hub',
-//               logo: shop.logo ? `/uploads/${shop.logo}` : '/images/default-logo.png',
-//               phone: shop.phone || '+92 000000000',
-//               address: shop.address || 'NextGenTech Solution, Quetta, Pakistan',
-//               email: shop.email || 'NextGenTechSolution@gmail.com',
-//               currency: shop.currency || 'PKR',
-//               primary_color: shop.primary_color || '#007bff',
-//               secondary_color: shop.secondary_color || '#6c757d'
-//             };
-//           }
-//         }
-//       }
-//     }
-//     next();
-//   } catch (err) {
-//     console.error('Error loading user/shop:', err);
-//     next();
-//   }
-// });
-
-/* ------------------ LOAD USER + SHOP ------------------ */
 app.use(async (req, res, next) => {
   try {
     if (req.session.userId) {
@@ -299,7 +177,7 @@ app.use('/user_profile', require('./routes/user'));
 app.use('/shop_setting', require('./routes/shop'));
 app.use('/alerts', require('./routes/alerts'));
 app.use('/expenses', require('./routes/expenses'));
-app.use('/raw', require('./routes/raw-materials'));
+app.use('/raw', require('./routes/raw'));
 app.use('/admin', require('./routes/admin'));
 app.use('/suppliers', require('./routes/suppliers'));
 

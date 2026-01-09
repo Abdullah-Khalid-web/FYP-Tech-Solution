@@ -574,10 +574,35 @@ ADD `account_number` VARCHAR(50) NULL ,
 ADD `bank_name` VARCHAR(50) NULL,
 ADD `notes` VARCHAR(100) NULL ,
 ADD `city` VARCHAR(50) NULL ,
- ADD `country` VARCHAR(50) NULL;
+ADD `country` VARCHAR(50) NULL;
+
+-- Table structure for table `expenses`
+CREATE TABLE expenses (
+    id BINARY(16) PRIMARY KEY,
+    shop_id BINARY(16) NOT NULL,
+    category VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    expense_date DATE NOT NULL,
+    payment_method VARCHAR(50) DEFAULT 'cash',
+    receipt_number VARCHAR(100),
+    created_by BINARY(16) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_shop_id (shop_id),
+    INDEX idx_created_by (created_by),
+    INDEX idx_category (category),
+    INDEX idx_expense_date (expense_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
-
+-- Add supplier_id to stock movements
+ALTER TABLE raw_material_stock_movements 
+ADD COLUMN supplier_id BINARY(16) AFTER reference_id,
+ADD CONSTRAINT fk_supplier 
+FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL;
 
 -- Reset modes
 SET SQL_MODE=@OLD_SQL_MODE;
