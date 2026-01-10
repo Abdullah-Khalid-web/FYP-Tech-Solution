@@ -236,26 +236,102 @@ CREATE TABLE customers (
     INDEX idx_phone (`phone`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Table structure for table `user_loan`
+
+-- Create user_loan table (Master loan record)
 CREATE TABLE user_loan (
-    id BINARY(16) PRIMARY KEY ,
+    id BINARY(16) PRIMARY KEY,
     shop_id BINARY(16) NOT NULL,
     user_id BINARY(16) NOT NULL,
-    transaction_type ENUM('loan_given','loan_repayment') NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    balance DECIMAL(12,2) DEFAULT 0,
+    loan_number VARCHAR(50) NOT NULL UNIQUE,
+    loan_type ENUM('full', 'installment') NOT NULL DEFAULT 'full',
+    total_amount DECIMAL(12,2) NOT NULL,
+    total_paid DECIMAL(12,2) NOT NULL DEFAULT 0,
+    total_balance DECIMAL(12,2) GENERATED ALWAYS AS (total_amount - total_paid) STORED,
+    installments INT DEFAULT 1,
+    installment_amount DECIMAL(12,2),
     description TEXT,
-    recorded_by BINARY(16) DEFAULT NULL,
+    loan_date DATE NOT NULL,
+    status ENUM('active', 'paid', 'cancelled') DEFAULT 'active',
+    created_by BINARY(16),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (recorded_by) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_shop_id (`shop_id`),
-    INDEX idx_user_id (`user_id`),
-    INDEX idx_recorded_by (`recorded_by`),
-    INDEX idx_transaction_type (`transaction_type`),
-    INDEX idx_created_at (`created_at`)
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_shop_id (shop_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_loan_number (loan_number),
+    INDEX idx_status (status),
+    INDEX idx_loan_date (loan_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Create user_loan_ledger table (Transaction records)
+CREATE TABLE user_loan_ledger (
+    id BINARY(16) PRIMARY KEY,
+    loan_id BINARY(16) NOT NULL,
+    shop_id BINARY(16) NOT NULL,
+    user_id BINARY(16) NOT NULL,
+    transaction_type ENUM('credit', 'debit') NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    description TEXT,
+    payment_method VARCHAR(50) DEFAULT 'cash',
+    reference_id BINARY(16),
+    reference_type ENUM('salary_deduction', 'direct_payment', 'adjustment', 'other') DEFAULT 'direct_payment',
+    created_by BINARY(16),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (loan_id) REFERENCES user_loan(id) ON DELETE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_loan_id (loan_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_shop_id (shop_id),
+    INDEX idx_transaction_type (transaction_type),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Create trigger to update loan balance when ledger entries are added
+DELIMITER $$
+CREATE TRIGGER after_loan_ledger_insert
+AFTER INSERT ON user_loan_ledger
+FOR EACH ROW
+BEGIN
+    IF NEW.transaction_type = 'debit' THEN
+        -- Payment made, increase paid amount
+        UPDATE user_loan 
+        SET total_paid = total_paid + NEW.amount,
+            status = CASE 
+                WHEN (total_amount - (total_paid + NEW.amount)) <= 0 THEN 'paid'
+                ELSE 'active'
+            END
+        WHERE id = NEW.loan_id;
+    END IF;
+END$$
+DELIMITER ;
+
+-- Function to generate loan number
+DELIMITER $$
+CREATE FUNCTION generate_loan_number(shop_prefix VARCHAR(10)) 
+RETURNS VARCHAR(50) DETERMINISTIC
+BEGIN
+    DECLARE next_num INT;
+    DECLARE loan_number VARCHAR(50);
+    
+    -- Get next sequence number for today
+    SELECT COALESCE(MAX(SUBSTRING(loan_number, -4)), 0) + 1 INTO next_num
+    FROM user_loan 
+    WHERE loan_number LIKE CONCAT(shop_prefix, '-', DATE_FORMAT(NOW(), '%Y%m%d'), '-%');
+    
+    -- Generate loan number: SHOP-YYYYMMDD-0001
+    SET loan_number = CONCAT(
+        shop_prefix, '-', 
+        DATE_FORMAT(NOW(), '%Y%m%d'), '-',
+        LPAD(next_num, 4, '0')
+    );
+    
+    RETURN loan_number;
+END$$
+DELIMITER ;
 
 -- Table structure for table `user_salary`
 CREATE TABLE user_salary (
@@ -603,6 +679,10 @@ ALTER TABLE raw_material_stock_movements
 ADD COLUMN supplier_id BINARY(16) AFTER reference_id,
 ADD CONSTRAINT fk_supplier 
 FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL;
+
+ALTER TABLE user_salary 
+ADD updated_at TIMESTAMP NULL AFTER created_at;
+
 
 -- Reset modes
 SET SQL_MODE=@OLD_SQL_MODE;

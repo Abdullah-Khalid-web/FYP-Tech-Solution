@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Management - <%= (shop && shop.name) || 'My Shop' %>
-    </title>
+    <title>Employee Management - <%= (shop && shop.name) || 'My Shop' %></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
         :root {
             --primary: #4e73df;
@@ -43,31 +40,10 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
-        .dashboard-header h1 {
-            font-size: 1.8rem;
-            margin: 0;
-            color: var(--dark);
-        }
-
-        .datetime {
-            color: var(--secondary);
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-
-        .shop-info {
-            text-align: right;
-        }
-
         .shop-info p {
             margin: 5px 0;
             color: var(--dark);
             font-size: 0.9rem;
-        }
-
-        .shop-info i {
-            margin-right: 5px;
-            color: var(--primary);
         }
 
         /* Card Styles */
@@ -80,14 +56,6 @@
             border: none;
         }
 
-        .card-header {
-            background: transparent;
-            border-bottom: 1px solid #eee;
-            padding: 15px 20px;
-            margin: -20px -20px 20px -20px;
-            border-radius: 10px 10px 0 0;
-        }
-
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -95,64 +63,6 @@
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 1px solid #eee;
-        }
-
-        .section-header h2 {
-            font-size: 1.2rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            color: var(--dark);
-        }
-
-        .section-header h2 i {
-            margin-right: 10px;
-            color: var(--primary);
-        }
-
-        /* Quick Actions */
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
-        }
-
-        .action-card {
-            background: white;
-            border-radius: 8px;
-            padding: 15px 10px;
-            text-align: center;
-            text-decoration: none;
-            color: var(--dark);
-            transition: all 0.3s;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            border: 1px solid #eee;
-        }
-
-        .action-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border-color: var(--primary);
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        .action-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 1.2rem;
-            color: white;
-        }
-
-        .action-card p {
-            margin: 0;
-            font-size: 0.85rem;
-            font-weight: 500;
         }
 
         /* Stats Cards */
@@ -170,164 +80,14 @@
             border-radius: 10px;
             color: white;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
             transition: transform 0.3s;
-            position: relative;
-            overflow: hidden;
         }
 
         .stat-card:hover {
             transform: translateY(-5px);
         }
 
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .stat-card:hover::after {
-            opacity: 1;
-        }
-
-        .stat-icon {
-            font-size: 2rem;
-            margin-right: 20px;
-            z-index: 1;
-        }
-
-        .stat-info {
-            z-index: 1;
-        }
-
-        .stat-info h3 {
-            font-size: 1.8rem;
-            margin: 0;
-        }
-
-        .stat-info p {
-            margin: 5px 0 0;
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-
-        .stat-trend {
-            position: absolute;
-            bottom: 10px;
-            right: 15px;
-            font-size: 0.7rem;
-            opacity: 0.9;
-            display: flex;
-            align-items: center;
-        }
-
-        /* Table Styles */
-        .table-responsive {
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #e5e7eb;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 0;
-        }
-
-        .table th {
-            font-weight: 600;
-            color: var(--secondary);
-            font-size: 0.85rem;
-            text-align: left;
-            padding: 15px;
-            background: #f8f9fc;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .table td {
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.9rem;
-            vertical-align: middle;
-        }
-
-        .table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .table tr:hover td {
-            background-color: #f8f9fc;
-        }
-
-        /* Badge Styles */
-        .badge {
-            font-size: 0.75rem;
-            font-weight: 500;
-            padding: 0.35em 0.65em;
-        }
-
-        .badge-pill {
-            border-radius: 50px;
-        }
-
-        /* Button Styles */
-        .btn {
-            border-radius: 6px;
-            font-weight: 500;
-            padding: 8px 16px;
-        }
-
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.875rem;
-        }
-
-        .btn-outline {
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 8px 16px;
-            font-weight: 500;
-            color: #374151;
-            transition: all 0.2s ease;
-        }
-
-        .btn-outline:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            background: transparent;
-        }
-
-        .btn-outline-danger {
-            color: var(--danger);
-            border-color: var(--danger);
-        }
-
-        .btn-outline-danger:hover {
-            background-color: var(--danger);
-            color: white;
-        }
-
-        /* Form Controls */
-        .form-control,
-        .form-select {
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
-            padding: 8px 12px;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
-        }
-
-        /* Employee Card Styles */
+        /* Employee Card */
         .employee-card {
             border-radius: 10px;
             border: none;
@@ -342,22 +102,6 @@
         }
 
         /* Status Badges */
-        .badge-owner {
-            background-color: var(--danger);
-        }
-
-        .badge-manager {
-            background-color: var(--success);
-        }
-
-        .badge-cashier {
-            background-color: var(--info);
-        }
-
-        .badge-other {
-            background-color: var(--secondary);
-        }
-
         .badge-active {
             background-color: var(--success);
         }
@@ -366,18 +110,8 @@
             background-color: var(--secondary);
         }
 
-        .badge-pending {
-            background-color: var(--warning);
-            color: #000;
-        }
-
         .salary-paid {
             color: var(--success);
-            font-weight: bold;
-        }
-
-        .salary-pending {
-            color: var(--warning);
             font-weight: bold;
         }
 
@@ -391,44 +125,6 @@
             font-weight: bold;
         }
 
-        .bonus-positive {
-            color: var(--success);
-            font-weight: bold;
-        }
-
-        .fine-negative {
-            color: var(--danger);
-            font-weight: bold;
-        }
-
-        .installment-badge {
-            background-color: #6f42c1;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 2rem;
-            color: #6b7280;
-        }
-
-        .empty-state-icon {
-            font-size: 3rem;
-            color: #d1d5db;
-            margin-bottom: 1rem;
-        }
-
-        /* Pagination */
-        .page-item.active .page-link {
-            background-color: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .page-link {
-            color: var(--primary);
-        }
-
-        /* Floating Action Button */
         .floating-action-btn {
             position: fixed;
             bottom: 2rem;
@@ -447,29 +143,38 @@
             font-size: 1.5rem;
         }
 
-        /* Progress Bar */
-        .progress {
-            height: 8px;
-            border-radius: 4px;
+        /* Loan types */
+        .badge-installment {
+            background-color: #6f42c1;
         }
 
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 6px;
+        .badge-full {
+            background-color: #17a2b8;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
+        .badge-credit {
+            background-color: var(--success);
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 10px;
+        .badge-debit {
+            background-color: var(--danger);
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
+        /* Custom dropdown fix */
+        .dropdown-menu {
+            min-width: 200px;
+        }
+
+        /* Fix for dropdown positioning */
+        .dropdown {
+            position: relative;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #6b7280;
         }
 
         @media (max-width: 768px) {
@@ -478,28 +183,13 @@
                 text-align: center;
                 gap: 10px;
             }
-
-            .shop-info {
-                text-align: center;
-            }
-
+            
             .stats-grid {
                 grid-template-columns: 1fr;
-            }
-
-            .action-grid {
-                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            }
-
-            .action-buttons .btn {
-                width: 100%;
-                margin-right: 0;
-                margin-bottom: 5px;
             }
         }
     </style>
 </head>
-
 <body>
     <!-- Floating Action Button -->
     <button class="floating-action-btn" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
@@ -514,12 +204,8 @@
                 <p class="datetime" id="datetime"></p>
             </div>
             <div class="shop-info">
-                <p><i class="fas fa-store"></i>
-                    <%= (shop && shop.name) || 'My Shop' %>
-                </p>
-                <p><i class="fas fa-map-marker-alt"></i>
-                    <%= (shop && shop.address) || 'Add shop address' %>
-                </p>
+                <p><i class="fas fa-store"></i><%= (shop && shop.name) || 'My Shop' %></p>
+                <p><i class="fas fa-map-marker-alt"></i><%= (shop && shop.address) || 'Add shop address' %></p>
             </div>
         </div>
 
@@ -530,13 +216,8 @@
                     <i class="fas fa-users"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>
-                        <%= totalStats.totalEmployees %>
-                    </h3>
+                    <h3><%= totalStats.totalEmployees %></h3>
                     <p>Total Employees</p>
-                </div>
-                <div class="stat-trend">
-                    <i class="fas fa-users"></i> <span>All employees</span>
                 </div>
             </div>
 
@@ -545,13 +226,8 @@
                     <i class="fas fa-user-check"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>
-                        <%= totalStats.activeEmployees %>
-                    </h3>
+                    <h3><%= totalStats.activeEmployees %></h3>
                     <p>Active Employees</p>
-                </div>
-                <div class="stat-trend">
-                    <i class="fas fa-check-circle"></i> <span>Active</span>
                 </div>
             </div>
 
@@ -560,13 +236,8 @@
                     <i class="fas fa-money-bill-wave"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>
-                        <%= totalStats.pendingSalaries %>
-                    </h3>
+                    <h3><%= totalStats.pendingSalaries %></h3>
                     <p>Pending Salaries</p>
-                </div>
-                <div class="stat-trend">
-                    <i class="fas fa-clock"></i> <span>Pending</span>
                 </div>
             </div>
 
@@ -575,13 +246,8 @@
                     <i class="fas fa-hand-holding-usd"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>
-                        <%= totalStats.activeLoans %>
-                    </h3>
+                    <h3><%= totalStats.activeLoans %></h3>
                     <p>Active Loans</p>
-                </div>
-                <div class="stat-trend">
-                    <i class="fas fa-exclamation-circle"></i> <span>Active</span>
                 </div>
             </div>
         </div>
@@ -591,34 +257,27 @@
             <div class="section-header">
                 <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
             </div>
-            <div class="action-grid">
-                <a href="/" class="action-card">
-                    <div class="action-icon bg-primary">
-                        <i class="fas fa-home"></i>
-                    </div>
-                    <p>Dashboard</p>
-                </a>
-
-                <a href="#" class="action-card" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
-                    <div class="action-icon bg-success">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <p>Add Employee</p>
-                </a>
-
-                <a href="#" class="action-card" id="payAllSalaries">
-                    <div class="action-icon bg-info">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                    <p>Pay All Salaries</p>
-                </a>
-
-                <a href="#" class="action-card" id="quickLoanBtn">
-                    <div class="action-icon bg-warning">
-                        <i class="fas fa-hand-holding-usd"></i>
-                    </div>
-                    <p>Quick Loan</p>
-                </a>
+            <div class="row g-3">
+                <div class="col-md-3 col-6">
+                    <a href="/" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-home me-1"></i>Dashboard
+                    </a>
+                </div>
+                <div class="col-md-3 col-6">
+                    <button class="btn btn-outline-success w-100" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                        <i class="fas fa-user-plus me-1"></i>Add Employee
+                    </button>
+                </div>
+                <div class="col-md-3 col-6">
+                    <button class="btn btn-outline-info w-100" id="payAllSalaries">
+                        <i class="fas fa-money-bill-wave me-1"></i>Pay All Salaries
+                    </button>
+                </div>
+                <div class="col-md-3 col-6">
+                    <button class="btn btn-outline-warning w-100" data-bs-toggle="modal" data-bs-target="#quickLoanModal">
+                        <i class="fas fa-hand-holding-usd me-1"></i>Quick Loan
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -633,10 +292,11 @@
                         <label class="form-label">Role</label>
                         <select class="form-select" id="roleFilter">
                             <option value="all">All Roles</option>
-                            <option value="owner" <%=query.role==='owner' ? 'selected' : '' %>>Owner</option>
-                            <option value="manager" <%=query.role==='manager' ? 'selected' : '' %>>Manager</option>
-                            <option value="cashier" <%=query.role==='cashier' ? 'selected' : '' %>>Cashier</option>
-                            <option value="other" <%=query.role==='other' ? 'selected' : '' %>>Other</option>
+                            <% if (roles && roles.length > 0) { %>
+                                <% roles.forEach(role=> { %>
+                                    <option value="<%= role.role_name %>" <%= query.role===role.role_name ? 'selected' : '' %>><%= role.role_name %></option>
+                                <% }); %>
+                            <% } %>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -651,8 +311,7 @@
                         <label class="form-label">Search</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="searchFilter" placeholder="Search by name..."
-                                value="<%= query.search || '' %>">
+                            <input type="text" class="form-control" id="searchFilter" placeholder="Search by name..." value="<%= query.search || '' %>">
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -660,10 +319,8 @@
                         <select class="form-select" id="salaryFilter">
                             <option value="all">All Salaries</option>
                             <option value="low" <%=query.salaryRange==='low' ? 'selected' : '' %>>Below 20,000</option>
-                            <option value="medium" <%=query.salaryRange==='medium' ? 'selected' : '' %>>20,000 - 50,000
-                            </option>
-                            <option value="high" <%=query.salaryRange==='high' ? 'selected' : '' %>>Above 50,000
-                            </option>
+                            <option value="medium" <%=query.salaryRange==='medium' ? 'selected' : '' %>>20,000 - 50,000</option>
+                            <option value="high" <%=query.salaryRange==='high' ? 'selected' : '' %>>Above 50,000</option>
                         </select>
                     </div>
                     <div class="col-md-12">
@@ -673,9 +330,6 @@
                             </button>
                             <button class="btn btn-outline" id="resetFilters">
                                 <i class="fas fa-redo me-1"></i>Reset
-                            </button>
-                            <button class="btn btn-outline-success" id="exportDataBtn">
-                                <i class="fas fa-download me-1"></i>Export
                             </button>
                         </div>
                     </div>
@@ -687,71 +341,41 @@
         <div class="card">
             <div class="section-header">
                 <h2><i class="fas fa-users"></i> Employees</h2>
-                <span class="badge bg-primary">
-                    <%= employees.length %> of <%= totalStats.totalEmployees %> employees
-                </span>
+                <span class="badge bg-primary"><%= employees.length %> of <%= totalStats.totalEmployees %> employees</span>
             </div>
             <div class="card-body">
                 <% if (employees.length> 0) { %>
-                    <!-- Grid View -->
                     <div class="row g-3" id="gridView">
                         <% employees.forEach(emp=> {
                             const currentMonth = new Date().toISOString().slice(0, 7);
                             const showNotPaid = !emp.current_salary || emp.current_salary.status !== 'paid';
-                            const progress = emp.total_active_loans > 0 ? Math.min(100, (emp.total_active_loans /
-                            (emp.salary || 1)) * 100) : 0;
+                            const progress = emp.total_active_loans > 0 ? Math.min(100, (emp.total_active_loans / (emp.salary || 1)) * 100) : 0;
                             %>
                             <div class="col-xl-4 col-lg-6 col-md-6">
                                 <div class="card employee-card h-100">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start mb-3">
                                             <div>
-                                                <h5 class="card-title mb-1">
-                                                    <%= emp.name %>
-                                                </h5>
-                                                <p class="text-muted small mb-0">
-                                                    <%= emp.email %>
-                                                </p>
+                                                <h5 class="card-title mb-1"><%= emp.name %></h5>
+                                                <p class="text-muted small mb-0"><%= emp.email %></p>
                                             </div>
                                             <div class="dropdown">
-                                                <button class="btn btn-sm btn-outline border-0" type="button"
-                                                    data-bs-toggle="dropdown">
+                                                <button class="btn btn-sm btn-outline border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                     <i class="fas fa-ellipsis-v"></i>
                                                 </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item view-employee" href="#"
-                                                            data-emp-id="<%= emp.id %>"><i
-                                                                class="fas fa-eye me-2"></i>View Details</a></li>
-                                                    <li><a class="dropdown-item edit-employee" href="#"
-                                                            data-emp-id="<%= emp.id %>"><i
-                                                                class="fas fa-edit me-2"></i>Edit</a></li>
-                                                    <li>
-                                                        <hr class="dropdown-divider">
-                                                    </li>
-                                                    <li><a class="dropdown-item manage-salary" href="#"
-                                                            data-emp-id="<%= emp.id %>"><i
-                                                                class="fas fa-money-bill me-2"></i>Manage Salary</a>
-                                                    </li>
-                                                    <li><a class="dropdown-item manage-loan" href="#"
-                                                            data-emp-id="<%= emp.id %>"><i
-                                                                class="fas fa-hand-holding-usd me-2"></i>Manage Loan</a>
-                                                    </li>
-                                                    <li>
-                                                        <hr class="dropdown-divider">
-                                                    </li>
+                                                <ul class="dropdown-menu" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(-131px, 35px);">
+                                                    <li><a class="dropdown-item view-employee" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-eye me-2"></i>View Details</a></li>
+                                                    <li><a class="dropdown-item edit-employee" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li><a class="dropdown-item manage-salary" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-money-bill me-2"></i>Manage Salary</a></li>
+                                                    <li><a class="dropdown-item manage-loan" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-hand-holding-usd me-2"></i>Manage Loan</a></li>
+                                                    <li><hr class="dropdown-divider"></li>
                                                     <% if (emp.status==='active' ) { %>
-                                                        <li><a class="dropdown-item deactivate-employee" href="#"
-                                                                data-emp-id="<%= emp.id %>"><i
-                                                                    class="fas fa-pause me-2"></i>Deactivate</a></li>
-                                                        <% } else { %>
-                                                            <li><a class="dropdown-item activate-employee" href="#"
-                                                                    data-emp-id="<%= emp.id %>"><i
-                                                                        class="fas fa-play me-2"></i>Activate</a></li>
-                                                            <% } %>
-                                                                <li><a class="dropdown-item text-danger delete-employee"
-                                                                        href="#" data-emp-id="<%= emp.id %>"><i
-                                                                            class="fas fa-trash me-2"></i>Delete</a>
-                                                                </li>
+                                                        <li><a class="dropdown-item deactivate-employee" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-pause me-2"></i>Deactivate</a></li>
+                                                    <% } else { %>
+                                                        <li><a class="dropdown-item activate-employee" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-play me-2"></i>Activate</a></li>
+                                                    <% } %>
+                                                    <li><a class="dropdown-item text-danger delete-employee" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-trash me-2"></i>Delete</a></li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -759,16 +383,11 @@
                                         <div class="row mb-3">
                                             <div class="col-6">
                                                 <small class="text-muted">Role</small>
-                                                <div><span class="badge badge-<%= emp.role %>">
-                                                        <%= emp.role %>
-                                                    </span></div>
+                                                <div><span class="badge bg-secondary"><%= emp.role %></span></div>
                                             </div>
                                             <div class="col-6">
                                                 <small class="text-muted">Status</small>
-                                                <div><span
-                                                        class="badge <%= emp.status === 'active' ? 'badge-active' : 'badge-inactive' %>">
-                                                        <%= emp.status %>
-                                                    </span></div>
+                                                <div><span class="badge <%= emp.status === 'active' ? 'badge-active' : 'badge-inactive' %>"><%= emp.status %></span></div>
                                             </div>
                                         </div>
 
@@ -776,11 +395,10 @@
                                             <small class="text-muted">Salary</small>
                                             <div class="fw-bold text-primary">
                                                 <% if (emp.salary) { %>
-                                                    <%= shop.currency %>
-                                                        <%= emp.salary.toLocaleString() %>
-                                                            <% } else { %>
-                                                                <span class="text-muted">Not set</span>
-                                                                <% } %>
+                                                    <%= shop.currency %> <%= emp.salary.toLocaleString() %>
+                                                <% } else { %>
+                                                    <span class="text-muted">Not set</span>
+                                                <% } %>
                                             </div>
                                         </div>
 
@@ -789,162 +407,45 @@
                                             <div>
                                                 <% if (showNotPaid) { %>
                                                     <span class="badge bg-danger">Not Paid</span>
-                                                    <button class="btn btn-sm btn-success ms-2 quick-pay-btn"
-                                                        data-emp-id="<%= emp.id %>" data-salary="<%= emp.salary %>">
+                                                    <button class="btn btn-sm btn-success ms-2 quick-pay-btn" data-emp-id="<%= emp.id %>" data-salary="<%= emp.salary %>">
                                                         Pay Now
                                                     </button>
-                                                    <% } else { %>
-                                                        <span class="salary-paid">Paid</span>
-                                                        <% if (emp.current_salary && emp.current_salary.net_amount <
-                                                            emp.current_salary.amount) { %>
-                                                            <small class="text-warning d-block">(-<%= shop.currency %>
-                                                                    <%= (emp.current_salary.amount -
-                                                                        emp.current_salary.net_amount).toLocaleString()
-                                                                        %>)</small>
-                                                            <% } %>
-                                                                <% } %>
+                                                <% } else { %>
+                                                    <span class="salary-paid">Paid</span>
+                                                <% } %>
                                             </div>
                                         </div>
 
                                         <div class="mb-3">
                                             <small class="text-muted">Active Loans</small>
-                                            <div
-                                                class="fw-bold <%= emp.total_active_loans > 0 ? 'loan-active' : 'text-muted' %>">
-                                                <%= shop.currency %>
-                                                    <%= (emp.total_active_loans || 0).toLocaleString() %>
+                                            <div class="fw-bold <%= emp.total_active_loans > 0 ? 'loan-active' : 'text-muted' %>">
+                                                <%= shop.currency %> <%= (emp.total_active_loans || 0).toLocaleString() %>
                                             </div>
                                             <% if (emp.total_active_loans> 0) { %>
                                                 <div class="progress mt-1">
-                                                    <div class="progress-bar bg-danger" role="progressbar"
-                                                        style="width: '<%= progress %>%';"></div>
+                                                    <div class="progress-bar bg-danger" role="progressbar" style="width: '<%= progress %>';"></div>
                                                 </div>
-                                                <% } %>
+                                            <% } %>
                                         </div>
 
                                         <div class="d-flex gap-1 mt-3">
-                                            <button class="btn btn-sm btn-outline-primary flex-fill view-employee"
-                                                data-emp-id="<%= emp.id %>">
+                                            <button class="btn btn-sm btn-outline-primary flex-fill view-employee" data-emp-id="<%= emp.id %>" title="View Details">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-success flex-fill manage-salary"
-                                                data-emp-id="<%= emp.id %>">
+                                            <button class="btn btn-sm btn-outline-success flex-fill manage-salary" data-emp-id="<%= emp.id %>" title="Salary">
                                                 <i class="fas fa-money-bill"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-warning flex-fill manage-loan"
-                                                data-emp-id="<%= emp.id %>">
+                                            <button class="btn btn-sm btn-outline-warning flex-fill manage-loan" data-emp-id="<%= emp.id %>" title="Loan">
                                                 <i class="fas fa-hand-holding-usd"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-info flex-fill loan-payment"
-                                                data-emp-id="<%= emp.id %>">
+                                            <button class="btn btn-sm btn-outline-info flex-fill direct-loan-payment" data-emp-id="<%= emp.id %>" title="Loan Payment">
                                                 <i class="fas fa-money-check"></i>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <% }); %>
-                    </div>
-
-                    <!-- Table View (Hidden by Default) -->
-                    <div class="table-responsive d-none" id="tableView">
-                        <table class="table table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Contact</th>
-                                    <th>Role</th>
-                                    <th class="text-end">Salary</th>
-                                    <th>Status</th>
-                                    <th>Current Month</th>
-                                    <th class="text-end">Loans</th>
-                                    <th width="120px">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% employees.forEach(emp=> {
-                                    const currentMonth = new Date().toISOString().slice(0, 7);
-                                    const showNotPaid = !emp.current_salary || emp.current_salary.status !== 'paid';
-                                    %>
-                                    <tr class="align-middle">
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
-                                                    style="width: 40px; height: 40px;">
-                                                    <%= emp.name.charAt(0).toUpperCase() %>
-                                                </div>
-                                                <div>
-                                                    <strong class="d-block">
-                                                        <%= emp.name %>
-                                                    </strong>
-                                                    <small class="text-muted">
-                                                        <%= emp.email %>
-                                                    </small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <small class="d-block">
-                                                <%= emp.phone || 'N/A' %>
-                                            </small>
-                                            <small class="text-muted">
-                                                <%= emp.cnic || 'No CNIC' %>
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-<%= emp.role %>">
-                                                <%= emp.role %>
-                                            </span>
-                                        </td>
-                                        <td class="text-end fw-bold text-primary">
-                                            <% if (emp.salary) { %>
-                                                <%= shop.currency %>
-                                                    <%= emp.salary.toLocaleString() %>
-                                                        <% } else { %>
-                                                            <span class="text-muted">Not set</span>
-                                                            <% } %>
-                                        </td>
-                                        <td>
-                                            <span
-                                                class="badge <%= emp.status === 'active' ? 'badge-active' : 'badge-inactive' %>">
-                                                <%= emp.status %>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <% if (showNotPaid) { %>
-                                                <span class="badge bg-danger">Not Paid</span>
-                                                <button class="btn btn-sm btn-success ms-1 quick-pay-btn"
-                                                    data-emp-id="<%= emp.id %>" data-salary="<%= emp.salary %>">
-                                                    <i class="fas fa-money-bill"></i>
-                                                </button>
-                                                <% } else { %>
-                                                    <span class="salary-paid">Paid</span>
-                                                    <% } %>
-                                        </td>
-                                        <td
-                                            class="text-end fw-bold <%= emp.total_active_loans > 0 ? 'loan-active' : 'text-muted' %>">
-                                            <%= shop.currency %>
-                                                <%= (emp.total_active_loans || 0).toLocaleString() %>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-primary view-employee"
-                                                    data-emp-id="<%= emp.id %>" title="View">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                                <button class="btn btn-outline-success manage-salary"
-                                                    data-emp-id="<%= emp.id %>" title="Salary">
-                                                    <i class="fas fa-money-bill"></i>
-                                                </button>
-                                                <button class="btn btn-outline-warning manage-loan"
-                                                    data-emp-id="<%= emp.id %>" title="Loan">
-                                                    <i class="fas fa-hand-holding-usd"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <% }); %>
-                            </tbody>
-                        </table>
+                        <% }); %>
                     </div>
 
                     <!-- Pagination -->
@@ -953,46 +454,38 @@
                             <nav aria-label="Page navigation">
                                 <ul class="pagination justify-content-center mb-0">
                                     <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                                        <a class="page-link"
-                                            href="/EmpMgmt?page=<%= currentPage - 1 %><%= buildQueryString(query) %>"
-                                            aria-label="Previous">
+                                        <a class="page-link" href="/EmpMgmt?page=<%= currentPage - 1 %><%= buildQueryString(query) %>" aria-label="Previous">
                                             <span aria-hidden="true">&laquo;</span>
                                         </a>
                                     </li>
                                     <% for (let i=1; i <=totalPages; i++) { %>
                                         <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                            <a class="page-link"
-                                                href="/EmpMgmt?page=<%= i %><%= buildQueryString(query) %>">
-                                                <%= i %>
-                                            </a>
+                                            <a class="page-link" href="/EmpMgmt?page=<%= i %><%= buildQueryString(query) %>"><%= i %></a>
                                         </li>
-                                        <% } %>
-                                            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                                                <a class="page-link"
-                                                    href="/EmpMgmt?page=<%= currentPage + 1 %><%= buildQueryString(query) %>"
-                                                    aria-label="Next">
-                                                    <span aria-hidden="true">&raquo;</span>
-                                                </a>
-                                            </li>
+                                    <% } %>
+                                    <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                        <a class="page-link" href="/EmpMgmt?page=<%= currentPage + 1 %><%= buildQueryString(query) %>" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
                                 </ul>
                             </nav>
                         </div>
-                        <% } %>
-                            <% } else { %>
-                                <div class="text-center py-5">
-                                    <div class="empty-state">
-                                        <div class="empty-state-icon">
-                                            <i class="fas fa-users"></i>
-                                        </div>
-                                        <h5>No employees found</h5>
-                                        <p class="text-muted mb-3">No employees match your current filters.</p>
-                                        <button class="btn btn-primary" data-bs-toggle="modal"
-                                            data-bs-target="#addEmployeeModal">
-                                            <i class="fas fa-plus me-2"></i>Add Your First Employee
-                                        </button>
-                                    </div>
-                                </div>
-                                <% } %>
+                    <% } %>
+                <% } else { %>
+                    <div class="text-center py-5">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-users fa-3x text-muted"></i>
+                            </div>
+                            <h5>No employees found</h5>
+                            <p class="text-muted mb-3">No employees match your current filters.</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                                <i class="fas fa-plus me-2"></i>Add Your First Employee
+                            </button>
+                        </div>
+                    </div>
+                <% } %>
             </div>
         </div>
     </div>
@@ -1010,13 +503,11 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="name" required
-                                    placeholder="Enter full name">
+                                <input type="text" class="form-control" name="name" required placeholder="Enter full name">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" name="email" required
-                                    placeholder="Enter email address">
+                                <input type="email" class="form-control" name="email" required placeholder="Enter email address">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Phone</label>
@@ -1030,31 +521,28 @@
                                 <label class="form-label">Role <span class="text-danger">*</span></label>
                                 <select class="form-select" name="role" required>
                                     <option value="">Select Role</option>
-                                    <option value="owner">Owner</option>
-                                    <option value="manager">Manager</option>
-                                    <option value="cashier">Cashier</option>
-                                    <option value="other">Other</option>
+                                    <% if (roles && roles.length > 0) { %>
+                                        <% roles.forEach(role=> { %>
+                                            <option value="<%= role.role_name %>"><%= role.role_name %></option>
+                                        <% }); %>
+                                    <% } %>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Salary (<%= shop.currency %>)</label>
-                                <input type="number" class="form-control" name="salary" step="0.01"
-                                    placeholder="Enter salary amount">
+                                <input type="number" class="form-control" name="salary" step="0.01" placeholder="Enter salary amount">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" name="password" required
-                                    placeholder="Enter password">
+                                <input type="password" class="form-control" name="password" required placeholder="Enter password">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" name="confirmPassword" required
-                                    placeholder="Confirm password">
+                                <input type="password" class="form-control" name="confirmPassword" required placeholder="Confirm password">
                             </div>
                             <div class="col-12 mb-3">
                                 <label class="form-label">Notes</label>
-                                <textarea class="form-control" name="notes" rows="3"
-                                    placeholder="Add any notes about this employee..."></textarea>
+                                <textarea class="form-control" name="notes" rows="3" placeholder="Add any notes about this employee..."></textarea>
                             </div>
                         </div>
                     </form>
@@ -1080,8 +568,7 @@
                 <div class="modal-body">
                     <form id="salaryForm">
                         <input type="hidden" id="salaryUserId" name="user_id">
-                        <input type="hidden" id="salaryMonth" name="month"
-                            value="<%= new Date().toISOString().slice(0, 7) %>">
+                        <input type="hidden" id="salaryMonth" name="month" value="<%= new Date().toISOString().slice(0, 7) %>">
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -1089,29 +576,27 @@
                                 <input type="text" class="form-control" id="salaryEmpName" readonly>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Base Salary (<%= shop.currency || 'PKR' %>)</label>
+                                <label class="form-label">Base Salary (<%= shop.currency %>)</label>
                                 <input type="number" class="form-control" id="salaryBaseAmount" readonly>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Bonus (<%= shop.currency || 'PKR' %>)</label>
-                                <input type="number" class="form-control" id="salaryBonus" name="bonus" value="0"
-                                    min="0" step="0.01">
+                                <label class="form-label">Bonus (<%= shop.currency %>)</label>
+                                <input type="number" class="form-control" id="salaryBonus" name="bonus" value="0" min="0" step="0.01">
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Fine/Deduction (<%= shop.currency || 'PKR' %>)</label>
-                                <input type="number" class="form-control" id="salaryFine" name="fine" value="0" min="0"
-                                    step="0.01">
+                                <label class="form-label">Fine/Deduction (<%= shop.currency %>)</label>
+                                <input type="number" class="form-control" id="salaryFine" name="fine" value="0" min="0" step="0.01">
                             </div>
                         </div>
 
                         <div class="mb-3" id="loanDeductionSection">
                             <div class="card">
                                 <div class="card-header bg-light">
-                                    <h6 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Loan Deductions</h6>
-                                    <small class="text-muted">Loans with installments will be auto-deducted</small>
+                                    <h6 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Loan Installment Deductions</h6>
+                                    <small class="text-muted">Installment loans will be auto-deducted</small>
                                 </div>
                                 <div class="card-body p-3" id="loanDeductionList">
                                     <!-- Loan items populated here -->
@@ -1123,8 +608,7 @@
                             <div class="row">
                                 <div class="col-6"><strong>Total Payable:</strong></div>
                                 <div class="col-6 text-end">
-                                    <strong id="totalPayableAmount">0</strong>
-                                    <%= shop.currency || 'PKR' %>
+                                    <strong id="totalPayableAmount">0</strong> <%= shop.currency %>
                                 </div>
                             </div>
                         </div>
@@ -1132,8 +616,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Payment Date</label>
-                                <input type="date" class="form-control" id="salaryPaidOn" name="paid_on"
-                                    value="<%= new Date().toISOString().split('T')[0] %>">
+                                <input type="date" class="form-control" id="salaryPaidOn" name="paid_on" value="<%= new Date().toISOString().split('T')[0] %>">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Payment Method</label>
@@ -1141,15 +624,13 @@
                                     <option value="cash">Cash</option>
                                     <option value="bank">Bank Transfer</option>
                                     <option value="check">Check</option>
-                                    <option value="other">Other</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Notes</label>
-                            <textarea class="form-control" id="salaryNotes" name="notes" rows="2"
-                                placeholder="Add any notes about this payment..."></textarea>
+                            <textarea class="form-control" id="salaryNotes" name="notes" rows="2" placeholder="Add any notes about this payment..."></textarea>
                         </div>
                     </form>
                 </div>
@@ -1174,14 +655,12 @@
                 <div class="modal-body">
                     <ul class="nav nav-tabs mb-3" id="loanTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="new-loan-tab" data-bs-toggle="tab"
-                                data-bs-target="#new-loan" type="button" role="tab">
+                            <button class="nav-link active" id="new-loan-tab" data-bs-toggle="tab" data-bs-target="#new-loan" type="button" role="tab">
                                 <i class="fas fa-plus me-1"></i>New Loan
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="existing-loans-tab" data-bs-toggle="tab"
-                                data-bs-target="#existing-loans" type="button" role="tab">
+                            <button class="nav-link" id="existing-loans-tab" data-bs-toggle="tab" data-bs-target="#existing-loans" type="button" role="tab">
                                 <i class="fas fa-list me-1"></i>Existing Loans
                             </button>
                         </li>
@@ -1199,17 +678,15 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label">Loan Amount (<%= shop.currency || 'PKR' %>) <span
-                                                class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="loanAmount" name="amount" required
-                                        min="1" step="0.01">
+                                    <label class="form-label">Loan Amount (<%= shop.currency %>) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="loanAmount" name="amount" required min="1" step="0.01">
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label">Repayment Type</label>
-                                    <select class="form-select" id="loanRepaymentType" name="repayment_type">
-                                        <option value="one_time">One-time Payment</option>
-                                        <option value="installments">Installments</option>
+                                    <label class="form-label">Loan Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="loanType" name="loan_type" required>
+                                        <option value="full">Full Payment</option>
+                                        <option value="installment">Installments</option>
                                     </select>
                                 </div>
 
@@ -1217,27 +694,23 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <label class="form-label">Number of Installments</label>
-                                            <input type="number" class="form-control" id="loanInstallments"
-                                                name="installments" min="2" max="24" value="3">
+                                            <input type="number" class="form-control" id="loanInstallments" name="installments" min="2" max="24" value="3">
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Monthly Installment</label>
-                                            <input type="number" class="form-control" id="loanInstallmentAmount"
-                                                name="installment_amount" readonly>
+                                            <input type="number" class="form-control" id="loanInstallmentAmount" name="installment_amount" readonly>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Reason <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="loanReason" name="reason" required
-                                        placeholder="e.g., Emergency, Medical, etc.">
+                                    <input type="text" class="form-control" id="loanReason" name="reason" required placeholder="e.g., Emergency, Medical, etc.">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Loan Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="loanTakenOn" name="taken_on"
-                                        value="<%= new Date().toISOString().split('T')[0] %>" required>
+                                    <input type="date" class="form-control" id="loanTakenOn" name="taken_on" value="<%= new Date().toISOString().split('T')[0] %>" required>
                                 </div>
                             </form>
                         </div>
@@ -1292,10 +765,11 @@
                                 <label class="form-label">Role <span class="text-danger">*</span></label>
                                 <select class="form-select" id="editRole" name="role" required>
                                     <option value="">Select Role</option>
-                                    <option value="owner">Owner</option>
-                                    <option value="manager">Manager</option>
-                                    <option value="cashier">Cashier</option>
-                                    <option value="other">Other</option>
+                                    <% if (roles && roles.length > 0) { %>
+                                        <% roles.forEach(role=> { %>
+                                            <option value="<%= role.role_name %>"><%= role.role_name %></option>
+                                        <% }); %>
+                                    <% } %>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -1361,24 +835,17 @@
                             <select class="form-select" id="quickLoanEmployee" required>
                                 <option value="">Select Employee</option>
                                 <% employees.forEach(emp=> { %>
-                                    <option value="<%= emp.id %>">
-                                        <%= emp.name %> - <%= emp.role %>
-                                    </option>
-                                    <% }); %>
+                                    <option value="<%= emp.id %>"><%= emp.name %> - <%= emp.role %></option>
+                                <% }); %>
                             </select>
                         </div>
-
                         <div class="mb-3">
-                            <label class="form-label">Loan Amount (<%= shop.currency %>) <span
-                                        class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="quickLoanAmount" name="amount" required
-                                min="1" step="0.01">
+                            <label class="form-label">Loan Amount (<%= shop.currency %>) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="quickLoanAmount" name="amount" required min="1" step="0.01">
                         </div>
-
                         <div class="mb-3">
                             <label class="form-label">Reason <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="quickLoanReason" name="reason" required
-                                placeholder="Short reason for loan">
+                            <input type="text" class="form-control" id="quickLoanReason" name="reason" required placeholder="Short reason for loan">
                         </div>
                     </form>
                 </div>
@@ -1386,6 +853,87 @@
                     <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="saveQuickLoanBtn">
                         <i class="fas fa-save me-1"></i>Save Loan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Direct Loan Payment Modal -->
+    <div class="modal fade" id="directLoanPaymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-money-check me-2"></i>Direct Loan Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="directLoanPaymentForm">
+                        <input type="hidden" id="directPaymentUserId" name="user_id">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Employee</label>
+                            <input type="text" class="form-control" id="directPaymentEmpName" readonly>
+                        </div>
+
+                        <div class="mb-3" id="loanSelectionSection">
+                            <label class="form-label">Select Payment Method</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="paymentType" id="payAllLoans" value="all" checked>
+                                <label class="form-check-label" for="payAllLoans">
+                                    <strong>Pay Against All Active Loans (Oldest First)</strong>
+                                </label>
+                            </div>
+                            
+                            <div id="specificLoanSection">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="paymentType" id="paySpecificLoan" value="specific">
+                                    <label class="form-check-label" for="paySpecificLoan">
+                                        <strong>Pay Specific Loan</strong>
+                                    </label>
+                                </div>
+                                
+                                <div class="mt-3" id="loanListContainer">
+                                    <!-- Loans will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Total Loan Balance (<%= shop.currency %>)</label>
+                                <input type="text" class="form-control" id="totalLoanBalance" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Payment Amount (<%= shop.currency %>) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="directPaymentAmount" name="amount" required min="1" step="0.01">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                            <select class="form-select" id="directPaymentMethod" name="payment_method">
+                                <option value="cash">Cash</option>
+                                <option value="bank">Bank Transfer</option>
+                                <option value="check">Check</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Payment Date</label>
+                            <input type="date" class="form-control" id="directPaymentDate" name="payment_date" value="<%= new Date().toISOString().split('T')[0] %>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description/Notes</label>
+                            <textarea class="form-control" id="directPaymentNotes" name="description" rows="3" placeholder="Enter payment description..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="processDirectPaymentBtn">
+                        <i class="fas fa-check me-1"></i>Process Payment
                     </button>
                 </div>
             </div>
@@ -1406,116 +954,361 @@
                 minute: '2-digit',
                 second: '2-digit'
             };
-            document.getElementById('datetime').textContent = now.toLocaleDateString('en-IN', options);
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-US', options);
         }
 
         setInterval(updateDateTime, 1000);
         updateDateTime(); // Initial call
 
+        // Initialize modals
+        let modals = {};
+        
+        function initializeModals() {
+            const modalIds = [
+                'addEmployeeModal',
+                'salaryModal', 
+                'loanModal',
+                'editEmployeeModal',
+                'employeeDetailsModal',
+                'quickLoanModal',
+                'directLoanPaymentModal'
+            ];
+            
+            modalIds.forEach(modalId => {
+                const modalElement = document.getElementById(modalId);
+                if (modalElement) {
+                    modals[modalId] = new bootstrap.Modal(modalElement);
+                }
+            });
+        }
+
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function () {
+            initializeModals();
             initializeEventListeners();
+            setupEventDelegation();
         });
+
+        function setupEventDelegation() {
+            // Handle click events on dynamically loaded elements
+            document.addEventListener('click', function (e) {
+                // View Employee
+                if (e.target.closest('.view-employee')) {
+                    e.preventDefault();
+                    const button = e.target.closest('.view-employee');
+                    const empId = button.getAttribute('data-emp-id');
+                    viewEmployeeDetails(empId);
+                }
+                
+                // Edit Employee
+                if (e.target.closest('.edit-employee')) {
+                    e.preventDefault();
+                    const button = e.target.closest('.edit-employee');
+                    const empId = button.getAttribute('data-emp-id');
+                    editEmployee(empId);
+                }
+                
+                // Manage Salary
+                if (e.target.closest('.manage-salary')) {
+                    e.preventDefault();
+                    const button = e.target.closest('.manage-salary');
+                    const empId = button.getAttribute('data-emp-id');
+                    manageSalary(empId);
+                }
+                
+                // Manage Loan
+                if (e.target.closest('.manage-loan')) {
+                    e.preventDefault();
+                    const button = e.target.closest('.manage-loan');
+                    const empId = button.getAttribute('data-emp-id');
+                    manageLoan(empId);
+                }
+                
+                // Direct Loan Payment
+                if (e.target.closest('.direct-loan-payment')) {
+                    e.preventDefault();
+                    const button = e.target.closest('.direct-loan-payment');
+                    const empId = button.getAttribute('data-emp-id');
+                    openDirectLoanPayment(empId);
+                }
+                
+                // Quick Pay Salary
+                if (e.target.closest('.quick-pay-btn')) {
+                    e.preventDefault();
+                    const button = e.target.closest('.quick-pay-btn');
+                    const empId = button.getAttribute('data-emp-id');
+                    const salary = button.getAttribute('data-salary');
+                    quickPaySalary(empId, salary);
+                }
+                
+                // Delete Employee (from dropdown)
+                if (e.target.closest('.delete-employee')) {
+                    e.preventDefault();
+                    const button = e.target.closest('.delete-employee');
+                    const empId = button.getAttribute('data-emp-id');
+                    deleteEmployee(empId);
+                }
+                
+                // Activate/Deactivate Employee
+                if (e.target.closest('.activate-employee')) {
+                    e.preventDefault();
+                    const button = e.target.closest('.activate-employee');
+                    const empId = button.getAttribute('data-emp-id');
+                    toggleEmployeeStatus(empId, 'active');
+                }
+                
+                if (e.target.closest('.deactivate-employee')) {
+                    e.preventDefault();
+                    const button = e.target.closest('.deactivate-employee');
+                    const empId = button.getAttribute('data-emp-id');
+                    toggleEmployeeStatus(empId, 'inactive');
+                }
+            });
+        }
 
         function initializeEventListeners() {
             // Save buttons
             document.getElementById('saveEmployeeBtn')?.addEventListener('click', saveEmployee);
             document.getElementById('updateEmployeeBtn')?.addEventListener('click', updateEmployee);
             document.getElementById('saveQuickLoanBtn')?.addEventListener('click', saveQuickLoan);
+            document.getElementById('saveSalaryBtn')?.addEventListener('click', saveSalary);
+            document.getElementById('saveLoanBtn')?.addEventListener('click', saveLoan);
+            document.getElementById('processDirectPaymentBtn')?.addEventListener('click', processDirectPayment);
 
             // Quick actions
             document.getElementById('payAllSalaries')?.addEventListener('click', payAllSalaries);
-            document.getElementById('quickLoanBtn')?.addEventListener('click', showQuickLoanModal);
-            document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
+            document.getElementById('quickLoanBtn')?.addEventListener('click', function() {
+                modals.quickLoanModal?.show();
+            });
 
             // Filters
             document.getElementById('applyFilters')?.addEventListener('click', applyFilters);
             document.getElementById('resetFilters')?.addEventListener('click', resetFilters);
 
-            // Event delegation for dynamic buttons
-            document.addEventListener('click', function (e) {
-                if (e.target.closest('.view-employee')) {
-                    const empId = e.target.closest('.view-employee').getAttribute('data-emp-id');
-                    viewEmployeeDetails(empId);
-                }
-                if (e.target.closest('.edit-employee')) {
-                    const empId = e.target.closest('.edit-employee').getAttribute('data-emp-id');
-                    editEmployee(empId);
-                }
-                if (e.target.closest('.manage-salary')) {
-                    const empId = e.target.closest('.manage-salary').getAttribute('data-emp-id');
-                    manageSalary(empId);
-                }
-                if (e.target.closest('.manage-loan')) {
-                    const empId = e.target.closest('.manage-loan').getAttribute('data-emp-id');
-                    manageLoan(empId);
-                }
-                if (e.target.closest('.loan-payment')) {
-                    const empId = e.target.closest('.loan-payment').getAttribute('data-emp-id');
-                    quickLoanPayment(empId);
-                }
-                if (e.target.closest('.delete-employee')) {
-                    const empId = e.target.closest('.delete-employee').getAttribute('data-emp-id');
-                    deleteEmployee(empId);
-                }
-                if (e.target.closest('.activate-employee')) {
-                    const empId = e.target.closest('.activate-employee').getAttribute('data-emp-id');
-                    toggleEmployeeStatus(empId, 'active');
-                }
-                if (e.target.closest('.deactivate-employee')) {
-                    const empId = e.target.closest('.deactivate-employee').getAttribute('data-emp-id');
-                    toggleEmployeeStatus(empId, 'inactive');
-                }
-                if (e.target.closest('.quick-pay-btn')) {
-                    const empId = e.target.closest('.quick-pay-btn').getAttribute('data-emp-id');
-                    const salary = e.target.closest('.quick-pay-btn').getAttribute('data-salary');
-                    quickPaySalary(empId, salary);
-                }
-            });
+            // Loan modal functionality
+            const loanType = document.getElementById('loanType');
+            if (loanType) {
+                loanType.addEventListener('change', function () {
+                    const installmentSection = document.getElementById('installmentSection');
+                    if (installmentSection) {
+                        installmentSection.style.display = this.value === 'installment' ? 'block' : 'none';
+                        calculateInstallment();
+                    }
+                });
+            }
+
+            const loanAmount = document.getElementById('loanAmount');
+            const loanInstallments = document.getElementById('loanInstallments');
+            if (loanAmount) loanAmount.addEventListener('input', calculateInstallment);
+            if (loanInstallments) loanInstallments.addEventListener('input', calculateInstallment);
+
+            // Salary calculation
+            const salaryBonus = document.getElementById('salaryBonus');
+            const salaryFine = document.getElementById('salaryFine');
+            if (salaryBonus) salaryBonus.addEventListener('input', calculateTotalPayable);
+            if (salaryFine) salaryFine.addEventListener('input', calculateTotalPayable);
+
+            // Auto-fill features for better UX
+            setupAutoFillFeatures();
         }
 
-        async function quickPaySalary(empId, salary) {
-            const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
-            const empName = row.querySelector('.card-title').textContent;
-
-            if (!confirm(`Pay ${parseFloat(salary).toLocaleString()} to ${empName}?`)) return;
-
-            try {
-                const salaryData = {
-                    month: new Date().toISOString().slice(0, 7),
-                    amount: parseFloat(salary),
-                    bonus: 0,
-                    fine: 0,
-                    paid_on: new Date().toISOString().split('T')[0],
-                    loan_deductions: []
-                };
-
-                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/salary/simple`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(salaryData)
+        function setupAutoFillFeatures() {
+            // Auto-generate email from name
+            const nameField = document.querySelector('input[name="name"]');
+            const emailField = document.querySelector('input[name="email"]');
+            
+            if (nameField && emailField) {
+                nameField.addEventListener('blur', function() {
+                    if (!emailField.value && this.value) {
+                        const name = this.value.toLowerCase().replace(/\s+/g, '.');
+                        emailField.value = name + '@company.com';
+                    }
                 });
+            }
+            
+            // Auto-suggest salary based on role
+            const roleField = document.querySelector('select[name="role"]');
+            const salaryField = document.querySelector('input[name="salary"]');
+            
+            if (roleField && salaryField) {
+                roleField.addEventListener('change', function() {
+                    if (!salaryField.value) {
+                        const salaries = {
+                            'owner': 100000,
+                            'manager': 50000,
+                            'cashier': 25000,
+                            'sales': 20000,
+                            'worker': 15000
+                        };
+                        
+                        const role = this.value.toLowerCase();
+                        if (salaries[role]) {
+                            salaryField.value = salaries[role];
+                        }
+                    }
+                });
+            }
+        }
 
+        async function viewEmployeeDetails(empId) {
+            try {
+                showNotification('Loading employee details...', 'info');
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}`);
                 const data = await response.json();
 
                 if (data.success) {
-                    let message = `Salary paid successfully to ${empName}!`;
-                    if (data.totalDeductions > 0) {
-                        message += ` ${data.totalDeductions.toLocaleString()} deducted for loans.`;
+                    const emp = data.employee;
+                    const shopCurrency = '<%= shop.currency %>' || 'PKR';
+                    
+                    let html = `
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-user me-2"></i>Employee Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Name:</strong> ${emp.name}</p>
+                                    <p><strong>Email:</strong> ${emp.email}</p>
+                                    <p><strong>Phone:</strong> ${emp.phone || 'Not provided'}</p>
+                                    <p><strong>CNIC:</strong> ${emp.cnic || 'Not provided'}</p>
+                                    <p><strong>Role:</strong> <span class="badge bg-secondary">${emp.role}</span></p>
+                                    <p><strong>Status:</strong> <span class="badge ${emp.status === 'active' ? 'badge-active' : 'badge-inactive'}">${emp.status}</span></p>
+                                    <p><strong>Current Salary:</strong> ${emp.salary ? `${shopCurrency} ${emp.salary.toLocaleString()}` : 'Not set'}</p>
+                                    <p><strong>Total Loan Balance:</strong> <span class="loan-active">${shopCurrency} ${data.totalLoanBalance.toLocaleString()}</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="salary-tab" data-bs-toggle="tab" data-bs-target="#salary" type="button" role="tab">
+                                        <i class="fas fa-money-bill me-1"></i>Salary History
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="loans-tab" data-bs-toggle="tab" data-bs-target="#loans" type="button" role="tab">
+                                        <i class="fas fa-hand-holding-usd me-1"></i>Loan History
+                                    </button>
+                                </li>
+                            </ul>
+                            
+                            <div class="tab-content mt-3" id="employeeTabsContent">
+                                <div class="tab-pane fade show active" id="salary" role="tabpanel">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th class="text-end">Amount</th>
+                                                    <th class="text-end">Bonus</th>
+                                                    <th class="text-end">Fine</th>
+                                                    <th class="text-end">Net Amount</th>
+                                                    <th>Status</th>
+                                                    <th>Paid On</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>`;
+                    
+                    if (data.salaries && data.salaries.length > 0) {
+                        data.salaries.forEach(salary => {
+                            html += `
+                                <tr>
+                                    <td>${salary.month}</td>
+                                    <td class="text-end">${shopCurrency} ${parseFloat(salary.amount).toLocaleString()}</td>
+                                    <td class="text-end ${salary.bonus > 0 ? 'bonus-positive' : ''}">${salary.bonus ? `+${parseFloat(salary.bonus).toLocaleString()}` : '-'}</td>
+                                    <td class="text-end ${salary.fine > 0 ? 'fine-negative' : ''}">${salary.fine ? `-${parseFloat(salary.fine).toLocaleString()}` : '-'}</td>
+                                    <td class="text-end fw-bold">${parseFloat(salary.net_amount || salary.amount).toLocaleString()}</td>
+                                    <td><span class="${salary.status === 'paid' ? 'salary-paid' : 'salary-pending'}">${salary.status}</span></td>
+                                    <td>${salary.paid_on ? new Date(salary.paid_on).toLocaleDateString() : '-'}</td>
+                                </tr>`;
+                        });
+                    } else {
+                        html += `<tr><td colspan="7" class="text-center text-muted">No salary records</td></tr>`;
                     }
-                    showNotification(message, 'success');
-                    setTimeout(() => location.reload(), 1500);
+                    
+                    html += `</tbody></table></div></div>`;
+                    
+                    // Loan History Tab
+                    html += `
+                        <div class="tab-pane fade" id="loans" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Loan #</th>
+                                            <th class="text-end">Amount</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                    
+                    if (data.loanLedger && data.loanLedger.length > 0) {
+                        data.loanLedger.forEach(ledger => {
+                            const typeClass = ledger.transaction_type === 'credit' ? 'text-danger' : 'text-success';
+                            const typeIcon = ledger.transaction_type === 'credit' ? 'fa-arrow-up' : 'fa-arrow-down';
+                            
+                            html += `
+                                <tr>
+                                    <td>${new Date(ledger.created_at).toLocaleDateString()}</td>
+                                    <td><span class="${typeClass}"><i class="fas ${typeIcon} me-1"></i>${ledger.transaction_type}</span></td>
+                                    <td>${ledger.loan_number || 'N/A'}</td>
+                                    <td class="text-end">${shopCurrency} ${parseFloat(ledger.amount).toLocaleString()}</td>
+                                    <td>${ledger.description}</td>
+                                </tr>`;
+                        });
+                    } else {
+                        html += `<tr><td colspan="5" class="text-center text-muted">No loan records</td></tr>`;
+                    }
+                    
+                    html += `</tbody></table></div>`;
+                    
+                    // Active Loans Section
+                    if (data.activeLoans && data.activeLoans.length > 0) {
+                        html += `
+                            <div class="mt-4">
+                                <h6 class="mb-3"><i class="fas fa-exclamation-circle text-warning me-2"></i>Active Loans</h6>
+                                <div class="list-group">`;
+                        
+                        data.activeLoans.forEach(loan => {
+                            html += `
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>${loan.loan_number}</strong>
+                                            <div class="text-muted small">${loan.description}</div>
+                                            <small class="text-muted">Created: ${new Date(loan.created_at).toLocaleDateString()}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="fw-bold text-danger">${shopCurrency} ${parseFloat(loan.total_balance).toLocaleString()}</div>
+                                            <small class="text-muted">Total: ${shopCurrency} ${parseFloat(loan.total_amount).toLocaleString()} | Paid: ${shopCurrency} ${parseFloat(loan.total_paid).toLocaleString()}</small>
+                                        </div>
+                                    </div>
+                                </div>`;
+                        });
+                        
+                        html += `</div></div>`;
+                    }
+                    
+                    html += `</div></div></div></div></div>`;
+
+                    document.getElementById('employeeDetailsContent').innerHTML = html;
+                    modals.employeeDetailsModal?.show();
+                    showNotification('Employee details loaded successfully!', 'success');
                 } else {
-                    showNotification('Error: ' + (data.message || 'Unknown error'), 'error');
+                    showNotification('Error loading employee details', 'error');
                 }
             } catch (error) {
-                console.error('Error paying salary:', error);
-                showNotification('Error processing payment', 'error');
+                console.error('Error fetching employee details:', error);
+                showNotification('Error loading employee details', 'error');
             }
         }
 
         async function editEmployee(empId) {
             try {
+                showNotification('Loading employee data...', 'info');
                 const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}`);
                 const data = await response.json();
 
@@ -1531,7 +1324,8 @@
                     document.getElementById('editSalary').value = emp.salary || '';
                     document.getElementById('editNotes').value = emp.notes || '';
 
-                    new bootstrap.Modal(document.getElementById('editEmployeeModal')).show();
+                    modals.editEmployeeModal?.show();
+                    showNotification('Employee data loaded successfully!', 'success');
                 } else {
                     showNotification('Error loading employee data', 'error');
                 }
@@ -1558,6 +1352,7 @@
             };
 
             try {
+                showNotification('Updating employee...', 'info');
                 const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -1567,7 +1362,7 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('editEmployeeModal')).hide();
+                    modals.editEmployeeModal?.hide();
                     showNotification('Employee updated successfully!', 'success');
                     setTimeout(() => location.reload(), 1500);
                 } else {
@@ -1581,10 +1376,12 @@
 
         async function toggleEmployeeStatus(empId, status) {
             const action = status === 'active' ? 'activate' : 'deactivate';
+            const employeeName = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card').querySelector('.card-title').textContent;
 
-            if (!confirm(`Are you sure you want to ${action} this employee?`)) return;
+            if (!confirm(`Are you sure you want to ${action} ${employeeName}?`)) return;
 
             try {
+                showNotification(`${action === 'activate' ? 'Activating' : 'Deactivating'} employee...`, 'info');
                 const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/status`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -1605,30 +1402,281 @@
             }
         }
 
-        function showQuickLoanModal() {
-            new bootstrap.Modal(document.getElementById('quickLoanModal')).show();
+        async function manageSalary(empId) {
+            try {
+                const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
+                if (!row) {
+                    showNotification('Employee card not found', 'error');
+                    return;
+                }
+
+                const empName = row.querySelector('.card-title')?.textContent || 'Unknown Employee';
+                const salaryText = row.querySelector('.text-primary')?.textContent || '';
+                const salaryMatch = salaryText.match(/(\d+\.?\d*)/);
+                const baseSalary = salaryMatch ? parseFloat(salaryMatch[0]) : 0;
+
+                // Fill modal fields
+                document.getElementById('salaryUserId').value = empId;
+                document.getElementById('salaryEmpName').value = empName;
+                document.getElementById('salaryBaseAmount').value = baseSalary;
+                document.getElementById('salaryBonus').value = 0;
+                document.getElementById('salaryFine').value = 0;
+                document.getElementById('salaryNotes').value = '';
+                document.getElementById('salaryPaidOn').valueAsDate = new Date();
+
+                // Load loans for deduction
+                await loadEmployeeLoansForSalary(empId, baseSalary);
+                calculateTotalPayable();
+
+                // Show modal
+                modals.salaryModal?.show();
+            } catch (error) {
+                console.error('Error in manageSalary:', error);
+                showNotification('Error opening salary management', 'error');
+            }
         }
 
-        async function saveQuickLoan() {
-            const employeeSelect = document.getElementById('quickLoanEmployee');
-            const amountInput = document.getElementById('quickLoanAmount');
-            const reasonInput = document.getElementById('quickLoanReason');
+        async function loadEmployeeLoansForSalary(empId, baseSalary) {
+            const loanList = document.getElementById('loanDeductionList');
+            if (!loanList) return;
 
-            if (!employeeSelect.value || !amountInput.value || !reasonInput.value) {
-                showNotification('Please fill all required fields', 'error');
+            loanList.innerHTML = '<div class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin me-2"></i>Loading loans...</div>';
+
+            try {
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}`);
+                const data = await response.json();
+
+                if (data.success && data.activeLoans && data.activeLoans.length > 0) {
+                    let html = '';
+                    data.activeLoans.forEach(loan => {
+                        const suggestedDeduction = loan.installment_amount || Math.min(loan.total_balance, baseSalary * 0.5);
+                        
+                        html += `
+                        <div class="loan-item mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input loan-checkbox" type="checkbox" 
+                                    data-loan-id="${loan.id}" 
+                                    id="loan-${loan.id}"
+                                    ${loan.loan_type === 'installment' ? 'checked' : ''}
+                                    ${loan.loan_type === 'installment' ? 'disabled' : ''}>
+                                <label class="form-check-label w-100" for="loan-${loan.id}">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>${loan.description}</strong>
+                                            <small class="text-muted d-block">${loan.loan_number} | Installment: ${loan.installment_amount ? loan.installment_amount.toLocaleString() : 'N/A'}</small>
+                                        </div>
+                                        <small class="text-danger">Balance: ${loan.total_balance.toLocaleString()}</small>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="mt-2">
+                                <input type="number" class="form-control form-control-sm loan-deduction-amount" 
+                                    value="${suggestedDeduction}" 
+                                    min="0" max="${loan.total_balance}"
+                                    data-loan-id="${loan.id}"
+                                    step="0.01"
+                                    ${loan.loan_type === 'installment' ? 'readonly' : ''}>
+                                <small class="text-muted">Max: ${loan.total_balance.toLocaleString()}</small>
+                            </div>
+                        </div>`;
+                    });
+                    loanList.innerHTML = html;
+
+                    // Add event listeners
+                    document.querySelectorAll('.loan-checkbox, .loan-deduction-amount').forEach(element => {
+                        element.addEventListener('change', calculateTotalPayable);
+                    });
+                } else {
+                    loanList.innerHTML = '<div class="text-center text-muted py-3">No active loans found</div>';
+                }
+            } catch (error) {
+                console.error('Error loading loans:', error);
+                loanList.innerHTML = '<div class="text-center text-danger py-3">Error loading loans</div>';
+            }
+        }
+
+        function calculateTotalPayable() {
+            const baseSalary = parseFloat(document.getElementById('salaryBaseAmount')?.value) || 0;
+            const bonus = parseFloat(document.getElementById('salaryBonus')?.value) || 0;
+            const fine = parseFloat(document.getElementById('salaryFine')?.value) || 0;
+            let totalDeductions = 0;
+
+            document.querySelectorAll('.loan-checkbox:checked').forEach(checkbox => {
+                const loanId = checkbox.getAttribute('data-loan-id');
+                const amountInput = document.querySelector(`.loan-deduction-amount[data-loan-id="${loanId}"]`);
+                if (amountInput) {
+                    totalDeductions += parseFloat(amountInput.value) || 0;
+                }
+            });
+
+            const totalPayable = baseSalary + bonus - fine - totalDeductions;
+            const payableElement = document.getElementById('totalPayableAmount');
+            if (payableElement) {
+                payableElement.textContent = totalPayable > 0 ? totalPayable.toLocaleString() : '0';
+            }
+        }
+
+        async function saveSalary() {
+            const form = document.getElementById('salaryForm');
+            if (!form) {
+                showNotification('Salary form not found', 'error');
                 return;
             }
 
+            const formData = new FormData(form);
+            const salaryData = {
+                user_id: formData.get('user_id'),
+                month: formData.get('month'),
+                amount: parseFloat(document.getElementById('salaryBaseAmount').value),
+                bonus: parseFloat(document.getElementById('salaryBonus').value) || 0,
+                fine: parseFloat(document.getElementById('salaryFine').value) || 0,
+                paid_on: formData.get('paid_on') || new Date().toISOString().split('T')[0],
+                notes: formData.get('notes') || '',
+                loan_deductions: []
+            };
+
+            // Collect loan deductions
+            document.querySelectorAll('.loan-checkbox:checked').forEach(checkbox => {
+                const loanId = checkbox.getAttribute('data-loan-id');
+                const amountInput = document.querySelector(`.loan-deduction-amount[data-loan-id="${loanId}"]`);
+                if (amountInput && parseFloat(amountInput.value) > 0) {
+                    salaryData.loan_deductions.push({
+                        loan_id: loanId,
+                        amount: parseFloat(amountInput.value)
+                    });
+                }
+            });
+
+            try {
+                showNotification('Processing salary payment...', 'info');
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${salaryData.user_id}/salary`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(salaryData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    let message = 'Salary paid successfully!';
+                    if (data.totalDeductions > 0) {
+                        message += ` ${data.totalDeductions.toLocaleString()} deducted for loans.`;
+                    }
+
+                    modals.salaryModal?.hide();
+                    showNotification(message, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification('Error: ' + (data.message || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error saving salary:', error);
+                showNotification('Error saving salary', 'error');
+            }
+        }
+
+        async function manageLoan(empId) {
+            try {
+                const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
+                if (!row) {
+                    showNotification('Employee card not found', 'error');
+                    return;
+                }
+
+                const empName = row.querySelector('.card-title')?.textContent || 'Unknown Employee';
+
+                // Reset and fill modal
+                document.getElementById('loanUserId').value = empId;
+                document.getElementById('loanEmpName').value = empName;
+                
+                // Reset form
+                const loanForm = document.getElementById('loanForm');
+                if (loanForm) loanForm.reset();
+                
+                document.getElementById('loanType').value = 'full';
+                document.getElementById('installmentSection').style.display = 'none';
+                document.getElementById('loanTakenOn').valueAsDate = new Date();
+
+                // Load existing loans
+                await loadExistingLoans(empId);
+
+                // Show modal
+                modals.loanModal?.show();
+            } catch (error) {
+                console.error('Error in manageLoan:', error);
+                showNotification('Error opening loan management', 'error');
+            }
+        }
+
+        async function loadExistingLoans(empId) {
+            const loansList = document.getElementById('existingLoansList');
+            if (!loansList) return;
+
+            loansList.innerHTML = '<div class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin me-2"></i>Loading loans...</div>';
+
+            try {
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/loans`);
+                const data = await response.json();
+
+                if (data.success && data.loans && data.loans.length > 0) {
+                    const shopCurrency = '<%= shop.currency %>' || 'PKR';
+                    let html = '<div class="list-group">';
+                    data.loans.forEach(loan => {
+                        html += `
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">${loan.loan_number}</h6>
+                                    <p class="mb-1">${loan.description}</p>
+                                    <small class="text-muted">
+                                        ${new Date(loan.loan_date).toLocaleDateString()} | 
+                                        Type: <span class="badge ${loan.loan_type === 'installment' ? 'badge-installment' : 'badge-full'}">${loan.loan_type}</span>
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold ${loan.status === 'active' ? 'text-danger' : 'text-success'}">
+                                        ${shopCurrency} ${loan.total_balance.toLocaleString()}
+                                    </div>
+                                    <small class="text-muted">
+                                        Total: ${loan.total_amount.toLocaleString()} | 
+                                        Paid: ${loan.total_paid.toLocaleString()}
+                                    </small>
+                                    <div>
+                                        <span class="badge ${loan.status === 'active' ? 'bg-warning' : 'bg-success'}">${loan.status}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    html += '</div>';
+                    loansList.innerHTML = html;
+                } else {
+                    loansList.innerHTML = '<div class="text-center text-muted py-3">No loans found</div>';
+                }
+            } catch (error) {
+                console.error('Error loading existing loans:', error);
+                loansList.innerHTML = '<div class="text-center text-danger py-3">Error loading loans</div>';
+            }
+        }
+
+        async function saveLoan() {
+            const form = document.getElementById('loanForm');
+            if (!form) {
+                showNotification('Loan form not found', 'error');
+                return;
+            }
+
+            const formData = new FormData(form);
             const loanData = {
-                user_id: parseInt(employeeSelect.value),
-                amount: parseFloat(amountInput.value),
-                reason: reasonInput.value,
-                repayment_type: 'one_time',
-                taken_on: new Date().toISOString().split('T')[0]
+                amount: parseFloat(formData.get('amount')),
+                description: formData.get('reason'),
+                loan_type: formData.get('loan_type'),
+                installments: formData.get('installments') || 1
             };
 
             try {
-                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${loanData.user_id}/loan/simple`, {
+                showNotification('Saving loan...', 'info');
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${formData.get('user_id')}/loan`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(loanData)
@@ -1637,15 +1685,230 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('quickLoanModal')).hide();
-                    showNotification('Quick loan added successfully!', 'success');
+                    modals.loanModal?.hide();
+                    showNotification('Loan added successfully!', 'success');
                     setTimeout(() => location.reload(), 1500);
                 } else {
                     showNotification('Error: ' + (data.message || 'Unknown error'), 'error');
                 }
             } catch (error) {
-                console.error('Error saving quick loan:', error);
-                showNotification('Error saving quick loan', 'error');
+                console.error('Error saving loan:', error);
+                showNotification('Error saving loan', 'error');
+            }
+        }
+
+        async function openDirectLoanPayment(empId) {
+            try {
+                const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
+                if (!row) {
+                    showNotification('Employee card not found', 'error');
+                    return;
+                }
+
+                const empName = row.querySelector('.card-title')?.textContent || 'Unknown Employee';
+                
+                // Reset and fill modal
+                document.getElementById('directPaymentUserId').value = empId;
+                document.getElementById('directPaymentEmpName').value = empName;
+                document.getElementById('directLoanPaymentForm').reset();
+                document.getElementById('directPaymentDate').valueAsDate = new Date();
+                document.getElementById('payAllLoans').checked = true;
+                
+                // Load employee loans
+                await loadEmployeeLoansForPayment(empId);
+                
+                // Show modal
+                modals.directLoanPaymentModal?.show();
+            } catch (error) {
+                console.error('Error opening direct payment modal:', error);
+                showNotification('Error opening payment modal', 'error');
+            }
+        }
+
+        async function loadEmployeeLoansForPayment(empId) {
+            try {
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const totalBalance = data.totalLoanBalance || 0;
+                    const activeLoans = data.activeLoans || [];
+                    
+                    // Update total balance
+                    document.getElementById('totalLoanBalance').value = totalBalance.toLocaleString();
+                    
+                    // Load specific loans list
+                    const loanListContainer = document.getElementById('loanListContainer');
+                    if (loanListContainer && activeLoans.length > 0) {
+                        let html = '<div class="list-group mt-2">';
+                        activeLoans.forEach(loan => {
+                            html += `
+                            <div class="list-group-item">
+                                <div class="form-check">
+                                    <input class="form-check-input loan-radio" type="radio" name="selectedLoan" 
+                                        id="loan-${loan.id}" value="${loan.id}">
+                                    <label class="form-check-label w-100" for="loan-${loan.id}">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <strong>${loan.loan_number}</strong><br>
+                                                <small class="text-muted">${loan.description}</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <strong class="text-danger">${loan.total_balance.toLocaleString()}</strong><br>
+                                                <small class="text-muted">Installment: ${loan.installment_amount ? loan.installment_amount.toLocaleString() : 'N/A'}</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>`;
+                        });
+                        html += '</div>';
+                        loanListContainer.innerHTML = html;
+                    } else {
+                        document.getElementById('specificLoanSection').style.display = 'none';
+                        if (loanListContainer) {
+                            loanListContainer.innerHTML = '<div class="alert alert-warning">No active loans found</div>';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading loans:', error);
+                showNotification('Error loading loan data', 'error');
+            }
+        }
+
+        async function processDirectPayment() {
+            const empId = document.getElementById('directPaymentUserId').value;
+            const amount = document.getElementById('directPaymentAmount').value;
+            const description = document.getElementById('directPaymentNotes').value;
+            const paymentMethod = document.getElementById('directPaymentMethod').value;
+            const paymentDate = document.getElementById('directPaymentDate').value;
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                showNotification('Please enter a valid payment amount', 'error');
+                return;
+            }
+
+            const paymentType = document.querySelector('input[name="paymentType"]:checked').value;
+            let selectedLoanId = null;
+            
+            if (paymentType === 'specific') {
+                const selectedLoanRadio = document.querySelector('input[name="selectedLoan"]:checked');
+                if (!selectedLoanRadio) {
+                    showNotification('Please select a loan to pay', 'error');
+                    return;
+                }
+                selectedLoanId = selectedLoanRadio.value;
+            }
+
+            const paymentData = {
+                amount: parseFloat(amount),
+                loan_id: selectedLoanId,
+                description: `${description} | Method: ${paymentMethod} | Date: ${paymentDate}`,
+                payment_method: paymentMethod
+            };
+
+            try {
+                showNotification('Processing payment...', 'info');
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/loan/payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paymentData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    modals.directLoanPaymentModal?.hide();
+                    showNotification('Payment processed successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification('Error: ' + (data.message || 'Payment failed'), 'error');
+                }
+            } catch (error) {
+                console.error('Error processing payment:', error);
+                showNotification('Error processing payment', 'error');
+            }
+        }
+
+        function calculateInstallment() {
+            const loanAmount = parseFloat(document.getElementById('loanAmount')?.value) || 0;
+            const installments = parseInt(document.getElementById('loanInstallments')?.value) || 3;
+
+            if (loanAmount > 0 && installments > 0) {
+                const installmentAmount = Math.ceil(loanAmount / installments);
+                const installmentInput = document.getElementById('loanInstallmentAmount');
+                if (installmentInput) {
+                    installmentInput.value = installmentAmount;
+                }
+            }
+        }
+
+        // Quick pay salary function
+        async function quickPaySalary(empId, salary) {
+            const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
+            const empName = row.querySelector('.card-title').textContent;
+
+            if (!confirm(`Pay ${parseFloat(salary).toLocaleString()} to ${empName}?`)) return;
+
+            try {
+                showNotification('Processing salary payment...', 'info');
+                const salaryData = {
+                    month: new Date().toISOString().slice(0, 7),
+                    amount: parseFloat(salary),
+                    bonus: 0,
+                    fine: 0,
+                    paid_on: new Date().toISOString().split('T')[0],
+                    loan_deductions: []
+                };
+
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/salary`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(salaryData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    let message = `Salary paid successfully to ${empName}!`;
+                    if (data.totalDeductions > 0) {
+                        message += ` ${data.totalDeductions.toLocaleString()} deducted for loans.`;
+                    }
+                    showNotification(message, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification('Error: ' + (data.message || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error paying salary:', error);
+                showNotification('Error processing payment', 'error');
+            }
+        }
+
+        async function deleteEmployee(empId) {
+            const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
+            const empName = row.querySelector('.card-title').textContent;
+
+            if (!confirm(`Are you sure you want to delete ${empName}? This action cannot be undone.`)) return;
+
+            try {
+                showNotification('Deleting employee...', 'info');
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Employee deleted successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification('Error: ' + (data.message || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting employee:', error);
+                showNotification('Error deleting employee', 'error');
             }
         }
 
@@ -1653,19 +1916,40 @@
             if (!confirm('Pay salaries to all active employees for this month?')) return;
 
             try {
-                const response = await fetch('/EmpMgmt/api/EmpMgmt/salaries/bulk-pay', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                showNotification('Processing bulk payment...', 'info');
+                // Get all active employees
+                const employees = document.querySelectorAll('.employee-card');
+                let processed = 0;
+                
+                for (const empCard of employees) {
+                    const empId = empCard.querySelector('.view-employee')?.getAttribute('data-emp-id');
+                    const salary = empCard.querySelector('.quick-pay-btn')?.getAttribute('data-salary');
+                    
+                    if (empId && salary) {
+                        const salaryData = {
+                            month: new Date().toISOString().slice(0, 7),
+                            amount: parseFloat(salary),
+                            bonus: 0,
+                            fine: 0,
+                            paid_on: new Date().toISOString().split('T')[0],
+                            loan_deductions: []
+                        };
 
-                const data = await response.json();
+                        const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/salary`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(salaryData)
+                        });
 
-                if (data.success) {
-                    showNotification(`Bulk payment completed! ${data.processed} salaries paid.`, 'success');
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    showNotification('Error: ' + (data.message || 'Unknown error'), 'error');
+                        const data = await response.json();
+                        if (data.success) {
+                            processed++;
+                        }
+                    }
                 }
+
+                showNotification(`Bulk payment completed! ${processed} salaries paid.`, 'success');
+                setTimeout(() => location.reload(), 1500);
             } catch (error) {
                 console.error('Error processing bulk payment:', error);
                 showNotification('Error processing bulk payment', 'error');
@@ -1682,6 +1966,7 @@
             }
 
             try {
+                showNotification('Saving employee...', 'info');
                 const employeeData = {
                     name: formData.get('name'),
                     email: formData.get('email'),
@@ -1702,7 +1987,7 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('addEmployeeModal')).hide();
+                    modals.addEmployeeModal?.hide();
                     form.reset();
                     showNotification('Employee added successfully!', 'success');
                     setTimeout(() => location.reload(), 1500);
@@ -1715,589 +2000,24 @@
             }
         }
 
-        async function viewEmployeeDetails(empId) {
-            try {
-                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}`);
-                const data = await response.json();
+        async function saveQuickLoan() {
+            const employeeSelect = document.getElementById('quickLoanEmployee');
+            const amountInput = document.getElementById('quickLoanAmount');
+            const reasonInput = document.getElementById('quickLoanReason');
 
-                if (data.success) {
-                    displayEmployeeDetails(data.employee, data.salaries, data.loans, data.salaryHistory);
-                } else {
-                    showNotification('Error loading employee details', 'error');
-                }
-            } catch (error) {
-                console.error('Error fetching employee details:', error);
-                showNotification('Error loading employee details', 'error');
-            }
-        }
-
-        function displayEmployeeDetails(emp, empSalaries, empLoans, salaryHistory) {
-            // Get shop currency safely
-            const shopCurrency = window.shopCurrency || 'PKR'; // Fallback to PKR if not defined
-
-            let html = `
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-user me-2"></i>Employee Information</h6>
-                    </div>
-                    <div class="card-body">
-                        <p><strong>Name:</strong> ${emp.name}</p>
-                        <p><strong>Email:</strong> ${emp.email}</p>
-                        <p><strong>Phone:</strong> ${emp.phone || 'Not provided'}</p>
-                        <p><strong>CNIC:</strong> ${emp.cnic || 'Not provided'}</p>
-                        <p><strong>Role:</strong> <span class="badge badge-${emp.role}">${emp.role}</span></p>
-                        <p><strong>Status:</strong> <span class="badge ${emp.status === 'active' ? 'badge-active' : 'badge-inactive'}">${emp.status}</span></p>
-                        <p><strong>Current Salary:</strong> ${emp.salary ? `${shopCurrency} ${emp.salary.toLocaleString()}` : 'Not set'}</p>
-                        <p><strong>Active Loans:</strong> <span class="loan-active">${shopCurrency} ${emp.totalActiveLoans || 0}</span></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-8">
-                <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="salary-tab" data-bs-toggle="tab" data-bs-target="#salary" type="button" role="tab">
-                            <i class="fas fa-money-bill me-1"></i>Salary History
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="loans-tab" data-bs-toggle="tab" data-bs-target="#loans" type="button" role="tab">
-                            <i class="fas fa-hand-holding-usd me-1"></i>Loan History
-                        </button>
-                    </li>
-                </ul>
-                
-                <div class="tab-content mt-3" id="employeeTabsContent">
-                    <div class="tab-pane fade show active" id="salary" role="tabpanel">
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Month</th>
-                                        <th class="text-end">Amount</th>
-                                        <th class="text-end">Bonus</th>
-                                        <th class="text-end">Fine</th>
-                                        <th class="text-end">Net Amount</th>
-                                        <th>Status</th>
-                                        <th>Paid On</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-    `;
-
-            if (empSalaries && empSalaries.length > 0) {
-                empSalaries.forEach(salary => {
-                    html += `
-                <tr>
-                    <td>${salary.month}</td>
-                    <td class="text-end">${shopCurrency} ${parseFloat(salary.amount).toLocaleString()}</td>
-                    <td class="text-end bonus-positive">${salary.bonus ? `+${parseFloat(salary.bonus).toLocaleString()}` : '-'}</td>
-                    <td class="text-end fine-negative">${salary.fine ? `-${parseFloat(salary.fine).toLocaleString()}` : '-'}</td>
-                    <td class="text-end fw-bold">${parseFloat(salary.net_amount || salary.amount).toLocaleString()}</td>
-                    <td><span class="${salary.status === 'paid' ? 'salary-paid' : 'salary-pending'}">${salary.status}</span></td>
-                    <td>${salary.paid_on ? new Date(salary.paid_on).toLocaleDateString() : '-'}</td>
-                </tr>
-            `;
-                });
-            } else {
-                html += `<tr><td colspan="7" class="text-center text-muted">No salary records</td></tr>`;
-            }
-
-            html += `</tbody></table></div></div>`;
-
-            // Loan History Tab
-            html += `
-        <div class="tab-pane fade" id="loans" role="tabpanel">
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Amount</th>
-                            <th>Due</th>
-                            <th>Installment</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-    `;
-
-            if (empLoans && empLoans.length > 0) {
-                empLoans.forEach(loan => {
-                    html += `
-                <tr>
-                    <td>${shopCurrency} ${parseFloat(loan.amount).toLocaleString()}</td>
-                    <td>${shopCurrency} ${parseFloat(loan.due_amount).toLocaleString()}</td>
-                    <td>${loan.installment ? `${shopCurrency} ${loan.installment.toLocaleString()}` : '-'}</td>
-                    <td>${loan.reason}</td>
-                    <td><span class="${loan.status === 'paid' ? 'loan-paid' : 'loan-active'}">${loan.status}</span></td>
-                    <td>${new Date(loan.taken_on).toLocaleDateString()}</td>
-                </tr>
-            `;
-                });
-            } else {
-                html += `<tr><td colspan="6" class="text-center text-muted">No loan records</td></tr>`;
-            }
-
-            html += `</tbody></table></div></div></div></div></div></div>`;
-
-            document.getElementById('employeeDetailsContent').innerHTML = html;
-            new bootstrap.Modal(document.getElementById('employeeDetailsModal')).show();
-        }
-
-        async function deleteEmployee(empId) {
-            const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
-            const empName = row.querySelector('.card-title').textContent;
-
-            if (!confirm(`Are you sure you want to delete ${empName}? This action cannot be undone.`)) return;
-
-            try {
-                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}`, {
-                    method: 'DELETE'
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showNotification('Employee deleted successfully!', 'success');
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    showNotification('Error: ' + (data.message || 'Unknown error'), 'error');
-                }
-            } catch (error) {
-                console.error('Error deleting employee:', error);
-                showNotification('Error deleting employee', 'error');
-            }
-        }
-
-        // Add these functions to your frontend JavaScript
-        async function manageSalary(empId) {
-            try {
-                const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
-                if (!row) {
-                    showNotification('Employee card not found', 'error');
-                    return;
-                }
-
-                const empName = row.querySelector('.card-title')?.textContent || 'Unknown Employee';
-                const salaryText = row.querySelector('.text-primary')?.textContent || '';
-                const salaryMatch = salaryText.match(/(\d+\.?\d*)/);
-                const baseSalary = salaryMatch ? parseFloat(salaryMatch[0]) : 0;
-
-                // Check if modal elements exist
-                const salaryUserId = document.getElementById('salaryUserId');
-                const salaryEmpName = document.getElementById('salaryEmpName');
-                const salaryBaseAmount = document.getElementById('salaryBaseAmount');
-
-                if (!salaryUserId || !salaryEmpName || !salaryBaseAmount) {
-                    showNotification('Salary modal elements not found', 'error');
-                    return;
-                }
-
-                salaryUserId.value = empId;
-                salaryEmpName.value = empName;
-                salaryBaseAmount.value = baseSalary;
-
-                // Reset form values
-                document.getElementById('salaryBonus').value = 0;
-                document.getElementById('salaryFine').value = 0;
-                document.getElementById('salaryNotes').value = '';
-
-                await loadEmployeeLoans(empId, baseSalary);
-                calculateTotalPayable();
-
-                new bootstrap.Modal(document.getElementById('salaryModal')).show();
-            } catch (error) {
-                console.error('Error in manageSalary:', error);
-                showNotification('Error opening salary management', 'error');
-            }
-        }
-
-        async function manageLoan(empId) {
-            try {
-                const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
-                if (!row) {
-                    showNotification('Employee card not found', 'error');
-                    return;
-                }
-
-                const empName = row.querySelector('.card-title')?.textContent || 'Unknown Employee';
-
-                // Check if modal elements exist
-                const loanUserId = document.getElementById('loanUserId');
-                const loanEmpName = document.getElementById('loanEmpName');
-
-                if (!loanUserId || !loanEmpName) {
-                    showNotification('Loan modal elements not found', 'error');
-                    return;
-                }
-
-                loanUserId.value = empId;
-                loanEmpName.value = empName;
-
-                // Reset form
-                document.getElementById('loanForm').reset();
-                document.getElementById('loanRepaymentType').value = 'one_time';
-                document.getElementById('installmentSection').style.display = 'none';
-                document.getElementById('loanTakenOn').valueAsDate = new Date();
-
-                // Load existing loans
-                await loadExistingLoans(empId);
-
-                new bootstrap.Modal(document.getElementById('loanModal')).show();
-            } catch (error) {
-                console.error('Error in manageLoan:', error);
-                showNotification('Error opening loan management', 'error');
-            }
-        }
-
-        async function quickLoanPayment(empId) {
-            try {
-                const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
-                if (!row) {
-                    showNotification('Employee card not found', 'error');
-                    return;
-                }
-
-                const empName = row.querySelector('.card-title')?.textContent || 'Unknown Employee';
-
-                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/loans/active`);
-                const data = await response.json();
-
-                if (data.success && data.loans.length > 0) {
-                    let totalDue = 0;
-                    let loanDetails = '';
-                    data.loans.forEach(loan => {
-                        totalDue += loan.due_amount;
-                        loanDetails += `\n• ${loan.reason}: ${loan.due_amount.toLocaleString()}`;
-                        if (loan.installment) {
-                            loanDetails += ` (Installment: ${loan.installment.toLocaleString()})`;
-                        }
-                    });
-
-                    const paymentAmount = prompt(`Pay loans for ${empName}\nTotal Due: ${totalDue.toLocaleString()}${loanDetails}\n\nEnter payment amount:`);
-
-                    if (paymentAmount && !isNaN(paymentAmount)) {
-                        const payResponse = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/loan/payment`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                amount: parseFloat(paymentAmount),
-                                payment_date: new Date().toISOString().split('T')[0],
-                                notes: 'Direct loan payment'
-                            })
-                        });
-
-                        const payData = await payResponse.json();
-
-                        if (payData.success) {
-                            showNotification(`Loan payment successful! ${payData.amountPaid.toLocaleString()} paid across ${payData.loansUpdated} loans.`, 'success');
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            showNotification('Error: ' + (payData.message || 'Payment failed'), 'error');
-                        }
-                    }
-                } else {
-                    showNotification('No active loans found for this employee.', 'info');
-                }
-            } catch (error) {
-                console.error('Error processing loan payment:', error);
-                showNotification('Error processing loan payment', 'error');
-            }
-        }
-
-        // Add the missing helper functions
-        async function loadEmployeeLoans(empId, baseSalary) {
-            const loanList = document.getElementById('loanDeductionList');
-            if (!loanList) {
-                console.error('loanDeductionList element not found');
+            if (!employeeSelect.value || !amountInput.value || !reasonInput.value) {
+                showNotification('Please fill all required fields', 'error');
                 return;
             }
-
-            loanList.innerHTML = '<div class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin me-2"></i>Loading loans...</div>';
-
-            try {
-                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/loans/active`);
-                const data = await response.json();
-
-                if (data.success && data.loans.length > 0) {
-                    let html = '';
-                    data.loans.forEach(loan => {
-                        // For loans with installments, use installment amount
-                        // For loans without installments, suggest 50% of salary as max
-                        let suggestedDeduction = 0;
-                        let maxDeduction = 0;
-
-                        if (loan.installment && loan.installment > 0) {
-                            // Loan has installment - use that amount
-                            suggestedDeduction = Math.min(loan.installment, loan.due_amount);
-                            maxDeduction = loan.installment;
-                        } else {
-                            // No installment - suggest reasonable amount
-                            maxDeduction = Math.min(loan.due_amount, baseSalary * 0.5);
-                            suggestedDeduction = Math.min(loan.due_amount, maxDeduction);
-                        }
-
-                        html += `
-                    <div class="loan-item">
-                        <div class="form-check">
-                            <input class="form-check-input loan-checkbox" type="checkbox" 
-                                   data-loan-id="${loan.id}" 
-                                   data-has-installment="${loan.installment ? 'true' : 'false'}"
-                                   ${loan.installment ? 'checked' : 'checked'} 
-                                   ${loan.installment ? 'onclick="return false;"' : ''}>
-                            <label class="form-check-label w-100">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <strong>${loan.reason}</strong>
-                                        ${loan.installment ? `<span class="badge installment-badge ms-1">Installment: ${loan.installment.toLocaleString()}</span>` : ''}
-                                    </div>
-                                    <small class="text-muted">Due: ${loan.due_amount.toLocaleString()}</small>
-                                </div>
-                                <small class="text-muted">
-                                    ${loan.installment ? 'Auto-deduction' : 'Suggested'}: ${suggestedDeduction.toLocaleString()}
-                                </small>
-                            </label>
-                        </div>
-                        <div class="mt-2">
-                            <input type="number" class="form-control form-control-sm loan-deduction-amount" 
-                                   value="${suggestedDeduction}" 
-                                   min="0" max="${maxDeduction}" 
-                                   data-loan-id="${loan.id}"
-                                   ${loan.installment ? 'readonly' : ''}>
-                        </div>
-                    </div>
-                `;
-                    });
-                    loanList.innerHTML = html;
-
-                    document.querySelectorAll('.loan-checkbox, .loan-deduction-amount').forEach(element => {
-                        if (!element.readOnly) {
-                            element.addEventListener('change', calculateTotalPayable);
-                        }
-                    });
-                } else {
-                    loanList.innerHTML = '<div class="text-center text-muted py-3">No active loans found</div>';
-                    const loanSection = document.getElementById('loanDeductionSection');
-                    if (loanSection) {
-                        loanSection.style.display = 'none';
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading loans:', error);
-                loanList.innerHTML = '<div class="text-center text-danger py-3">Error loading loans</div>';
-            }
-        }
-
-        async function loadExistingLoans(empId) {
-            const loansList = document.getElementById('existingLoansList');
-            if (!loansList) {
-                console.error('existingLoansList element not found');
-                return;
-            }
-
-            loansList.innerHTML = '<div class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin me-2"></i>Loading loans...</div>';
-
-            try {
-                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}`);
-                const data = await response.json();
-
-                if (data.success && data.loans && data.loans.length > 0) {
-                    let html = '<div class="list-group">';
-                    data.loans.forEach(loan => {
-                        html += `
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1">${loan.reason}</h6>
-                                <p class="mb-1">Amount: ${loan.amount.toLocaleString()} | Due: ${loan.due_amount.toLocaleString()}</p>
-                                <small class="text-muted">Taken: ${new Date(loan.taken_on).toLocaleDateString()}</small>
-                                ${loan.installment ? `<br><small class="text-primary">Installment: ${loan.installment.toLocaleString()}/month</small>` : ''}
-                            </div>
-                            <div>
-                                <span class="badge ${loan.status === 'active' ? 'bg-warning' : 'bg-success'}">${loan.status}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                    });
-                    html += '</div>';
-                    loansList.innerHTML = html;
-                } else {
-                    loansList.innerHTML = '<div class="text-center text-muted py-3">No loans found</div>';
-                }
-            } catch (error) {
-                console.error('Error loading existing loans:', error);
-                loansList.innerHTML = '<div class="text-center text-danger py-3">Error loading loans</div>';
-            }
-        }
-
-        function calculateTotalPayable() {
-            const baseSalaryInput = document.getElementById('salaryBaseAmount');
-            const bonusInput = document.getElementById('salaryBonus');
-            const fineInput = document.getElementById('salaryFine');
-            const totalPayableElement = document.getElementById('totalPayableAmount');
-
-            if (!baseSalaryInput || !bonusInput || !fineInput || !totalPayableElement) {
-                return;
-            }
-
-            const baseSalary = parseFloat(baseSalaryInput.value) || 0;
-            const bonus = parseFloat(bonusInput.value) || 0;
-            const fine = parseFloat(fineInput.value) || 0;
-
-            let totalDeductions = 0;
-
-            document.querySelectorAll('.loan-checkbox:checked').forEach(checkbox => {
-                const loanId = checkbox.getAttribute('data-loan-id');
-                const amountInput = document.querySelector(`.loan-deduction-amount[data-loan-id="${loanId}"]`);
-                if (amountInput) {
-                    totalDeductions += parseFloat(amountInput.value) || 0;
-                }
-            });
-
-            const totalPayable = baseSalary + bonus - fine - totalDeductions;
-            totalPayableElement.textContent = totalPayable > 0 ? totalPayable.toLocaleString() : '0';
-        }
-
-        // Add event listeners for loan modal functionality
-        document.addEventListener('DOMContentLoaded', function () {
-            // Loan repayment type change
-            const loanRepaymentType = document.getElementById('loanRepaymentType');
-            if (loanRepaymentType) {
-                loanRepaymentType.addEventListener('change', function () {
-                    const installmentSection = document.getElementById('installmentSection');
-                    if (installmentSection) {
-                        installmentSection.style.display = this.value === 'installments' ? 'block' : 'none';
-                        calculateInstallment();
-                    }
-                });
-            }
-
-            // Calculate installment when amount or installments change
-            const loanAmount = document.getElementById('loanAmount');
-            const loanInstallments = document.getElementById('loanInstallments');
-
-            if (loanAmount) loanAmount.addEventListener('input', calculateInstallment);
-            if (loanInstallments) loanInstallments.addEventListener('input', calculateInstallment);
-
-            // Recalculate totals for salary
-            const salaryBonus = document.getElementById('salaryBonus');
-            const salaryFine = document.getElementById('salaryFine');
-
-            if (salaryBonus) salaryBonus.addEventListener('input', calculateTotalPayable);
-            if (salaryFine) salaryFine.addEventListener('input', calculateTotalPayable);
-
-            // Save buttons
-            const saveSalaryBtn = document.getElementById('saveSalaryBtn');
-            const saveLoanBtn = document.getElementById('saveLoanBtn');
-
-            if (saveSalaryBtn) saveSalaryBtn.addEventListener('click', saveSalary);
-            if (saveLoanBtn) saveLoanBtn.addEventListener('click', saveLoan);
-        });
-
-        function calculateInstallment() {
-            const loanAmount = document.getElementById('loanAmount');
-            const loanInstallments = document.getElementById('loanInstallments');
-            const loanInstallmentAmount = document.getElementById('loanInstallmentAmount');
-
-            if (!loanAmount || !loanInstallments || !loanInstallmentAmount) return;
-
-            const amount = parseFloat(loanAmount.value) || 0;
-            const installments = parseInt(loanInstallments.value) || 3;
-
-            if (amount > 0 && installments > 0) {
-                const installmentAmount = Math.ceil(amount / installments);
-                loanInstallmentAmount.value = installmentAmount;
-            }
-        }
-
-        // Save salary function
-        async function saveSalary() {
-            const form = document.getElementById('salaryForm');
-            if (!form) {
-                showNotification('Salary form not found', 'error');
-                return;
-            }
-
-            const formData = new FormData(form);
-
-            const salaryData = {
-                user_id: parseInt(formData.get('user_id')),
-                month: formData.get('month'),
-                amount: parseFloat(document.getElementById('salaryBaseAmount').value),
-                bonus: parseFloat(document.getElementById('salaryBonus').value) || 0,
-                fine: parseFloat(document.getElementById('salaryFine').value) || 0,
-                paid_on: formData.get('paid_on'),
-                notes: formData.get('notes'),
-                loan_deductions: []
-            };
-
-            document.querySelectorAll('.loan-checkbox:checked').forEach(checkbox => {
-                const loanId = checkbox.getAttribute('data-loan-id');
-                const amountInput = document.querySelector(`.loan-deduction-amount[data-loan-id="${loanId}"]`);
-                if (amountInput) {
-                    salaryData.loan_deductions.push({
-                        loan_id: parseInt(loanId),
-                        amount: parseFloat(amountInput.value) || 0
-                    });
-                }
-            });
-
-            try {
-                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${salaryData.user_id}/salary/simple`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(salaryData)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    let message = 'Salary paid successfully!';
-                    if (data.totalDeductions > 0) {
-                        message += ` ${data.totalDeductions.toLocaleString()} deducted for loans.`;
-                        if (data.processedLoans && data.processedLoans.length > 0) {
-                            message += ` Loans updated: ${data.processedLoans.length}`;
-                        }
-                    }
-
-                    bootstrap.Modal.getInstance(document.getElementById('salaryModal')).hide();
-                    showNotification(message, 'success');
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    showNotification('Error: ' + (data.message || 'Unknown error'), 'error');
-                }
-            } catch (error) {
-                console.error('Error saving salary:', error);
-                showNotification('Error saving salary', 'error');
-            }
-        }
-
-        // Save loan function
-        async function saveLoan() {
-            const form = document.getElementById('loanForm');
-            if (!form) {
-                showNotification('Loan form not found', 'error');
-                return;
-            }
-
-            const formData = new FormData(form);
 
             const loanData = {
-                user_id: parseInt(formData.get('user_id')),
-                amount: parseFloat(formData.get('amount')),
-                repayment_type: formData.get('repayment_type'),
-                installments: formData.get('installments') ? parseInt(formData.get('installments')) : null,
-                installment_amount: formData.get('installment_amount') ? parseFloat(formData.get('installment_amount')) : null,
-                reason: formData.get('reason'),
-                taken_on: formData.get('taken_on')
+                amount: parseFloat(amountInput.value),
+                description: reasonInput.value
             };
 
             try {
-                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${loanData.user_id}/loan/simple`, {
+                showNotification('Saving loan...', 'info');
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${employeeSelect.value}/loan`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(loanData)
@@ -2306,22 +2026,46 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    let message = 'Loan added successfully!';
-                    if (data.installmentAmount) {
-                        message += ` Monthly installment: ${data.installmentAmount.toLocaleString()}`;
-                    }
-
-                    bootstrap.Modal.getInstance(document.getElementById('loanModal')).hide();
-                    showNotification(message, 'success');
+                    modals.quickLoanModal?.hide();
+                    showNotification('Quick loan added successfully!', 'success');
                     setTimeout(() => location.reload(), 1500);
                 } else {
                     showNotification('Error: ' + (data.message || 'Unknown error'), 'error');
                 }
             } catch (error) {
-                console.error('Error saving loan:', error);
-                showNotification('Error saving loan', 'error');
+                console.error('Error saving quick loan:', error);
+                showNotification('Error saving quick loan', 'error');
             }
         }
+
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.custom-notification');
+            existingNotifications.forEach(n => n.remove());
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show custom-notification position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;';
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            // Add to page
+            document.body.appendChild(notification);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+
         function applyFilters() {
             const roleFilter = document.getElementById('roleFilter').value;
             const statusFilter = document.getElementById('statusFilter').value;
@@ -2342,32 +2086,6 @@
         function resetFilters() {
             window.location.href = '/EmpMgmt?page=1';
         }
-
-        function exportData() {
-            alert('Export feature coming soon!');
-        }
-
-        function showNotification(message, type = 'info') {
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            notification.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-
-            // Add to page
-            document.body.appendChild(notification);
-
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 5000);
-        }
     </script>
 </body>
-
 </html>
