@@ -1,1249 +1,1576 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shop Settings - <%= (shop && shop.name) || 'My Shop' %></title>
-  <style>
-    :root {
-      --primary-color: <%= (shop && shop.primary_color) || '#007bff' %>;
-      --secondary-color: <%= (shop && shop.secondary_color) || '#6c757d' %>;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - <%= shop.name %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: <%= shop.primary_color || '#4e73df' %>;
+            --secondary: <%= shop.secondary_color || '#858796' %>;
+            --success: #1cc88a;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --info: #36b9cc;
+            --dark: #5a5c69;
+            --light: #f8f9fc;
+        }
 
-    body {
-      background-color: #f8fafc;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
 
-    .dashboard-header {
-      background-color: white;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 1.5rem 0;
-      margin-bottom: 1.5rem;
-    }
+        .settings-container {
+            padding: 20px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
 
-    .card {
-      background: white;
-      border-radius: 0.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-      border: 1px solid #e5e7eb;
-      margin-bottom: 1.5rem;
-    }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            animation: fadeIn 0.5s ease;
+        }
 
-    .card-header {
-      background: #f8fafc;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid #e5e7eb;
-      border-radius: 0.5rem 0.5rem 0 0;
-    }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-    .card-body {
-      padding: 1.5rem;
-    }
+        .shop-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 2px solid #e5e7eb;
+            transition: transform 0.3s ease;
+        }
 
-    .btn-primary {
-      background-color: var(--primary-color);
-      border: none;
-      border-radius: 0.375rem;
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      color: #fff;
-    }
+        .shop-logo:hover {
+            transform: scale(1.05);
+        }
 
-    .btn-primary:hover {
-      background-color: #1e429f;
-      transform: translateY(-1px);
-    }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
 
-    .btn-outline {
-      border: 1px solid #e5e7eb;
-      border-radius: 0.375rem;
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      color: #374151;
-      transition: all 0.2s ease;
-      background: transparent;
-    }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid var(--primary);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
 
-    .btn-outline:hover {
-      border-color: var(--primary-color);
-      color: var(--primary-color);
-      background: transparent;
-    }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
 
-    .form-control,
-    .form-select {
-      border-radius: 0.375rem;
-      border: 1px solid #e5e7eb;
-      padding: 0.5rem 0.75rem;
-      transition: all 0.2s ease;
-    }
+        .stat-card h3 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--dark);
+        }
 
-    .form-control:focus,
-    .form-select:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
-    }
+        .stat-card p {
+            margin: 5px 0 0;
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
 
-    .color-preview {
-      width: 30px;
-      height: 30px;
-      border-radius: 0.375rem;
-      border: 2px solid #e5e7eb;
-      display: inline-block;
-      margin-right: 10px;
-      vertical-align: middle;
-    }
+        .section-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            animation: slideUp 0.5s ease;
+        }
 
-    .logo-preview {
-      max-width: 200px;
-      max-height: 100px;
-      border-radius: 0.375rem;
-      border: 2px solid #e5e7eb;
-      padding: 5px;
-    }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-    .nav-tabs .nav-link {
-      border: none;
-      color: #6b7280;
-      font-weight: 500;
-      padding: 0.75rem 1rem;
-    }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light);
+        }
 
-    .nav-tabs .nav-link.active {
-      color: var(--primary-color);
-      border-bottom: 2px solid var(--primary-color);
-      background: transparent;
-    }
+        .section-header h2 {
+            font-size: 1.3rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            color: var(--dark);
+        }
 
-    .setting-section {
-      border-bottom: 1px solid #e5e7eb;
-      padding-bottom: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
+        .section-header h2 i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
 
-    .setting-section:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
+        .badge-plan {
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            background-color: var(--primary);
+            color: white;
+        }
 
-    .subscription-card {
-      background: linear-gradient(135deg, var(--primary-color), #1e429f);
-      color: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-    }
+        .subscription-card {
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
-    .danger-zone {
-      border: 2px solid #ef4444;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      background: #fef2f2;
-    }
+        .subscription-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
 
-    @media (max-width: 768px) {
-      .dashboard-header {
-        padding: 1rem 0;
-        margin-bottom: 1rem;
-      }
-      .card-body {
-        padding: 1rem;
-      }
-    }
-  </style>
+        .subscription-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .subscription-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .subscription-card.active {
+            border-color: var(--success);
+            background: linear-gradient(135deg, #f0fff4, #ffffff);
+        }
+
+        .subscription-card.expired {
+            border-color: var(--danger);
+            background: linear-gradient(135deg, #fff5f5, #ffffff);
+        }
+
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+
+        .plan-features li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .plan-features li:hover {
+            transform: translateX(5px);
+        }
+
+        .plan-features li i {
+            color: var(--success);
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+
+        .plan-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plan-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .plan-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .plan-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .plan-card.popular {
+            border: 2px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plan-card.popular::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: 10px;
+            right: -30px;
+            background: var(--primary);
+            color: white;
+            padding: 5px 40px;
+            transform: rotate(45deg);
+            font-size: 0.7rem;
+            font-weight: 600;
+            z-index: 1;
+        }
+
+        .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .price::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 25%;
+            width: 50%;
+            height: 2px;
+            background: var(--primary);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .plan-card:hover .price::after {
+            transform: scaleX(1);
+        }
+
+        .price-period {
+            font-size: 0.9rem;
+            color: var(--secondary);
+        }
+
+        .btn-custom {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            padding: 10px 25px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-custom::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-custom:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-custom:hover {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(var(--primary-rgb, 78, 115, 223), 0.4);
+        }
+
+        .btn-outline-custom {
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+            padding: 10px 25px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-custom:hover {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(var(--primary-rgb, 78, 115, 223), 0.3);
+        }
+
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            display: inline-block;
+            border: 1px solid #ddd;
+            transition: transform 0.3s ease;
+        }
+
+        .color-preview:hover {
+            transform: scale(1.1);
+        }
+
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .status-badge:hover {
+            transform: scale(1.05);
+        }
+
+        .status-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-inactive {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-suspended {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .danger-zone {
+            border: 2px solid var(--danger);
+            border-radius: 10px;
+            padding: 25px;
+            background: linear-gradient(135deg, #fff5f5, #ffffff);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { border-color: var(--danger); }
+            50% { border-color: #ff6b6b; }
+            100% { border-color: var(--danger); }
+        }
+
+        .danger-zone .section-header {
+            border-bottom-color: #fecaca;
+        }
+
+        .warning-alert {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            animation: slideInLeft 0.5s ease;
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .action-history {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .action-history::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .action-history::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .action-history::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .history-item {
+            padding: 12px;
+            border-left: 3px solid var(--primary);
+            background: #f8f9fa;
+            margin-bottom: 8px;
+            border-radius: 0 5px 5px 0;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            background: white;
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-item .time {
+            font-size: 0.8rem;
+            color: var(--secondary);
+        }
+
+        .modal-danger .modal-header {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb, 78, 115, 223), 0.25);
+            transform: translateY(-1px);
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+            font-weight: 500;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-tabs .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: var(--primary);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-tabs .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary);
+            background: transparent;
+        }
+
+        .nav-tabs .nav-link.active::after {
+            width: 100%;
+        }
+
+        .logo-loading {
+            animation: pulse 1.5s infinite;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .settings-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .plan-card.popular::before {
+                font-size: 0.6rem;
+                right: -35px;
+                padding: 4px 35px;
+            }
+            
+            .price {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </head>
-
 <body>
-  <!-- Header -->
-  <div class="dashboard-header">
-    <div class="container-fluid">
-      <div class="row align-items-center">
-        <div class="col-md-8">
-          <h1 class="h3 mb-2"><i class="fas fa-cog me-2"></i>Shop Settings</h1>
-          <p class="mb-0 text-muted">Manage your shop configuration and preferences</p>
-        </div>
-        <div class="col-md-4 text-md-end">
-          <a href="/" class="btn btn-outline btn-sm">
-            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="container-fluid">
-    <!-- Navigation Tabs -->
-    <div class="card">
-      <div class="card-body p-0">
-        <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
-              <i class="fas fa-store me-2"></i>General
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="appearance-tab" data-bs-toggle="tab" data-bs-target="#appearance" type="button" role="tab">
-              <i class="fas fa-palette me-2"></i>Appearance
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing" type="button" role="tab">
-              <i class="fas fa-credit-card me-2"></i>Billing &amp; Subscription
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
-              <i class="fas fa-users me-2"></i>Users &amp; Permissions
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab">
-              <i class="fas fa-sliders-h me-2"></i>Advanced
-            </button>
-          </li>
-        </ul>
-      </div>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
     </div>
 
-    <!-- Tab Content -->
-    <div class="tab-content" id="settingsTabsContent">
-      <!-- General Settings Tab -->
-      <div class="tab-pane fade show active" id="general" role="tabpanel">
-        <div class="row">
-          <div class="col-lg-8">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Shop Information</h5>
-              </div>
-              <div class="card-body">
-                <form id="shopInfoForm" enctype="multipart/form-data">
-                  <div class="setting-section">
-                    <h6 class="fw-semibold mb-3">Basic Information</h6>
-                    <div class="row">
-                      <div class="col-md-6">
-                        <div class="mb-3">
-                          <label for="shopName" class="form-label">Shop Name *</label>
-                          <input type="text" class="form-control" id="shopName" name="name" value="<%= shop.name %>" required>
+    <div class="settings-container">
+        <!-- Header -->
+        <div class="settings-header">
+            <div>
+                <h1 class="h3 mb-2">
+                    <i class="fas fa-cog me-2"></i>Shop Settings
+                </h1>
+                <p class="text-muted mb-0">Manage your shop configuration and subscriptions</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="position-relative">
+                    <img src="<%= shop.logo || '/images/default-shop.png' %>" 
+                         alt="Shop Logo" 
+                         class="shop-logo" 
+                         id="shopLogo"
+                         onerror="this.onerror=null; this.src='/images/default-shop.png';">
+                    <div class="logo-loading" id="logoLoading" style="display: none;"></div>
+                </div>
+                <div>
+                    <h5 class="mb-1"><%= shop.name %></h5>
+                    <span class="badge <%= shop.status === 'active' ? 'status-active' : shop.status === 'inactive' ? 'status-inactive' : 'status-suspended' %> status-badge">
+                        <%= shop.status ? shop.status.charAt(0).toUpperCase() + shop.status.slice(1) : 'Active' %>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <% if (success) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i> <%= success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
+        <% if (error) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i> <%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3><%= stats.total_users || 0 %></h3>
+                <p><i class="fas fa-users me-1"></i> Active Users</p>
+            </div>
+            <div class="stat-card">
+                <h3><%= stats.total_products || 0 %></h3>
+                <p><i class="fas fa-box me-1"></i> Products</p>
+            </div>
+            <div class="stat-card">
+                <h3><%= stats.total_customers || 0 %></h3>
+                <p><i class="fas fa-user-friends me-1"></i> Customers</p>
+            </div>
+            <div class="stat-card">
+                <h3><%= stats.today_sales || 0 %></h3>
+                <p><i class="fas fa-shopping-cart me-1"></i> Today's Sales</p>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="section-card">
+            <ul class="nav nav-tabs" id="settingsTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#general">
+                        <i class="fas fa-store me-2"></i> General Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#subscription">
+                        <i class="fas fa-credit-card me-2"></i> Subscription
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#plans">
+                        <i class="fas fa-gem me-2"></i> Upgrade Plan
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Danger Zone
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content mt-4">
+                <!-- General Settings Tab -->
+                <div class="tab-pane fade show active" id="general">
+                    <form method="POST" action="/shop_setting/update" enctype="multipart/form-data" id="shopForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Shop Name *</label>
+                                <input type="text" class="form-control" name="name" 
+                                       value="<%= shop.name %>" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Shop Email *</label>
+                                <input type="email" class="form-control" name="email" 
+                                       value="<%= shop.email %>" required>
+                            </div>
                         </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="mb-3">
-                          <label for="shopEmail" class="form-label">Email Address *</label>
-                          <input type="email" class="form-control" id="shopEmail" name="email" value="<%= shop.email || '' %>" required>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" name="phone" 
+                                       value="<%= shop.phone || '' %>">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Currency *</label>
+                                <select class="form-select" name="currency" required>
+                                    <option value="PKR" <%= shop.currency === 'PKR' ? 'selected' : '' %>>Pakistani Rupee (PKR)</option>
+                                    <option value="USD" <%= shop.currency === 'USD' ? 'selected' : '' %>>US Dollar (USD)</option>
+                                    <option value="EUR" <%= shop.currency === 'EUR' ? 'selected' : '' %>>Euro (EUR)</option>
+                                    <option value="GBP" <%= shop.currency === 'GBP' ? 'selected' : '' %>>British Pound (GBP)</option>
+                                    <option value="INR" <%= shop.currency === 'INR' ? 'selected' : '' %>>Indian Rupee (INR)</option>
+                                </select>
+                            </div>
                         </div>
-                      </div>
-                    </div>
-                    <div class="row">
-                      <div class="col-md-6">
+
                         <div class="mb-3">
-                          <label for="shopPhone" class="form-label">Phone Number</label>
-                          <input type="tel" class="form-control" id="shopPhone" name="phone" value="<%= shop.phone || '' %>">
+                            <label class="form-label">Shop Address</label>
+                            <textarea class="form-control" name="address" rows="3"><%= shop.address || '' %></textarea>
                         </div>
-                      </div>
-                      <div class="col-md-6">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Primary Color</label>
+                                <div class="input-group">
+                                    <input type="color" class="form-control form-control-color" 
+                                           name="primary_color" value="<%= shop.primary_color %>" id="primaryColor">
+                                    <span class="input-group-text color-preview" 
+                                          style="background-color: '<%= shop.primary_color %>'" id="primaryPreview"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Secondary Color</label>
+                                <div class="input-group">
+                                    <input type="color" class="form-control form-control-color" 
+                                           name="secondary_color" value="<%= shop.secondary_color %>" id="secondaryColor">
+                                    <span class="input-group-text color-preview" 
+                                          style="background-color: '<%= shop.secondary_color %>'" id="secondaryPreview"></span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
-                          <label for="shopCurrency" class="form-label">Currency</label>
-                          <select class="form-select" id="shopCurrency" name="currency">
-                            <option value="PKR" <%= shop.currency === 'PKR' ? 'selected' : '' %>>Pakistani Rupee (PKR)</option>
-                            <option value="USD" <%= shop.currency === 'USD' ? 'selected' : '' %>>US Dollar (USD)</option>
-                            <option value="EUR" <%= shop.currency === 'EUR' ? 'selected' : '' %>>Euro (EUR)</option>
-                            <option value="GBP" <%= shop.currency === 'GBP' ? 'selected' : '' %>>British Pound (GBP)</option>
-                            <option value="INR" <%= shop.currency === 'INR' ? 'selected' : '' %>>Indian Rupee (INR)</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="mb-3">
-                      <label for="shopAddress" class="form-label">Address</label>
-                      <textarea class="form-control" id="shopAddress" name="address" rows="3"><%= shop.address || '' %></textarea>
-                    </div>
-                  </div>
-                  <div class="setting-section">
-                    <h6 class="fw-semibold mb-3">Shop Logo</h6>
-                    <div class="row align-items-center">
-                      <div class="col-md-6">
-                        <div class="mb-3">
-                          <label for="shopLogo" class="form-label">Upload Logo</label>
-                          <input type="file" class="form-control" id="shopLogo" name="logo" accept="image/*">
-                          <div class="form-text">Recommended: 200x100px, PNG or JPG format</div>
-                        </div>
-                      </div>
-                      <div class="col-md-6 text-center">
-                        <% if (shop.logo && shop.logo !== '/images/default-logo.png') { %>
-                          <div class="mb-3">
-                            <img src="<%= shop.logo %>" alt="Current Logo" class="logo-preview">
+                            <label class="form-label">Shop Logo</label>
+                            <% if (shop.logo && shop.logo !== '/images/default-shop.png') { %>
+                                <div class="mb-2">
+                                    <img src="<%= shop.logo %>" alt="Current Logo" 
+                                         style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px;"
+                                         onerror="this.onerror=null; this.src='/images/default-shop.png';"
+                                         id="currentLogo">
+                                </div>
+                            <% } %>
+                            <input type="file" class="form-control" name="logo" accept="image/*" id="logoInput">
+                            <small class="text-muted">Upload a new logo (max 2MB, JPG, PNG, GIF)</small>
                             <div class="mt-2">
-                              <button type="button" class="btn btn-sm btn-outline-danger" id="removeLogoBtn">
-                                <i class="fas fa-trash me-1"></i>Remove Logo
-                              </button>
+                                <img id="logoPreview" style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px; display: none;">
                             </div>
-                          </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-custom" id="saveBtn">
+                            <i class="fas fa-save me-2"></i> Save Changes
+                        </button>
+                    </form>
+
+                    <!-- Recent Actions -->
+                    <div class="mt-5">
+                        <div class="section-header">
+                            <h2><i class="fas fa-history me-2"></i> Recent Actions</h2>
+                        </div>
+                        <div class="action-history">
+                            <% if (recentActions && recentActions.length > 0) { %>
+                                <% recentActions.forEach(action => { 
+                                    let details = {};
+                                    try {
+                                        details = action.details ? JSON.parse(action.details) : {};
+                                    } catch (e) {
+                                        details = { action: action.action_type };
+                                    }
+                                %>
+                                    <div class="history-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong><%= details.action || action.action_type %></strong>
+                                                <% if (details.amount) { %>
+                                                    <span class="ms-2 badge bg-info">
+                                                        <%= shop.currency %> <%= details.amount.toLocaleString() %>
+                                                    </span>
+                                                <% } %>
+                                                <% if (details.reason) { %>
+                                                    <p class="mb-0 mt-1 text-muted"><small><%= details.reason %></small></p>
+                                                <% } %>
+                                            </div>
+                                            <small class="time">
+                                                <%= new Date(action.created_at).toLocaleDateString('en-IN', { 
+                                                    year: 'numeric', 
+                                                    month: 'short', 
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                }) %>
+                                            </small>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-history fa-2x mb-3"></i>
+                                    <p>No recent actions found</p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+ <!-- Subscription Tab -->
+                <div class="tab-pane fade" id="subscription">
+                    <% if (activeSubscription) { %>
+                        <div class="subscription-card active">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h4 class="mb-1"><%= activeSubscription.plan_name %></h4>
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-calendar-alt me-1"></i>
+                                        <%= activeSubscription.duration.charAt(0).toUpperCase() + activeSubscription.duration.slice(1) %> Plan
+                                    </p>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge-plan bg-success">Active</span>
+                                    <p class="mt-1 mb-0">
+                                        <strong><%= shop.currency %> <%= activeSubscription.price.toLocaleString() %></strong>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1">
+                                        <i class="fas fa-play-circle me-2"></i>
+                                        Started: <%= new Date(activeSubscription.started_at).toLocaleDateString('en-IN', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        }) %>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1">
+                                        <i class="fas fa-stop-circle me-2"></i>
+                                        Expires: <%= new Date(activeSubscription.expires_at).toLocaleDateString('en-IN', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        }) %>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <p class="mb-2">
+                                    <i class="fas fa-credit-card me-2"></i>
+                                    Payment Method: <strong><%= activeSubscription.payment_method || 'Manual' %></strong>
+                                </p>
+                                <% if (activeSubscription.auto_renew) { %>
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-sync-alt me-1"></i> Auto-renew enabled
+                                    </span>
+                                <% } %>
+                            </div>
+
+                            <div class="mt-4">
+                                <button type="button" class="btn btn-outline-danger" 
+                                        data-bs-toggle="modal" data-bs-target="#cancelSubscriptionModal">
+                                    <i class="fas fa-ban me-2"></i> Cancel Subscription
+                                </button>
+                                <a href="#plans" class="btn btn-custom ms-2" onclick="switchTab('plans')">
+                                    <i class="fas fa-arrow-up me-2"></i> Upgrade Plan
+                                </a>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>No Active Subscription</strong>
+                            <p class="mb-0 mt-2">You are currently on the free plan with limited features.</p>
+                            <a href="#plans" class="btn btn-custom mt-3" onclick="switchTab('plans')">
+                                <i class="fas fa-gem me-2"></i> View Available Plans
+                            </a>
+                        </div>
+                    <% } %>
+
+                    <!-- Subscription History -->
+                    <div class="mt-5">
+                        <div class="section-header">
+                            <h2><i class="fas fa-history me-2"></i> Subscription History</h2>
+                        </div>
+                        
+                        <% if (subscriptionHistory.length > 0) { %>
+                            <% subscriptionHistory.forEach(sub => { 
+                                const isActive = sub.status === 'active';
+                                const isExpired = sub.status === 'expired';
+                            %>
+                                <div class="subscription-card <%= isActive ? 'active' : isExpired ? 'expired' : '' %>">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="mb-1"><%= sub.plan_name %></h5>
+                                            <p class="text-muted mb-1">
+                                                <%= sub.duration.charAt(0).toUpperCase() + sub.duration.slice(1) %> • 
+                                                <%= shop.currency %> <%= sub.price.toLocaleString() %>
+                                            </p>
+                                            <p class="mb-0">
+                                                <small class="text-muted">
+                                                    <%= new Date(sub.started_at).toLocaleDateString() %> - 
+                                                    <%= new Date(sub.expires_at).toLocaleDateString() %>
+                                                </small>
+                                            </p>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge <%= isActive ? 'bg-success' : isExpired ? 'bg-danger' : 'bg-secondary' %>">
+                                                <%= sub.status.charAt(0).toUpperCase() + sub.status.slice(1) %>
+                                            </span>
+                                            <p class="mt-1 mb-0">
+                                                <small class="text-muted"><%= sub.payment_method || 'Manual' %></small>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
                         <% } else { %>
-                          <div class="text-muted">
-                            <i class="fas fa-store fa-3x mb-2"></i>
-                            <p>No logo uploaded</p>
-                          </div>
-                        <% } %>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
-                      <i class="fas fa-save me-2"></i>Save Changes
-                    </button>
-                    <button type="button" class="btn btn-outline" onclick="resetForm()">
-                      <i class="fas fa-undo me-2"></i>Reset
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <!-- Quick Stats -->
-            <div class="card">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Shop Overview</h5>
-              </div>
-              <div class="card-body">
-                <div class="mb-3">
-                  <small class="text-muted">Shop ID</small>
-                  <div class="fw-semibold"><%= shop.id %></div>
-                </div>
-                <div class="mb-3">
-                  <small class="text-muted">Registration Date</small>
-                  <div class="fw-semibold" id="registrationDate">Loading...</div>
-                </div>
-                <div class="mb-3">
-                  <small class="text-muted">Total Products</small>
-                  <div class="fw-semibold" id="totalProducts">Loading...</div>
-                </div>
-                <div class="mb-3">
-                  <small class="text-muted">Total Sales</small>
-                  <div class="fw-semibold" id="totalSales">Loading...</div>
-                </div>
-              </div>
-            </div>
-            <!-- Quick Actions -->
-            <div class="card mt-4">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
-              </div>
-              <div class="card-body">
-                <div class="d-grid gap-2">
-                  <button class="btn btn-outline-primary text-start" onclick="backupData()">
-                    <i class="fas fa-download me-2"></i>Backup Data
-                  </button>
-                  <button class="btn btn-outline-info text-start" onclick="exportReports()">
-                    <i class="fas fa-file-export me-2"></i>Export Reports
-                  </button>
-                  <button class="btn btn-outline-warning text-start" onclick="showApiSettings()">
-                    <i class="fas fa-key me-2"></i>API Settings
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Appearance Tab -->
-      <div class="tab-pane fade" id="appearance" role="tabpanel">
-        <div class="row">
-          <div class="col-lg-8">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-paint-brush me-2"></i>Theme &amp; Appearance</h5>
-              </div>
-              <div class="card-body">
-                <form id="appearanceForm">
-                  <div class="setting-section">
-                    <h6 class="fw-semibold mb-3">Color Scheme</h6>
-                    <div class="row">
-                      <div class="col-md-6">
-                        <div class="mb-3">
-                          <label for="primaryColor" class="form-label">Primary Color</label>
-                          <div class="input-group">
-                            <span class="input-group-text">
-                              <div class="color-preview" id="primaryColorPreview" style="background-color: <%= shop.primary_color %>"></div>
-                            </span>
-                            <input type="color" class="form-control form-control-color" id="primaryColor" name="primary_color" value="<%= shop.primary_color %>" title="Choose primary color">
-                          </div>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="mb-3">
-                          <label for="secondaryColor" class="form-label">Secondary Color</label>
-                          <div class="input-group">
-                            <span class="input-group-text">
-                              <div class="color-preview" id="secondaryColorPreview" style="background-color: <%= shop.secondary_color %>"></div>
-                            </span>
-                            <input type="color" class="form-control form-control-color" id="secondaryColor" name="secondary_color" value="<%= shop.secondary_color %>" title="Choose secondary color">
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="alert alert-info">
-                      <small>
-                        <i class="fas fa-info-circle me-1"></i>
-                        Colors will be applied to buttons, headers, and other UI elements.
-                      </small>
-                    </div>
-                  </div>
-                  <div class="setting-section">
-                    <h6 class="fw-semibold mb-3">Display Settings</h6>
-                    <div class="row">
-                      <div class="col-md-6">
-                        <div class="mb-3">
-                          <label for="dateFormat" class="form-label">Date Format</label>
-                          <select class="form-select" id="dateFormat" name="date_format">
-                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="mb-3">
-                          <label for="timeFormat" class="form-label">Time Format</label>
-                          <select class="form-select" id="timeFormat" name="time_format">
-                            <option value="12h">12-hour format</option>
-                            <option value="24h">24-hour format</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="mb-3">
-                      <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="darkMode" name="dark_mode">
-                        <label class="form-check-label" for="darkMode">Enable Dark Mode</label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
-                      <i class="fas fa-save me-2"></i>Save Appearance
-                    </button>
-                    <button type="button" class="btn btn-outline" onclick="resetAppearance()">
-                      <i class="fas fa-undo me-2"></i>Reset to Default
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Preview</h5>
-              </div>
-              <div class="card-body">
-                <div class="text-center p-4 border rounded" style="background-color: <%= shop.primary_color %>; color: white;">
-                  <h6 class="mb-2">Primary Color Preview</h6>
-                  <p class="mb-3">This is how your primary color looks</p>
-                  <button class="btn btn-light btn-sm">Example Button</button>
-                </div>
-                <div class="mt-3 p-3 border rounded" style="border-left: 4px solid <%= shop.secondary_color %>;">
-                  <h6 class="mb-1">Secondary Color Preview</h6>
-                  <p class="mb-0 text-muted">Used for borders and accents</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Billing Tab -->
-      <div class="tab-pane fade" id="billing" role="tabpanel">
-        <div class="row">
-          <div class="col-lg-8">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Current Subscription</h5>
-              </div>
-              <div class="card-body">
-                <div class="subscription-card">
-                  <div class="row align-items-center">
-                    <div class="col-md-8">
-                      <h4 class="mb-1" id="currentPlan">Loading...</h4>
-                      <p class="mb-2" id="planDescription">Loading plan details...</p>
-                      <small id="billingCycle">Loading billing cycle...</small>
-                    </div>
-                    <div class="col-md-4 text-end">
-                      <h3 class="mb-1" id="planPrice">Loading...</h3>
-                      <button class="btn btn-light btn-sm" onclick="changePlan()">Change Plan</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="setting-section">
-                  <h6 class="fw-semibold mb-3">Billing Information</h6>
-                  <div id="billingInfo">
-                    <div class="text-center py-4">
-                      <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                      </div>
-                      <p class="mt-2 mb-0">Loading billing information...</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="setting-section">
-                  <h6 class="fw-semibold mb-3">Payment History</h6>
-                  <div class="table-responsive">
-                    <table class="table table-hover">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Amount</th>
-                          <th>Plan</th>
-                          <th>Status</th>
-                          <th>Receipt</th>
-                        </tr>
-                      </thead>
-                      <tbody id="paymentHistory">
-                        <tr>
-                          <td colspan="5" class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                              <span class="visually-hidden">Loading...</span>
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-receipt fa-2x mb-3"></i>
+                                <p>No subscription history found</p>
                             </div>
-                            <p class="mt-2 mb-0">Loading payment history...</p>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Payment Methods</h5>
-              </div>
-              <div class="card-body">
-                <div id="paymentMethods">
-                  <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                      <span class="visually-hidden">Loading...</span>
+                        <% } %>
                     </div>
-                    <p class="mt-2 mb-0">Loading payment methods...</p>
-                  </div>
                 </div>
-                <button class="btn btn-outline-primary w-100 mt-3" onclick="addPaymentMethod()">
-                  <i class="fas fa-plus me-2"></i>Add Payment Method
-                </button>
-              </div>
-            </div>
-            <div class="card mt-4">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Invoices</h5>
-              </div>
-              <div class="card-body">
-                <div class="d-grid gap-2">
-                  <button class="btn btn-outline-secondary text-start" onclick="downloadInvoice('last')">
-                    <i class="fas fa-download me-2"></i>Download Last Invoice
-                  </button>
-                  <button class="btn btn-outline-secondary text-start" onclick="viewAllInvoices()">
-                    <i class="fas fa-list me-2"></i>View All Invoices
-                  </button>
+
+                <!-- Plans Tab -->
+                <div class="tab-pane fade" id="plans">
+                    <div class="section-header">
+                        <h2><i class="fas fa-gem me-2"></i> Choose Your Plan</h2>
+                        <span class="badge bg-info">Current: <%= shop.plan %></span>
+                    </div>
+
+                    <% if (pricingPlans.length > 0) { %>
+                        <div class="row">
+                            <% pricingPlans.forEach((plan, index) => { 
+                                const isPopular = index === 1; // Make second plan popular
+                            %>
+                                <div class="col-md-4 mb-4">
+                                    <div class="plan-card <%= isPopular ? 'popular' : '' %>">
+                                        <h4 class="mb-3"><%= plan.name %></h4>
+                                        <div class="price">
+                                            <%= shop.currency %> 
+                                            <% if (plan.monthly_price > 0) { %>
+                                                <%= plan.monthly_price.toLocaleString() %>
+                                                <span class="price-period">/month</span>
+                                            <% } else { %>
+                                                <span>Free</span>
+                                            <% } %>
+                                        </div>
+                                        
+                                        <% if (plan.description) { %>
+                                            <p class="text-muted mb-4"><%= plan.description %></p>
+                                        <% } %>
+
+                                        <ul class="plan-features">
+                                            <% if (plan.features) { 
+                                                const features = JSON.parse(plan.features);
+                                                features.forEach(feature => { %>
+                                                    <li><i class="fas fa-check"></i> <%= feature %></li>
+                                                <% });
+                                            } %>
+                                        </ul>
+
+                                        <button type="button" class="btn <%= isPopular ? 'btn-custom' : 'btn-outline-custom' %> w-100 mt-3"
+                                                data-bs-toggle="modal" data-bs-target="#subscribeModal"
+                                                data-plan-id="<%= plan.plan_id %>" 
+                                                data-plan-name="<%= plan.name %>"
+                                                onclick="selectPlan(this)">
+                                            <% if (shop.plan === plan.name) { %>
+                                                <i class="fas fa-check me-2"></i> Current Plan
+                                            <% } else { %>
+                                                <i class="fas fa-arrow-up me-2"></i> 
+                                                <%= plan.monthly_price > 0 ? 'Upgrade Now' : 'Select Free' %>
+                                            <% } %>
+                                        </button>
+
+                                        <% if (plan.quarterly_price || plan.yearly_price) { %>
+                                            <div class="mt-3 text-center">
+                                                <small class="text-muted">
+                                                    Save 
+                                                    <% if (plan.quarterly_price) { %>
+                                                        <%= Math.round((1 - (plan.quarterly_price / 3) / plan.monthly_price) * 100) %>%
+                                                        with quarterly
+                                                    <% } %>
+                                                    <% if (plan.yearly_price) { %>
+                                                        <%= Math.round((1 - (plan.yearly_price / 12) / plan.monthly_price) * 100) %>%
+                                                        with yearly
+                                                    <% } %>
+                                                </small>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    <% } else { %>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No pricing plans available at the moment.
+                        </div>
+                    <% } %>
+
+                    <!-- FAQ Section -->
+                    <div class="mt-5">
+                        <div class="section-header">
+                            <h2><i class="fas fa-question-circle me-2"></i> Frequently Asked Questions</h2>
+                        </div>
+                        
+                        <div class="accordion" id="faqAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                        When will my new subscription start?
+                                    </button>
+                                </h2>
+                                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Your new subscription will start immediately after your current active subscription expires. 
+                                        This ensures you don't lose any remaining days on your current plan.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                        Can I cancel my subscription anytime?
+                                    </button>
+                                </h2>
+                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Yes, you can cancel your subscription at any time. After cancellation, 
+                                        you'll continue to have access to premium features until the end of your current billing period.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                        What happens if I downgrade my plan?
+                                    </button>
+                                </h2>
+                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        When you downgrade, the changes take effect at the start of your next billing cycle. 
+                                        You'll keep all your data, but some features may become limited based on your new plan.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
+
+                <!-- Danger Zone Tab -->
+                <div class="tab-pane fade" id="danger">
+                    <div class="danger-zone">
+                        <div class="section-header">
+                            <h2><i class="fas fa-exclamation-triangle me-2"></i> Danger Zone</h2>
+                            <span class="badge bg-danger">Critical Actions</span>
+                        </div>
+
+                        <!-- Shop Status Control -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Shop Status</h5>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Deactivating your shop will make it inaccessible to all users except you. 
+                                All data will be preserved and can be restored anytime.
+                            </div>
+                            
+                            <form method="POST" action="/shop_setting/update-status" class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Change Shop Status</label>
+                                    <select class="form-select" name="status" id="statusSelect">
+                                        <option value="active" <%= shop.status === 'active' ? 'selected' : '' %>>Active</option>
+                                        <option value="inactive" <%= shop.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                                        <option value="suspended" <%= shop.status === 'suspended' ? 'selected' : '' %>>Suspended</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Reason for Change</label>
+                                    <input type="text" class="form-control" name="reason" 
+                                           placeholder="Optional reason for status change">
+                                </div>
+                                <div class="col-12">
+                                    <div id="statusWarning" class="warning-alert" style="display: none;">
+                                        <i class="fas fa-exclamation-circle me-2"></i>
+                                        <strong>Warning:</strong> Changing status to 
+                                        <span id="statusType"></span> will restrict access to your shop.
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-outline-danger" 
+                                            onclick="confirmStatusChange()">
+                                        <i class="fas fa-power-off me-2"></i> Update Status
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Data Management -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Data Management</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-database fa-2x text-info mb-3"></i>
+                                            <h5>Create Backup</h5>
+                                            <p class="text-muted">Create a full backup of your shop data</p>
+                                            <form method="POST" action="/shop_setting/backup">
+                                                <button type="submit" class="btn btn-outline-info w-100">
+                                                    <i class="fas fa-download me-2"></i> Request Backup
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-file-export fa-2x text-primary mb-3"></i>
+                                            <h5>Export Data</h5>
+                                            <p class="text-muted">Export all shop data in JSON format</p>
+                                            <a href="/shop_setting/export-data" class="btn btn-outline-primary w-100">
+                                                <i class="fas fa-file-export me-2"></i> Export Now
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Permanent Actions -->
+                        <div class="mt-5">
+                            <div class="warning-alert">
+                                <i class="fas fa-radiation-alt me-2"></i>
+                                <strong>Extreme Caution:</strong> The following actions are irreversible and will 
+                                significantly impact your shop operations. Please proceed with caution.
+                            </div>
+
+                            <div class="d-flex gap-3 mt-4">
+                                <button type="button" class="btn btn-danger" 
+                                        data-bs-toggle="modal" data-bs-target="#deleteShopModal">
+                                    <i class="fas fa-trash-alt me-2"></i> Delete Shop
+                                </button>
+                                
+                                <button type="button" class="btn btn-warning" 
+                                        data-bs-toggle="modal" data-bs-target="#resetDataModal">
+                                    <i class="fas fa-redo me-2"></i> Reset All Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-      <!-- Users Tab -->
-      <div class="tab-pane fade" id="users" role="tabpanel">
-        <div class="row">
-          <div class="col-lg-8">
-            <div class="card">
-              <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                  <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>User Management</h5>
-                  <button class="btn btn-primary btn-sm" onclick="addUser()">
-                    <i class="fas fa-plus me-1"></i>Add User
-                  </button>
-                </div>
-              </div>
-              <div class="card-body p-0">
-                <div class="table-responsive">
-                  <table class="table table-hover mb-0">
-                    <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Last Login</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="usersTable">
-                      <tr>
-                        <td colspan="6" class="text-center py-4">
-                          <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                          </div>
-                          <p class="mt-2 mb-0">Loading users...</p>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Role Permissions</h5>
-              </div>
-              <div class="card-body">
-                <div id="rolePermissions">
-                  <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                      <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2 mb-0">Loading permissions...</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card mt-4">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Login Activity</h5>
-              </div>
-              <div class="card-body">
-                <div id="loginActivity">
-                  <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                      <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2 mb-0">Loading activity...</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Advanced Tab -->
-      <div class="tab-pane fade" id="advanced" role="tabpanel">
-        <div class="row">
-          <div class="col-lg-8">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Data Management</h5>
-              </div>
-              <div class="card-body">
-                <div class="setting-section">
-                  <h6 class="fw-semibold mb-3">Backup &amp; Restore</h6>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary" onclick="createBackup()">
-                          <i class="fas fa-download me-2"></i>Create Backup
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="viewBackups()">
-                          <i class="fas fa-history me-2"></i>View Backups
-                        </button>
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="d-grid gap-2">
-                        <button class="btn btn-outline-warning" onclick="restoreBackup()">
-                          <i class="fas fa-upload me-2"></i>Restore Backup
-                        </button>
-                        <button class="btn btn-outline-info" onclick="exportData()">
-                          <i class="fas fa-file-export me-2"></i>Export Data
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="setting-section">
-                  <h6 class="fw-semibold mb-3">API Settings</h6>
-                  <div class="mb-3">
-                    <label for="apiKey" class="form-label">API Key</label>
-                    <div class="input-group">
-                      <input type="text" class="form-control" id="apiKey" value="sk_" readonly>
-                      <button class="btn btn-outline-secondary" type="button" onclick="generateApiKey()">
-                        <i class="fas fa-sync me-1"></i>Generate
-                      </button>
-                    </div>
-                  </div>
-                  <div class="form-check form-switch mb-3">
-                    <input class="form-check-input" type="checkbox" id="apiEnabled" checked>
-                    <label class="form-check-label" for="apiEnabled">Enable API Access</label>
-                  </div>
-                </div>
-                <div class="danger-zone">
-                  <h6 class="fw-semibold mb-3 text-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Danger Zone
-                  </h6>
-                  <p class="text-muted mb-3">These actions are irreversible. Please proceed with caution.</p>
-                  <div class="d-grid gap-2">
-                    <button class="btn btn-outline-danger" onclick="resetShopData()">
-                      <i class="fas fa-eraser me-2"></i>Reset All Data
-                    </button>
-                    <button class="btn btn-danger" onclick="deleteShop()">
-                      <i class="fas fa-trash me-2"></i>Delete Shop
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-tools me-2"></i>System Information</h5>
-              </div>
-              <div class="card-body">
-                <div class="mb-3">
-                  <small class="text-muted">System Version</small>
-                  <div class="fw-semibold" id="systemVersion">v2.1.0</div>
-                </div>
-                <div class="mb-3">
-                  <small class="text-muted">Database Size</small>
-                  <div class="fw-semibold" id="dbSize">Loading...</div>
-                </div>
-                <div class="mb-3">
-                  <small class="text-muted">Last Backup</small>
-                  <div class="fw-semibold" id="lastBackup">Never</div>
-                </div>
-                <div class="mb-3">
-                  <small class="text-muted">Server Status</small>
-                  <div class="fw-semibold text-success"><i class="fas fa-circle me-1"></i>Online</div>
-                </div>
-              </div>
-            </div>
-            <div class="card mt-4">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notifications</h5>
-              </div>
-              <div class="card-body">
-                <div class="form-check form-switch mb-3">
-                  <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
-                  <label class="form-check-label" for="emailNotifications">Email Notifications</label>
-                </div>
-                <div class="form-check form-switch mb-3">
-                  <input class="form-check-input" type="checkbox" id="lowStockAlerts" checked>
-                  <label class="form-check-label" for="lowStockAlerts">Low Stock Alerts</label>
-                </div>
-                <div class="form-check form-switch mb-3">
-                  <input class="form-check-input" type="checkbox" id="salesReports" checked>
-                  <label class="form-check-label" for="salesReports">Daily Sales Reports</label>
-                </div>
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="systemUpdates" checked>
-                  <label class="form-check-label" for="systemUpdates">System Update Notifications</label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
-  <!-- Add User Modal -->
-  <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Add New User</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <form id="addUserForm">
-          <div class="modal-body">
-            <div class="mb-3">
-              <label for="newUserName" class="form-label">Full Name *</label>
-              <input type="text" class="form-control" id="newUserName" name="name" required>
-            </div>
-            <div class="mb-3">
-              <label for="newUserEmail" class="form-label">Email Address *</label>
-              <input type="email" class="form-control" id="newUserEmail" name="email" required>
-            </div>
-            <div class="mb-3">
-              <label for="newUserRole" class="form-label">Role *</label>
-              <select class="form-select" id="newUserRole" name="role" required>
-                <option value="cashier">Cashier</option>
-                <option value="manager">Manager</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="newUserSalary" class="form-label">Salary</label>
-              <input type="number" step="0.01" class="form-control" id="newUserSalary" name="salary">
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary">Add User</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // Provide shop data to the client-side script
-    window.shopData = {
-      currency: '<%= (shop && shop.currency) || "PKR" %>',
-      name: '<%= (shop && shop.name) || "My Shop" %>',
-      primaryColor: '<%= (shop && shop.primary_color) || "#007bff" %>',
-      secondaryColor: '<%= (shop && shop.secondary_color) || "#6c757d" %>'
-    };
 
-    // Initialize event listeners and load initial data
-    document.addEventListener('DOMContentLoaded', function () {
-      console.log('Initializing shop settings...');
-      loadShopStatistics();
-      loadSubscriptionInfo();
-      loadShopUsers();
-      setupEventListeners();
-      initializeColorPickers();
-    });
-
-    /**
-     * Bind form submissions and other UI events once on page load.
-     */
-    function setupEventListeners() {
-      // Shop information form submission
-      const shopInfoForm = document.getElementById('shopInfoForm');
-      if (shopInfoForm) {
-        shopInfoForm.addEventListener('submit', function (e) {
-          e.preventDefault();
-          updateShopInfo();
-        });
-      }
-      // Appearance form submission
-      const appearanceForm = document.getElementById('appearanceForm');
-      if (appearanceForm) {
-        appearanceForm.addEventListener('submit', function (e) {
-          e.preventDefault();
-          updateAppearance();
-        });
-      }
-      // Add user form submission
-      const addUserForm = document.getElementById('addUserForm');
-      if (addUserForm) {
-        addUserForm.addEventListener('submit', function (e) {
-          e.preventDefault();
-          submitAddUser();
-        });
-      }
-      // Remove logo button
-      const removeLogoBtn = document.getElementById('removeLogoBtn');
-      if (removeLogoBtn) {
-        removeLogoBtn.addEventListener('click', function () {
-          removeLogo();
-        });
-      }
-      // Live color previews
-      const primaryColorInput = document.getElementById('primaryColor');
-      const secondaryColorInput = document.getElementById('secondaryColor');
-      if (primaryColorInput) {
-        primaryColorInput.addEventListener('input', function () {
-          const preview = document.getElementById('primaryColorPreview');
-          if (preview) {
-            preview.style.backgroundColor = this.value;
-          }
-        });
-      }
-      if (secondaryColorInput) {
-        secondaryColorInput.addEventListener('input', function () {
-          const preview = document.getElementById('secondaryColorPreview');
-          if (preview) {
-            preview.style.backgroundColor = this.value;
-          }
-        });
-      }
-    }
-
-    /**
-     * Placeholder for additional color picker initialization if needed.
-     */
-    function initializeColorPickers() {
-      // Currently using native HTML color inputs; no additional initialization required.
-    }
-
-    /**
-     * Format currency values based on the shop's currency.
-     * @param {number} amount
-     */
-    function formatCurrency(amount) {
-      const currency = window.shopData?.currency || 'PKR';
-      return new Intl.NumberFormat('en-PK', {
-        style: 'currency',
-        currency: currency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      }).format(amount || 0);
-    }
-
-    /**
-     * Escape HTML to prevent XSS when injecting user-provided values into the DOM.
-     * @param {string} unsafe
-     */
-    function escapeHtml(unsafe) {
-      if (!unsafe) return '';
-      return unsafe
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    /**
-     * Determine badge class for a given user role.
-     * @param {string} role
-     */
-    function getRoleBadgeClass(role) {
-      const classes = {
-        owner: 'bg-primary',
-        manager: 'bg-success',
-        cashier: 'bg-info',
-        other: 'bg-secondary'
-      };
-      return classes[role] || 'bg-secondary';
-    }
-
-    /**
-     * Display a toast message. For now this uses alert() as a placeholder.
-     * @param {string} message
-     * @param {string} type
-     */
-    function showToast(message, type = 'success') {
-      alert(`${type.toUpperCase()}: ${message}`);
-    }
-
-    /**
-     * Load basic shop statistics from the server and populate the dashboard.
-     */
-    async function loadShopStatistics() {
-      try {
-        const response = await fetch('shop/statistics');
-        const data = await response.json();
-        if (data.success) {
-          const stats = data.statistics;
-          document.getElementById('registrationDate').textContent = new Date(stats.registrationDate).toLocaleDateString();
-          document.getElementById('totalProducts').textContent = stats.totalProducts.toLocaleString();
-          document.getElementById('totalSales').textContent = formatCurrency(stats.totalSales);
-        }
-      } catch (error) {
-        console.error('Error loading shop statistics:', error);
-        showToast('Failed to load shop statistics', 'error');
-      }
-    }
-
-    /**
-     * Load current subscription information from the server.
-     */
-    async function loadSubscriptionInfo() {
-      try {
-        const response = await fetch('/shop/subscription');
-        const data = await response.json();
-        if (data.success) {
-          const subscription = data.subscription;
-          if (subscription) {
-            document.getElementById('currentPlan').textContent = subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1) + ' Plan';
-            document.getElementById('planDescription').textContent = `${subscription.duration} billing`;
-            document.getElementById('planPrice').textContent = formatCurrency(subscription.price);
-            document.getElementById('billingCycle').textContent = `Next billing: ${new Date(subscription.expiryDate).toLocaleDateString()}`;
-          } else {
-            document.getElementById('currentPlan').textContent = 'No Active Subscription';
-            document.getElementById('planDescription').textContent = 'Please subscribe to a plan';
-            document.getElementById('planPrice').textContent = '₨0';
-          }
-        }
-      } catch (error) {
-        console.error('Error loading subscription info:', error);
-      }
-    }
-
-    /**
-     * Fetch and display the list of users for the current shop.
-     */
-    async function loadShopUsers() {
-      try {
-        const response = await fetch('/shop/users');
-        const data = await response.json();
-        const usersTable = document.getElementById('usersTable');
-        if (data.success && data.users.length > 0) {
-          let html = '';
-          data.users.forEach(user => {
-            html += `
-              <tr>
-                <td>
-                  <div class="fw-semibold">${escapeHtml(user.name)}</div>
-                  <small class="text-muted">ID: ${user.id}</small>
-                </td>
-                <td>${escapeHtml(user.email)}</td>
-                <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span></td>
-                <td><span class="badge ${user.status === 'active' ? 'bg-success' : 'bg-secondary'}">${user.status.charAt(0).toUpperCase() + user.status.slice(1)}</span></td>
-                <td>${user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'Never'}</td>
-                <td>
-                  <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="editUser(${user.id})"><i class="fas fa-edit"></i></button>
-                    ${user.role !== 'owner' ? `<button class="btn btn-outline-danger" onclick="deleteUser(${user.id})"><i class="fas fa-trash"></i></button>` : ''}
-                  </div>
-                </td>
-              </tr>
-            `;
-          });
-          usersTable.innerHTML = html;
-        } else {
-          usersTable.innerHTML = `
-            <tr>
-              <td colspan="6" class="text-center py-4">
-                <div class="empty-state">
-                  <i class="fas fa-users fa-2x text-muted mb-3"></i>
-                  <h5>No Users Found</h5>
-                  <p class="text-muted">Add your first user to get started</p>
+    <!-- Subscribe Modal -->
+    <div class="modal fade" id="subscribeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Subscribe to <span id="modalPlanName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-              </td>
-            </tr>
-          `;
-        }
-      } catch (error) {
-        console.error('Error loading users:', error);
-        document.getElementById('usersTable').innerHTML = `
-          <tr>
-            <td colspan="6" class="text-center py-4 text-danger">
-              <i class="fas fa-exclamation-triangle me-2"></i>Failed to load users
-            </td>
-          </tr>
-        `;
-      }
-    }
+                <form method="POST" action="/shop_setting/subscribe" id="subscribeForm">
+                    <input type="hidden" name="plan_id" id="modalPlanId">
+                    
+                    <div class="modal-body">
+                        <% if (activeSubscription) { %>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Your current plan (<%= activeSubscription.plan_name %>) will remain active until 
+                                <%= new Date(activeSubscription.expires_at).toLocaleDateString('en-IN', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                }) %>. The new subscription will start automatically after that.
+                            </div>
+                        <% } %>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Select Billing Period</label>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check card p-3 <%= activeSubscription?.duration === 'monthly' ? 'border-primary' : '' %>"
+                                         onclick="selectDuration('monthly')">
+                                        <input class="form-check-input" type="radio" name="duration" 
+                                               id="durationMonthly" value="monthly" checked>
+                                        <label class="form-check-label" for="durationMonthly">
+                                            <strong>Monthly</strong>
+                                            <p class="text-muted mb-0 mt-1">Pay monthly, cancel anytime</p>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check card p-3 <%= activeSubscription?.duration === 'quarterly' ? 'border-primary' : '' %>"
+                                         onclick="selectDuration('quarterly')">
+                                        <input class="form-check-input" type="radio" name="duration" 
+                                               id="durationQuarterly" value="quarterly">
+                                        <label class="form-check-label" for="durationQuarterly">
+                                            <strong>Quarterly</strong>
+                                            <p class="text-muted mb-0 mt-1">Save up to 15% with 3 months billing</p>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check card p-3 <%= activeSubscription?.duration === 'yearly' ? 'border-primary' : '' %>"
+                                         onclick="selectDuration('yearly')">
+                                        <input class="form-check-input" type="radio" name="duration" 
+                                               id="durationYearly" value="yearly">
+                                        <label class="form-check-label" for="durationYearly">
+                                            <strong>Yearly</strong>
+                                            <p class="text-muted mb-0 mt-1">Save up to 30% with annual billing</p>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-    /**
-     * Send form data to update shop information.
-     */
-    async function updateShopInfo() {
-      const form = document.getElementById('shopInfoForm');
-      const formData = new FormData(form);
-      try {
-        const response = await fetch('/api/shop/update', {
-          method: 'PUT',
-          body: formData
+                        <div class="mb-4">
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select" name="payment_method" required>
+                                <option value="">Select payment method</option>
+                                <option value="credit_card">Credit Card</option>
+                                <option value="debit_card">Debit Card</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="easypaisa">Easypaisa</option>
+                                <option value="jazzcash">JazzCash</option>
+                                <option value="manual">Manual Payment</option>
+                            </select>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" name="auto_renew" id="autoRenew">
+                            <label class="form-check-label" for="autoRenew">
+                                Enable auto-renewal
+                                <small class="text-muted d-block">Automatically renew this subscription before it expires</small>
+                            </label>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            By subscribing, you agree to our Terms of Service and Privacy Policy. 
+                            All subscriptions are non-refundable.
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-custom">
+                            <i class="fas fa-check me-2"></i> Confirm Subscription
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Subscription Modal -->
+    <div class="modal fade" id="cancelSubscriptionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class="fas fa-ban me-2"></i> Cancel Subscription
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <h5 class="alert-heading">Are you sure?</h5>
+                        <p class="mb-2">You are about to cancel your active subscription.</p>
+                        <ul class="mb-0">
+                            <li>You will lose access to premium features immediately</li>
+                            <li>Your data will be preserved but limited to free plan features</li>
+                            <li>You can resubscribe anytime</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="POST" action="/shop_setting/cancel-subscription" id="cancelForm">
+                        <div class="mb-3">
+                            <label class="form-label">Reason for cancellation (optional)</label>
+                            <textarea class="form-control" name="reason" rows="3" 
+                                      placeholder="Help us improve by sharing your reason..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Keep Subscription</button>
+                    <button type="submit" form="cancelForm" class="btn btn-danger">
+                        <i class="fas fa-ban me-2"></i> Cancel Subscription
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Shop Modal -->
+    <div class="modal fade modal-danger" id="deleteShopModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-skull-crossbones me-2"></i> Delete Shop
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
+                        <h4 class="text-danger">This action cannot be undone!</h4>
+                    </div>
+                    
+                    <div class="alert alert-danger">
+                        <strong>Warning:</strong> Deleting your shop will:
+                        <ul class="mt-2 mb-0">
+                            <li>Permanently remove all shop data</li>
+                            <li>Delete all user accounts</li>
+                            <li>Remove all products and sales records</li>
+                            <li>Cancel any active subscriptions</li>
+                            <li>This action is irreversible</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete1">
+                        <label class="form-check-label" for="confirmDelete1">
+                            I understand this will delete all my shop data permanently
+                        </label>
+                    </div>
+                    
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete2">
+                        <label class="form-check-label" for="confirmDelete2">
+                            I have backed up all important data
+                        </label>
+                    </div>
+                    
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete3">
+                        <label class="form-check-label" for="confirmDelete3">
+                            I want to proceed with shop deletion
+                        </label>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Type "DELETE" to confirm</label>
+                        <input type="text" class="form-control" id="deleteConfirmText" 
+                               placeholder="Type DELETE to confirm">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="deleteShopBtn" disabled>
+                        <i class="fas fa-trash-alt me-2"></i> Delete Shop Permanently
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Data Modal -->
+    <div class="modal fade" id="resetDataModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-warning">
+                        <i class="fas fa-redo me-2"></i> Reset Shop Data
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <h5 class="alert-heading">Reset All Data</h5>
+                        <p>This will reset all your shop data to factory defaults:</p>
+                        <ul>
+                            <li>Remove all products and inventory</li>
+                            <li>Clear all sales and purchase records</li>
+                            <li>Remove all customers and suppliers</li>
+                            <li>Reset all user passwords</li>
+                            <li>Keep shop settings and subscription</li>
+                        </ul>
+                        <p class="mb-0"><strong>Note:</strong> This action cannot be undone.</p>
+                    </div>
+                    
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="confirmReset">
+                        <label class="form-check-label" for="confirmReset">
+                            I understand this will erase all my shop data
+                        </label>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Type "RESET" to confirm</label>
+                        <input type="text" class="form-control" id="resetConfirmText" 
+                               placeholder="Type RESET to confirm">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="resetDataBtn" disabled>
+                        <i class="fas fa-redo me-2"></i> Reset All Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // Handle logo preview
+        document.getElementById('logoInput')?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file size (2MB max)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('File size must be less than 2MB');
+                    this.value = '';
+                    return;
+                }
+                
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert('Only image files are allowed');
+                    this.value = '';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('logoPreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
         });
-        const data = await response.json();
-        if (data.success) {
-          showToast('Shop information updated successfully!', 'success');
-          setTimeout(() => location.reload(), 1000);
-        } else {
-          throw new Error(data.message || 'Failed to update shop information');
-        }
-      } catch (error) {
-        console.error('Error updating shop:', error);
-        showToast('Failed to update shop information', 'error');
-      }
-    }
 
-    /**
-     * Send form data to update appearance settings (colors).
-     */
-    async function updateAppearance() {
-      const form = document.getElementById('appearanceForm');
-      const formData = new FormData(form);
-      try {
-        const response = await fetch('/api/shop/appearance', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.fromEntries(formData))
+        // Handle color preview updates
+        document.getElementById('primaryColor')?.addEventListener('input', function(e) {
+            document.getElementById('primaryPreview').style.backgroundColor = e.target.value;
+            document.documentElement.style.setProperty('--primary', e.target.value);
         });
-        const data = await response.json();
-        if (data.success) {
-          showToast('Appearance settings updated successfully!', 'success');
-          setTimeout(() => location.reload(), 1000);
-        } else {
-          throw new Error(data.message || 'Failed to update appearance');
-        }
-      } catch (error) {
-        console.error('Error updating appearance:', error);
-        showToast('Failed to update appearance settings', 'error');
-      }
-    }
 
-    /**
-     * Remove the shop logo by sending a flag to the backend.
-     */
-    async function removeLogo() {
-      if (!confirm('Are you sure you want to remove the shop logo?')) return;
-      try {
-        const formData = new FormData();
-        formData.append('remove_logo', 'true');
-        const response = await fetch('/api/shop/update', {
-          method: 'PUT',
-          body: formData
+        document.getElementById('secondaryColor')?.addEventListener('input', function(e) {
+            document.getElementById('secondaryPreview').style.backgroundColor = e.target.value;
+            document.documentElement.style.setProperty('--secondary', e.target.value);
         });
-        const data = await response.json();
-        if (data.success) {
-          showToast('Logo removed successfully!', 'success');
-          setTimeout(() => location.reload(), 1000);
-        } else {
-          throw new Error(data.message || 'Failed to remove logo');
-        }
-      } catch (error) {
-        console.error('Error removing logo:', error);
-        showToast('Failed to remove logo', 'error');
-      }
-    }
 
-    /**
-     * Show the add user modal.
-     */
-    function addUser() {
-      const modalEl = document.getElementById('addUserModal');
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
-    }
-
-    /**
-     * Handle submission of the add user form.
-     */
-    async function submitAddUser() {
-      const form = document.getElementById('addUserForm');
-      const formData = new FormData(form);
-      try {
-        const response = await fetch('/api/shop/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.fromEntries(formData))
+        // Handle form submission
+        document.getElementById('shopForm')?.addEventListener('submit', function(e) {
+            showLoading();
+            
+            // Add a small delay to show loading state
+            setTimeout(() => {
+                // Form validation
+                const name = this.querySelector('input[name="name"]').value;
+                const email = this.querySelector('input[name="email"]').value;
+                
+                if (!name || !email) {
+                    e.preventDefault();
+                    hideLoading();
+                    alert('Shop name and email are required!');
+                    return false;
+                }
+                
+                // Email validation
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    e.preventDefault();
+                    hideLoading();
+                    alert('Please enter a valid email address!');
+                    return false;
+                }
+                
+                return true;
+            }, 500);
         });
-        const data = await response.json();
-        if (data.success) {
-          showToast('User added successfully!', 'success');
-          const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
-          modal.hide();
-          form.reset();
-          loadShopUsers();
-          if (data.tempPassword) {
-            alert(`User created! Temporary password: ${data.tempPassword}\n\nPlease share this with the user and ask them to change it immediately.`);
-          }
-        } else {
-          throw new Error(data.message || 'Failed to add user');
+
+        // Handle logo loading errors
+        const shopLogo = document.getElementById('shopLogo');
+        if (shopLogo) {
+            shopLogo.onerror = function() {
+                this.style.display = 'none';
+                setTimeout(() => {
+                    this.src = '/images/default-shop.png';
+                    this.style.display = 'block';
+                }, 100);
+            };
+            
+            // Show loading state while image loads
+            shopLogo.onload = function() {
+                document.getElementById('logoLoading')?.style.display = 'none';
+            };
+            
+            shopLogo.onloadstart = function() {
+                document.getElementById('logoLoading')?.style.display = 'block';
+            };
         }
-      } catch (error) {
-        console.error('Error adding user:', error);
-        showToast('Failed to add user', 'error');
-      }
-    }
 
-    /**
-     * Placeholder for editing a user. Implement as needed.
-     * @param {number} userId
-     */
-    function editUser(userId) {
-      alert('Edit user: ' + userId);
-      // Implementation would open an edit user modal
-    }
-
-    /**
-     * Soft-delete a user via the API.
-     * @param {number} userId
-     */
-    async function deleteUser(userId) {
-      if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
-      try {
-        const response = await fetch(`/api/shop/users/${userId}`, { method: 'DELETE' });
-        const data = await response.json();
-        if (data.success) {
-          showToast('User deleted successfully!', 'success');
-          loadShopUsers();
-        } else {
-          throw new Error(data.message || 'Failed to delete user');
+        // Tab switching function
+        function switchTab(tabName) {
+            const tabTrigger = document.querySelector(`#settingsTabs a[href="#${tabName}"]`);
+            if (tabTrigger) {
+                const tab = new bootstrap.Tab(tabTrigger);
+                tab.show();
+            }
         }
-      } catch (error) {
-        console.error('Error deleting user:', error);
-        showToast('Failed to delete user', 'error');
-      }
-    }
 
-    /**
-     * Trigger a backup creation and optionally offer to download it.
-     */
-    async function createBackup() {
-      if (!confirm('Create a backup of all shop data?')) return;
-      try {
-        showToast('Creating backup...', 'info');
-        const response = await fetch('/api/shop/backup', { method: 'POST' });
-        const data = await response.json();
-        if (data.success) {
-          showToast('Backup created successfully!', 'success');
-          if (confirm('Backup created. Would you like to download it now?')) {
-            window.open(data.downloadUrl, '_blank');
-          }
-        } else {
-          throw new Error(data.message || 'Failed to create backup');
-        }
-      } catch (error) {
-        console.error('Error creating backup:', error);
-        showToast('Failed to create backup', 'error');
-      }
-    }
-
-    /**
-     * Soft-reset shop data by marking all records inactive.
-     */
-    async function resetShopData() {
-      const confirmation = prompt('This will delete ALL shop data including products, sales, and user data. This action cannot be undone.\n\nType "DELETE_ALL_DATA" to confirm:');
-      if (confirmation !== 'DELETE_ALL_DATA') {
-        showToast('Reset cancelled', 'info');
-        return;
-      }
-      try {
-        const response = await fetch('/api/shop/reset', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ confirmation })
+        // Status select warning
+        document.getElementById('statusSelect')?.addEventListener('change', function() {
+            const warning = document.getElementById('statusWarning');
+            if (this.value !== 'active') {
+                document.getElementById('statusType').textContent = 
+                    this.value.charAt(0).toUpperCase() + this.value.slice(1);
+                warning.style.display = 'block';
+            } else {
+                warning.style.display = 'none';
+            }
         });
-        const data = await response.json();
-        if (data.success) {
-          showToast('All shop data has been reset', 'success');
-          setTimeout(() => location.reload(), 2000);
-        } else {
-          throw new Error(data.message || 'Failed to reset data');
-        }
-      } catch (error) {
-        console.error('Error resetting data:', error);
-        showToast('Failed to reset shop data', 'error');
-      }
-    }
 
-    /**
-     * Soft-delete the entire shop via API. Confirmation is handled on the client.
-     */
-    function deleteShop() {
-      if (confirm('This will permanently delete your shop and all associated data. This action cannot be undone. Are you absolutely sure?')) {
-        alert('Shop deletion functionality coming soon');
-      }
-    }
+        // Auto-hide alerts
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                setTimeout(() => bsAlert.close(), 5000);
+            });
+        }, 3000);
 
-    // Placeholder functions for future features
-    function changePlan() { alert('Change plan functionality coming soon'); }
-    function backupData() { alert('Backup data functionality coming soon'); }
-    function exportReports() { alert('Export reports functionality coming soon'); }
-    function showApiSettings() { alert('API settings functionality coming soon'); }
-    function resetForm() { document.getElementById('shopInfoForm').reset(); }
-    function resetAppearance() {
-      document.getElementById('primaryColor').value = '#007bff';
-      document.getElementById('secondaryColor').value = '#6c757d';
-      document.getElementById('primaryColorPreview').style.backgroundColor = '#007bff';
-      document.getElementById('secondaryColorPreview').style.backgroundColor = '#6c757d';
-    }
-    function addPaymentMethod() { alert('Add payment method functionality coming soon'); }
-    function downloadInvoice(type) { alert('Download invoice functionality coming soon'); }
-    function viewAllInvoices() { alert('View all invoices functionality coming soon'); }
-    function generateApiKey() { alert('Generate API key functionality coming soon'); }
-    function viewBackups() { alert('View backups functionality coming soon'); }
-    function restoreBackup() { alert('Restore backup functionality coming soon'); }
-    function exportData() { alert('Export data functionality coming soon'); }
-  </script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Hide loading overlay after page loads
+            setTimeout(hideLoading, 1000);
+        });
+
+        // Prevent continuous loading by handling page load
+        window.addEventListener('load', function() {
+            hideLoading();
+            
+            // Check if all images are loaded
+            const images = document.querySelectorAll('img');
+            let loadedCount = 0;
+            
+            images.forEach(img => {
+                if (img.complete) {
+                    loadedCount++;
+                } else {
+                    img.addEventListener('load', () => {
+                        loadedCount++;
+                        if (loadedCount === images.length) {
+                            hideLoading();
+                        }
+                    });
+                    img.addEventListener('error', () => {
+                        loadedCount++;
+                        if (loadedCount === images.length) {
+                            hideLoading();
+                        }
+                    });
+                }
+            });
+            
+            // If all images are already loaded
+            if (loadedCount === images.length) {
+                hideLoading();
+            }
+        });
+
+        // Handle page before unload
+        window.addEventListener('beforeunload', function() {
+            showLoading();
+        });
+    </script>
 </body>
-
 </html>

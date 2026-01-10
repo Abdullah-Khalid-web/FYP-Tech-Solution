@@ -521,50 +521,50 @@
                     <div class="col-md-3">
                         <label class="form-label">Date Range</label>
                         <select class="form-select" id="dateFilter">
-                            <option value="all">All Time</option>
-                            <option value="today">Today</option>
-                            <option value="yesterday">Yesterday</option>
-                            <option value="week">This Week</option>
-                            <option value="month">This Month</option>
-                            <option value="custom">Custom Range</option>
+                            <option value="all" <%= query.date === 'all' || !query.date ? 'selected' : '' %>>All Time</option>
+                            <option value="today" <%= query.date === 'today' ? 'selected' : '' %>>Today</option>
+                            <option value="yesterday" <%= query.date === 'yesterday' ? 'selected' : '' %>>Yesterday</option>
+                            <option value="week" <%= query.date === 'week' ? 'selected' : '' %>>This Week</option>
+                            <option value="month" <%= query.date === 'month' ? 'selected' : '' %>>This Month</option>
+                            <option value="custom" <%= query.date === 'custom' ? 'selected' : '' %>>Custom Range</option>
                         </select>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Customer</label>
-                        <input type="text" class="form-control" id="customerFilter" placeholder="Search customer...">
+                        <input type="text" class="form-control" id="customerFilter" placeholder="Search customer..." value="<%= query.customer || '' %>">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Bill Number</label>
-                        <input type="text" class="form-control" id="billNumberFilter" placeholder="Bill number...">
+                        <input type="text" class="form-control" id="billNumberFilter" placeholder="Bill number..." value="<%= query.billNumber || '' %>">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Status</label>
                         <select class="form-select" id="statusFilter">
-                            <option value="all">All Status</option>
-                            <option value="paid">Paid</option>
-                            <option value="pending">Pending</option>
-                            <option value="refund">Refund</option>
+                            <option value="all" <%= query.status === 'all' || !query.status ? 'selected' : '' %>>All Status</option>
+                            <option value="paid" <%= query.status === 'paid' ? 'selected' : '' %>>Paid</option>
+                            <option value="pending" <%= query.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                            <option value="refund" <%= query.status === 'refund' ? 'selected' : '' %>>Refund</option>
                         </select>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Payment Method</label>
                         <select class="form-select" id="paymentMethodFilter">
-                            <option value="all">All Methods</option>
-                            <option value="cash">Cash</option>
-                            <option value="card">Card</option>
-                            <option value="mobile">Mobile</option>
-                            <option value="bank">Bank Transfer</option>
+                            <option value="all" query.paymentMethod === 'all' || !query.paymentMethod ? 'selected' : '' %>>All Methods</option>
+                            <option value="cash" <%= query.paymentMethod === 'cash' ? 'selected' : '' %>>Cash</option>
+                            <option value="card" <%= query.paymentMethod === 'card' ? 'selected' : '' %>>Card</option>
+                            <option value="mobile" <%= query.paymentMethod === 'mobile' ? 'selected' : '' %>>Mobile</option>
+                            <option value="bank" <%= query.paymentMethod === 'bank' ? 'selected' : '' %>>Bank Transfer</option>
                         </select>
                     </div>
-                    <div class="col-md-6" id="customDateRange" style="display: none;">
+                    <div class="col-md-6" id="customDateRange" style="display: <% if (query.date === 'custom') { %>block<% } else { %>none<% } %>;">
                         <div class="row g-2">
                             <div class="col-md-6">
                                 <label class="form-label">From Date</label>
-                                <input type="date" class="form-control" id="fromDate">
+                                <input type="date" class="form-control" id="fromDate" value="<%= query.fromDate || '' %>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">To Date</label>
-                                <input type="date" class="form-control" id="toDate">
+                                <input type="date" class="form-control" id="toDate" value="<%= query.toDate || '' %>">
                             </div>
                         </div>
                     </div>
@@ -634,19 +634,19 @@
                                         <span class="badge bg-secondary"><%= bill.item_count %> items</span>
                                     </td>
                                     <td class="text-end fw-bold">
-                                        <%= shop.currency || '₹' %> <%= Math.abs(Number(bill.total_amount)).toFixed(2) %>
+                                        <%= shop.currency || '₹' %> <%= Math.abs(bill.total_amount).toFixed(2) %>
                                     </td>
                                     <td class="text-end">
-                                        <%= shop.currency || '₹' %> <%= Number(bill.paid_amount).toFixed(2) %>
+                                        <%= shop.currency || '₹' %> <%= bill.paid_amount.toFixed(2) %>
                                     </td>
                                     <td class="text-end">
-                                        <% if (Number(bill.due_amount) > 0) { %>
+                                        <% if (bill.due_amount > 0) { %>
                                             <span class="text-danger fw-bold">
-                                                <%= shop.currency || '₹' %> <%= Number(bill.due_amount).toFixed(2) %>
+                                                <%= shop.currency || '₹' %> <%= bill.due_amount.toFixed(2) %>
                                             </span>
-                                        <% } else if (Number(bill.due_amount) < 0) { %>
+                                        <% } else if (bill.due_amount < 0) { %>
                                             <span class="text-success fw-bold">
-                                                <%= shop.currency || '₹' %> <%= Math.abs(Number(bill.due_amount)).toFixed(2) %>
+                                                <%= shop.currency || '₹' %> <%= Math.abs(bill.due_amount).toFixed(2) %>
                                             </span>
                                         <% } else { %>
                                             <span class="text-muted">-</span>
@@ -702,17 +702,17 @@
                     <nav aria-label="Page navigation">
                         <ul class="pagination justify-content-center mb-0">
                             <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                                <a class="page-link" href="/ALLbills?page=<%= currentPage - 1 %>" aria-label="Previous">
+                                <a class="page-link" href="/ALLbills?<%= buildQueryString({...query, page: currentPage - 1}) %>" aria-label="Previous">
                                     <span aria-hidden="true">&laquo;</span>
                                 </a>
                             </li>
                             <% for (let i = 1; i <= totalPages; i++) { %>
                                 <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                                    <a class="page-link" href="/ALLbills?page=<%= i %>"><%= i %></a>
+                                    <a class="page-link" href="/ALLbills?<%= buildQueryString({...query, page: i}) %>"><%= i %></a>
                                 </li>
                             <% } %>
                             <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                                <a class="page-link" href="/ALLbills?page=<%= currentPage + 1 %>" aria-label="Next">
+                                <a class="page-link" href="/ALLbills?<%= buildQueryString({...query, page: currentPage + 1}) %>" aria-label="Next">
                                     <span aria-hidden="true">&raquo;</span>
                                 </a>
                             </li>
@@ -762,50 +762,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             initializeFilters();
             initializeEventListeners();
-            prefillFilters();
         });
-
-        function prefillFilters() {
-            // Get URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-
-            // Pre-fill date filter
-            if (urlParams.get('date')) {
-                document.getElementById('dateFilter').value = urlParams.get('date');
-            }
-
-            // Pre-fill customer filter
-            if (urlParams.get('customer')) {
-                document.getElementById('customerFilter').value = urlParams.get('customer');
-            }
-
-            // Pre-fill bill number filter
-            if (urlParams.get('billNumber')) {
-                document.getElementById('billNumberFilter').value = urlParams.get('billNumber');
-            }
-
-            // Pre-fill status filter
-            if (urlParams.get('status')) {
-                document.getElementById('statusFilter').value = urlParams.get('status');
-            }
-
-            // Pre-fill payment method filter
-            if (urlParams.get('paymentMethod')) {
-                document.getElementById('paymentMethodFilter').value = urlParams.get('paymentMethod');
-            }
-
-            // Pre-fill custom date range
-            if (urlParams.get('fromDate') || urlParams.get('toDate')) {
-                document.getElementById('dateFilter').value = 'custom';
-                document.getElementById('customDateRange').style.display = 'block';
-                if (urlParams.get('fromDate')) {
-                    document.getElementById('fromDate').value = urlParams.get('fromDate');
-                }
-                if (urlParams.get('toDate')) {
-                    document.getElementById('toDate').value = urlParams.get('toDate');
-                }
-            }
-        }
 
         function initializeFilters() {
             // Date filter toggle
@@ -876,6 +833,16 @@
             });
         }
 
+        function buildQueryString(params) {
+            const queryParams = new URLSearchParams();
+            for (const [key, value] of Object.entries(params)) {
+                if (value !== undefined && value !== null && value !== '' && value !== 'all') {
+                    queryParams.append(key, value);
+                }
+            }
+            return queryParams.toString();
+        }
+
         function applyFilters() {
             const filters = {
                 date: document.getElementById('dateFilter').value,
@@ -909,12 +876,8 @@
 
             console.log('Applying filters:', params.toString());
             
-            // Use the correct base URL - detect current path
-            const currentPath = window.location.pathname;
-            const basePath = currentPath.includes('/ALLbills') ? '/ALLbills' : '/bills';
-            
             // Reload page with filters
-            window.location.href = `${basePath}?${params.toString()}`;
+            window.location.href = `/ALLbills?${params.toString()}`;
         }
 
         function resetFilters() {
@@ -928,12 +891,8 @@
             document.getElementById('fromDate').value = '';
             document.getElementById('toDate').value = '';
             
-            // Use the correct base URL
-            const currentPath = window.location.pathname;
-            const basePath = currentPath.includes('/ALLbills') ? '/ALLbills' : '/bills';
-            
             // Reload without filters
-            window.location.href = `${basePath}?page=1`;
+            window.location.href = '/ALLbills?page=1';
         }
 
         function exportBills() {
@@ -956,11 +915,11 @@
             if (filters.status && filters.status !== 'all') params.append('status', filters.status);
             if (filters.paymentMethod && filters.paymentMethod !== 'all') params.append('paymentMethod', filters.paymentMethod);
 
-            window.open(`/Allbills/export?${params.toString()}`, '_blank');
+            window.open(`/ALLbills/export?${params.toString()}`, '_blank');
         }
 
         function viewBillDetails(billId) {
-            fetch(`/bills/${billId}`)
+            fetch(`/ALLbills/${billId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -977,7 +936,8 @@
 
         function displayBillDetails(bill, items) {
             const modalContent = document.getElementById('billDetailsContent');
-            const status = Number(bill.due_amount) > 0 ? 'pending' : (Number(bill.total_amount) < 0 ? 'refund' : 'paid');
+            const status = bill.due_amount > 0 ? 'pending' : (bill.total_amount < 0 ? 'refund' : 'paid');
+            const currency = bill.currency || '₹';
 
             modalContent.innerHTML = `
             <div class="row mb-4">
@@ -1011,10 +971,10 @@
                         ${items.map(item => `
                             <tr>
                                 <td>${item.product_name}</td>
-                                <td><span class="badge ${item.item_type === 'sale' ? 'bg-success' : 'bg-danger'}">${item.item_type.toUpperCase()}</span></td>
+                                <td><span class="badge ${item.item_type === 'sale' ? 'bg-success' : 'bg-danger'}">${item.item_type ? item.item_type.toUpperCase() : 'SALE'}</span></td>
                                 <td>${item.quantity}</td>
-                                <td>${bill.currency || '₹'}${Number(item.unit_price).toFixed(2)}</td>
-                                <td>${bill.currency || '₹'}${Number(item.total_price).toFixed(2)}</td>
+                                <td>${currency}${parseFloat(item.unit_price || 0).toFixed(2)}</td>
+                                <td>${currency}${parseFloat(item.total_price || 0).toFixed(2)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -1026,24 +986,24 @@
                     <table class="table table-sm">
                         <tr>
                             <td><strong>Subtotal:</strong></td>
-                            <td class="text-end">${bill.currency || '₹'}${Number(bill.subtotal).toFixed(2)}</td>
+                            <td class="text-end">${currency}${parseFloat(bill.subtotal || 0).toFixed(2)}</td>
                         </tr>
                         <tr>
                             <td><strong>Tax:</strong></td>
-                            <td class="text-end">${bill.currency || '₹'}${Number(bill.tax).toFixed(2)}</td>
+                            <td class="text-end">${currency}${parseFloat(bill.tax || 0).toFixed(2)}</td>
                         </tr>
                         <tr>
                             <td><strong>Total Amount:</strong></td>
-                            <td class="text-end"><strong>${bill.currency || '₹'}${Number(bill.total_amount).toFixed(2)}</strong></td>
+                            <td class="text-end"><strong>${currency}${parseFloat(bill.total_amount || 0).toFixed(2)}</strong></td>
                         </tr>
                         <tr>
                             <td><strong>Paid Amount:</strong></td>
-                            <td class="text-end">${bill.currency || '₹'}${Number(bill.paid_amount).toFixed(2)}</td>
+                            <td class="text-end">${currency}${parseFloat(bill.paid_amount || 0).toFixed(2)}</td>
                         </tr>
                         <tr>
                             <td><strong>Due Amount:</strong></td>
-                            <td class="text-end ${Number(bill.due_amount) > 0 ? 'text-danger' : 'text-success'}">
-                                <strong>${bill.currency || '₹'}${Math.abs(Number(bill.due_amount)).toFixed(2)}</strong>
+                            <td class="text-end ${parseFloat(bill.due_amount || 0) > 0 ? 'text-danger' : 'text-success'}">
+                                <strong>${currency}${Math.abs(parseFloat(bill.due_amount || 0)).toFixed(2)}</strong>
                             </td>
                         </tr>
                     </table>
@@ -1056,14 +1016,14 @@
                     <p>${bill.notes}</p>
                 </div>
             ` : ''}
-        `;
+            `;
 
             // Show modal
             new bootstrap.Modal(document.getElementById('billDetailsModal')).show();
         }
 
         function printBill(billId) {
-            window.open(`/bills/${billId}/print`, '_blank');
+            window.open(`/ALLbills/${billId}/print`, '_blank');
         }
 
         function addPayment(billId) {
@@ -1076,7 +1036,7 @@
 
         function deleteBill(billId) {
             if (confirm('Are you sure you want to delete this bill? This action cannot be undone.')) {
-                fetch(`/bills/${billId}`, {
+                fetch(`/ALLbills/${billId}`, {
                     method: 'DELETE'
                 })
                     .then(response => response.json())

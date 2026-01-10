@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - <%= (shop && shop.name) || 'Retail Management System' %></title>
+    <title><%= title %> - <%= shop.name || 'Retail Management System' %></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -129,6 +129,13 @@
             justify-content: center;
             font-size: 3rem;
             color: white;
+            overflow: hidden;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         /* Stats Cards */
@@ -362,6 +369,16 @@
         .bg-info { background-color: var(--info); }
         .bg-secondary { background-color: var(--secondary); }
 
+        /* Profile Picture Upload */
+        .profile-picture-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #ddd;
+            margin-bottom: 10px;
+        }
+
         /* Scrollbar styling */
         ::-webkit-scrollbar {
             width: 6px;
@@ -418,8 +435,8 @@
                 <p class="datetime" id="datetime"></p>
             </div>
             <div class="shop-info">
-                <p><i class="fas fa-store"></i> <%= (shop && shop.name) || 'My Shop' %></p>
-                <p><i class="fas fa-map-marker-alt"></i> <%= (shop && shop.address) || 'Add shop address' %></p>
+                <p><i class="fas fa-store"></i> <%= shop.name || 'My Shop' %></p>
+                <p><i class="fas fa-map-marker-alt"></i> <%= shop.address || 'Add shop address' %></p>
             </div>
         </div>
 
@@ -444,7 +461,9 @@
                 <div class="col-auto">
                     <div class="profile-avatar">
                         <% if (user.profile_picture) { %>
-                            <img src="<%= user.profile_picture %>" alt="Profile" class="profile-avatar-img" 
+                            <img src="/uploads/profiles/<%= user.profile_picture %>" 
+                                 alt="Profile Picture" 
+                                 class="profile-avatar-img"
                                  onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user\'></i>';">
                         <% } else { %>
                             <i class="fas fa-user"></i>
@@ -455,19 +474,24 @@
                     <h1 class="h2 mb-2"><%= user.name %></h1>
                     <p class="mb-1">
                         <i class="fas fa-user-tag me-2"></i> 
-                        <span class="text-capitalize"><%= user.role %></span>
+                        <span class="text-capitalize"><%= user.role || 'User' %></span>
                     </p>
                     <p class="mb-1">
-                        <i class="fas fa-store me-2"></i> <%= user.shop_name || 'My Shop' %>
+                        <i class="fas fa-store me-2"></i> <%= shop.name || 'My Shop' %>
                     </p>
                     <p class="mb-0">
                         <i class="fas fa-calendar me-2"></i> 
-                        Member since <%= new Date(user.created_at).toLocaleDateString() %>
+                        Member since <%= new Date(user.created_at).toLocaleDateString('en-IN', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        }) %>
                     </p>
                 </div>
                 <div class="col-auto">
-                    <span class="badge bg-success fs-6 p-2">
-                        <i class="fas fa-circle me-1"></i> <%= user.status || 'Active' %>
+                    <span class="badge <%= user.status === 'active' ? 'bg-success' : 'bg-danger' %> fs-6 p-2">
+                        <i class="fas fa-circle me-1"></i> 
+                        <%= user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'Active' %>
                     </span>
                 </div>
             </div>
@@ -527,25 +551,27 @@
                     <div class="card-body">
                         <div class="info-item">
                             <span class="info-label">Shop Name:</span>
-                            <span class="info-value"><%= user.shop_name || 'My Shop' %></span>
+                            <span class="info-value"><%= shop.name || 'My Shop' %></span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">Plan:</span>
                             <span class="info-value">
-                                <span class="badge bg-primary text-capitalize"><%= user.plan_name || 'Basic' %></span>
+                                <span class="badge bg-primary text-capitalize">
+                                    <%= shop.plan || 'Basic' %>
+                                </span>
                             </span>
                         </div>
-                        <% if (user.expires_at) { %>
                         <div class="info-item">
-                            <span class="info-label">Subscription:</span>
-                            <span class="info-value">
-                                Expires <%= new Date(user.expires_at).toLocaleDateString() %>
-                            </span>
+                            <span class="info-label">Currency:</span>
+                            <span class="info-value"><%= shop.currency || 'PKR' %></span>
                         </div>
-                        <% } %>
                         <div class="info-item">
                             <span class="info-label">Address:</span>
-                            <span class="info-value"><%= user.shop_address || 'Not provided' %></span>
+                            <span class="info-value"><%= shop.address || 'Not provided' %></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Contact:</span>
+                            <span class="info-value"><%= shop.phone || 'Not provided' %></span>
                         </div>
                     </div>
                 </div>
@@ -557,14 +583,14 @@
                     </div>
                     <div class="card-body">
                         <div class="action-grid">
-                            <a href="/" class="action-card">
+                            <a href="/dashboard" class="action-card">
                                 <div class="action-icon bg-primary">
                                     <i class="fas fa-tachometer-alt"></i>
                                 </div>
                                 <p>Dashboard</p>
                             </a>
                             
-                            <a href="/user_profile" class="action-card">
+                            <a href="#activity" class="action-card" onclick="switchTab('activity')">
                                 <div class="action-icon bg-info">
                                     <i class="fas fa-history"></i>
                                 </div>
@@ -615,7 +641,7 @@
                         <div class="tab-content">
                             <!-- Personal Info Tab -->
                             <div class="tab-pane fade show active" id="personal">
-                                <form method="POST" action="/user_profile" enctype="multipart/form-data">
+                                <form method="POST" action="/user_profile" enctype="multipart/form-data" id="profileForm">
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Full Name *</label>
@@ -633,35 +659,55 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Phone</label>
                                             <input type="tel" class="form-control" name="phone" 
-                                                   value="<%= user.phone || '' %>">
+                                                   value="<%= user.phone || '' %>" 
+                                                   pattern="[0-9]{10,15}">
+                                            <small class="text-muted">Enter 10-15 digit phone number</small>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">CNIC</label>
                                             <input type="text" class="form-control" name="cnic" 
-                                                   value="<%= user.cnic || '' %>">
+                                                   value="<%= user.cnic || '' %>"
+                                                   pattern="[0-9]{13}">
+                                            <small class="text-muted">Enter 13-digit CNIC without dashes</small>
                                         </div>
                                     </div>
 
                                     <% if (user.role === 'owner' || user.role === 'admin') { %>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label">Salary (<%= shop.currency || 'PKR' %>)</label>
+                                            <label class="form-label">Monthly Salary (<%= shop.currency || 'PKR' %>)</label>
                                             <input type="number" class="form-control" name="salary" 
-                                                   value="<%= user.salary || '' %>" step="0.01">
+                                                   value="<%= user.salary || '' %>" step="0.01" min="0">
                                         </div>
                                     </div>
                                     <% } %>
 
                                     <div class="mb-3">
                                         <label class="form-label">Profile Picture</label>
+                                        <% if (user.profile_picture) { %>
+                                            <div class="mb-2">
+                                                <img src="/uploads/profiles/<%= user.profile_picture %>" 
+                                                     alt="Current Profile" 
+                                                     class="profile-picture-preview"
+                                                     onerror="this.style.display='none';">
+                                            </div>
+                                        <% } %>
                                         <input type="file" class="form-control" name="profile_picture" 
-                                               accept="image/*">
-                                        <small class="text-muted">Max 2MB. JPG, PNG, GIF allowed.</small>
+                                               accept="image/*" id="profilePictureInput">
+                                        <small class="text-muted">Max 2MB. JPG, PNG, GIF allowed. Leave empty to keep current.</small>
+                                        <div class="mt-2">
+                                            <img id="profilePicturePreview" class="profile-picture-preview" style="display: none;">
+                                        </div>
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-2"></i> Update Profile
-                                    </button>
+                                    <div class="d-flex justify-content-between">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i> Update Profile
+                                        </button>
+                                        <button type="button" class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#passwordModal">
+                                            <i class="fas fa-key me-2"></i> Change Password
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
 
@@ -673,17 +719,27 @@
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div>
                                                     <h6 class="mb-1">
-                                                        <%= salary.month %> - <%= shop.currency || 'PKR' %> <%= (salary.amount || 0).toLocaleString() %>
+                                                        <%= salary.month %> - <%= shop.currency || 'PKR' %> 
+                                                        <%= (salary.amount || 0).toLocaleString('en-IN', { 
+                                                            minimumFractionDigits: 2, 
+                                                            maximumFractionDigits: 2 
+                                                        }) %>
                                                     </h6>
                                                     <% if (salary.paid_on) { %>
-                                                        <small class="text-muted">Paid on: <%= new Date(salary.paid_on).toLocaleDateString() %></small>
+                                                        <small class="text-muted">
+                                                            Paid on: <%= new Date(salary.paid_on).toLocaleDateString('en-IN', { 
+                                                                year: 'numeric', 
+                                                                month: 'long', 
+                                                                day: 'numeric' 
+                                                            }) %>
+                                                        </small>
                                                     <% } %>
                                                     <% if (salary.notes) { %>
                                                         <p class="mb-0 mt-1"><small><%= salary.notes %></small></p>
                                                     <% } %>
                                                 </div>
                                                 <span class="badge <%= salary.status === 'paid' ? 'bg-success' : 'bg-warning' %>">
-                                                    <%= salary.status %>
+                                                    <%= salary.status ? salary.status.charAt(0).toUpperCase() + salary.status.slice(1) : 'Pending' %>
                                                 </span>
                                             </div>
                                         </div>
@@ -706,17 +762,35 @@
                                         <div class="activity-item loan-item">
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div>
-                                                    <h6 class="mb-1"><%= shop.currency || 'PKR' %> <%= (loan.amount || 0).toLocaleString() %></h6>
-                                                    <p class="mb-1 text-muted">Taken on: <%= new Date(loan.taken_on).toLocaleDateString() %></p>
+                                                    <h6 class="mb-1">
+                                                        <%= shop.currency || 'PKR' %> 
+                                                        <%= (loan.amount || 0).toLocaleString('en-IN', { 
+                                                            minimumFractionDigits: 2, 
+                                                            maximumFractionDigits: 2 
+                                                        }) %>
+                                                    </h6>
+                                                    <p class="mb-1 text-muted">
+                                                        Taken on: <%= new Date(loan.taken_on).toLocaleDateString('en-IN', { 
+                                                            year: 'numeric', 
+                                                            month: 'long', 
+                                                            day: 'numeric' 
+                                                        }) %>
+                                                    </p>
                                                     <% if (loan.due_amount > 0) { %>
-                                                        <p class="mb-1">Due Amount: <%= shop.currency || 'PKR' %> <%= (loan.due_amount || 0).toLocaleString() %></p>
+                                                        <p class="mb-1">
+                                                            Due Amount: <%= shop.currency || 'PKR' %> 
+                                                            <%= (loan.due_amount || 0).toLocaleString('en-IN', { 
+                                                                minimumFractionDigits: 2, 
+                                                                maximumFractionDigits: 2 
+                                                            }) %>
+                                                        </p>
                                                     <% } %>
                                                     <% if (loan.notes) { %>
                                                         <p class="mb-0 mt-1"><small><%= loan.notes %></small></p>
                                                     <% } %>
                                                 </div>
-                                                <span class="badge <%= loan.status === 'paid' ? 'bg-success' : loan.status === 'partial' ? 'bg-warning' : 'bg-danger' %>">
-                                                    <%= loan.status %>
+                                                <span class="badge <%= loan.status === 'repaid' ? 'bg-success' : loan.status === 'partial' ? 'bg-warning' : 'bg-danger' %>">
+                                                    <%= loan.status ? loan.status.charAt(0).toUpperCase() + loan.status.slice(1) : 'Active' %>
                                                 </span>
                                             </div>
                                         </div>
@@ -740,11 +814,17 @@
                                             <div class="d-flex justify-content-between">
                                                 <h6 class="mb-1"><%= activity.action %></h6>
                                                 <small class="text-muted">
-                                                    <%= new Date(activity.created_at).toLocaleDateString() %>
+                                                    <%= new Date(activity.created_at).toLocaleDateString('en-IN', { 
+                                                        year: 'numeric', 
+                                                        month: 'short', 
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    }) %>
                                                 </small>
                                             </div>
                                             <p class="mb-0 text-muted">
-                                                <small>Type: <%= activity.action_type %></small>
+                                                <small>Type: <%= activity.action_type ? activity.action_type.replace('_', ' ') : 'General' %></small>
                                             </p>
                                         </div>
                                     <% }); %>
@@ -773,18 +853,19 @@
                     <h5 class="modal-title"><i class="fas fa-key me-2"></i>Change Password</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="/user_profile/change-password">
+                <form method="POST" action="/user_profile/change-password" id="passwordForm">
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">Current Password</label>
+                            <label class="form-label">Current Password *</label>
                             <input type="password" class="form-control" name="current_password" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">New Password</label>
+                            <label class="form-label">New Password *</label>
                             <input type="password" class="form-control" name="new_password" required minlength="6">
+                            <small class="text-muted">Minimum 6 characters</small>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Confirm New Password</label>
+                            <label class="form-label">Confirm New Password *</label>
                             <input type="password" class="form-control" name="confirm_password" required minlength="6">
                         </div>
                     </div>
@@ -829,7 +910,25 @@
                 }, 5000);
             });
 
-            // Handle profile picture error
+            // Handle profile picture preview
+            const profilePictureInput = document.getElementById('profilePictureInput');
+            const profilePicturePreview = document.getElementById('profilePicturePreview');
+            
+            if (profilePictureInput && profilePicturePreview) {
+                profilePictureInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            profilePicturePreview.src = e.target.result;
+                            profilePicturePreview.style.display = 'block';
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            // Handle existing profile picture error
             const profileAvatarImg = document.querySelector('.profile-avatar-img');
             if (profileAvatarImg) {
                 profileAvatarImg.onerror = function() {
@@ -841,7 +940,69 @@
                     parent.style.justifyContent = 'center';
                 };
             }
+
+            // Password form validation
+            const passwordForm = document.getElementById('passwordForm');
+            if (passwordForm) {
+                passwordForm.addEventListener('submit', function(e) {
+                    const newPassword = this.querySelector('input[name="new_password"]').value;
+                    const confirmPassword = this.querySelector('input[name="confirm_password"]').value;
+                    
+                    if (newPassword !== confirmPassword) {
+                        e.preventDefault();
+                        alert('New passwords do not match!');
+                        return false;
+                    }
+                    
+                    if (newPassword.length < 6) {
+                        e.preventDefault();
+                        alert('Password must be at least 6 characters long!');
+                        return false;
+                    }
+                    
+                    return true;
+                });
+            }
+
+            // Profile form validation
+            const profileForm = document.getElementById('profileForm');
+            if (profileForm) {
+                profileForm.addEventListener('submit', function(e) {
+                    const phone = this.querySelector('input[name="phone"]').value;
+                    const cnic = this.querySelector('input[name="cnic"]').value;
+                    
+                    if (phone && !/^\d{10,15}$/.test(phone)) {
+                        e.preventDefault();
+                        alert('Please enter a valid phone number (10-15 digits)!');
+                        return false;
+                    }
+                    
+                    if (cnic && !/^\d{13}$/.test(cnic)) {
+                        e.preventDefault();
+                        alert('Please enter a valid 13-digit CNIC!');
+                        return false;
+                    }
+                    
+                    return true;
+                });
+            }
         });
+
+        // Function to switch tabs programmatically
+        function switchTab(tabName) {
+            const tabTrigger = document.querySelector(`#profileTabs a[href="#${tabName}"]`);
+            if (tabTrigger) {
+                const tab = new bootstrap.Tab(tabTrigger);
+                tab.show();
+            }
+        }
+
+        // Show success/error messages in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('success') || urlParams.has('error')) {
+            // Remove query parameters from URL without reloading
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
     </script>
 </body>
 </html>

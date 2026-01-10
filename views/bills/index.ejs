@@ -622,30 +622,31 @@
                                 </tr>
                             </thead>
                             <tbody id="modalProductsList">
-                                <% products.forEach(product=> { %>
-                                    <tr>
-                                        <td><%= product.name %></td>
-                                        <td><%= product.brand || 'N/A' %></td>
-                                        <td><%= product.sku %></td>
-                                        <td><%= shop.currency || '₹' %><%= product.selling_price %></td>
-                                        <td>
-                                            <span class="badge <%= product.quantity > 10 ? 'bg-success' : product.quantity > 0 ? 'bg-warning' : 'bg-danger' %>">
-                                                <%= product.quantity %>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <button class="btn btn-sm btn-primary add-product-modal"
-                                                data-product-id="<%= product.id %>"
-                                                data-product-name="<%= product.name %>"
-                                                data-product-price="<%= product.selling_price %>"
-                                                data-product-sku="<%= product.sku %>"
-                                                data-product-stock="<%= product.quantity %>"
-                                                data-product-brand="<%= product.brand || '' %>">
-                                                <i class="fas fa-plus me-1"></i>Add
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <% }); %>
+                            <!-- In the Product List Modal section -->
+                            <% products.forEach(product=> { %>
+                                <tr>
+                                    <td><%= product.name %></td>
+                                    <td><%= product.brand || 'N/A' %></td>
+                                    <td><%= product.sku %></td>
+                                    <td><%= shop.currency || '₹' %><%= product.price || product.selling_price %></td>
+                                    <td>
+                                        <span class="badge <%= product.stock > 10 ? 'bg-success' : product.stock > 0 ? 'bg-warning' : 'bg-danger' %>">
+                                            <%= product.stock || product.quantity %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary add-product-modal"
+                                            data-product-id="<%= product.id %>"
+                                            data-product-name="<%= product.name %>"
+                                            data-product-price="<%= product.price || product.selling_price %>"
+                                            data-product-sku="<%= product.sku %>"
+                                            data-product-stock="<%= product.stock || product.quantity %>"
+                                            data-product-brand="<%= product.brand || '' %>">
+                                            <i class="fas fa-plus me-1"></i>Add
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
                             </tbody>
                         </table>
                     </div>
@@ -897,14 +898,23 @@
             }
 
             // Add products from modal to transaction
+            // Add products from modal to transaction - FIXED
             document.addEventListener('click', function (e) {
-                if (e.target.classList.contains('add-product-modal')) {
-                    const productId = e.target.getAttribute('data-product-id');
-                    const productName = e.target.getAttribute('data-product-name');
-                    const productPrice = parseFloat(e.target.getAttribute('data-product-price'));
-                    const productSku = e.target.getAttribute('data-product-sku');
-                    const productStock = parseInt(e.target.getAttribute('data-product-stock'));
-                    const productBrand = e.target.getAttribute('data-product-brand');
+                if (e.target.classList.contains('add-product-modal') || e.target.closest('.add-product-modal')) {
+                    const button = e.target.classList.contains('add-product-modal') ? e.target : e.target.closest('.add-product-modal');
+                    const productId = button.getAttribute('data-product-id');
+                    const productName = button.getAttribute('data-product-name');
+                    const productPrice = parseFloat(button.getAttribute('data-product-price')) || 0;
+                    const productSku = button.getAttribute('data-product-sku');
+                    const productStock = parseInt(button.getAttribute('data-product-stock')) || 0;
+                    const productBrand = button.getAttribute('data-product-brand');
+
+                    console.log('Adding product from modal:', {
+                        productId,
+                        productName,
+                        productPrice,
+                        productStock
+                    });
 
                     addProductToTransaction({
                         id: productId,
@@ -917,7 +927,9 @@
                     });
 
                     const modal = bootstrap.Modal.getInstance(document.getElementById('productListModal'));
-                    modal.hide();
+                    if (modal) {
+                        modal.hide();
+                    }
                 }
             });
 
@@ -1226,7 +1238,7 @@ async function finalizeTransaction() {
     const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
     const notes = document.getElementById('transactionNotes').value.trim();
 
-    // Prepare transaction data
+    // Prepare transaction data - FIXED: Use string productId (UUID)
     const transactionData = {
         customer_name: customerName,
         customer_phone: customerPhone,
@@ -1235,16 +1247,16 @@ async function finalizeTransaction() {
         tax_amount: taxAmount,
         notes: notes,
         items: window.transactionItems.map(item => ({
-            productId: parseInt(item.id),
+            productId: item.id, // This should be the UUID string
             name: item.name,
             price: parseFloat(item.price),
             quantity: parseInt(item.quantity),
             discount: parseFloat(item.discount) || 0,
-            type: item.type
+            type: item.type || 'sale'
         }))
     };
 
-    console.log('Sending transaction data:', transactionData);
+    console.log('Sending transaction data:', JSON.stringify(transactionData, null, 2));
 
     try {
         const response = await fetch('/bills', {
@@ -1258,7 +1270,6 @@ async function finalizeTransaction() {
         console.log('Response status:', response.status);
         
         if (!response.ok) {
-            // Try to get error message from response
             const errorText = await response.text();
             console.error('Server error response:', errorText);
             throw new Error(`Server error: ${response.status} - ${errorText}`);
@@ -1293,6 +1304,7 @@ async function finalizeTransaction() {
 }
 
 // ===== SEARCH FUNCTIONS =====
+// ===== SEARCH FUNCTIONS =====
 async function searchProducts(searchTerm) {
     try {
         const response = await fetch(`/bills/api/products?search=${encodeURIComponent(searchTerm)}`);
@@ -1306,20 +1318,20 @@ async function searchProducts(searchTerm) {
                 html += `
                     <div class="search-result-item p-2 border-bottom" 
                          onclick="addProductToTransaction({
-                             id: ${product.id},
+                             id: '${product.id}', // FIXED: Pass as string
                              name: '${escapeHtml(product.name)}',
-                             price: ${product.price},
+                             price: ${product.price || product.selling_price || 0},
                              sku: '${escapeHtml(product.sku)}',
-                             stock: ${product.stock},
+                             stock: ${product.stock || product.quantity || 0},
                              brand: '${escapeHtml(product.brand || '')}',
                              type: 'sale'
                          })">
                         <div class="fw-bold">${escapeHtml(product.name)}</div>
                         <small class="text-muted">SKU: ${escapeHtml(product.sku)} | Brand: ${escapeHtml(product.brand || 'N/A')}</small>
                         <div class="d-flex justify-content-between mt-1">
-                            <span>${window.shop.currency}${product.price}</span>
-                            <span class="badge ${product.stock > 10 ? 'bg-success' : product.stock > 0 ? 'bg-warning' : 'bg-danger'}">
-                                Stock: ${product.stock}
+                            <span>${window.shop.currency}${product.price || product.selling_price || 0}</span>
+                            <span class="badge ${(product.stock || product.quantity) > 10 ? 'bg-success' : (product.stock || product.quantity) > 0 ? 'bg-warning' : 'bg-danger'}">
+                                Stock: ${product.stock || product.quantity || 0}
                             </span>
                         </div>
                     </div>
@@ -1336,8 +1348,6 @@ async function searchProducts(searchTerm) {
         showToast('Error searching products', 'error');
     }
 }
-
-
 
 
 async function searchCustomerBills(name, phone) {
