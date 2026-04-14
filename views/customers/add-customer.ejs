@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Customer - <%= shop.name %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <style>
+        :root {
+            --primary: #4e73df;
+            --success: #1cc88a;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --info: #36b9cc;
+            --secondary: #858796;
+            --dark: #5a5c69;
+            --light: #f8f9fc;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 20px;
+            background-color: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--dark);
+        }
+
+        .shop-info {
+            text-align: right;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h3 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--dark);
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        .back-btn {
+            margin-bottom: 20px;
+        }
+
+        .btn-submit {
+            min-width: 150px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div>
+                <h1><i class="fas fa-user-plus me-2"></i>Add New Customer</h1>
+                <p class="text-muted">Add a new customer to your shop</p>
+            </div>
+            <div class="shop-info">
+                <p><i class="fas fa-store"></i> <%= shop.name %></p>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="back-btn">
+            <a href="/customers" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Customers
+            </a>
+        </div>
+
+        <!-- Add Customer Form -->
+        <div class="card">
+            <div class="form-section">
+                <h3><i class="fas fa-user-circle me-2"></i>Customer Information</h3>
+                <form id="addCustomerForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerName" class="form-label required">Full Name</label>
+                                <input type="text" class="form-control" id="customerName" name="name" required
+                                       placeholder="Enter customer's full name">
+                                <div class="form-text">Enter the complete name of the customer</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerPhone" class="form-label required">Phone Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                    <input type="tel" class="form-control" id="customerPhone" name="phone" required
+                                           placeholder="03123456789">
+                                </div>
+                                <div class="form-text">Must be 11 digits starting with 0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerEmail" class="form-label">Email Address</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                    <input type="email" class="form-control" id="customerEmail" name="email"
+                                           placeholder="customer@example.com">
+                                </div>
+                                <div class="form-text">Optional - for sending receipts and promotions</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerType" class="form-label">Customer Type</label>
+                                <select class="form-select" id="customerType" name="type">
+                                    <option value="regular" selected>Regular Customer</option>
+                                    <option value="wholesale">Wholesale Customer</option>
+                                    <option value="corporate">Corporate Customer</option>
+                                    <option value="vip">VIP Customer</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="customerAddress" class="form-label">Complete Address</label>
+                        <textarea class="form-control" id="customerAddress" name="address" rows="3"
+                                  placeholder="Enter complete address including city and postal code"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerCity" class="form-label">City</label>
+                                <input type="text" class="form-control" id="customerCity" name="city"
+                                       placeholder="Enter city">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerCountry" class="form-label">Country</label>
+                                <input type="text" class="form-control" id="customerCountry" name="country"
+                                       placeholder="Enter country" value="Pakistan">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerNotes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="customerNotes" name="notes" rows="2"
+                                          placeholder="Any special notes about this customer"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerReference" class="form-label">Reference</label>
+                                <input type="text" class="form-control" id="customerReference" name="reference"
+                                       placeholder="How did they hear about us?">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerDiscount" class="form-label">Special Discount (%)</label>
+                                <input type="number" class="form-control" id="customerDiscount" name="discount" 
+                                       min="0" max="100" step="0.5" value="0" placeholder="0">
+                                <div class="form-text">Special discount percentage for this customer</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerCreditLimit" class="form-label">Credit Limit (<%= shop.currency %>)</label>
+                                <input type="number" class="form-control" id="customerCreditLimit" name="credit_limit" 
+                                       min="0" step="100" value="0" placeholder="0">
+                                <div class="form-text">Maximum credit allowed for this customer</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="/customers" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-submit">
+                            <i class="fas fa-save me-2"></i>Save Customer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        // Toastr configuration
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "5000"
+        };
+
+        // Handle form submission
+        document.getElementById('addCustomerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Validate phone number
+            const phoneInput = document.getElementById('customerPhone');
+            const phone = phoneInput.value.trim();
+            
+            if (!/^0\d{10}$/.test(phone)) {
+                toastr.error('Phone number must be exactly 11 digits starting with 0 (e.g., 03123456789)');
+                phoneInput.focus();
+                return;
+            }
+            
+            // Validate email if provided
+            const emailInput = document.getElementById('customerEmail');
+            const email = emailInput.value.trim();
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                toastr.error('Please enter a valid email address');
+                emailInput.focus();
+                return;
+            }
+
+            // Show loading state
+            const submitBtn = document.querySelector('.btn-submit');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/customers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    toastr.success(result.message);
+                    
+                    // Reset form
+                    document.getElementById('addCustomerForm').reset();
+                    
+                    // Reset country to default
+                    document.getElementById('customerCountry').value = 'Pakistan';
+                    document.getElementById('customerDiscount').value = '0';
+                    document.getElementById('customerCreditLimit').value = '0';
+                    
+                    // Ask if user wants to add another customer or go back
+                    if (confirm('Customer added successfully! Would you like to add another customer?')) {
+                        // Focus on first field
+                        document.getElementById('customerName').focus();
+                    } else {
+                        window.location.href = '/customers';
+                    }
+                } else {
+                    toastr.error(result.message);
+                    // Focus back on first field if error
+                    document.getElementById('customerName').focus();
+                }
+            } catch (error) {
+                console.error('Error adding customer:', error);
+                toastr.error('An error occurred while adding customer. Please try again.');
+            } finally {
+                // Restore button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Auto-focus on first field
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('customerName').focus();
+            
+            // Set default country
+            document.getElementById('customerCountry').value = 'Pakistan';
+        });
+
+        // Phone number validation and formatting
+        document.getElementById('customerPhone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            // Ensure starts with 0
+            if (value.length > 0 && !value.startsWith('0')) {
+                value = '0' + value;
+            }
+            
+            // Limit to 11 digits
+            if (value.length > 11) {
+                value = value.substring(0, 11);
+            }
+            
+            e.target.value = value;
+            
+            // Visual feedback
+            if (value.length === 11) {
+                e.target.classList.remove('is-invalid');
+                e.target.classList.add('is-valid');
+            } else if (value.length > 0) {
+                e.target.classList.add('is-invalid');
+                e.target.classList.remove('is-valid');
+            } else {
+                e.target.classList.remove('is-invalid', 'is-valid');
+            }
+        });
+
+        // Real-time validation for required fields
+        document.getElementById('customerName').addEventListener('input', function(e) {
+            if (e.target.value.trim().length > 0) {
+                e.target.classList.remove('is-invalid');
+                e.target.classList.add('is-valid');
+            } else {                e.target.classList.remove('is-valid');
+                e.target.classList.add('is-invalid');
+            }
+        });
+    </script>
+</body>
+</html>

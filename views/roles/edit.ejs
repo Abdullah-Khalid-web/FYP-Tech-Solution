@@ -1,0 +1,184 @@
+<%- include('../partials/header', { title: 'Edit Role' }) %>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Edit Role: <%= role.role_name %>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <% if (error) { %>
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <%= error %>
+                        </div>
+                    <% } %>
+
+                    <form method="POST" action="/roles/<%= role.id %>/edit" id="roleForm">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="role_name" class="form-label">Role Name *</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="role_name" 
+                                           name="role_name" 
+                                           value="<%= role.role_name %>"
+                                           required 
+                                           placeholder="e.g., Store Manager">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="active" <%= role.status === 'active' ? 'selected' : '' %>>Active</option>
+                                        <option value="inactive" <%= role.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" 
+                                              id="description" 
+                                              name="description" 
+                                              rows="3"
+                                              placeholder="Describe the role's responsibilities"><%= role.description || '' %></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-lock me-2"></i>
+                                    Permissions
+                                </h5>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">
+                                        <i class="fas fa-check-double me-2"></i>Select All
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">
+                                        <i class="fas fa-times me-2"></i>Deselect All
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="accordion" id="permissionsAccordion">
+                                <% 
+                                let moduleIndex = 0;
+                                for (const [module, perms] of Object.entries(permissionsByModule)) { 
+                                %>
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading<%= moduleIndex %>">
+                                            <button class="accordion-button <%= moduleIndex === 0 ? '' : 'collapsed' %>" 
+                                                    type="button" 
+                                                    data-bs-toggle="collapse" 
+                                                    data-bs-target="#collapse<%= moduleIndex %>">
+                                                <strong>
+                                                    <i class="fas fa-folder me-2"></i>
+                                                    <%= module.replace('_', ' ').toUpperCase() %>
+                                                </strong>
+                                                <span class="badge bg-primary ms-3"><%= perms.length %> permissions</span>
+                                            </button>
+                                        </h2>
+                                        <div id="collapse<%= moduleIndex %>" 
+                                             class="accordion-collapse collapse <%= moduleIndex === 0 ? 'show' : '' %>" 
+                                             data-bs-parent="#permissionsAccordion">
+                                            <div class="accordion-body">
+                                                <div class="row">
+                                                    <% perms.forEach(perm => { %>
+                                                        <div class="col-md-4 mb-2">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input permission-checkbox" 
+                                                                       type="checkbox" 
+                                                                       name="permissions" 
+                                                                       value="<%= perm.id %>" 
+                                                                       id="perm_<%= perm.id %>"
+                                                                       <%= perm.assigned ? 'checked' : '' %>>
+                                                                <label class="form-check-label" for="perm_<%= perm.id %>">
+                                                                    <strong><%= perm.name %></strong>
+                                                                    <% if (perm.description) { %>
+                                                                        <small class="d-block text-muted">
+                                                                            <%= perm.description %>
+                                                                        </small>
+                                                                    <% } %>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    <% }) %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% 
+                                    moduleIndex++;
+                                } 
+                                %>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="/roles" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Roles
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save me-2"></i>Update Role
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select All button
+        document.getElementById('selectAll').addEventListener('click', function() {
+            document.querySelectorAll('.permission-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        });
+
+        // Deselect All button
+        document.getElementById('deselectAll').addEventListener('click', function() {
+            document.querySelectorAll('.permission-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+
+        // Module-wise select
+        document.querySelectorAll('.accordion-item').forEach(item => {
+            const checkboxes = item.querySelectorAll('.permission-checkbox');
+            
+            // Add select/deselect for this module if not exists
+            if (!item.querySelector('.select-module')) {
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'mb-2';
+                actionDiv.innerHTML = `
+                    <button type="button" class="btn btn-sm btn-link select-module">Select All in Module</button>
+                    <button type="button" class="btn btn-sm btn-link deselect-module ms-2">Deselect All in Module</button>
+                `;
+                
+                item.querySelector('.accordion-body').prepend(actionDiv);
+                
+                item.querySelector('.select-module').addEventListener('click', function() {
+                    checkboxes.forEach(cb => cb.checked = true);
+                });
+                
+                item.querySelector('.deselect-module').addEventListener('click', function() {
+                    checkboxes.forEach(cb => cb.checked = false);
+                });
+            }
+        });
+    });
+</script>
+
+<%- include('../partials/footer') %>
