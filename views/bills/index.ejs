@@ -534,40 +534,45 @@
                             </div>
                         </div>
 
+                        <!-- Summary Section - Update this part -->
                         <div class="transaction-summary">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal (Sales):</span>
-                                <span id="summarySalesSubtotal"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summarySalesSubtotal"><%= shop.currency || 'PKR' %>0.00</span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal (Returns):</span>
-                                <span id="summaryReturnsSubtotal"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryReturnsSubtotal"><%= shop.currency || 'PKR' %>0.00</span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Total Discount:</span>
-                                <span id="summaryDiscount">-<%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryDiscount">-<%= shop.currency || 'PKR' %>0.00</span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Total Tax:</span>
-                                <span id="summaryTax"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryTax"><%= shop.currency || 'PKR' %>0.00</span>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
                                 <span>Net Amount:</span>
-                                <span id="summaryTotal"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryTotal"><%= shop.currency || 'PKR' %>0.00</span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Amount Paid:</span>
-                                <span id="summaryPaid"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryPaid"><%= shop.currency || 'PKR' %>0.00</span>
                             </div>
+                            
+                            <!-- Change Section - Shown when customer overpays -->
                             <div class="d-flex justify-content-between fw-bold text-success" id="changeSection">
                                 <span>Change:</span>
-                                <span id="summaryChange"><%= shop.currency || '₹' %>0.00</span>
+                                <span id="summaryChange"><%= shop.currency || 'PKR' %>0.00</span>
                             </div>
-                            <div class="d-flex justify-content-between fw-bold text-danger" id="refundSection" style="display: none;">
+                            
+                            <!-- Refund Section - Shown when customer underpays -->
+                            <!-- <div class="d-flex justify-content-between fw-bold text-danger" id="refundSection" style="display: none;">
                                 <span>Refund Due:</span>
-                                <span id="summaryRefund"><%= shop.currency || '₹' %>0.00</span>
-                            </div>
+                                <span id="summaryRefund"><%= shop.currency || 'PKR' %>0.00</span>
+                            </div> -->
                         </div>
 
                         <!-- Action Buttons -->
@@ -686,15 +691,17 @@
                     </div>
 
                     <!-- Return with Bill Section -->
+                    <!-- Return with Bill Section -->
                     <div id="returnWithBillSection" style="display: none;">
                         <div class="mb-3">
-                            <label class="form-label">Search Customer Bills</label>
+                            <label class="form-label">Search by Customer or Bill Number</label>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="customerSearch" placeholder="Enter customer name or phone">
+                                <input type="text" class="form-control" id="customerSearch" placeholder="Enter customer name, phone, or bill number (e.g., INV-2026-3155)">
                                 <button class="btn btn-outline-primary" type="button" id="searchCustomerBillsBtn">
                                     <i class="fas fa-search"></i> Search
                                 </button>
                             </div>
+                            <small class="text-muted">You can search by customer name, phone number, or bill number</small>
                         </div>
 
                         <div id="customerBillsResults" style="display: none;">
@@ -1126,104 +1133,537 @@ function removeItem(index) {
     }
 }
 
+
 function updateSummary() {
+    console.log('updateSummary called');
+    
     if (!Array.isArray(window.transactionItems)) {
         window.transactionItems = [];
     }
 
-    const salesSubtotal = window.transactionItems
-        .filter(item => item.type === 'sale')
-        .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // Calculate sales and returns separately
+    let salesSubtotal = 0;
+    let returnsSubtotal = 0;
+    let salesDiscount = 0;
+    let returnsDiscount = 0;
 
-    const returnsSubtotal = window.transactionItems
-        .filter(item => item.type === 'return')
-        .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    window.transactionItems.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        const itemDiscount = item.discount || 0;
+        
+        if (item.type === 'sale') {
+            salesSubtotal += itemTotal;
+            salesDiscount += itemDiscount;
+        } else if (item.type === 'return') {
+            returnsSubtotal += itemTotal;
+            returnsDiscount += itemDiscount;
+        }
+    });
 
-    const totalDiscount = window.transactionItems.reduce((sum, item) => sum + item.discount, 0);
-    const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
-    const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+    // Get values from inputs - DIRECTLY from the DOM
+    const paymentInput = document.getElementById('paymentAmount');
+    const paymentAmount = paymentInput ? parseFloat(paymentInput.value) || 0 : 0;
+    
+    const taxInput = document.getElementById('taxAmount');
+    const taxAmount = taxInput ? parseFloat(taxInput.value) || 0 : 0;
 
-    const netAmount = salesSubtotal - returnsSubtotal - totalDiscount + taxAmount;
+    console.log('Payment Amount:', paymentAmount);
+    console.log('Tax Amount:', taxAmount);
+
+    // Calculate net amount
+    const netSales = salesSubtotal - salesDiscount;
+    const netReturns = returnsSubtotal - returnsDiscount;
+    const netAmount = netSales - netReturns + taxAmount;
+    
+    // Calculate change (payment - net amount)
     const change = paymentAmount - netAmount;
 
-    // Update summary display
+    console.log('Net Amount:', netAmount);
+    console.log('Change:', change);
+
+    // Update display
     document.getElementById('summarySalesSubtotal').textContent = `${window.shop.currency}${salesSubtotal.toFixed(2)}`;
     document.getElementById('summaryReturnsSubtotal').textContent = `${window.shop.currency}${returnsSubtotal.toFixed(2)}`;
+    
+    const totalDiscount = salesDiscount + returnsDiscount;
     document.getElementById('summaryDiscount').textContent = `-${window.shop.currency}${totalDiscount.toFixed(2)}`;
     document.getElementById('summaryTax').textContent = `${window.shop.currency}${taxAmount.toFixed(2)}`;
     document.getElementById('summaryTotal').textContent = `${window.shop.currency}${netAmount.toFixed(2)}`;
     document.getElementById('summaryPaid').textContent = `${window.shop.currency}${paymentAmount.toFixed(2)}`;
 
-    // Show change or refund section
-    if (change >= 0) {
-        document.getElementById('changeSection').style.display = 'flex';
-        document.getElementById('refundSection').style.display = 'none';
-        document.getElementById('summaryChange').textContent = `${window.shop.currency}${change.toFixed(2)}`;
+    // **FIX: Show change section logic - handles negative change too**
+    const changeSection = document.getElementById('changeSection');
+    const summaryChange = document.getElementById('summaryChange');
+    
+    if (change !== 0) {  // Show change section for ANY non-zero change
+        changeSection.style.display = 'flex';
+        
+        if (change > 0) {
+            // Customer overpaid - show as green (return change)
+            changeSection.className = 'd-flex justify-content-between fw-bold text-success';
+            summaryChange.textContent = `${window.shop.currency}${change.toFixed(2)}`;
+        } else {
+            // Customer underpaid - show as red (due amount)
+            changeSection.className = 'd-flex justify-content-between fw-bold text-danger';
+            summaryChange.textContent = `${window.shop.currency}${Math.abs(change).toFixed(2)} (Due)`;
+        }
     } else {
-        document.getElementById('changeSection').style.display = 'none';
-        document.getElementById('refundSection').style.display = 'flex';
-        document.getElementById('summaryRefund').textContent = `${window.shop.currency}${Math.abs(change).toFixed(2)}`;
+        changeSection.style.display = 'none';
     }
 }
 
-// async function finalizeTransaction() {
-//     if (window.transactionItems.length === 0) {
-//         showToast('Please add items to the transaction', 'error');
-//         return;
-//     }
+function updateQuantity(index, change, directValue = null) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+        return;
+    }
+    
+    const item = window.transactionItems[index];
+    
+    if (directValue !== null) {
+        // Direct value from input
+        let newQty = parseInt(directValue);
+        if (isNaN(newQty) || newQty < 1) newQty = 1;
+        
+        // For returns, don't allow quantity that exceeds available stock
+        if (item.type === 'return') {
+            const maxReturnQty = item.originalQuantity || item.quantity;
+            newQty = Math.min(newQty, maxReturnQty);
+        }
+        
+        item.quantity = newQty;
+    } else {
+        // Increment/decrement
+        let newQty = item.quantity + change;
+        
+        // For returns, don't allow negative or exceeding original quantity
+        if (item.type === 'return') {
+            const maxReturnQty = item.originalQuantity || item.quantity;
+            if (newQty >= 1 && newQty <= maxReturnQty) {
+                item.quantity = newQty;
+            }
+        } else {
+            // For sales, just ensure minimum 1
+            if (newQty >= 1) {
+                item.quantity = newQty;
+            }
+        }
+    }
+    
+    updateTransactionTable();
+    updateSummary();
+}
 
-//     const customerName = document.getElementById('customerName').value.trim() || 'Walk-in Customer';
-//     const customerPhone = document.getElementById('customerPhone').value.trim();
-//     const paymentMethod = document.getElementById('paymentMethod').value;
-//     const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
-//     const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
-//     const notes = document.getElementById('transactionNotes').value.trim();
+function updateDiscount(index, discount) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+        return;
+    }
+    
+    const item = window.transactionItems[index];
+    let newDiscount = parseFloat(discount) || 0;
+    
+    // Validate discount - can't exceed item total
+    const itemTotal = item.price * item.quantity;
+    if (newDiscount > itemTotal) {
+        newDiscount = itemTotal;
+        showToast('Discount cannot exceed item total', 'warning');
+    }
+    
+    item.discount = newDiscount;
+    updateTransactionTable();
+    updateSummary();
+}
 
-//     const transactionData = {
-//         customer_name: customerName,
-//         customer_phone: customerPhone,
-//         payment_method: paymentMethod,
-//         paid_amount: paymentAmount,
-//         tax_amount: taxAmount,
-//         notes: notes,
-//         items: window.transactionItems
-//     };
+function addProductToTransaction(product) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+    }
 
-//     try {
-//         const response = await fetch('/bills', {
-//             method: 'POST',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//             },
-//             body: JSON.stringify(transactionData)
-//         });
+    // Check if product already exists in transaction
+    const existingItemIndex = window.transactionItems.findIndex(item => 
+        item.id === product.id && item.type === product.type
+    );
 
-//         const data = await response.json();
+    if (existingItemIndex > -1) {
+        // Update existing item
+        const existingItem = window.transactionItems[existingItemIndex];
+        const newQuantity = existingItem.quantity + (product.quantity || 1);
+        
+        // For returns, check if exceeding original quantity
+        if (product.type === 'return') {
+            const maxReturnQty = product.originalQuantity || product.quantity || 1;
+            if (newQuantity > maxReturnQty) {
+                showToast(`Cannot return more than ${maxReturnQty} of this item`, 'warning');
+                return;
+            }
+        }
+        
+        existingItem.quantity = newQuantity;
+    } else {
+        // Add new item
+        const newItem = {
+            id: product.id,
+            name: product.name,
+            price: parseFloat(product.price) || 0,
+            sku: product.sku || '',
+            type: product.type || 'sale',
+            quantity: product.quantity || 1,
+            discount: 0,
+            tax: 0,
+            originalQuantity: product.originalQuantity || product.quantity || 1 // For returns
+        };
+        
+        // For returns, ensure quantity doesn't exceed original
+        if (newItem.type === 'return' && newItem.quantity > newItem.originalQuantity) {
+            newItem.quantity = newItem.originalQuantity;
+        }
+        
+        window.transactionItems.push(newItem);
+    }
 
-//         if (data.success) {
-//             showToast('Transaction completed successfully!', 'success');
-//             document.getElementById('printBtn').style.display = 'block';
-//             window.lastBillData = data;
+    updateTransactionTable();
+    updateSummary();
+    showToast(`${product.type === 'return' ? 'Return' : 'Sale'} item added: ${product.name}`, 'success');
+}
+
+function removeItem(index) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+        return;
+    }
+    
+    if (confirm('Are you sure you want to remove this item?')) {
+        const removedItem = window.transactionItems[index];
+        window.transactionItems.splice(index, 1);
+        updateTransactionTable();
+        updateSummary();
+        showToast(`${removedItem.type === 'return' ? 'Return' : 'Sale'} item removed`, 'success');
+    }
+}
+
+async function finalizeTransaction() {
+    if (window.transactionItems.length === 0) {
+        showToast('Please add items to the transaction', 'error');
+        return;
+    }
+
+    // Validate returns don't exceed sales
+    const saleItems = window.transactionItems.filter(item => item.type === 'sale');
+    const returnItems = window.transactionItems.filter(item => item.type === 'return');
+    
+    // Calculate totals
+    const salesTotal = saleItems.reduce((sum, item) => sum + (item.price * item.quantity) - item.discount, 0);
+    const returnsTotal = returnItems.reduce((sum, item) => sum + (item.price * item.quantity) - item.discount, 0);
+    
+    // Validate payment amount
+    const netAmount = salesTotal - returnsTotal + (parseFloat(document.getElementById('taxAmount').value) || 0);
+    const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+    
+    if (paymentAmount < netAmount && paymentAmount > 0) {
+        if (!confirm(`Payment amount (${window.shop.currency}${paymentAmount.toFixed(2)}) is less than total (${window.shop.currency}${netAmount.toFixed(2)}). Continue with partial payment?`)) {
+            return;
+        }
+    }
+
+    const customerName = document.getElementById('customerName').value.trim() || 'Walk-in Customer';
+    const customerPhone = document.getElementById('customerPhone').value.trim();
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
+    const notes = document.getElementById('transactionNotes').value.trim();
+
+    // Prepare transaction data
+    const transactionData = {
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        payment_method: paymentMethod,
+        paid_amount: paymentAmount,
+        tax_amount: taxAmount,
+        notes: notes,
+        items: window.transactionItems.map(item => ({
+            productId: item.id,
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: parseInt(item.quantity),
+            discount: parseFloat(item.discount) || 0,
+            type: item.type || 'sale'
+        }))
+    };
+
+    console.log('Sending transaction data:', JSON.stringify(transactionData, null, 2));
+
+    try {
+        showLoading();
+        
+        const response = await fetch('/bills', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(transactionData)
+        });
+
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error response:', errorText);
+            throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Success response:', data);
+
+        if (data.success) {
+            showToast('Transaction completed successfully!', 'success');
+            document.getElementById('printBtn').style.display = 'block';
+            window.lastBillData = data;
             
-//             // Reset transaction
-//             window.transactionItems = [];
-//             updateTransactionTable();
-//             updateSummary();
+            // Reset transaction
+            window.transactionItems = [];
+            updateTransactionTable();
+            updateSummary();
             
-//             // Clear form
-//             document.getElementById('customerName').value = '';
-//             document.getElementById('customerPhone').value = '';
-//             document.getElementById('paymentAmount').value = '0.00';
-//             document.getElementById('transactionNotes').value = '';
+            // Clear form
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('paymentAmount').value = '0.00';
+            document.getElementById('transactionNotes').value = '';
             
-//         } else {
-//             showToast(data.message || 'Error processing transaction', 'error');
-//         }
-//     } catch (error) {
-//         console.error('Error finalizing transaction:', error);
-//         showToast('Network error. Please try again.', 'error');
-//     }
-// }
+            // Show print button
+            setTimeout(() => {
+                if (confirm('Print receipt?')) {
+                    printReceipt();
+                }
+            }, 500);
+            
+        } else {
+            showToast(data.message || 'Error processing transaction', 'error');
+        }
+    } catch (error) {
+        console.error('Error finalizing transaction:', error);
+        showToast('Error: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Add loading functions
+function showLoading() {
+    const overlay = document.createElement('div');
+    overlay.id = 'loadingOverlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    `;
+    overlay.innerHTML = '<div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>';
+    document.body.appendChild(overlay);
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.remove();
+}
+
+// Fix the search results display
+function updateTransactionTable() {
+    const tbody = document.getElementById('transactionItemsBody');
+    
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+    }
+    
+    if (window.transactionItems.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    <i class="fas fa-shopping-cart fa-2x mb-2 d-block"></i>
+                    No items added to transaction
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    let html = '';
+    window.transactionItems.forEach((item, index) => {
+        const itemSubtotal = item.price * item.quantity;
+        const itemTotal = itemSubtotal - (item.discount || 0);
+        const itemClass = item.type === 'return' ? 'return-item' : 'sale-item';
+        const badgeClass = item.type === 'return' ? 'bg-warning' : 'bg-success';
+        const badgeText = item.type === 'return' ? 'RETURN' : 'SALE';
+        
+        html += `
+            <tr class="${itemClass}" data-type="${item.type}">
+                <td>
+                    <span class="badge ${badgeClass}">${badgeText}</span>
+                </td>
+                <td>
+                    <div class="fw-bold">${escapeHtml(item.name)}</div>
+                    <small class="text-muted">SKU: ${escapeHtml(item.sku) || 'N/A'}</small>
+                </td>
+                <td>${window.shop.currency}${item.price.toFixed(2)}</td>
+                <td>
+                    <div class="quantity-controls">
+                        <div class="input-group input-group-sm" style="width: 120px;">
+                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" 
+                                   value="${item.quantity}" min="1" 
+                                   ${item.type === 'return' ? `max="${item.originalQuantity || item.quantity}"` : ''}
+                                   onchange="updateQuantity(${index}, 0, this.value)">
+                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           value="${item.discount || 0}" min="0" max="${itemSubtotal}" step="0.01"
+                           onchange="updateDiscount(${index}, this.value)"
+                           style="width: 100px;">
+                </td>
+                <td>${window.shop.currency}${(item.tax || 0).toFixed(2)}</td>
+                <td class="fw-bold">${window.shop.currency}${itemTotal.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeItem(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+}
+
+// Fix the search products function
+async function searchProducts(searchTerm) {
+    try {
+        const response = await fetch(`/bills/api/products?search=${encodeURIComponent(searchTerm)}`);
+        const data = await response.json();
+
+        const searchResults = document.getElementById('searchResults');
+        
+        if (data.success && data.products.length > 0) {
+            let html = '';
+            data.products.forEach(product => {
+                const price = product.price || product.selling_price || 0;
+                const stock = product.stock || product.quantity || 0;
+                const stockClass = stock > 10 ? 'bg-success' : stock > 0 ? 'bg-warning' : 'bg-danger';
+                
+                html += `
+                    <div class="search-result-item p-2 border-bottom" 
+                         onclick="addProductToTransaction({
+                             id: '${product.id}',
+                             name: '${escapeHtml(product.name)}',
+                             price: ${price},
+                             sku: '${escapeHtml(product.sku || '')}',
+                             stock: ${stock},
+                             brand: '${escapeHtml(product.brand || '')}',
+                             type: 'sale',
+                             quantity: 1
+                         })">
+                        <div class="fw-bold">${escapeHtml(product.name)}</div>
+                        <small class="text-muted">SKU: ${escapeHtml(product.sku || 'N/A')} | Brand: ${escapeHtml(product.brand || 'N/A')}</small>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span>${window.shop.currency}${price.toFixed(2)}</span>
+                            <span class="badge ${stockClass}">
+                                Stock: ${stock}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            searchResults.innerHTML = html;
+            searchResults.style.display = 'block';
+        } else {
+            searchResults.innerHTML = '<div class="p-2 text-muted">No products found</div>';
+            searchResults.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error searching products:', error);
+        showToast('Error searching products', 'error');
+    }
+}
+
+// Add CSS for custom notification
+const style = document.createElement('style');
+style.textContent = `
+    .custom-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 350px;
+    }
+    
+    .custom-notification .alert {
+        margin-bottom: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .return-item {
+        background-color: #fff3cd !important;
+    }
+    
+    .sale-item {
+        background-color: #d1e7dd !important;
+    }
+    
+    .quantity-controls .input-group {
+        max-width: 120px;
+    }
+    
+    .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .search-result-item {
+        cursor: pointer;
+        transition: background-color 0.2s;
+        padding: 10px 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .search-result-item:hover {
+        background-color: #f8f9fc;
+    }
+    
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+`;
+
+document.head.appendChild(style);
 
 async function finalizeTransaction() {
     if (window.transactionItems.length === 0) {
@@ -1479,6 +1919,7 @@ async function searchProductsForReturn(searchTerm) {
 }
 
 // Enhanced customer bill search with suggestions
+// Enhanced customer bill search with suggestions - INCLUDES BILL NUMBER SEARCH
 async function searchCustomerBillsForReturn(searchTerm) {
     try {
         const response = await fetch(`/bills/api/customer-bills?search=${encodeURIComponent(searchTerm)}`);
@@ -1502,7 +1943,7 @@ async function searchCustomerBillsForReturn(searchTerm) {
                 
                 html += `
                     <a href="#" class="list-group-item list-group-item-action select-bill-for-return" 
-                       data-bill-id="${bill.id}">
+                       data-bill-id="${bill.bill_id_str}">
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
                                 <h6 class="mb-1">
@@ -1516,7 +1957,7 @@ async function searchCustomerBillsForReturn(searchTerm) {
                                 </div>
                             </div>
                             <div class="text-end ms-3">
-                                <div class="fw-bold text-success">${window.shop.currency}${bill.total_amount}</div>
+                                <div class="fw-bold text-success">${window.shop.currency}${parseFloat(bill.total_amount).toFixed(2)}</div>
                                 <small class="badge bg-primary">${bill.item_count} items</small>
                                 <div class="small text-muted mt-1">${bill.payment_method}</div>
                             </div>
@@ -1543,7 +1984,7 @@ async function searchCustomerBillsForReturn(searchTerm) {
                 </div>
                 <div class="text-center text-muted">
                     <i class="fas fa-search fa-2x mb-2 d-block"></i>
-                    Try searching by customer name, phone number, or bill number
+                    Try searching by customer name, phone number, or bill number (e.g., INV-2026-3155)
                 </div>
             `;
             customerBillsResults.style.display = 'block';

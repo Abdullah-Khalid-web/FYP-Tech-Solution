@@ -148,9 +148,9 @@ exports.register = async (req, res) => {
 
     // Insert Owner
     await conn.execute(
-      `INSERT INTO users (id, shop_id, name, email, password, role_id,phone,cnic status)
-      VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?,?, ?, 'active')`,
-      [shopId, ownerName, ownerEmail, hashedPassword, roleId, ownerphone , cnic,]
+      `INSERT INTO users (id, shop_id, name, email, password, role_id, phone, cnic, status)
+      VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, ?, ?, 'active')`,
+      [shopId, ownerName, ownerEmail, hashedPassword, roleId, ownerphone, cnic]
     );
 
 

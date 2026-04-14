@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const adminController = require('../controllers/adminController');
+const customerController = require('../controllers/customerController');
 
 // Apply all routes from the controller
-router.use('/', adminController);
+router.use('/', customerController);
 
 module.exports = router;

@@ -1,3 +1,4 @@
+// middleware/auth.js
 const { pool } = require('../db');
 
 /**
@@ -36,6 +37,19 @@ function hasPermission(permissionSlug) {
       if (rows[0].allowed) {
         return next(); // user has permission
       } else {
+        // Check for individual user permissions
+        const [userPermRows] = await pool.execute(
+          `SELECT COUNT(*) AS allowed
+           FROM user_permissions up
+           JOIN permissions p ON up.permission_id = p.id
+           WHERE up.user_id = UUID_TO_BIN(?) AND p.slug = ? AND p.status = 'active'`,
+          [req.session.userId, permissionSlug]
+        );
+        
+        if (userPermRows[0].allowed) {
+          return next();
+        }
+        
         req.flash('error', 'You do not have permission to access this page.');
         return res.redirect('/dashboard');
       }
