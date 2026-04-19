@@ -1,0 +1,19 @@
+<!-- Admin Topbar Partial -->
+<!-- Requires: title, admin -->
+<div class="sa-topbar">
+    <div class="sa-topbar-left">
+        <button class="sa-hamburger" onclick="toggleAdminSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <h1><i class="fas fa-shield-alt"></i> <%= title %></h1>
+    </div>
+    <div class="sa-topbar-right">
+        <div class="sa-topbar-meta">
+            Welcome, <strong><%= admin.username %></strong><br>
+            <small><%= new Date(admin.loginTime).toLocaleString() %></small>
+        </div>
+        <a href="/" class="sa-topbar-back">
+            <i class="fas fa-external-link-alt"></i> Public Site
+        </a>
+    </div>
+</div>

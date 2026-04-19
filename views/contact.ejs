@@ -1,0 +1,81 @@
+<div class="bg-glow"></div>
+<div class="bg-glow-right"></div>
+
+<div class="container" style="padding-top: 120px; padding-bottom: 60px; min-height: 80vh;">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="glass-panel p-5">
+                <div class="text-center mb-5">
+                    <div class="badge px-3 py-2 text-uppercase mb-3" style="background: rgba(59, 130, 246, 0.1); color: var(--secondary); font-weight: 600; font-size: 0.85rem; letter-spacing: 1px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                        Get in Touch
+                    </div>
+                    <h1 style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 3rem; color: var(--text-main);">
+                        Contact <span class="text-gradient">Us</span>
+                    </h1>
+                    <p class="mt-3" style="color: var(--text-muted); font-size: 1.1rem;">Have questions about Manage Hub? We're here to help.</p>
+                </div>
+
+                <div class="row g-4 mt-2 mb-5">
+                    <div class="col-md-6">
+                        <div class="p-4 rounded-4 text-center" style="background: rgba(15, 23, 42, 0.03); border: 1px solid rgba(0,0,0,0.05); height: 100%;">
+                            <div style="font-size: 2rem; margin-bottom: 15px; color: #3b82f6;"><i class="bi bi-envelope-paper-fill"></i></div>
+                            <h4 style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.25rem;">Email Support</h4>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">For general inquiries and technical support.</p>
+                            <a href="mailto:NextGenTechSolution@gmail.com" style="font-weight: 600; color: var(--primary); text-decoration: none;">NextGenTechSolution@gmail.com</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-4 rounded-4 text-center" style="background: rgba(15, 23, 42, 0.03); border: 1px solid rgba(0,0,0,0.05); height: 100%;">
+                            <div style="font-size: 2rem; margin-bottom: 15px; color: #3b82f6;"><i class="bi bi-telephone-fill"></i></div>
+                            <h4 style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.25rem;">Phone Number</h4>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">Available Mon-Fri, 9AM to 6PM.</p>
+                            <a href="tel:+923331223334444" style="font-weight: 600; color: var(--primary); text-decoration: none;">+92 333 1223334444</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-4" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(0,0,0,0.05);">
+                    <h4 class="mb-4" style="font-family: 'Outfit', sans-serif; font-weight: 700; text-align: center;">Send us a message</h4>
+                    
+                    <form onsubmit="event.preventDefault(); alert('Thank you for contacting us. We will get back to you shortly.'); this.reset();">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Full Name</label>
+                                <input type="text" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Email Address</label>
+                                <input type="email" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Subject</label>
+                                <input type="text" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Message</label>
+                                <textarea class="form-control px-3 py-2" rows="4" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);"></textarea>
+                            </div>
+                            <div class="col-12 mt-4 text-center">
+                                <button type="submit" class="btn text-white w-100 py-3 rounded-pill" style="background: linear-gradient(135deg, #0f172a, #3b82f6); font-weight: 700; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">
+                                    Send Message <i class="bi bi-send ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Pull required landing page styles if accessed directly */
+.bg-glow { position: fixed; width: 600px; height: 600px; background: radial-gradient(circle, rgba(15, 23, 42, 0.1) 0%, transparent 70%); top: -150px; left: -150px; z-index: -1; filter: blur(80px); }
+.bg-glow-right { position: fixed; width: 600px; height: 600px; background: radial-gradient(circle, rgba(38, 132, 255, 0.1) 0%, transparent 70%); bottom: -100px; right: -100px; z-index: -1; filter: blur(80px); }
+.glass-panel { background: var(--bg-card, rgba(255,255,255,0.8)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border, rgba(0,0,0,0.05)); border-radius: 24px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); }
+.text-gradient { background: linear-gradient(135deg, #0f172a, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+[data-theme="dark"] .glass-panel { background: rgba(30, 41, 59, 0.7); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .text-gradient { background: linear-gradient(135deg, #f8fafc, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+[data-theme="dark"] .form-control { background: rgba(15, 23, 42, 0.5) !important; border-color: rgba(255,255,255,0.1) !important; color: white; }
+</style>

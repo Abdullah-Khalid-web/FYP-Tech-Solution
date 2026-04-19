@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales & Returns - <%= (shop && shop.name) || 'My Shop' %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4e73df;
+            --success: #1cc88a;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --info: #36b9cc;
+            --secondary: #858796;
+            --dark: #5a5c69;
+            --light: #f8f9fc;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 20px;
+            background-color: #f5f7fa;
+            min-height: calc(100vh - 70px);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--dark);
+        }
+
+        .username {
+            color: var(--primary);
+        }
+
+        .datetime {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .shop-info {
+            text-align: right;
+        }
+
+        .shop-info p {
+            margin: 5px 0;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .shop-info i {
+            margin-right: 5px;
+            color: var(--primary);
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eee;
+            padding: 15px 20px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .card-header.bg-primary {
+            background: linear-gradient(135deg, var(--primary), #2e59d9) !important;
+            color: white;
+            border: none;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section-header h2 {
+            font-size: 1.2rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            color: var(--dark);
+        }
+
+        .section-header h2 i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        /* Quick Actions */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px 10px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--dark);
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eee;
+        }
+
+        .action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .action-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .action-card p {
+            margin: 0;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Table Styles */
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+        }
+
+        .table th {
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 0.85rem;
+            text-align: left;
+            padding: 15px;
+            background: #f8f9fc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tr:hover td {
+            background-color: #f8f9fc;
+        }
+
+        /* Badge Styles */
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+        }
+
+        /* Button Styles */
+        .btn {
+            border-radius: 6px;
+            font-weight: 500;
+            padding: 8px 16px;
+        }
+
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        /* Form Controls */
+        .form-control, .form-select {
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        /* Search Results */
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-result-item {
+            cursor: pointer;
+            transition: background-color 0.2s;
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .search-result-item:hover {
+            background-color: #f8f9fc;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Return Option Cards */
+        .return-option-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            height: 100%;
+        }
+
+        .return-option-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .return-option-card.selected {
+            border: 2px solid var(--primary);
+            background-color: #f8f9fa;
+        }
+
+        /* Quantity Controls */
+        .quantity-controls {
+            width: 120px;
+        }
+
+        .quick-return-quantity {
+            max-width: 60px;
+        }
+
+        /* Summary Card */
+        .summary-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid var(--primary);
+        }
+
+        .sticky-top {
+            position: sticky;
+            top: 20px;
+        }
+
+        /* Transaction Items */
+        .sale-item {
+            background-color: #f8f9fa;
+        }
+
+        .return-item {
+            background-color: #fff3cd;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            padding: 20px;
+            text-align: center;
+            color: var(--secondary);
+        }
+
+        .loading-spinner i {
+            margin-right: 8px;
+        }
+
+        /* Color Classes */
+        .bg-primary { background-color: var(--primary); }
+        .bg-success { background-color: var(--success); }
+        .bg-warning { background-color: var(--warning); }
+        .bg-danger { background-color: var(--danger); }
+        .bg-info { background-color: var(--info); }
+        .bg-secondary { background-color: var(--secondary); }
+        .bg-dark { background-color: var(--dark); }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Print Styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+            }
+
+            .container {
+                max-width: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div>
+                <h1><i class="fas fa-cash-register me-2"></i>Sales & Returns</h1>
+                <p class="datetime" id="datetime"></p>
+            </div>
+            <div class="shop-info">
+                <p><i class="fas fa-store"></i> <%= (shop && shop.name) || 'My Shop' %></p>
+                <p><i class="fas fa-map-marker-alt"></i> <%= (shop && shop.address) || 'Add shop address' %></p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions card">
+            <div class="section-header">
+                <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+            </div>
+            <div class="action-grid">
+                <a href="/ALLbills" class="action-card">
+                    <div class="action-icon bg-primary">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <p>All Bills</p>
+                </a>
+                
+                <a href="#" class="action-card" data-bs-toggle="modal" data-bs-target="#productListModal">
+                    <div class="action-icon bg-info">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <p>View Products</p>
+                </a>
+                
+                <a href="#" class="action-card" data-bs-toggle="modal" data-bs-target="#returnOptionsModal">
+                    <div class="action-icon bg-warning">
+                        <i class="fas fa-undo"></i>
+                    </div>
+                    <p>Add Return</p>
+                </a>
+                
+                <a href="/products" class="action-card">
+                    <div class="action-icon bg-success">
+                        <i class="fas fa-cubes"></i>
+                    </div>
+                    <p>Manage Products</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Left Column - Customer & Products -->
+            <div class="col-lg-8">
+                <!-- Customer Information -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-user me-2"></i>Customer Information</h5>
+                        <button class="btn btn-sm btn-light" id="searchCustomerBtn">
+                            <i class="fas fa-search me-1"></i>Find Previous Bills
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Customer Name <small class="text-muted">(Optional)</small></label>
+                                <input type="text" class="form-control" id="customerName" placeholder="Walk-in Customer">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number <small class="text-muted">(Optional)</small></label>
+                                <input type="text" class="form-control" id="customerPhone" placeholder="Enter phone number">
+                            </div>
+                        </div>
+                        <div id="customerBillsSection" class="mt-3" style="display: none;">
+                            <h6><i class="fas fa-history me-2"></i>Previous Bills</h6>
+                            <div id="customerBillsList" class="small"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Search and Selection -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-search me-2"></i>Product Selection</h5>
+                        <div>
+                            <button class="btn btn-sm btn-light me-2" id="viewProductsBtn">
+                                <i class="fas fa-boxes me-1"></i>View All Products
+                            </button>
+                            <button class="btn btn-sm btn-light" id="addReturnBtn">
+                                <i class="fas fa-undo me-1"></i>Add Return
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3 product-search-input position-relative">
+                            <label class="form-label">Search Products</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="productSearch" placeholder="Search by product name, SKU, or brand">
+                                <button class="btn btn-outline-secondary" type="button" id="scanBarcodeBtn">
+                                    <i class="fas fa-barcode"></i>
+                                </button>
+                            </div>
+                            <div class="search-results" id="searchResults"></div>
+                        </div>
+
+                        <!-- Transaction Items Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="transactionItems">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="5%">Type</th>
+                                        <th width="25%">Product</th>
+                                        <th width="10%">Price</th>
+                                        <th width="10%">Qty</th>
+                                        <th width="10%">Discount</th>
+                                        <th width="10%">Tax</th>
+                                        <th width="10%">Total</th>
+                                        <th width="5%">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionItemsBody">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="fas fa-shopping-cart fa-2x mb-2 d-block"></i>
+                                            No items added to transaction
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Summary -->
+            <div class="col-lg-4">
+                <div class="summary-card sticky-top">
+                    <div class="section-header">
+                        <h2><i class="fas fa-receipt"></i> Transaction Summary</h2>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="row g-2 mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Payment Method</label>
+                                <select class="form-select" id="paymentMethod">
+                                    <option value="cash" selected>Cash</option>
+                                    <option value="card">Credit/Debit Card</option>
+                                    <option value="mobile">Mobile Payment</option>
+                                    <option value="bank">Bank Transfer</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Amount Paid</label>
+                                <input type="number" class="form-control" id="paymentAmount" value="0.00" min="0" step="0.01">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Tax Amount (FBR)</label>
+                                <input type="number" class="form-control" id="taxAmount" value="1.00" min="0" step="0.01">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Additional Notes</label>
+                                <textarea class="form-control" id="transactionNotes" rows="2" placeholder="Any additional notes"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="transaction-summary">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal (Sales):</span>
+                                <span id="summarySalesSubtotal"><%= shop.currency || '₹' %>0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal (Returns):</span>
+                                <span id="summaryReturnsSubtotal"><%= shop.currency || '₹' %>0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Discount:</span>
+                                <span id="summaryDiscount">-<%= shop.currency || '₹' %>0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Tax:</span>
+                                <span id="summaryTax"><%= shop.currency || '₹' %>0.00</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                                <span>Net Amount:</span>
+                                <span id="summaryTotal"><%= shop.currency || '₹' %>0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Amount Paid:</span>
+                                <span id="summaryPaid"><%= shop.currency || '₹' %>0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between fw-bold text-success" id="changeSection">
+                                <span>Change:</span>
+                                <span id="summaryChange"><%= shop.currency || '₹' %>0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between fw-bold text-danger" id="refundSection" style="display: none;">
+                                <span>Refund Due:</span>
+                                <span id="summaryRefund"><%= shop.currency || '₹' %>0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="row g-2 mt-3 no-print">
+                            <div class="col-12">
+                                <button class="btn btn-outline-secondary w-100" id="clearTransactionBtn">
+                                    <i class="fas fa-times me-2"></i> Clear Transaction
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-primary w-100" id="finalizeBtn">
+                                    <i class="fas fa-check-circle me-2"></i> Finalize Transaction
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="btn btn-warning w-100" onclick="printReceipt()" id="printBtn" style="display: none;">
+                                    <i class="fas fa-print me-1"></i>Print Receipt
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product List Modal -->
+    <div class="modal fade" id="productListModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-boxes me-2"></i>Product Catalog</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Search products..." id="modalProductSearch">
+                        <button class="btn btn-outline-primary" type="button" id="modalSearchBtn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Brand</th>
+                                    <th>SKU</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th width="15%">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalProductsList">
+                            <!-- In the Product List Modal section -->
+                            <% products.forEach(product=> { %>
+                                <tr>
+                                    <td><%= product.name %></td>
+                                    <td><%= product.brand || 'N/A' %></td>
+                                    <td><%= product.sku %></td>
+                                    <td><%= shop.currency || '₹' %><%= product.price || product.selling_price %></td>
+                                    <td>
+                                        <span class="badge <%= product.stock > 10 ? 'bg-success' : product.stock > 0 ? 'bg-warning' : 'bg-danger' %>">
+                                            <%= product.stock || product.quantity %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary add-product-modal"
+                                            data-product-id="<%= product.id %>"
+                                            data-product-name="<%= product.name %>"
+                                            data-product-price="<%= product.price || product.selling_price %>"
+                                            data-product-sku="<%= product.sku %>"
+                                            data-product-stock="<%= product.stock || product.quantity %>"
+                                            data-product-brand="<%= product.brand || '' %>">
+                                            <i class="fas fa-plus me-1"></i>Add
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Return Options Modal -->
+    <div class="modal fade" id="returnOptionsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-undo me-2"></i>Add Return Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card return-option-card h-100" id="returnWithBillCard">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-receipt fa-3x text-primary mb-3"></i>
+                                    <h5>Return with Bill Reference</h5>
+                                    <p class="text-muted">Select items from a previous bill for return</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card return-option-card h-100" id="returnWithoutBillCard">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-undo fa-3x text-warning mb-3"></i>
+                                    <h5>Return without Bill</h5>
+                                    <p class="text-muted">Add return items without bill reference</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Return with Bill Section -->
+                    <div id="returnWithBillSection" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Search Customer Bills</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="customerSearch" placeholder="Enter customer name or phone">
+                                <button class="btn btn-outline-primary" type="button" id="searchCustomerBillsBtn">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="customerBillsResults" style="display: none;">
+                            <h6><i class="fas fa-receipt me-2"></i>Customer Bills</h6>
+                            <div id="customerBillsListReturn" class="mb-3"></div>
+                        </div>
+
+                        <div id="billItemsSection" style="display: none;">
+                            <h6><i class="fas fa-list me-2"></i>Select Items to Return</h6>
+                            <div id="billItemsListReturn"></div>
+                        </div>
+                    </div>
+
+                    <!-- Return without Bill Section -->
+                    <div id="returnWithoutBillSection" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Quick Return:</strong> Search for products to return without bill reference
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Search Products</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="returnProductSearch" placeholder="Search products by name, SKU, or brand">
+                                <button class="btn btn-outline-primary" type="button" id="returnSearchBtn">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-hover table-sm">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Price</th>
+                                        <th>Stock</th>
+                                        <th width="120px">Qty</th>
+                                        <th width="100px">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="returnProductsList">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-3">
+                                            <i class="fas fa-search fa-2x mb-2 d-block"></i>
+                                            Search for products to return
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="addSelectedReturnsBtn" style="display: none;">
+                        <i class="fas fa-plus me-1"></i> Add Selected Returns
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Template (Hidden) -->
+    <div id="receiptTemplate" style="display: none;"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Update datetime every second
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-IN', options);
+        }
+        
+        setInterval(updateDateTime, 1000);
+        updateDateTime(); // Initial call
+
+        // Rest of your existing JavaScript code remains the same...
+        // ===== GLOBAL VARIABLES =====
+        window.transactionItems = [];
+        window.shop = {
+            currency: '<%= shop.currency || "₹" %>',
+            name: '<%= shop.name || "My Shop" %>',
+            primary_color: '<%= shop.primary_color || "#007bff" %>'
+        };
+
+        // ===== DOM READY =====
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('DOM loaded - Initializing transaction system');
+            
+            // Your existing JavaScript code continues here...
+            // (All the JavaScript from your original file remains unchanged)
+            
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Product Search
+            const productSearch = document.getElementById('productSearch');
+            const searchResults = document.getElementById('searchResults');
+
+            if (productSearch) {
+                productSearch.addEventListener('input', debounce(function (e) {
+                    const searchTerm = e.target.value.trim();
+                    if (searchTerm.length < 2) {
+                        searchResults.style.display = 'none';
+                        return;
+                    }
+                    searchProducts(searchTerm);
+                }, 300));
+
+                document.addEventListener('click', function (e) {
+                    if (!productSearch.contains(e.target) && !searchResults.contains(e.target)) {
+                        searchResults.style.display = 'none';
+                    }
+                });
+            }
+
+            // View Products Modal
+            const viewProductsBtn = document.getElementById('viewProductsBtn');
+            if (viewProductsBtn) {
+                viewProductsBtn.addEventListener('click', function () {
+                    const modal = new bootstrap.Modal(document.getElementById('productListModal'));
+                    modal.show();
+                });
+            }
+
+            // Add Return Modal
+            const addReturnBtn = document.getElementById('addReturnBtn');
+            if (addReturnBtn) {
+                addReturnBtn.addEventListener('click', function () {
+                    const modal = new bootstrap.Modal(document.getElementById('returnOptionsModal'));
+                    modal.show();
+                });
+            }
+
+            // Return Options Selection
+            const returnWithBillCard = document.getElementById('returnWithBillCard');
+            const returnWithoutBillCard = document.getElementById('returnWithoutBillCard');
+            const returnWithBillSection = document.getElementById('returnWithBillSection');
+            const returnWithoutBillSection = document.getElementById('returnWithoutBillSection');
+
+            if (returnWithBillCard) {
+                returnWithBillCard.addEventListener('click', function () {
+                    returnWithBillCard.classList.add('selected');
+                    returnWithoutBillCard.classList.remove('selected');
+                    returnWithBillSection.style.display = 'block';
+                    returnWithoutBillSection.style.display = 'none';
+                    document.getElementById('addSelectedReturnsBtn').style.display = 'none';
+                    resetReturnSections();
+                });
+            }
+
+            if (returnWithoutBillCard) {
+                returnWithoutBillCard.addEventListener('click', function () {
+                    returnWithoutBillCard.classList.add('selected');
+                    returnWithBillCard.classList.remove('selected');
+                    returnWithBillSection.style.display = 'none';
+                    returnWithoutBillSection.style.display = 'block';
+                    document.getElementById('addSelectedReturnsBtn').style.display = 'none';
+                    resetReturnSections();
+                });
+            }
+
+            // Search Customer Bills for Return
+            const searchCustomerBillsBtn = document.getElementById('searchCustomerBillsBtn');
+            if (searchCustomerBillsBtn) {
+                searchCustomerBillsBtn.addEventListener('click', function () {
+                    const customerSearch = document.getElementById('customerSearch').value.trim();
+                    if (customerSearch.length < 2) {
+                        alert('Please enter at least 2 characters to search');
+                        return;
+                    }
+                    searchCustomerBillsForReturn(customerSearch);
+                });
+            }
+
+            // Search Products for Return without Bill
+            const returnSearchBtn = document.getElementById('returnSearchBtn');
+            if (returnSearchBtn) {
+                returnSearchBtn.addEventListener('click', function () {
+                    const searchTerm = document.getElementById('returnProductSearch').value.trim();
+                    if (searchTerm.length < 2) {
+                        alert('Please enter at least 2 characters to search');
+                        return;
+                    }
+                    searchProductsForReturn(searchTerm);
+                });
+            }
+
+            // Add products from modal to transaction
+            // Add products from modal to transaction - FIXED
+            document.addEventListener('click', function (e) {
+                if (e.target.classList.contains('add-product-modal') || e.target.closest('.add-product-modal')) {
+                    const button = e.target.classList.contains('add-product-modal') ? e.target : e.target.closest('.add-product-modal');
+                    const productId = button.getAttribute('data-product-id');
+                    const productName = button.getAttribute('data-product-name');
+                    const productPrice = parseFloat(button.getAttribute('data-product-price')) || 0;
+                    const productSku = button.getAttribute('data-product-sku');
+                    const productStock = parseInt(button.getAttribute('data-product-stock')) || 0;
+                    const productBrand = button.getAttribute('data-product-brand');
+
+                    console.log('Adding product from modal:', {
+                        productId,
+                        productName,
+                        productPrice,
+                        productStock
+                    });
+
+                    addProductToTransaction({
+                        id: productId,
+                        name: productName,
+                        price: productPrice,
+                        sku: productSku,
+                        stock: productStock,
+                        brand: productBrand,
+                        type: 'sale'
+                    });
+
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('productListModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                }
+            });
+
+            // Clear Transaction
+            const clearTransactionBtn = document.getElementById('clearTransactionBtn');
+            if (clearTransactionBtn) {
+                clearTransactionBtn.addEventListener('click', function () {
+                    if (window.transactionItems.length > 0 && confirm('Are you sure you want to clear the transaction?')) {
+                        window.transactionItems = [];
+                        updateTransactionTable();
+                        updateSummary();
+                        showToast('Transaction cleared', 'success');
+                    }
+                });
+            }
+
+            // Finalize Transaction
+            const finalizeBtn = document.getElementById('finalizeBtn');
+            if (finalizeBtn) {
+                finalizeBtn.addEventListener('click', function () {
+                    finalizeTransaction();
+                });
+            }
+
+            // Payment Amount Change
+            const paymentAmount = document.getElementById('paymentAmount');
+            if (paymentAmount) {
+                paymentAmount.addEventListener('input', function () {
+                    updateSummary();
+                });
+            }
+
+            // Search Customer Button
+            const searchCustomerBtn = document.getElementById('searchCustomerBtn');
+            if (searchCustomerBtn) {
+                searchCustomerBtn.addEventListener('click', function () {
+                    const customerName = document.getElementById('customerName').value.trim();
+                    const customerPhone = document.getElementById('customerPhone').value.trim();
+
+                    if (!customerName && !customerPhone) {
+                        alert('Please enter either customer name or phone number');
+                        return;
+                    }
+
+                    searchCustomerBills(customerName, customerPhone);
+                });
+            }
+
+            // Initialize summary
+            updateSummary();
+            // Add enhanced search setup
+            setupEnhancedSearch();
+        });
+
+ 
+// ===== TRANSACTION FUNCTIONS =====
+function addProductToTransaction(product) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+    }
+
+    const existingItemIndex = window.transactionItems.findIndex(item => 
+        item.id === product.id && item.type === product.type
+    );
+
+    if (existingItemIndex > -1) {
+        window.transactionItems[existingItemIndex].quantity += product.quantity || 1;
+    } else {
+        window.transactionItems.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            sku: product.sku,
+            type: product.type || 'sale',
+            quantity: product.quantity || 1,
+            discount: 0,
+            tax: 0
+        });
+    }
+
+    updateTransactionTable();
+    updateSummary();
+    showToast(`${product.type === 'return' ? 'Return' : 'Sale'} item added: ${product.name}`, 'success');
+}
+
+function updateTransactionTable() {
+    const tbody = document.getElementById('transactionItemsBody');
+    
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+    }
+    
+    if (window.transactionItems.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    <i class="fas fa-shopping-cart fa-2x mb-2 d-block"></i>
+                    No items added to transaction
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    let html = '';
+    window.transactionItems.forEach((item, index) => {
+        const itemTotal = (item.price * item.quantity) - item.discount;
+        html += `
+            <tr class="${item.type === 'return' ? 'return-item' : 'sale-item'}">
+                <td>
+                    <span class="badge ${item.type === 'return' ? 'bg-warning' : 'bg-success'}">
+                        ${item.type === 'return' ? 'RETURN' : 'SALE'}
+                    </span>
+                </td>
+                <td>
+                    <div class="fw-bold">${escapeHtml(item.name)}</div>
+                    <small class="text-muted">SKU: ${escapeHtml(item.sku)}</small>
+                </td>
+                <td>${window.shop.currency}${item.price.toFixed(2)}</td>
+                <td>
+                    <div class="quantity-controls">
+                        <div class="input-group input-group-sm">
+                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" 
+                                   value="${item.quantity}" min="1" 
+                                   onchange="updateQuantity(${index}, 0, this.value)">
+                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           value="${item.discount}" min="0" step="0.01"
+                           onchange="updateDiscount(${index}, this.value)">
+                </td>
+                <td>${window.shop.currency}${item.tax.toFixed(2)}</td>
+                <td class="fw-bold">${window.shop.currency}${itemTotal.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeItem(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+}
+
+function updateQuantity(index, change, directValue = null) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+        return;
+    }
+    
+    if (directValue !== null) {
+        window.transactionItems[index].quantity = parseInt(directValue) || 1;
+    } else {
+        window.transactionItems[index].quantity += change;
+        if (window.transactionItems[index].quantity < 1) {
+            window.transactionItems[index].quantity = 1;
+        }
+    }
+    updateTransactionTable();
+    updateSummary();
+}
+
+function updateDiscount(index, discount) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+        return;
+    }
+    
+    window.transactionItems[index].discount = parseFloat(discount) || 0;
+    updateTransactionTable();
+    updateSummary();
+}
+
+function removeItem(index) {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+        return;
+    }
+    
+    if (confirm('Are you sure you want to remove this item?')) {
+        window.transactionItems.splice(index, 1);
+        updateTransactionTable();
+        updateSummary();
+        showToast('Item removed from transaction', 'success');
+    }
+}
+
+function updateSummary() {
+    if (!Array.isArray(window.transactionItems)) {
+        window.transactionItems = [];
+    }
+
+    const salesSubtotal = window.transactionItems
+        .filter(item => item.type === 'sale')
+        .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    const returnsSubtotal = window.transactionItems
+        .filter(item => item.type === 'return')
+        .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    const totalDiscount = window.transactionItems.reduce((sum, item) => sum + item.discount, 0);
+    const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
+    const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+
+    const netAmount = salesSubtotal - returnsSubtotal - totalDiscount + taxAmount;
+    const change = paymentAmount - netAmount;
+
+    // Update summary display
+    document.getElementById('summarySalesSubtotal').textContent = `${window.shop.currency}${salesSubtotal.toFixed(2)}`;
+    document.getElementById('summaryReturnsSubtotal').textContent = `${window.shop.currency}${returnsSubtotal.toFixed(2)}`;
+    document.getElementById('summaryDiscount').textContent = `-${window.shop.currency}${totalDiscount.toFixed(2)}`;
+    document.getElementById('summaryTax').textContent = `${window.shop.currency}${taxAmount.toFixed(2)}`;
+    document.getElementById('summaryTotal').textContent = `${window.shop.currency}${netAmount.toFixed(2)}`;
+    document.getElementById('summaryPaid').textContent = `${window.shop.currency}${paymentAmount.toFixed(2)}`;
+
+    // Show change or refund section
+    if (change >= 0) {
+        document.getElementById('changeSection').style.display = 'flex';
+        document.getElementById('refundSection').style.display = 'none';
+        document.getElementById('summaryChange').textContent = `${window.shop.currency}${change.toFixed(2)}`;
+    } else {
+        document.getElementById('changeSection').style.display = 'none';
+        document.getElementById('refundSection').style.display = 'flex';
+        document.getElementById('summaryRefund').textContent = `${window.shop.currency}${Math.abs(change).toFixed(2)}`;
+    }
+}
+
+// async function finalizeTransaction() {
+//     if (window.transactionItems.length === 0) {
+//         showToast('Please add items to the transaction', 'error');
+//         return;
+//     }
+
+//     const customerName = document.getElementById('customerName').value.trim() || 'Walk-in Customer';
+//     const customerPhone = document.getElementById('customerPhone').value.trim();
+//     const paymentMethod = document.getElementById('paymentMethod').value;
+//     const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+//     const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
+//     const notes = document.getElementById('transactionNotes').value.trim();
+
+//     const transactionData = {
+//         customer_name: customerName,
+//         customer_phone: customerPhone,
+//         payment_method: paymentMethod,
+//         paid_amount: paymentAmount,
+//         tax_amount: taxAmount,
+//         notes: notes,
+//         items: window.transactionItems
+//     };
+
+//     try {
+//         const response = await fetch('/bills', {
+//             method: 'POST',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//             },
+//             body: JSON.stringify(transactionData)
+//         });
+
+//         const data = await response.json();
+
+//         if (data.success) {
+//             showToast('Transaction completed successfully!', 'success');
+//             document.getElementById('printBtn').style.display = 'block';
+//             window.lastBillData = data;
+            
+//             // Reset transaction
+//             window.transactionItems = [];
+//             updateTransactionTable();
+//             updateSummary();
+            
+//             // Clear form
+//             document.getElementById('customerName').value = '';
+//             document.getElementById('customerPhone').value = '';
+//             document.getElementById('paymentAmount').value = '0.00';
+//             document.getElementById('transactionNotes').value = '';
+            
+//         } else {
+//             showToast(data.message || 'Error processing transaction', 'error');
+//         }
+//     } catch (error) {
+//         console.error('Error finalizing transaction:', error);
+//         showToast('Network error. Please try again.', 'error');
+//     }
+// }
+
+async function finalizeTransaction() {
+    if (window.transactionItems.length === 0) {
+        showToast('Please add items to the transaction', 'error');
+        return;
+    }
+
+    const customerName = document.getElementById('customerName').value.trim() || 'Walk-in Customer';
+    const customerPhone = document.getElementById('customerPhone').value.trim();
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+    const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
+    const notes = document.getElementById('transactionNotes').value.trim();
+
+    // Prepare transaction data - FIXED: Use string productId (UUID)
+    const transactionData = {
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        payment_method: paymentMethod,
+        paid_amount: paymentAmount,
+        tax_amount: taxAmount,
+        notes: notes,
+        items: window.transactionItems.map(item => ({
+            productId: item.id, // This should be the UUID string
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: parseInt(item.quantity),
+            discount: parseFloat(item.discount) || 0,
+            type: item.type || 'sale'
+        }))
+    };
+
+    console.log('Sending transaction data:', JSON.stringify(transactionData, null, 2));
+
+    try {
+        const response = await fetch('/bills', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(transactionData)
+        });
+
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error response:', errorText);
+            throw new Error(`Server error: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Success response:', data);
+
+        if (data.success) {
+            showToast('Transaction completed successfully!', 'success');
+            document.getElementById('printBtn').style.display = 'block';
+            window.lastBillData = data;
+            
+            // Reset transaction
+            window.transactionItems = [];
+            updateTransactionTable();
+            updateSummary();
+            
+            // Clear form
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('paymentAmount').value = '0.00';
+            document.getElementById('transactionNotes').value = '';
+            
+        } else {
+            showToast(data.message || 'Error processing transaction', 'error');
+        }
+    } catch (error) {
+        console.error('Error finalizing transaction:', error);
+        showToast('Error: ' + error.message, 'error');
+    }
+}
+
+// ===== SEARCH FUNCTIONS =====
+// ===== SEARCH FUNCTIONS =====
+async function searchProducts(searchTerm) {
+    try {
+        const response = await fetch(`/bills/api/products?search=${encodeURIComponent(searchTerm)}`);
+        const data = await response.json();
+
+        const searchResults = document.getElementById('searchResults');
+        
+        if (data.success && data.products.length > 0) {
+            let html = '';
+            data.products.forEach(product => {
+                html += `
+                    <div class="search-result-item p-2 border-bottom" 
+                         onclick="addProductToTransaction({
+                             id: '${product.id}', // FIXED: Pass as string
+                             name: '${escapeHtml(product.name)}',
+                             price: ${product.price || product.selling_price || 0},
+                             sku: '${escapeHtml(product.sku)}',
+                             stock: ${product.stock || product.quantity || 0},
+                             brand: '${escapeHtml(product.brand || '')}',
+                             type: 'sale'
+                         })">
+                        <div class="fw-bold">${escapeHtml(product.name)}</div>
+                        <small class="text-muted">SKU: ${escapeHtml(product.sku)} | Brand: ${escapeHtml(product.brand || 'N/A')}</small>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span>${window.shop.currency}${product.price || product.selling_price || 0}</span>
+                            <span class="badge ${(product.stock || product.quantity) > 10 ? 'bg-success' : (product.stock || product.quantity) > 0 ? 'bg-warning' : 'bg-danger'}">
+                                Stock: ${product.stock || product.quantity || 0}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            searchResults.innerHTML = html;
+            searchResults.style.display = 'block';
+        } else {
+            searchResults.innerHTML = '<div class="p-2 text-muted">No products found</div>';
+            searchResults.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error searching products:', error);
+        showToast('Error searching products', 'error');
+    }
+}
+
+
+async function searchCustomerBills(name, phone) {
+    try {
+        const params = new URLSearchParams();
+        if (name) params.append('name', name);
+        if (phone) params.append('phone', phone);
+
+        const response = await fetch(`/bills/api/customer-bills?${params}`);
+        const data = await response.json();
+
+        const customerBillsSection = document.getElementById('customerBillsSection');
+        const customerBillsList = document.getElementById('customerBillsList');
+
+        if (data.success && data.bills.length > 0) {
+            let html = '<div class="list-group">';
+            data.bills.forEach(bill => {
+                html += `
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">Bill #${bill.bill_number}</h6>
+                                <small class="text-muted">Date: ${new Date(bill.created_at).toLocaleDateString()}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">${window.shop.currency}${bill.total_amount}</div>
+                                <small class="badge bg-secondary">${bill.item_count} items</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            customerBillsList.innerHTML = html;
+            customerBillsSection.style.display = 'block';
+        } else {
+            customerBillsList.innerHTML = '<p class="text-muted">No previous bills found</p>';
+            customerBillsSection.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error searching customer bills:', error);
+        showToast('Error searching customer bills', 'error');
+    }
+}
+
+
+// ===== ENHANCED SEARCH FUNCTIONS =====
+
+// Enhanced product search for return without bill reference
+async function searchProductsForReturn(searchTerm) {
+    try {
+        const response = await fetch(`/bills/api/products?search=${encodeURIComponent(searchTerm)}`);
+        const data = await response.json();
+
+        const returnProductsList = document.getElementById('returnProductsList');
+        
+        if (data.success && data.products.length > 0) {
+            let html = '';
+            data.products.forEach(product => {
+                html += `
+                    <tr>
+                        <td>
+                            <div class="fw-bold">${escapeHtml(product.name)}</div>
+                            <small class="text-muted">
+                                SKU: ${escapeHtml(product.sku)} | 
+                                Brand: ${escapeHtml(product.brand || 'N/A')}
+                            </small>
+                        </td>
+                        <td>${window.shop.currency}${product.price}</td>
+                        <td>
+                            <span class="badge ${product.stock > 10 ? 'bg-success' : product.stock > 0 ? 'bg-warning' : 'bg-danger'}">
+                                ${product.stock}
+                            </span>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm quick-return-quantity" 
+                                   value="1" min="1" max="${product.stock}" 
+                                   data-product-id="${product.id}">
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-warning add-quick-return" 
+                                    data-product-id="${product.id}"
+                                    data-product-name="${escapeHtml(product.name)}"
+                                    data-product-price="${product.price}"
+                                    data-product-sku="${escapeHtml(product.sku)}">
+                                <i class="fas fa-undo"></i> Add
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            returnProductsList.innerHTML = html;
+
+            document.querySelectorAll('.add-quick-return').forEach(button => {
+                button.addEventListener('click', function () {
+                    const productId = this.getAttribute('data-product-id');
+                    const productName = this.getAttribute('data-product-name');
+                    const productPrice = parseFloat(this.getAttribute('data-product-price'));
+                    const productSku = this.getAttribute('data-product-sku');
+                    const quantityInput = document.querySelector(`.quick-return-quantity[data-product-id="${productId}"]`);
+                    const quantity = parseInt(quantityInput.value) || 1;
+
+                    addProductToTransaction({
+                        id: productId,
+                        name: productName,
+                        price: productPrice,
+                        sku: productSku,
+                        type: 'return',
+                        quantity: quantity
+                    });
+
+                    showToast('Return item added to transaction', 'success');
+                });
+            });
+        } else {
+            returnProductsList.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-3">
+                        <i class="fas fa-search fa-2x mb-2 d-block"></i>
+                        No products found matching "${searchTerm}"
+                    </td>
+                </tr>
+            `;
+        }
+    } catch (error) {
+        console.error('Error searching products for return:', error);
+        showToast('Error searching products', 'error');
+    }
+}
+
+// Enhanced customer bill search with suggestions
+async function searchCustomerBillsForReturn(searchTerm) {
+    try {
+        const response = await fetch(`/bills/api/customer-bills?search=${encodeURIComponent(searchTerm)}`);
+        const data = await response.json();
+
+        const customerBillsResults = document.getElementById('customerBillsResults');
+        const customerBillsListReturn = document.getElementById('customerBillsListReturn');
+
+        if (data.success && data.bills.length > 0) {
+            let html = `
+                <div class="alert alert-info mb-2">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Found ${data.bills.length} bill(s) matching "${searchTerm}"
+                </div>
+                <div class="list-group">
+            `;
+            
+            data.bills.forEach(bill => {
+                const billDate = new Date(bill.created_at).toLocaleDateString();
+                const billTime = new Date(bill.created_at).toLocaleTimeString();
+                
+                html += `
+                    <a href="#" class="list-group-item list-group-item-action select-bill-for-return" 
+                       data-bill-id="${bill.id}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">
+                                    <i class="fas fa-receipt me-2 text-primary"></i>
+                                    Bill #${bill.bill_number}
+                                </h6>
+                                <div class="small text-muted mb-2">
+                                    <div><i class="fas fa-user me-1"></i> ${bill.customer_name}</div>
+                                    <div><i class="fas fa-phone me-1"></i> ${bill.customer_phone || 'No phone'}</div>
+                                    <div><i class="fas fa-calendar me-1"></i> ${billDate} at ${billTime}</div>
+                                </div>
+                            </div>
+                            <div class="text-end ms-3">
+                                <div class="fw-bold text-success">${window.shop.currency}${bill.total_amount}</div>
+                                <small class="badge bg-primary">${bill.item_count} items</small>
+                                <div class="small text-muted mt-1">${bill.payment_method}</div>
+                            </div>
+                        </div>
+                    </a>
+                `;
+            });
+            html += '</div>';
+            customerBillsListReturn.innerHTML = html;
+            customerBillsResults.style.display = 'block';
+
+            document.querySelectorAll('.select-bill-for-return').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const billId = this.getAttribute('data-bill-id');
+                    loadBillItemsForReturn(billId);
+                });
+            });
+        } else {
+            customerBillsListReturn.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No bills found matching "${searchTerm}"
+                </div>
+                <div class="text-center text-muted">
+                    <i class="fas fa-search fa-2x mb-2 d-block"></i>
+                    Try searching by customer name, phone number, or bill number
+                </div>
+            `;
+            customerBillsResults.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error searching customer bills for return:', error);
+        showToast('Error searching customer bills', 'error');
+    }
+}
+
+// Enhanced bill search with auto-suggestions
+function setupEnhancedSearch() {
+    const customerSearch = document.getElementById('customerSearch');
+    const returnProductSearch = document.getElementById('returnProductSearch');
+    
+    // Customer search with debouncing
+    if (customerSearch) {
+        let customerSearchTimeout;
+        customerSearch.addEventListener('input', function(e) {
+            clearTimeout(customerSearchTimeout);
+            const searchTerm = e.target.value.trim();
+            
+            if (searchTerm.length < 2) {
+                document.getElementById('customerBillsResults').style.display = 'none';
+                return;
+            }
+            
+            customerSearchTimeout = setTimeout(() => {
+                searchCustomerBillsForReturn(searchTerm);
+            }, 500);
+        });
+    }
+    
+    // Product search with debouncing for return without bill
+    if (returnProductSearch) {
+        let productSearchTimeout;
+        returnProductSearch.addEventListener('input', function(e) {
+            clearTimeout(productSearchTimeout);
+            const searchTerm = e.target.value.trim();
+            
+            if (searchTerm.length < 2) {
+                return;
+            }
+            
+            productSearchTimeout = setTimeout(() => {
+                searchProductsForReturn(searchTerm);
+            }, 500);
+        });
+    }
+}
+
+// Add this to your DOMContentLoaded function
+
+async function loadBillItemsForReturn(billId) {
+    try {
+        const response = await fetch(`/bills/${billId}/items`);
+        const data = await response.json();
+
+        if (data.success) {
+            window.selectedBillForReturn = data.bill;
+            const billItemsListReturn = document.getElementById('billItemsListReturn');
+            
+            let html = `
+                <div class="alert alert-success mb-3">
+                    <h6 class="mb-1"><i class="fas fa-receipt me-2"></i>Bill #${data.bill.bill_number}</h6>
+                    <small class="text-muted">
+                        Customer: ${data.bill.customer_name} | 
+                        Date: ${new Date(data.bill.created_at).toLocaleDateString()} |
+                        Total: ${window.shop.currency}${data.bill.total_amount}
+                    </small>
+                </div>
+                <div class="list-group">
+            `;
+            
+            data.bill.items.forEach(item => {
+                const maxReturnQty = item.quantity;
+                const itemTotal = item.unit_price * item.quantity;
+                
+                html += `
+                    <div class="bill-item-card">
+                        <div class="form-check">
+                            <input class="form-check-input return-item-checkbox" 
+                                   type="checkbox" 
+                                   value="${item.id}"
+                                   data-product-id="${item.product_id}"
+                                   data-product-name="${escapeHtml(item.product_name)}"
+                                   data-unit-price="${item.unit_price}"
+                                   data-max-qty="${maxReturnQty}">
+                            <label class="form-check-label w-100">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">${escapeHtml(item.product_name)}</h6>
+                                        <small class="text-muted">
+                                            SKU: ${item.sku || 'N/A'} | 
+                                            Purchased: ${item.quantity} @ ${window.shop.currency}${item.unit_price} |
+                                            Total: ${window.shop.currency}${itemTotal.toFixed(2)}
+                                        </small>
+                                    </div>
+                                    <div class="text-end ms-3">
+                                        <div class="fw-bold text-success">${window.shop.currency}${itemTotal.toFixed(2)}</div>
+                                        <small class="badge bg-info">Max: ${maxReturnQty}</small>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="return-quantity-control mt-2" style="display: none;">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <label class="form-label mb-1">Return Quantity (Max: ${maxReturnQty})</label>
+                                    <input type="number" class="form-control return-quantity" 
+                                           value="1" min="1" max="${maxReturnQty}" 
+                                           data-item-id="${item.id}">
+                                </div>
+                                <div class="col-auto">
+                                    <small class="text-muted">
+                                        Refund: <span class="fw-bold" id="refund-amount-${item.id}">${window.shop.currency}${item.unit_price}</span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            billItemsListReturn.innerHTML = html;
+
+            document.getElementById('billItemsSection').style.display = 'block';
+            document.getElementById('addSelectedReturnsBtn').style.display = 'block';
+
+            // Add quantity change listeners for real-time refund calculation
+            document.querySelectorAll('.return-quantity').forEach(input => {
+                input.addEventListener('input', function() {
+                    const itemId = this.getAttribute('data-item-id');
+                    const unitPrice = parseFloat(document.querySelector(`.return-item-checkbox[value="${itemId}"]`).getAttribute('data-unit-price'));
+                    const quantity = parseInt(this.value) || 0;
+                    const refundAmount = unitPrice * quantity;
+                    document.getElementById(`refund-amount-${itemId}`).textContent = `${window.shop.currency}${refundAmount.toFixed(2)}`;
+                });
+            });
+
+            document.querySelectorAll('.return-item-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    const quantityControl = this.closest('.bill-item-card').querySelector('.return-quantity-control');
+                    quantityControl.style.display = this.checked ? 'block' : 'none';
+                    
+                    // Initialize refund amount
+                    if (this.checked) {
+                        const itemId = this.value;
+                        const unitPrice = parseFloat(this.getAttribute('data-unit-price'));
+                        const quantityInput = document.querySelector(`.return-quantity[data-item-id="${itemId}"]`);
+                        const quantity = parseInt(quantityInput.value) || 1;
+                        const refundAmount = unitPrice * quantity;
+                        document.getElementById(`refund-amount-${itemId}`).textContent = `${window.shop.currency}${refundAmount.toFixed(2)}`;
+                    }
+                });
+            });
+
+            const addSelectedReturnsBtn = document.getElementById('addSelectedReturnsBtn');
+            addSelectedReturnsBtn.onclick = addSelectedReturnItems;
+        }
+    } catch (error) {
+        console.error('Error loading bill items:', error);
+        showToast('Error loading bill items', 'error');
+    }
+}
+
+function addSelectedReturnItems() {
+    const selectedItems = document.querySelectorAll('.return-item-checkbox:checked');
+    
+    if (selectedItems.length === 0) {
+        showToast('Please select at least one item to return', 'error');
+        return;
+    }
+
+    selectedItems.forEach(checkbox => {
+        const productId = checkbox.getAttribute('data-product-id');
+        const productName = checkbox.getAttribute('data-product-name');
+        const unitPrice = parseFloat(checkbox.getAttribute('data-unit-price'));
+        const maxQty = parseInt(checkbox.getAttribute('data-max-qty'));
+        const quantityInput = checkbox.closest('.bill-item-card').querySelector('.return-quantity');
+        const quantity = Math.min(parseInt(quantityInput.value) || 1, maxQty);
+
+        addProductToTransaction({
+            id: productId,
+            name: productName,
+            price: unitPrice,
+            type: 'return',
+            quantity: quantity
+        });
+    });
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById('returnOptionsModal'));
+    modal.hide();
+    showToast('Return items added to transaction', 'success');
+}
+
+function resetReturnSections() {
+    document.getElementById('customerBillsResults').style.display = 'none';
+    document.getElementById('billItemsSection').style.display = 'none';
+    document.getElementById('addSelectedReturnsBtn').style.display = 'none';
+    window.selectedReturnItems = [];
+    window.selectedBillForReturn = null;
+}
+
+// ===== UTILITY FUNCTIONS =====
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function showToast(message, type = 'success') {
+    let toastContainer = document.querySelector('.custom-notification');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'custom-notification';
+        document.body.appendChild(toastContainer);
+    }
+
+    const toastId = 'toast-' + Date.now();
+    const toastHtml = `
+        <div id="${toastId}" class="alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'warning'} alert-dismissible fade show">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+
+    toastContainer.innerHTML = toastHtml;
+
+    setTimeout(() => {
+        const toast = document.getElementById(toastId);
+        if (toast) {
+            toast.remove();
+        }
+    }, 3000);
+}
+
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// ===== PRINT FUNCTION =====
+function printReceipt() {
+    if (!window.lastBillData) {
+        showToast('No transaction data available for printing', 'error');
+        return;
+    }
+
+    const receiptTemplate = document.getElementById('receiptTemplate');
+    const bill = window.lastBillData.billDetails;
+    const items = window.lastBillData.billItems;
+
+    let receiptHtml = `
+        <div style="font-family: 'Courier New', monospace; max-width: 300px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 24px;">${window.shop.name}</h2>
+                <p style="margin: 5px 0; font-size: 14px;">Thank you for your business!</p>
+            </div>
+            
+            <div style="border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: between;">
+                    <span>Bill #:</span>
+                    <span>${bill.bill_number}</span>
+                </div>
+                <div style="display: flex; justify-content: between;">
+                    <span>Date:</span>
+                    <span>${new Date(bill.created_at).toLocaleString()}</span>
+                </div>
+                <div style="display: flex; justify-content: between;">
+                    <span>Customer:</span>
+                    <span>${bill.customer_name}</span>
+                </div>
+            </div>
+
+            <div style="margin: 15px 0;">
+                ${items.map(item => `
+                    <div style="display: flex; justify-content: between; margin-bottom: 8px;">
+                        <div style="flex: 2;">
+                            <div>${item.product_name}</div>
+                            <small>${item.quantity} x ${window.shop.currency}${item.unit_price}</small>
+                        </div>
+                        <div style="flex: 1; text-align: right;">
+                            ${window.shop.currency}${item.total_price.toFixed(2)}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div style="border-top: 1px dashed #000; padding-top: 10px;">
+                <div style="display: flex; justify-content: between;">
+                    <span>Subtotal:</span>
+                    <span>${window.shop.currency}${bill.subtotal.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: between;">
+                    <span>Tax:</span>
+                    <span>${window.shop.currency}${bill.tax.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: between; font-weight: bold;">
+                    <span>Total:</span>
+                    <span>${window.shop.currency}${bill.total_amount.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: between;">
+                    <span>Paid:</span>
+                    <span>${window.shop.currency}${bill.paid_amount.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: between;">
+                    <span>Change:</span>
+                    <span>${window.shop.currency}${(bill.paid_amount - bill.total_amount).toFixed(2)}</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px; font-size: 12px;">
+                <p>Payment Method: ${bill.payment_method.toUpperCase()}</p>
+                <p>Thank you for your business!</p>
+                <p>Visit again!</p>
+            </div>
+        </div>
+    `;
+
+    receiptTemplate.innerHTML = receiptHtml;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Receipt - ${bill.bill_number}</title>
+                <style>
+                    body { margin: 0; padding: 20px; font-family: 'Courier New', monospace; }
+                    @media print { 
+                        body { margin: 0; padding: 0; }
+                        @page { margin: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${receiptHtml}
+            </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+}
+
+
+</script>
+</body>
+</html>
