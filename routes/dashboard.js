@@ -35,6 +35,11 @@ router.get('/dashboard', isAuthenticated, (req, res) => {
   });
 });
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 // API routes for dashboard data
 router.get('/api/dashboard/stats', isAuthenticated, dashboardController.getStats);
 router.get('/api/dashboard/recent-sales', isAuthenticated, dashboardController.getRecentSales);

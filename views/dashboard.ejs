@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- dashboard.ejs -->
@@ -16,6 +17,38 @@
 
   <!-- Quick Stats Cards -->
   <div class="stats-grid">
+=======
+<%- include('partials/header', { title: 'Dashboard' }) %>
+
+<div class="p-5 dashboard-container">
+  <!-- Welcome Header with Role Badge -->
+  <div class="dashboard-header">
+    <div>
+      <h1>Welcome, <span class="username"><%= user?.username || session?.username || 'User' %></span></h1>
+      <div class="role-badge">
+        <span class="badge bg-<%= 
+          roleHelper.isAdmin() ? 'danger' : 
+          roleHelper.isManager() ? 'warning' : 
+          roleHelper.canAccessSales() ? 'success' : 'info' 
+        %>">
+          <i class="fas fa-shield-alt"></i> <%= user?.roleName || session?.roleName || 'User' %>
+        </span>
+      </div>
+      <p class="datetime" id="datetime"></p>
+    </div>
+    <div class="shop-info">
+      <p><i class="fas fa-store"></i> <%= shop?.name || 'Shop' %></p>
+      <p><i class="fas fa-map-marker-alt"></i> <%= shop?.address || 'Address' %></p>
+      <% if (shop?.currency) { %>
+        <p><i class="fas fa-money-bill"></i> <%= shop.currency %></p>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Quick Stats Cards (Role-based visibility) -->
+  <div class="stats-grid">
+    <!-- Products Card - Visible to all -->
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
     <div class="stat-card bg-primary" onclick="window.location.href='/products'">
       <div class="stat-icon">
         <i class="fas fa-box-open"></i>
@@ -24,11 +57,18 @@
         <h3 id="totalProducts">Loading...</h3>
         <p>Total Products</p>
       </div>
+<<<<<<< HEAD
       <div class="stat-trend">
         <i class="fas fa-arrow-up"></i> <span>5% from last month</span>
       </div>
     </div>  
 
+=======
+    </div>  
+
+    <!-- Sales Card - Only for sales roles -->
+    <% if (roleHelper.canAccessSales()) { %>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
     <div class="stat-card bg-success" onclick="window.location.href='/ALLbills'">
       <div class="stat-icon">
         <i class="fas fa-receipt"></i>
@@ -37,11 +77,19 @@
         <h3 id="todaySales">Loading...</h3>
         <p>Today's Sales</p>
       </div>
+<<<<<<< HEAD
       <div class="stat-trend">
         <i class="fas fa-arrow-up"></i> <span>12% from yesterday</span>
       </div>
     </div>
 
+=======
+    </div>
+    <% } %>
+
+    <!-- Employees Card - Only for HR/Manager roles -->
+    <% if (roleHelper.canViewEmployees()) { %>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
     <div class="stat-card bg-warning" onclick="window.location.href='/EmpMgmt'">
       <div class="stat-icon">
         <i class="fas fa-users"></i>
@@ -51,7 +99,14 @@
         <p>Employees</p>
       </div>
     </div>
+<<<<<<< HEAD
 
+=======
+    <% } %>
+
+    <!-- Low Stock Card - Only for inventory roles -->
+    <% if (roleHelper.canAccessInventory()) { %>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
     <div class="stat-card bg-danger" onclick="window.location.href='/alerts'">
       <div class="stat-icon">
         <i class="fas fa-exclamation-triangle"></i>
@@ -61,18 +116,27 @@
         <p>Low Stock Items</p>
       </div>
     </div>
+<<<<<<< HEAD
+=======
+    <% } %>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
   </div>
 
   <!-- Main Content Area -->
   <div class="dashboard-content">
     <!-- Left Column -->
     <div class="dashboard-left">
+<<<<<<< HEAD
       <!-- Quick Actions -->
+=======
+      <!-- Quick Actions (Role-based filtering) -->
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
       <div class="quick-actions card">
         <div class="section-header">
           <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
         </div>
         <div class="action-grid">
+<<<<<<< HEAD
           <a href="/products" class="action-card">
             <div class="action-icon bg-primary">
               <i class="fas fa-plus"></i>
@@ -139,23 +203,53 @@
       </div>
 
       <!-- Recent Sales -->
+=======
+          <% 
+            const allowedActions = roleHelper.getAllowedQuickActions();
+            allowedActions.forEach(action => { 
+          %>
+          <a href="<%= action.url %>" class="action-card">
+            <div class="action-icon <%= action.bg %>">
+              <i class="fas <%= action.icon %>"></i>
+            </div>
+            <p><%= action.label %></p>
+          </a>
+          <% }); %>
+        </div>
+      </div>
+
+      <!-- Recent Sales (Conditional) -->
+      <% if (roleHelper.canAccessSales()) { %>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
       <div class="recent-sales card">
         <div class="section-header">
           <h2><i class="fas fa-shopping-cart"></i> Recent Sales</h2>
           <a href="/ALLbills" class="view-all">View All</a>
         </div>
         <div class="sales-list" id="recentSales">
+<<<<<<< HEAD
           <!-- Will be populated by JavaScript -->
+=======
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
           <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i> Loading recent sales...
           </div>
         </div>
       </div>
+<<<<<<< HEAD
+=======
+      <% } %>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
     </div>
 
     <!-- Right Column -->
     <div class="dashboard-right">
+<<<<<<< HEAD
       <!-- Low Stock Alert -->
+=======
+      <!-- Low Stock Alert (Conditional) -->
+      <% if (roleHelper.canAccessInventory()) { %>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
       <div class="low-stock card">
         <div class="section-header">
           <h2><i class="fas fa-exclamation-triangle"></i> Low Stock Alerts</h2>
@@ -167,13 +261,22 @@
               <tr>
                 <th>Product</th>
                 <th>Stock</th>
+<<<<<<< HEAD
+=======
+                <th>Min Level</th>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="lowStockTable">
+<<<<<<< HEAD
               <!-- Will be populated by JavaScript -->
               <tr>
                 <td colspan="3" class="text-center">
+=======
+              <tr>
+                <td colspan="4" class="text-center">
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
                   <i class="fas fa-spinner fa-spin"></i> Loading...
                 </td>
               </tr>
@@ -181,15 +284,24 @@
           </table>
         </div>
       </div>
+<<<<<<< HEAD
 
       <!-- Recent Activity -->
+=======
+      <% } %>
+
+      <!-- Recent Activity (Always visible) -->
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
       <div class="activity-section card">
         <div class="section-header">
           <h2><i class="fas fa-history"></i> Recent Activity</h2>
           <a href="/activity" class="view-all">View All</a>
         </div>
         <div class="activity-list" id="recentActivity">
+<<<<<<< HEAD
           <!-- Will be populated by JavaScript -->
+=======
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
           <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i> Loading activities...
           </div>
@@ -198,12 +310,29 @@
     </div>
   </div>
 
+<<<<<<< HEAD
+=======
+  <!-- Sales Graph (Conditional) -->
+  <% if (roleHelper.canAccessSales()) { %>
+  <div class="card mt-4">
+    <div class="section-header">
+      <h2><i class="fas fa-chart-line"></i> Sales (Last 7 Days)</h2>
+    </div>
+    <canvas id="salesChart" height="100"></canvas>
+  </div>
+  <% } %>
+
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
   <!-- Daily Summary Modal -->
   <div class="modal fade" id="dailySummaryModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
+<<<<<<< HEAD
           <h5 class="modal-title">Daily Summary</h5>
+=======
+          <h5 class="modal-title">Daily Summary - <%= new Date().toLocaleDateString() %></h5>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
           <button type="button" class="close" data-dismiss="modal">
             <span>&times;</span>
           </button>
@@ -213,13 +342,22 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+<<<<<<< HEAD
           <button type="button" class="btn btn-primary" onclick="printDailySummary()">
             <i class="fas fa-print"></i> Print
           </button>
+=======
+          <% if (roleHelper.canAccessReports()) { %>
+          <button type="button" class="btn btn-primary" onclick="printDailySummary()">
+            <i class="fas fa-print"></i> Print
+          </button>
+          <% } %>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
         </div>
       </div>
     </div>
   </div>
+<<<<<<< HEAD
   
 
   <div class="card">
@@ -227,6 +365,29 @@
     <canvas id="salesChart" height="100"></canvas>
   </div>
 
+=======
+<!-- Debug Info - Remove after fixing -->
+<div class="alert alert-info">
+    <strong>Debug Info:</strong><br>
+    Session User ID: <%= session?.userId || 'Not set' %><br>
+    Session Username: <%= session?.username || 'Not set' %><br>
+    Session Role: <%= session?.roleName || 'Not set' %><br>
+    Session Role ID: <%= session?.roleId || 'Not set' %><br>
+    Session Shop ID: <%= session?.shopId || 'Not set' %><br>
+    <hr>
+    User Object Role: <%= user?.roleName || 'Not set' %><br>
+    User Object Username: <%= user?.username || 'Not set' %><br>
+    <hr>
+    Role Helper Tests:<br>
+    isAdmin: <%= roleHelper.isAdmin() %><br>
+    canAccessSales: <%= roleHelper.canAccessSales() %><br>
+    canViewEmployees: <%= roleHelper.canViewEmployees() %><br>
+    canAccessInventory: <%= roleHelper.canAccessInventory() %><br>
+    canManageEmployees: <%= roleHelper.canManageEmployees ? roleHelper.canManageEmployees() : 'Method missing' %><br>
+    canAccessFinance: <%= roleHelper.canAccessFinance ? roleHelper.canAccessFinance() : 'Method missing' %><br>
+    canAccessReports: <%= roleHelper.canAccessReports ? roleHelper.canAccessReports() : 'Method missing' %>
+</div>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 
 </div>
 
@@ -707,10 +868,28 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
     fetch('/api/dashboard/stats')
       .then(response => response.json())
       .then(data => {
+<<<<<<< HEAD
         document.getElementById('totalProducts').textContent = data.totalProducts.toLocaleString();
         document.getElementById('todaySales').textContent = data.todaySales.toLocaleString('en-IN');
         document.getElementById('totalEmployees').textContent = data.totalEmployees;
         document.getElementById('lowStockItems').textContent = data.lowStockItems;
+=======
+        document.getElementById('totalProducts').textContent = data.totalProducts?.toLocaleString() || '0';
+        
+        // Check if elements exist before updating
+        if (document.getElementById('todaySales')) {
+          document.getElementById('todaySales').textContent = 
+            new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR' }).format(data.todaySales || 0);
+        }
+        
+        if (document.getElementById('totalEmployees')) {
+          document.getElementById('totalEmployees').textContent = data.totalEmployees || '0';
+        }
+        
+        if (document.getElementById('lowStockItems')) {
+          document.getElementById('lowStockItems').textContent = data.lowStockItems || '0';
+        }
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
       })
       .catch(error => console.error('Error fetching stats:', error));
 
@@ -719,6 +898,11 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
       .then(response => response.json())
       .then(data => {
         const salesList = document.getElementById('recentSales');
+<<<<<<< HEAD
+=======
+        if (!salesList) return;
+        
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
         salesList.innerHTML = '';
         
         if (data.length === 0) {
@@ -731,10 +915,17 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
           saleItem.className = 'sale-item';
           saleItem.innerHTML = `
             <div class="sale-info">
+<<<<<<< HEAD
               <div class="sale-id">Sale #${sale.id}</div>
               <div class="sale-time">${new Date(sale.createdAt).toLocaleTimeString()}</div>
             </div>
             <div class="sale-amount">₹${sale.totalAmount.toLocaleString('en-IN')}</div>
+=======
+              <div class="sale-id">${sale.bill_number || `Sale #${sale.id}`}</div>
+              <div class="sale-time">${new Date(sale.created_at).toLocaleTimeString()}</div>
+            </div>
+            <div class="sale-amount">PKR ${Number(sale.total_amount).toLocaleString()}</div>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
           `;
           saleItem.onclick = () => window.location.href = `/bills/${sale.id}`;
           salesList.appendChild(saleItem);
@@ -747,12 +938,21 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
       .then(response => response.json())
       .then(data => {
         const stockTable = document.getElementById('lowStockTable');
+<<<<<<< HEAD
+=======
+        if (!stockTable) return;
+        
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
         stockTable.innerHTML = '';
         
         if (data.length === 0) {
           stockTable.innerHTML = `
             <tr>
+<<<<<<< HEAD
               <td colspan="3" class="text-center py-3 text-muted">No low stock items</td>
+=======
+              <td colspan="4" class="text-center py-3 text-muted">No low stock items</td>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
             </tr>
           `;
           return;
@@ -761,10 +961,18 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
         data.forEach(item => {
           const row = document.createElement('tr');
           row.innerHTML = `
+<<<<<<< HEAD
             <td class="badge badge-danger">${item.name}</td>
             <td><span class="badge-danger">${item.quantity} left</span></td>
             <td>
               <button class="btn btn-sm btn-primary" onclick="reorderProduct(${item.id})">
+=======
+            <td>${item.name}</td>
+            <td><span class="badge bg-danger">${item.current_quantity} left</span></td>
+            <td>${item.min_stock_level ? item.min_stock_level : MIN_STOCK}</td>
+            <td>
+              <button class="btn btn-sm btn-primary" onclick="reorderProduct('${item.id}')">
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
                 <i class="fas fa-shopping-cart"></i> Reorder
               </button>
             </td>
@@ -779,6 +987,11 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
       .then(response => response.json())
       .then(data => {
         const activityList = document.getElementById('recentActivity');
+<<<<<<< HEAD
+=======
+        if (!activityList) return;
+        
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
         activityList.innerHTML = '';
         
         if (data.length === 0) {
@@ -792,16 +1005,23 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
           
           if (activity.type === 'sale') {
             iconClass = 'success';
+<<<<<<< HEAD
             icon = 'fa-rupee-sign';
+=======
+            icon = 'fa-shopping-cart';
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
           } else if (activity.type === 'inventory') {
             iconClass = 'warning';
             icon = 'fa-box';
           } else if (activity.type === 'employee') {
             iconClass = 'info';
             icon = 'fa-user';
+<<<<<<< HEAD
           } else if (activity.type === 'alert') {
             iconClass = 'danger';
             icon = 'fa-exclamation-triangle';
+=======
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
           }
           
           const activityItem = document.createElement('div');
@@ -811,7 +1031,11 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
               <i class="fas ${icon}"></i>
             </div>
             <div class="activity-details">
+<<<<<<< HEAD
               <p>${activity.description}</p>
+=======
+              <p>${activity.description || activity.title}</p>
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
               <span class="activity-time">${formatTimeAgo(activity.timestamp)}</span>
             </div>
           `;
@@ -820,7 +1044,12 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
       })
       .catch(error => console.error('Error fetching activity:', error));
   }
+<<<<<<< HEAD
 
+=======
+    
+    
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
   function formatTimeAgo(timestamp) {
     const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
     
