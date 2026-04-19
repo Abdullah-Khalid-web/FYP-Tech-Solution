@@ -605,6 +605,10 @@ router.get('/api/products', getShopDetails, async (req, res) => {
 });
 
 // GET /bills/api/customer-bills - Get customer's previous bills
+<<<<<<< HEAD
+=======
+// GET /bills/api/customer-bills - Get customer's previous bills (with bill number search)
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 router.get('/api/customer-bills', getShopDetails, async (req, res) => {
     try {
         const { phone, name, search } = req.query;
@@ -635,8 +639,14 @@ router.get('/api/customer-bills', getShopDetails, async (req, res) => {
         }
 
         if (search) {
+<<<<<<< HEAD
             query += ' AND (b.customer_name LIKE ? OR b.customer_phone LIKE ?)';
             params.push(`%${search}%`, `%${search}%`);
+=======
+            // Search by customer name, phone, OR bill number
+            query += ' AND (b.customer_name LIKE ? OR b.customer_phone LIKE ? OR b.bill_number LIKE ?)';
+            params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
         }
 
         query += ' GROUP BY b.id ORDER BY b.created_at DESC LIMIT 10';
@@ -649,7 +659,10 @@ router.get('/api/customer-bills', getShopDetails, async (req, res) => {
         res.status(500).json({ success: false, message: 'Failed to fetch customer bills' });
     }
 });
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 // GET /bills/api/debug-stock - Debug stock information
 router.get('/api/debug-stock', getShopDetails, async (req, res) => {
     try {
