@@ -1,0 +1,208 @@
+<%- include('../partials/header', { title: 'Shop Registration', shop: shop }) %>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Register Your Shop</h4>
+        </div>
+        <div class="card-body">
+          <% if (error) { %>
+            <div class="alert alert-danger"><%= error %></div>
+          <% } %>
+          <% if (success) { %>
+            <div class="alert alert-success"><%= success %></div>
+          <% } %>
+
+          <form action="/register" method="POST" enctype="multipart/form-data">
+            <h5 class="mb-3">Shop Information</h5>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="shopName" class="form-label">Shop Name *</label>
+                <input type="text" class="form-control" id="shopName" name="shopName" required>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="plan" class="form-label">Subscription Plan *</label>
+                <select class="form-select" id="plan" name="plan" required>
+                  <option value="">Select Plan</option>
+                  <% plans.forEach(p => { %>
+                    <option value="<%= p.name %>"
+                      data-monthly="<%= p.monthly_price %>"
+                      data-quarterly="<%= p.quarterly_price %>"
+                      data-yearly="<%= p.yearly_price %>">
+                      <%= p.name.toUpperCase() %> - PKR <%= p.monthly_price.toLocaleString() %>/month
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Subscription Duration *</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="subscriptionDuration" value="monthly" id="monthly" checked>
+                  <label class="form-check-label" for="monthly">Monthly</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="subscriptionDuration" value="quarterly" id="quarterly">
+                  <label class="form-check-label" for="quarterly">Quarterly</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="subscriptionDuration" value="yearly" id="yearly">
+                  <label class="form-check-label" for="yearly">Yearly</label>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Price Preview</label>
+                <div class="border p-2">
+                  <strong>Plan:</strong> <span id="selectedPlan">-</span><br>
+                  <strong>Duration:</strong> <span id="selectedDuration">-</span><br>
+                  <strong>Price:</strong> <span id="calculatedPrice">PKR 0</span><br>
+                  <strong>Savings:</strong> <span id="savings">PKR 0</span>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-4">
+            <h5 class="mb-3">Payment Method</h5>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="paymentMethod" class="form-label">Payment Method *</label>
+                <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+                  <option value="">Select Payment Method</option>
+                  <option value="credit_card">Credit Card</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="jazzcash">JazzCash</option>
+                  <option value="easypaisa">EasyPaisa</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="paymentDetails" class="form-label">Payment Reference / Details</label>
+                <input type="text" class="form-control" id="paymentDetails" name="paymentDetails">
+              </div>
+            </div>
+
+            <hr class="my-4">
+            <h5 class="mb-3">Shop Details</h5>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="email" class="form-label">Shop Email *</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="phone" class="form-label">Shop Phone</label>
+                <input type="tel" class="form-control" id="phone" name="phone">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="address" class="form-label">Shop Address</label>
+              <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="currency" class="form-label">Currency</label>
+                <select class="form-select" id="currency" name="currency">
+                  <option value="PKR">PKR</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="logo" class="form-label">Shop Logo</label>
+                <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+              </div>
+            </div>
+
+            <hr class="my-4">
+            <h5 class="mb-3">Owner Information</h5>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="ownerName" class="form-label">Full Name *</label>
+                <input type="text" class="form-control" id="ownerName" name="ownerName" required>
+              </div>
+                <div class="col-md-6 mb-3">
+                <label for="ownerEmail" class="form-label">Email *</label>
+                <input type="email" class="form-control" id="ownerEmail" name="ownerEmail" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="ownerphone" class="form-label">Phone *</label>
+                <input type="text" class="form-control" id="ownerphone" name="ownerphone" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="cnic" class="form-label">CNIC *</label>
+                <input type="text" class="form-control" id="cnic" name="cnic" required>
+              </div>
+
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="ownerPassword" class="form-label">Password *</label>
+                <input type="password" class="form-control" id="ownerPassword" name="ownerPassword" required minlength="6">
+                <div class="form-text">Minimum 6 characters</div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="confirmPassword" class="form-label">Confirm Password *</label>
+                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary btn-lg">Register Shop</button>
+            </div>
+          </form>
+
+          <div class="mt-3 text-center">
+            <p>Already have an account? <a href="/login">Login here</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const planSelect = document.getElementById('plan');
+const durationRadios = document.querySelectorAll('input[name="subscriptionDuration"]');
+const priceSpan = document.getElementById('calculatedPrice');
+const savingsSpan = document.getElementById('savings');
+const planSpan = document.getElementById('selectedPlan');
+const durationSpan = document.getElementById('selectedDuration');
+
+function updatePrice() {
+  const selectedOption = planSelect.options[planSelect.selectedIndex];
+  if (!selectedOption || !selectedOption.dataset.monthly) return;
+
+  const monthly = parseFloat(selectedOption.dataset.monthly);
+  const quarterly = parseFloat(selectedOption.dataset.quarterly);
+  const yearly = parseFloat(selectedOption.dataset.yearly);
+
+  const duration = document.querySelector('input[name="subscriptionDuration"]:checked').value;
+
+  let price = monthly;
+  let savings = 0;
+
+  if (duration === 'quarterly') {
+    price = quarterly;
+    savings = (monthly * 3) - quarterly;
+  } else if (duration === 'yearly') {
+    price = yearly;
+    savings = (monthly * 12) - yearly;
+  }
+
+  planSpan.textContent = selectedOption.text;
+  durationSpan.textContent = duration.charAt(0).toUpperCase() + duration.slice(1);
+  priceSpan.textContent = `PKR ${price.toLocaleString()}`;
+  savingsSpan.textContent = `PKR ${savings.toLocaleString()}`;
+}
+
+planSelect.addEventListener('change', updatePrice);
+durationRadios.forEach(r => r.addEventListener('change', updatePrice));
+</script>

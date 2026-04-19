@@ -1,0 +1,60 @@
+<div class="bg-glow"></div>
+<div class="bg-glow-right"></div>
+
+<div class="container" style="padding-top: 120px; padding-bottom: 60px; min-height: 80vh;">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="glass-panel p-5">
+                <div class="text-center mb-5">
+                    <div class="badge px-3 py-2 text-uppercase mb-3" style="background: rgba(59, 130, 246, 0.1); color: var(--secondary); font-weight: 600; font-size: 0.85rem; letter-spacing: 1px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                        Legal & Security
+                    </div>
+                    <h1 style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 3rem; color: var(--text-main);">
+                        Privacy <span class="text-gradient">Policy</span>
+                    </h1>
+                    <p class="mt-3" style="color: var(--text-muted); font-size: 1.1rem;">Last updated: <%= new Date().toLocaleDateString() %></p>
+                </div>
+
+                <div class="p-4 p-md-5 rounded-4" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(0,0,0,0.05); color: var(--text-main);">
+                    
+                    <h4 style="font-family: 'Outfit', sans-serif; font-weight: 700; margin-bottom: 1rem;">1. Information We Collect</h4>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 2rem;">
+                        We collect information you provide directly to us when subscribing to our service, including your shop name, email address, phone number, and physical address. Given our Agentic AI features, we also securely process audio data exclusively for translating voice commands into dashboard actions. We do not use your voice data for advertising.
+                    </p>
+
+                    <h4 style="font-family: 'Outfit', sans-serif; font-weight: 700; margin-bottom: 1rem;">2. How We Use Information</h4>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 2rem;">
+                        The information we collect is used solely to provide, maintain, and improve Manage Hub. We use your data to authenticate your account, process sales/billing data within your specific shop's database environment, and utilize AI services to provide predictive analytics and autonomous operations exclusively for your shop.
+                    </p>
+
+                    <h4 style="font-family: 'Outfit', sans-serif; font-weight: 700; margin-bottom: 1rem;">3. Data Security & Storage</h4>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 2rem;">
+                        We implement enterprise-grade security measures to protect your information. Passwords are cryptographically hashed, and database interactions happen over secure protocols. AI processing communicates with generative models in strict compliance with enterprise privacy standards, ensuring your private shop data is not leaked to public models.
+                    </p>
+
+                    <h4 style="font-family: 'Outfit', sans-serif; font-weight: 700; margin-bottom: 1rem;">4. Third-Party Services</h4>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 2rem;">
+                        We may share limited information with third-party vendors, consultants, and API providers (like Google Gemini for AI capabilities) who need access to such information to carry out work on our behalf. These third parties are strictly bound by confidentiality agreements and data protection laws.
+                    </p>
+
+                    <h4 style="font-family: 'Outfit', sans-serif; font-weight: 700; margin-bottom: 1rem;">5. Contact Us</h4>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 0;">
+                        If you have any questions about this Privacy Policy, please contact us at <a href="mailto:NextGenTechSolution@gmail.com" style="color: var(--primary); font-weight: 600; text-decoration: none;">NextGenTechSolution@gmail.com</a>.
+                    </p>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Pull required landing page styles if accessed directly */
+.bg-glow { position: fixed; width: 600px; height: 600px; background: radial-gradient(circle, rgba(15, 23, 42, 0.1) 0%, transparent 70%); top: -150px; left: -150px; z-index: -1; filter: blur(80px); }
+.bg-glow-right { position: fixed; width: 600px; height: 600px; background: radial-gradient(circle, rgba(38, 132, 255, 0.1) 0%, transparent 70%); bottom: -100px; right: -100px; z-index: -1; filter: blur(80px); }
+.glass-panel { background: var(--bg-card, rgba(255,255,255,0.8)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border, rgba(0,0,0,0.05)); border-radius: 24px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); }
+.text-gradient { background: linear-gradient(135deg, #0f172a, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+[data-theme="dark"] .glass-panel { background: rgba(30, 41, 59, 0.7); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .text-gradient { background: linear-gradient(135deg, #f8fafc, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+</style>

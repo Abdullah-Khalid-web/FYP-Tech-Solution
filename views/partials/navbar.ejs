@@ -1,0 +1,241 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap');
+
+/* Initial Transparent Navbar */
+.modern-navbar {
+    background: transparent;
+    border-bottom: 1px solid transparent;
+    padding: 18px 0;
+    transition: all 0.4s ease;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Scrolled Blue Navbar */
+.modern-navbar.scrolled {
+    background: #0f172a;
+    padding: 10px 0;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.3);
+}
+
+.modern-navbar .navbar-brand {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: #0f172a; /* Dark blue when transparent (on white bg) */
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: color 0.4s ease;
+}
+
+/* DARK MODE OVERRIDES */
+html[data-theme="dark"] .modern-navbar {
+    background: #0f172a;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+html[data-theme="dark"] .modern-navbar.scrolled {
+    background: #0f172a;
+}
+
+html[data-theme="dark"] .modern-navbar:not(.scrolled) .navbar-brand {
+    color: #ffffff;
+}
+
+.modern-navbar.scrolled .navbar-brand {
+    color: #ffffff; /* White text when scrolled */
+}
+
+/* Nav links colors */
+.modern-navbar .nav-link {
+    color: #4b5563 !important; /* Dark text when transparent */
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 8px 16px !important;
+    margin: 0 4px;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+}
+
+html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link {
+    color: #e2e8f0 !important;
+}
+
+.modern-navbar.scrolled .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important; /* Light text when scrolled */
+}
+
+/* Nav link hover states */
+.modern-navbar .nav-link:hover {
+    color: #0f172a !important;
+    background: rgba(15, 23, 42, 0.05);
+}
+
+html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modern-navbar.scrolled .nav-link:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modern-navbar .theme-toggle-btn {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.05), rgba(59, 130, 246, 0.1));
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    color: #0f172a;
+    border-radius: 50px;
+    padding: 8px 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+html[data-theme="dark"] .modern-navbar:not(.scrolled) .theme-toggle-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.modern-navbar.scrolled .theme-toggle-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.modern-navbar .theme-toggle-btn:hover {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.1), rgba(59, 130, 246, 0.2));
+    border-color: rgba(15, 23, 42, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.1);
+}
+
+html[data-theme="dark"] .modern-navbar:not(.scrolled) .theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.modern-navbar.scrolled .theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom hamburger icon */
+.modern-navbar .navbar-toggler {
+    border: none;
+    padding: 4px;
+}
+.modern-navbar.scrolled .navbar-toggler-icon, html[data-theme="dark"] .modern-navbar .navbar-toggler-icon {
+    filter: brightness(0) invert(1); /* Makes the hamburger icon white */
+}
+.modern-navbar .navbar-toggler:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+/* Special styling for primary actions */
+.modern-navbar .nav-link.active-badge {
+    background: rgba(15, 23, 42, 0.1) !important;
+    color: #0f172a !important;
+}
+
+html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link.active-badge {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.modern-navbar.scrolled .nav-link.active-badge {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+}
+
+.modern-navbar .nav-link.active-badge:hover {
+    background: rgba(15, 23, 42, 0.15) !important;
+    color: #1e40af !important;
+}
+
+html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link.active-badge:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+}
+
+.modern-navbar.scrolled .nav-link.active-badge:hover {
+    background: rgba(255, 255, 255, 0.25) !important;
+}
+</style>
+
+<nav class="navbar navbar-expand-lg modern-navbar fixed-top" id="mainNav">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" href="/">
+            <% if (typeof shop !== 'undefined' && shop && shop.logo) { %>
+                <img src="<%= shop.logo %>" alt="<%= shop.name %>"
+                    style="height:36px; border-radius:8px; object-fit: cover;">
+            <% } else { %>
+                <div style="width:36px; height:36px; border-radius:8px; background: linear-gradient(135deg, #0f172a, #3b82f6); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.3);">
+                    <span style="color: white; font-size: 1.2rem; font-weight: 800;">M</span>
+                </div>
+            <% } %>
+            <%= typeof shop !== 'undefined' && shop ? shop.name : 'Manage Hub' %>
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-lg-center">
+                <% if (typeof user !== 'undefined' && user && user.username) { %>
+                    <li class="nav-item">
+                        <a class="nav-link active-badge" href="/user_profile">
+                            <span style="margin-right: 4px;">👋</span> Hi, <%= user.username %>
+                        </a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="/products">Products</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/bills">Billing</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/reports">Sales Reports</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/ALLbills">List Bills</a></li>
+                    <li class="nav-item ms-lg-2"><a class="nav-link text-danger logout-btn" href="/logout">Logout</a></li>
+                <% } else { %>
+                    <li class="nav-item d-none d-lg-block"><a class="nav-link" href="/about">About</a></li>
+                    <li class="nav-item d-none d-lg-block"><a class="nav-link" href="/contact">Contact</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+                    <li class="nav-item"><a class="nav-link active-badge" href="/register">Subscribe</a></li>
+                    <li class="nav-item"><a class="nav-link admin-btn ms-2 py-1 mt-1" href="/admin" style="border: 1px solid rgba(0,0,0,0.1); border-radius: 50px;">Admin</a></li>
+                <% } %>
+                <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
+                    <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeToggle">
+                        🌓 <span class="d-lg-none d-xl-inline">Theme</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<script>
+// Handle Navbar Scroll Effect
+window.addEventListener("scroll", function() {
+    var nav = document.getElementById("mainNav");
+    var adminBtn = document.querySelector(".admin-btn");
+    var logoutBtn = document.querySelector(".logout-btn");
+    
+    if(window.scrollY > 50) {
+        nav.classList.add("scrolled");
+        nav.classList.remove("navbar-light");
+        nav.classList.add("navbar-dark");
+        if(adminBtn) adminBtn.style.borderColor = "rgba(255,255,255,0.3)";
+        if(logoutBtn) logoutBtn.style.color = "#fecaca"; // Lighter red
+    } else {
+        nav.classList.remove("scrolled");
+        nav.classList.remove("navbar-dark");
+        nav.classList.add("navbar-light");
+        if(adminBtn) adminBtn.style.borderColor = "rgba(0,0,0,0.1)";
+        if(logoutBtn) logoutBtn.style.color = "#ef4444"; // Dark red
+    }
+});
+</script>

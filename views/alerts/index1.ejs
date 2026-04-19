@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Alerts - <%= (shop && shop.name) || 'My Shop' %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: <%=(shop && shop.primary_color) || '#007bff' %>;
+            --secondary-color: <%=(shop && shop.secondary_color) || '#6c757d' %>;
+        }
+
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-header {
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .alert-card {
+            border-left: 4px solid;
+            transition: all 0.2s ease;
+        }
+
+        .alert-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .alert-critical {
+            border-left-color: #dc3545;
+        }
+
+        .alert-warning {
+            border-left-color: #ffc107;
+        }
+
+        .alert-info {
+            border-left-color: #0dcaf0;
+        }
+
+        .alert-success {
+            border-left-color: #198754;
+        }
+
+        .alert-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-right: 1rem;
+        }
+
+        .alert-icon-critical {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .alert-icon-warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+
+        .alert-icon-info {
+            background-color: rgba(13, 202, 240, 0.1);
+            color: #0dcaf0;
+        }
+
+        .alert-icon-success {
+            background-color: rgba(25, 135, 84, 0.1);
+            color: #198754;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e429f;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            color: #374151;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+        }
+
+        .badge-pill {
+            border-radius: 50px;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            color: #d1d5db;
+            margin-bottom: 1rem;
+        }
+
+        .summary-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .summary-critical {
+            color: #dc3545;
+        }
+
+        .summary-warning {
+            color: #ffc107;
+        }
+
+        .summary-info {
+            color: #0dcaf0;
+        }
+
+        .summary-success {
+            color: #198754;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 1rem 0;
+                margin-bottom: 1rem;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h3 mb-2"><i class="fas fa-exclamation-triangle me-2"></i>Stock Alerts</h1>
+                    <p class="mb-0 text-muted">Monitor low stock and important product alerts</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="/" class="btn btn-outline btn-sm me-2">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                    <a href="/products" class="btn btn-primary">
+                        <i class="fas fa-boxes me-2"></i>Manage Products
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Alert Summary -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card summary-card">
+                    <div class="summary-value summary-critical"><%= criticalAlertsCount || 0 %></div>
+                    <div class="summary-label">Critical Alerts</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card summary-card">
+                    <div class="summary-value summary-warning"><%= warningAlertsCount || 0 %></div>
+                    <div class="summary-label">Warning Alerts</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card summary-card">
+                    <div class="summary-value summary-info"><%= infoAlertsCount || 0 %></div>
+                    <div class="summary-label">Info Alerts</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card summary-card">
+                    <div class="summary-value summary-success"><%= totalProducts || 0 %></div>
+                    <div class="summary-label">Total Products</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Critical Alerts -->
+        <% if (criticalAlerts && criticalAlerts.length) { %>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-circle me-2 text-danger"></i>Critical Alerts</h5>
+                    <span class="badge bg-danger badge-pill"><%= criticalAlerts.length %></span>
+                </div>
+                <div class="card-body">
+                    <% criticalAlerts.forEach(alert => { %>
+                        <div class="alert-card card mb-3 alert-critical">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="alert-icon alert-icon-critical">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">Out of Stock: <%= alert.name %></h5>
+                                        <p class="mb-1 text-muted">
+                                            <% if (alert.brand) { %>Brand: <%= alert.brand %> | <% } %>
+                                            Category: <%= alert.category || 'Uncategorized' %> | 
+                                            SKU: <%= alert.sku || 'N/A' %>
+                                        </p>
+                                        <p class="mb-0">
+                                            <strong>Current Stock:</strong> 
+                                            <span class="badge bg-danger"><%= alert.quantity %></span> | 
+                                            <strong>Alert Level:</strong> 
+                                            <span class="badge bg-warning"><%= alert.min_stock_alert %></span>
+                                        </p>
+                                    </div>
+                                    <div class="ms-3">
+                                        <a href="/products" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-plus-circle me-1"></i>Add Stock
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- Warning Alerts -->
+        <% if (warningAlerts && warningAlerts.length) { %>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Warning Alerts</h5>
+                    <span class="badge bg-warning badge-pill"><%= warningAlerts.length %></span>
+                </div>
+                <div class="card-body">
+                    <% warningAlerts.forEach(alert => { %>
+                        <div class="alert-card card mb-3 alert-warning">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="alert-icon alert-icon-warning">
+                                        <i class="fas fa-exclamation"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">Low Stock: <%= alert.name %></h5>
+                                        <p class="mb-1 text-muted">
+                                            <% if (alert.brand) { %>Brand: <%= alert.brand %> | <% } %>
+                                            Category: <%= alert.category || 'Uncategorized' %> | 
+                                            SKU: <%= alert.sku || 'N/A' %>
+                                        </p>
+                                        <p class="mb-0">
+                                            <strong>Current Stock:</strong> 
+                                            <span class="badge bg-warning"><%= alert.quantity %></span> | 
+                                            <strong>Alert Level:</strong> 
+                                            <span class="badge bg-secondary"><%= alert.min_stock_alert %></span>
+                                        </p>
+                                    </div>
+                                    <div class="ms-3">
+                                        <a href="/products" class="btn btn-outline btn-sm">
+                                            <i class="fas fa-eye me-1"></i>View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- Info Alerts -->
+        <% if (infoAlerts && infoAlerts.length) { %>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-info"></i>Info Alerts</h5>
+                    <span class="badge bg-info badge-pill"><%= infoAlerts.length %></span>
+                </div>
+                <div class="card-body">
+                    <% infoAlerts.forEach(alert => { %>
+                        <div class="alert-card card mb-3 alert-info">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="alert-icon alert-icon-info">
+                                        <i class="fas fa-info"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">Product Information: <%= alert.name %></h5>
+                                        <p class="mb-1 text-muted">
+                                            <% if (alert.brand) { %>Brand: <%= alert.brand %> | <% } %>
+                                            Category: <%= alert.category || 'Uncategorized' %> | 
+                                            SKU: <%= alert.sku || 'N/A' %>
+                                        </p>
+                                        <p class="mb-0">
+                                            <strong>Stock Level:</strong> 
+                                            <span class="badge bg-success"><%= alert.quantity %></span> | 
+                                            <strong>Status:</strong> 
+                                            <span class="badge <%= alert.status === 'active' ? 'bg-success' : 'bg-secondary' %>">
+                                                <%= alert.status.charAt(0).toUpperCase() + alert.status.slice(1) %>
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="ms-3">
+                                        <a href="/products" class="btn btn-outline btn-sm">
+                                            <i class="fas fa-edit me-1"></i>Edit
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- No Alerts State -->
+        <% if ((!criticalAlerts || criticalAlerts.length === 0) && 
+              (!warningAlerts || warningAlerts.length === 0) && 
+              (!infoAlerts || infoAlerts.length === 0)) { %>
+            <div class="card">
+                <div class="card-body">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h5>No Active Alerts</h5>
+                        <p class="text-muted mb-3">All your products are well-stocked and there are no urgent alerts at the moment.</p>
+                        <a href="/products" class="btn btn-primary">
+                            <i class="fas fa-boxes me-2"></i>Manage Products
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-refresh the page every 5 minutes to check for new alerts
+        setTimeout(function() {
+            window.location.reload();
+        }, 5 * 60 * 1000); // 5 minutes
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Receipt - <%= shop.name %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            background: white;
+            padding: 20px;
+        }
+
+        .receipt-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .header .subtitle {
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        .shop-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .receipt-details {
+            margin-bottom: 30px;
+        }
+
+        .receipt-details table {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .receipt-details td {
+            padding: 5px 0;
+            vertical-align: top;
+        }
+
+        .receipt-details .label {
+            font-weight: bold;
+            width: 30%;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .items-table th {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .items-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+        }
+
+        .total-section {
+            border: 2px solid #000;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .total-row.grand-total {
+            font-size: 18px;
+            font-weight: bold;
+            border-top: 1px solid #000;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            font-size: 12px;
+        }
+
+        .signature {
+            margin-top: 40px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 200px;
+            margin: 0 auto;
+            margin-top: 40px;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                font-size: 12px;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .print-btn {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <!-- Print Button -->
+        <div class="text-end mb-3 no-print">
+            <button class="btn btn-primary print-btn" onclick="window.print()">
+                <i class="fas fa-print me-2"></i>Print Receipt
+            </button>
+            <button class="btn btn-outline-secondary print-btn" onclick="window.close()">
+                <i class="fas fa-times me-2"></i>Close
+            </button>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1><%= shop.name %></h1>
+            <div class="subtitle">STOCK PURCHASE RECEIPT</div>
+            <% if (shop.address) { %>
+                <div><%= shop.address %></div>
+            <% } %>
+            <% if (shop.phone) { %>
+                <div>Phone: <%= shop.phone %></div>
+            <% } %>
+        </div>
+
+        <!-- Receipt Details -->
+        <div class="receipt-details">
+            <table>
+                <tr>
+                    <td class="label">Receipt ID:</td>
+                    <td>STK-<%= receipt_id %></td>
+                    <td class="label">Date & Time:</td>
+                    <td><%= printDate %></td>
+                </tr>
+                <% if (batch_number) { %>
+                <tr>
+                    <td class="label">Batch Number:</td>
+                    <td><%= batch_number %></td>
+                </tr>
+                <% } %>
+                <tr>
+                    <td class="label">Received By:</td>
+                    <td><%= user.name %></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Product Name</th>
+                    <th>Quantity</th>
+                    <th>Buying Price</th>
+                    <th>Selling Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% results.forEach((item, index) => { 
+                    if (item.product_name) { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= item.product_name %></td>
+                            <td><%= parseFloat(item.quantity).toFixed(3) %></td>
+                            <td>₨<%= parseFloat(item.buying_price || 0).toFixed(2) %></td>
+                            <td>₨<%= parseFloat(item.selling_price || (item.buying_price * 1.3) || 0).toFixed(2) %></td>
+                            <td>₨<%= parseFloat(item.buying_total || (item.quantity * item.buying_price) || 0).toFixed(2) %></td>
+                        </tr>
+                    <% } %>
+                <% }); %>
+            </tbody>
+        </table>
+
+        <!-- Supplier Information -->
+        <% if (results.find(item => item.supplier)) { 
+            const supplierInfo = results.find(item => item.supplier); %>
+            <div class="total-section">
+                <div class="total-row">
+                    <span>Supplier:</span>
+                    <span><%= supplierInfo.supplier %></span>
+                </div>
+                <% if (supplierInfo.transaction_type) { %>
+                <div class="total-row">
+                    <span>Transaction Type:</span>
+                    <span><%= supplierInfo.transaction_type.charAt(0).toUpperCase() + supplierInfo.transaction_type.slice(1) %> Purchase</span>
+                </div>
+                <% } %>
+                <% if (supplierInfo.payment_made > 0) { %>
+                <div class="total-row">
+                    <span>Payment Made:</span>
+                    <span>₨<%= parseFloat(supplierInfo.payment_made || 0).toFixed(2) %></span>
+                </div>
+                <% } %>
+                <% if (supplierInfo.balance_after !== undefined) { %>
+                <div class="total-row">
+                    <span>Balance After:</span>
+                    <span>₨<%= parseFloat(supplierInfo.balance_after || 0).toFixed(2) %></span>
+                </div>
+                <% } %>
+                
+                <div class="total-row grand-total">
+                    <span>TOTAL BUYING VALUE:</span>
+                    <span>₨<%= parseFloat(total_value || 0).toFixed(2) %></span>
+                </div>
+            </div>
+        <% } else { %>
+            <div class="total-section">
+                <div class="total-row">
+                    <span>Supplier:</span>
+                    <span>No Supplier (Self Purchase)</span>
+                </div>
+                <% const transactionInfo = results.find(item => item.transaction_type); %>
+                <% if (transactionInfo && transactionInfo.transaction_type) { %>
+                <div class="total-row">
+                    <span>Transaction Type:</span>
+                    <span><%= transactionInfo.transaction_type.charAt(0).toUpperCase() + transactionInfo.transaction_type.slice(1) %> Purchase</span>
+                </div>
+                <% } %>
+                <% if (transactionInfo && transactionInfo.payment_made > 0) { %>
+                <div class="total-row">
+                    <span>Payment Made:</span>
+                    <span>₨<%= parseFloat(transactionInfo.payment_made || 0).toFixed(2) %></span>
+                </div>
+                <% } %>
+                
+                <div class="total-row grand-total">
+                    <span>TOTAL BUYING VALUE:</span>
+                    <span>₨<%= parseFloat(total_value || 0).toFixed(2) %></span>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- Notes -->
+        <% if (results.find(item => item.supplier && item.supplier !== 'No Supplier (Self Purchase)')) { 
+            const supplierItem = results.find(item => item.supplier && item.supplier !== 'No Supplier (Self Purchase)');
+        %>
+            <div class="notes mb-4">
+                <strong>Note:</strong> 
+                <% if (supplierItem.transaction_type === 'credit') { %>
+                    This amount has been added to <%= supplierItem.supplier %>'s outstanding balance.
+                <% } else if (supplierItem.transaction_type === 'cash') { %>
+                    Full payment has been made to <%= supplierItem.supplier %>.
+                <% } else if (supplierItem.transaction_type === 'partial') { %>
+                    Partial payment of ₨<%= parseFloat(supplierItem.payment_made || 0).toFixed(2) %> has been made to <%= supplierItem.supplier %>.
+                <% } %>
+            </div>
+        <% } %>
+
+        <!-- Signature -->
+        <div class="signature text-center">
+            <div class="signature-line"></div>
+            <div>Authorized Signature</div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div>Thank you for your business!</div>
+            <div class="mt-2">Receipt ID: STK-<%= receipt_id %> | Generated on: <%= printDate %></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+        // Auto print if needed
+        if (window.location.search.includes('autoprint=true')) {
+            window.print();
+        }
+        
+        // Add safe number parsing
+        function safeParseFloat(value, defaultValue = 0) {
+            if (value === null || value === undefined || value === '') {
+                return defaultValue;
+            }
+            const num = parseFloat(value);
+            return isNaN(num) ? defaultValue : num;
+        }
+    </script>
+</body>
+</html>

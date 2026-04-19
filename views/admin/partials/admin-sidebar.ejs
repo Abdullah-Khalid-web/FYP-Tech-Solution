@@ -1,0 +1,63 @@
+<!-- Admin Sidebar Partial -->
+<!-- Requires: admin (session object), currentPage (string) -->
+<aside class="sa-sidebar" id="adminSidebar">
+    <div class="sa-sidebar-header">
+        <div class="sa-logo">M</div>
+        <div class="sa-brand">
+            <div class="sa-brand-name">Manage Hub</div>
+            <div class="sa-brand-sub">Super Admin</div>
+        </div>
+    </div>
+
+    <nav class="sa-nav">
+        <div>
+            <span class="sa-nav-label">Main</span>
+            <a href="/admin/dashboard" class="sa-nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'dashboard' ? 'active' : '' %>">
+                <i class="fas fa-th-large"></i><span>Dashboard</span>
+            </a>
+        </div>
+
+        <div>
+            <span class="sa-nav-label">Management</span>
+            <a href="/admin/shops" class="sa-nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'shops' ? 'active' : '' %>">
+                <i class="fas fa-store"></i><span>All Shops</span>
+            </a>
+            <a href="/admin/subscriptions" class="sa-nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'subscriptions' ? 'active' : '' %>">
+                <i class="fas fa-credit-card"></i><span>Subscriptions</span>
+            </a>
+            <a href="/admin/users" class="sa-nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'users' ? 'active' : '' %>">
+                <i class="fas fa-users-cog"></i><span>Users</span>
+            </a>
+            <a href="/admin/feedback" class="sa-nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'feedback' ? 'active' : '' %>">
+                <i class="fas fa-comments"></i><span>Feedback</span>
+            </a>
+        </div>
+
+    </nav>
+
+    <div class="sa-sidebar-footer">
+        <div class="sa-user-block">
+            <div class="sa-user-avatar"><%= admin.username.charAt(0).toUpperCase() %></div>
+            <div>
+                <div class="sa-user-name"><%= admin.username %></div>
+                <div class="sa-user-role">Super Admin</div>
+            </div>
+        </div>
+        <a href="/admin/logout" class="sa-logout">
+            <i class="fas fa-sign-out-alt"></i><span>Sign Out</span>
+        </a>
+    </div>
+</aside>
+
+<div class="sa-overlay" id="sidebarOverlay"></div>
+
+<script>
+function toggleAdminSidebar() {
+    const sidebar = document.getElementById('adminSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+    document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+}
+document.getElementById('sidebarOverlay')?.addEventListener('click', toggleAdminSidebar);
+</script>

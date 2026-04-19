@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> — Manage Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/css/admin-shared.css" rel="stylesheet">
+    <style>
+        /* Dashboard specific micro-animations and styling for stat cards, etc. */
+        .sa-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px; margin-bottom: 28px;
+        }
+
+        .sa-stat {
+            background: var(--sa-white);
+            border-radius: 14px; padding: 22px;
+            border: 1px solid var(--sa-gray-200);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            position: relative; overflow: hidden;
+            transition: all var(--sa-ease);
+            animation: fadeUp 0.4s ease forwards;
+        }
+        .sa-stat:nth-child(1) { animation-delay: 0s; }
+        .sa-stat:nth-child(2) { animation-delay: 0.06s; }
+        .sa-stat:nth-child(3) { animation-delay: 0.08s; }
+        .sa-stat:nth-child(4) { animation-delay: 0.12s; }
+
+        .sa-stat::before {
+            content: '';
+            position: absolute; top: 0; left: 0;
+            width: 4px; height: 100%;
+            border-radius: 14px 0 0 14px;
+            background: var(--sa-primary);
+            transition: width var(--sa-ease);
+        }
+        .sa-stat:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.07); border-color: transparent; }
+        .sa-stat:hover::before { width: 6px; }
+
+        .sa-stat-top { display: flex; align-items: flex-start; gap: 14px; }
+
+        .sa-stat-icon {
+            width: 46px; height: 46px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; flex-shrink: 0;
+            background: var(--sa-blue-50); color: var(--sa-primary);
+        }
+
+        .sa-stat-number {
+            font-size: 1.75rem; font-weight: 800;
+            color: var(--sa-primary-dark); line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+        .sa-stat-label {
+            font-size: 0.82rem; color: var(--sa-gray-500);
+            font-weight: 500; margin-top: 3px;
+        }
+        .sa-stat-sub {
+            margin-top: 10px;
+            display: flex; gap: 12px;
+            font-size: 0.75rem; font-weight: 600;
+        }
+        .sa-stat-sub .text-success { color: var(--sa-success) !important; }
+        .sa-stat-sub .text-danger  { color: var(--sa-danger)  !important; }
+        .sa-stat-sub .text-warning { color: var(--sa-warning) !important; }
+        .sa-stat-sub .text-muted   { color: var(--sa-gray-400) !important; }
+
+        /* ================================
+           CARDS
+           ================================ */
+        .sa-card {
+            background: var(--sa-white);
+            border-radius: 14px;
+            border: 1px solid var(--sa-gray-200);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            overflow: hidden;
+            margin-bottom: 20px;
+            animation: fadeUp 0.4s ease forwards;
+            opacity: 0;
+            animation-delay: 0.2s;
+        }
+
+        .sa-card-header {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--sa-gray-100);
+        }
+        .sa-card-header h2 {
+            font-size: 0.95rem; font-weight: 700;
+            color: var(--sa-gray-900); margin: 0;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .sa-card-header h2 i { color: var(--sa-primary); font-size: 0.92rem; }
+
+        .sa-card-header .sa-badge {
+            padding: 4px 12px; border-radius: 50px;
+            font-size: 0.72rem; font-weight: 700;
+        }
+        .sa-badge-warn  { background: rgba(245,158,11,0.12); color: var(--sa-warning); }
+        .sa-badge-blue  { background: var(--sa-blue-100); color: var(--sa-primary); }
+
+        .sa-view-all {
+            color: var(--sa-primary); font-weight: 600;
+            font-size: 0.78rem; padding: 4px 12px;
+            border-radius: 6px; transition: all var(--sa-ease);
+        }
+        .sa-view-all:hover { background: var(--sa-blue-50); }
+
+        .sa-card-body { padding: 0; }
+
+        /* ================================
+           TABLE
+           ================================ */
+        .sa-table { width: 100%; border-collapse: collapse; }
+
+        .sa-table thead th {
+            font-weight: 600; color: var(--sa-gray-500);
+            font-size: 0.75rem; text-transform: uppercase;
+            letter-spacing: 0.04em; text-align: left;
+            padding: 10px 18px; background: var(--sa-gray-50);
+            border-bottom: 1px solid var(--sa-gray-200);
+        }
+
+        .sa-table tbody td {
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--sa-gray-100);
+            font-size: 0.85rem; color: var(--sa-gray-700);
+            vertical-align: middle;
+        }
+        .sa-table tbody tr:last-child td { border-bottom: none; }
+        .sa-table tbody tr:hover td { background: var(--sa-gray-50); }
+
+        .sa-table .shop-name { font-weight: 600; color: var(--sa-gray-900); }
+        .sa-table .shop-email { font-size: 0.75rem; color: var(--sa-gray-400); }
+
+        .sa-badge-status {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 50px;
+            font-size: 0.72rem; font-weight: 600;
+        }
+        .sa-badge-active  { background: rgba(16,185,129,0.12); color: var(--sa-success); }
+        .sa-badge-blocked { background: rgba(239,68,68,0.1); color: var(--sa-danger); }
+        .sa-badge-inactive { background: var(--sa-gray-100); color: var(--sa-gray-500); }
+        .sa-badge-plan {
+            background: var(--sa-blue-100); color: var(--sa-primary);
+            padding: 3px 10px; border-radius: 50px;
+            font-size: 0.72rem; font-weight: 600;
+        }
+        .sa-badge-noplan {
+            background: var(--sa-gray-100); color: var(--sa-gray-400);
+            padding: 3px 10px; border-radius: 50px;
+            font-size: 0.72rem; font-weight: 600;
+        }
+
+        .sa-btn-view {
+            width: 32px; height: 32px;
+            border-radius: 8px; border: 1px solid var(--sa-gray-200);
+            background: var(--sa-white); color: var(--sa-primary);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.82rem; cursor: pointer;
+            transition: all var(--sa-ease);
+        }
+        .sa-btn-view:hover {
+            background: var(--sa-primary); color: white;
+            border-color: var(--sa-primary);
+        }
+
+        .sa-btn-extend {
+            padding: 5px 14px; border: none; border-radius: 6px;
+            background: rgba(245,158,11,0.1); color: var(--sa-warning);
+            font-size: 0.76rem; font-weight: 600; cursor: pointer;
+            transition: all var(--sa-ease);
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .sa-btn-extend:hover { background: var(--sa-warning); color: white; }
+
+        .sa-badge-days {
+            padding: 3px 10px; border-radius: 50px;
+            font-size: 0.72rem; font-weight: 600;
+        }
+        .sa-badge-days.urgent { background: rgba(239,68,68,0.1); color: var(--sa-danger); }
+        .sa-badge-days.warn   { background: rgba(245,158,11,0.12); color: var(--sa-warning); }
+
+        .sa-empty {
+            text-align: center; padding: 40px 20px;
+            color: var(--sa-gray-400);
+        }
+        .sa-empty i { font-size: 2rem; margin-bottom: 12px; display: block; color: var(--sa-success); }
+        .sa-empty p { margin: 0; font-size: 0.85rem; }
+
+        /* ================================
+           GRID
+           ================================ */
+        .sa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        /* ================================
+           QUICK ACTIONS
+           ================================ */
+        .sa-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px; padding: 20px 22px;
+        }
+
+        .sa-action-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 16px; border-radius: 10px;
+            font-size: 0.82rem; font-weight: 600;
+            border: 1px solid var(--sa-gray-200);
+            background: var(--sa-white);
+            color: var(--sa-gray-700);
+            cursor: pointer;
+            transition: all var(--sa-ease);
+        }
+        .sa-action-btn:hover {
+            border-color: var(--sa-primary);
+            color: var(--sa-primary);
+            background: var(--sa-blue-50);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37,99,235,0.1);
+        }
+        .sa-action-btn i { font-size: 0.9rem; color: var(--sa-primary); }
+
+        /* ================================
+           MODAL
+           ================================ */
+        .sa-modal .modal-content {
+            border-radius: 16px; border: none;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .sa-modal .modal-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--sa-gray-200);
+            background: var(--sa-gray-50);
+            border-radius: 16px 16px 0 0;
+        }
+        .sa-modal .modal-title { font-weight: 700; font-size: 1rem; }
+        .sa-modal .modal-body { padding: 24px; }
+        .sa-modal .modal-footer {
+            padding: 14px 24px;
+            border-top: 1px solid var(--sa-gray-200);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1023px) and (min-width: 768px) {
+            .sa-stats { grid-template-columns: repeat(2, 1fr); }
+            .sa-actions { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 767px) {
+            .sa-stats { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .sa-stat { padding: 16px; }
+            .sa-stat-number { font-size: 1.3rem; }
+            .sa-stat-sub { display: none; }
+            .sa-grid { grid-template-columns: 1fr; }
+            .sa-actions { grid-template-columns: 1fr 1fr; gap: 10px; }
+        }
+
+        @media (max-width: 480px) {
+            .sa-stats { grid-template-columns: 1fr; }
+            .sa-actions { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sa-wrapper">
+        <%- include('partials/admin-sidebar') %>
+
+        <div class="sa-main">
+            <%- include('partials/admin-topbar') %>
+
+            <!-- Content -->
+            <div class="sa-content">
+                <!-- Stat Cards -->
+                <div class="sa-stats">
+                    <div class="sa-stat">
+                        <div class="sa-stat-top">
+                            <div class="sa-stat-icon"><i class="fas fa-store"></i></div>
+                            <div>
+                                <div class="sa-stat-number"><%= stats.totalShops %></div>
+                                <div class="sa-stat-label">Total Shops</div>
+                            </div>
+                        </div>
+                        <div class="sa-stat-sub">
+                            <span class="text-primary"><i class="fas fa-check-circle"></i> <%= stats.activeShops %> Active</span>
+                            <span class="text-muted"><i class="fas fa-times-circle"></i> <%= stats.inactiveShops %> Inactive</span>
+                        </div>
+                    </div>
+
+                    <div class="sa-stat">
+                        <div class="sa-stat-top">
+                            <div class="sa-stat-icon"><i class="fas fa-credit-card"></i></div>
+                            <div>
+                                <div class="sa-stat-number"><%= subscriptionStats.activeSubscriptions %></div>
+                                <div class="sa-stat-label">Active Subscriptions</div>
+                            </div>
+                        </div>
+                        <div class="sa-stat-sub">
+                            <span class="text-primary"><i class="fas fa-clock"></i> <%= expiringSubscriptions.length %> Expiring Soon</span>
+                        </div>
+                    </div>
+
+                    <div class="sa-stat">
+                        <div class="sa-stat-top">
+                            <div class="sa-stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+                            <div>
+                                <div class="sa-stat-number"><%= subscriptionStats.expiredSubscriptions %></div>
+                                <div class="sa-stat-label">Expired Subscriptions</div>
+                            </div>
+                        </div>
+                        <div class="sa-stat-sub">
+                            <span class="text-muted">Need attention</span>
+                        </div>
+                    </div>
+
+                    <div class="sa-stat">
+                        <div class="sa-stat-top">
+                            <div class="sa-stat-icon"><i class="fas fa-ban"></i></div>
+                            <div>
+                                <div class="sa-stat-number"><%= stats.blockedShops %></div>
+                                <div class="sa-stat-label">Blocked Shops</div>
+                            </div>
+                        </div>
+                        <div class="sa-stat-sub">
+                            <span class="text-muted">Require review</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two Column Grid -->
+                <div class="sa-grid">
+                    <!-- Recent Shops -->
+                    <div class="sa-card">
+                        <div class="sa-card-header">
+                            <h2><i class="fas fa-store"></i> Recent Shops</h2>
+                            <a href="/admin/shops" class="sa-view-all">View All →</a>
+                        </div>
+                        <div class="sa-card-body">
+                            <table class="sa-table">
+                                <thead>
+                                    <tr>
+                                        <th>Shop Name</th>
+                                        <th>Plan</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% recentShops.forEach(shop => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="shop-name"><%= shop.name %></div>
+                                            <div class="shop-email"><%= shop.email %></div>
+                                        </td>
+                                        <td>
+                                            <% if (shop.plan_name) { %>
+                                                <span class="sa-badge-plan"><%= shop.plan_name %></span>
+                                            <% } else { %>
+                                                <span class="sa-badge-noplan">No Plan</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <span class="sa-badge-status sa-badge-<%= shop.status %>"><%= shop.status %></span>
+                                        </td>
+                                        <td><%= new Date(shop.created_at).toLocaleDateString() %></td>
+                                        <td>
+                                            <a href="/admin/shops/<%= shop.id %>" class="sa-btn-view" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                    <% if (recentShops.length === 0) { %>
+                                    <tr>
+                                        <td colspan="5">
+                                            <div class="sa-empty"><p>No shops registered yet</p></div>
+                                        </td>
+                                    </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Expiring Subscriptions -->
+                    <div class="sa-card">
+                        <div class="sa-card-header">
+                            <h2><i class="fas fa-clock"></i> Expiring Subscriptions</h2>
+                            <span class="sa-badge sa-badge-warn"><%= expiringSubscriptions.length %> Shops</span>
+                        </div>
+                        <div class="sa-card-body">
+                            <table class="sa-table">
+                                <thead>
+                                    <tr>
+                                        <th>Shop</th>
+                                        <th>Plan</th>
+                                        <th>Expires</th>
+                                        <th>Days Left</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% expiringSubscriptions.forEach(sub => { %>
+                                    <tr>
+                                        <td class="shop-name"><%= sub.shop_name %></td>
+                                        <td><%= sub.plan_name %></td>
+                                        <td><%= new Date(sub.expires_at).toLocaleDateString() %></td>
+                                        <td>
+                                            <span class="sa-badge-days <%= sub.days_remaining <= 3 ? 'urgent' : 'warn' %>">
+                                                <%= sub.days_remaining %> days
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="sa-btn-extend" onclick="extendSubscription('<%= sub.shop_id %>', '<%= sub.shop_name %>')">
+                                                <i class="fas fa-plus-circle"></i> Extend
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                    <% if (expiringSubscriptions.length === 0) { %>
+                                    <tr>
+                                        <td colspan="5">
+                                            <div class="sa-empty">
+                                                <i class="fas fa-check-circle"></i>
+                                                <p>No expiring subscriptions</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="sa-card" style="animation-delay: 0.3s;">
+                    <div class="sa-card-header">
+                        <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+                    </div>
+                    <div class="sa-actions">
+                        <a href="/admin/shops?status=blocked" class="sa-action-btn">
+                            <i class="fas fa-ban"></i> Blocked Shops
+                        </a>
+                        <a href="/admin/shops?status=inactive" class="sa-action-btn">
+                            <i class="fas fa-pause"></i> Inactive Shops
+                        </a>
+                        <a href="/admin/feedback?status=new" class="sa-action-btn">
+                            <i class="fas fa-envelope"></i> New Feedback
+                        </a>
+                        <a href="/admin/users" class="sa-action-btn">
+                            <i class="fas fa-user-cog"></i> Manage Users
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extend Subscription Modal -->
+    <div class="modal fade sa-modal" id="extendSubscriptionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus-circle" style="color: var(--sa-primary); margin-right: 8px;"></i>Extend Subscription</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="extendSubscriptionForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label" style="font-weight: 600; font-size: 0.85rem;">Shop</label>
+                            <input type="text" class="form-control" id="extendShopName" readonly style="border-radius: 8px;">
+                        </div>
+                        <div class="mb-3">
+                            <label for="extendDays" class="form-label" style="font-weight: 600; font-size: 0.85rem;">Number of Days</label>
+                            <input type="number" class="form-control" id="extendDays" name="days" min="1" max="365" value="30" required style="border-radius: 8px;">
+                        </div>
+                        <div class="mb-3">
+                            <label for="extendReason" class="form-label" style="font-weight: 600; font-size: 0.85rem;">Reason (Optional)</label>
+                            <textarea class="form-control" id="extendReason" name="reason" rows="3" style="border-radius: 8px;"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                        <button type="submit" class="btn" style="background: var(--sa-primary); color: white; border-radius: 8px; font-weight: 600;">Extend Subscription</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Extend subscription
+        let currentShopId = null;
+
+        function extendSubscription(shopId, shopName) {
+            currentShopId = shopId;
+            document.getElementById('extendShopName').value = shopName;
+            new bootstrap.Modal(document.getElementById('extendSubscriptionModal')).show();
+        }
+
+        document.getElementById('extendSubscriptionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const days = formData.get('days');
+            const reason = formData.get('reason');
+
+            try {
+                const response = await fetch(`/admin/api/shops/${currentShopId}/extend-subscription`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ days, reason })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Subscription extended successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('extendSubscriptionModal')).hide();
+                    location.reload();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Auto-refresh every 5 minutes
+        setInterval(() => console.log('Dashboard auto-refresh check...'), 300000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+# Manage Hub - Full Stack Docker Compose
+# Runs: Backend (Node.js) + AI Module (FastAPI) + Database (MySQL)
+#
+# Usage:
+#   docker-compose up --build        # Build and start all services
+#   docker-compose up -d             # Start in background
+#   docker-compose down              # Stop all services
+#   docker-compose logs -f backend   # View backend logs
+
+version: "3.8"
+
+services:
+  # ==========================================
+  # MySQL Database
+  # ==========================================
+  db:
+    image: mysql:8.0
+    container_name: managehub-db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: manage_hub
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./retail2 DB uuid.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # Node.js Backend
+  # ==========================================
+  backend:
+    build: .
+    container_name: managehub-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: manage_hub
+      DB_PORT: 3306
+      SESSION_SECRET: managehub-session-secret
+      AI_SERVICE_URL: http://ai:8000
+      AI_SERVICE_SECRET: managehub-ai-secret-2026
+      AI_REQUEST_TIMEOUT: 10000
+      AI_MAX_RETRIES: 3
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+      ai:
+        condition: service_started
+
+  # ==========================================
+  # FastAPI AI Module
+  # ==========================================
+  ai:
+    build: ./agentic AI
+    container_name: managehub-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      GROQ_API_KEY: "your_groq_api_key_here"
+      LLM_MODEL: llama3-70b-8192
+      LLM_TEMPERATURE: "0.1"
+      BACKEND_API_BASE_URL: http://backend:3000/api
+      BACKEND_API_TIMEOUT: "30"
+      DEFAULT_SHOP_ID: "24"
+      AI_SERVICE_SECRET: managehub-ai-secret-2026
+      ALLOWED_ORIGINS: http://localhost:3000,http://backend:3000
+      MAX_RETRIES: "3"
+      VERBOSE_LOGGING: "true"
+
+volumes:
+  db_data:
+    driver: local
