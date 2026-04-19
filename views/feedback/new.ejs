@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - <%= shop.name %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <style>
+        :root {
+            --primary-color: <%= shop.primary_color || '#007bff' %>;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-container {
+            padding: 20px;
+            background-color: #f5f7fa;
+            min-height: calc(100vh - 70px);
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--primary-color);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .card-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .rating-stars {
+            font-size: 2rem;
+            color: #ddd;
+            cursor: pointer;
+        }
+        
+        .rating-stars .star {
+            transition: color 0.2s;
+        }
+        
+        .rating-stars .star:hover,
+        .rating-stars .star.active {
+            color: #f39c12;
+        }
+        
+        .character-count {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-align: right;
+        }
+        
+        .character-count.warning {
+            color: #ffc107;
+        }
+        
+        .character-count.danger {
+            color: #dc3545;
+        }
+        
+        .help-text {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        
+        .category-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .category-btn {
+            padding: 8px 16px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .category-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .category-btn.active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div>
+                <h1><i class="fas fa-plus-circle me-2"></i><%= title %></h1>
+                <p class="text-muted mb-0">Help us improve by sharing your thoughts</p>
+            </div>
+            <div>
+                <a href="/feedback" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Feedback
+                </a>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Submit Your Feedback</h5>
+                </div>
+                <div class="card-body">
+                    <form id="feedbackForm">
+                        <!-- Feedback Type -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Feedback Type</label>
+                            <div class="category-buttons">
+                                <button type="button" class="category-btn active" data-type="suggestion">
+                                    <i class="fas fa-lightbulb me-2"></i>Suggestion
+                                </button>
+                                <button type="button" class="category-btn" data-type="bug">
+                                    <i class="fas fa-bug me-2"></i>Bug Report
+                                </button>
+                                <button type="button" class="category-btn" data-type="question">
+                                    <i class="fas fa-question-circle me-2"></i>Question
+                                </button>
+                                <button type="button" class="category-btn" data-type="complaint">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Complaint
+                                </button>
+                                <button type="button" class="category-btn" data-type="compliment">
+                                    <i class="fas fa-heart me-2"></i>Compliment
+                                </button>
+                            </div>
+                            <input type="hidden" id="feedbackType" name="type" value="suggestion">
+                        </div>
+
+                        <!-- Subject -->
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject *</label>
+                            <input type="text" class="form-control" id="subject" name="subject" 
+                                   placeholder="Briefly describe your feedback" required maxlength="200">
+                            <div class="character-count" id="subjectCount">0/200</div>
+                        </div>
+
+                        <!-- Rating -->
+                        <div class="mb-4">
+                            <label class="form-label">Rating (Optional)</label>
+                            <div class="rating-stars" id="ratingStars">
+                                <% for (let i = 1; i <= 5; i++) { %>
+                                    <i class="fas fa-star star" data-rating="<%= i %>"></i>
+                                <% } %>
+                            </div>
+                            <input type="hidden" id="rating" name="rating" value="">
+                            <div class="help-text">Click stars to rate your experience</div>
+                        </div>
+
+                        <!-- Message -->
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Detailed Message *</label>
+                            <textarea class="form-control" id="message" name="message" 
+                                      rows="8" placeholder="Please provide details about your feedback, suggestion, or issue..." 
+                                      required maxlength="2000"></textarea>
+                            <div class="character-count" id="messageCount">0/2000</div>
+                            <div class="help-text">
+                                Be as specific as possible. Include steps to reproduce for bugs or detailed suggestions for improvements.
+                            </div>
+                        </div>
+
+                        <!-- Contact Preference (Optional) -->
+                        <div class="mb-3">
+                            <label class="form-label">Contact Preference</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="allowContact" name="allow_contact" checked>
+                                <label class="form-check-label" for="allowContact">
+                                    Allow admin to contact you regarding this feedback
+                                </label>
+                            </div>
+                            <div class="help-text">
+                                We may reach out for clarification or updates on your feedback
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                We typically respond within 1-2 business days
+                            </div>
+                            <button type="submit" class="btn btn-primary px-4" id="submitBtn">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Feedback
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tips Card -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Tips for Effective Feedback</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li><strong>Be specific:</strong> Include exact steps to reproduce issues</li>
+                        <li><strong>Provide context:</strong> Mention when and where the issue occurred</li>
+                        <li><strong>Suggest solutions:</strong> If you have ideas for improvements</li>
+                        <li><strong>Be constructive:</strong> Focus on how to make things better</li>
+                        <li><strong>Include screenshots:</strong> If possible, describe visual issues</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        // Toastr configuration
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+
+        // Category buttons
+        document.querySelectorAll('.category-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all buttons
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Update hidden input
+                document.getElementById('feedbackType').value = this.getAttribute('data-type');
+            });
+        });
+
+        // Rating stars
+        const ratingStars = document.querySelectorAll('.star');
+        const ratingInput = document.getElementById('rating');
+        
+        ratingStars.forEach(star => {
+            star.addEventListener('click', function() {
+                const rating = this.getAttribute('data-rating');
+                ratingInput.value = rating;
+                
+                // Update star display
+                ratingStars.forEach(s => {
+                    if (s.getAttribute('data-rating') <= rating) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // Character counters
+        const subjectInput = document.getElementById('subject');
+        const messageInput = document.getElementById('message');
+        const subjectCount = document.getElementById('subjectCount');
+        const messageCount = document.getElementById('messageCount');
+
+        function updateCharacterCount(input, counter, maxLength) {
+            const length = input.value.length;
+            counter.textContent = `${length}/${maxLength}`;
+            
+            // Update color based on length
+            if (length > maxLength * 0.8) {
+                counter.classList.add('warning');
+                counter.classList.remove('danger');
+            } else if (length > maxLength * 0.95) {
+                counter.classList.add('danger');
+                counter.classList.remove('warning');
+            } else {
+                counter.classList.remove('warning', 'danger');
+            }
+        }
+
+        subjectInput.addEventListener('input', () => {
+            updateCharacterCount(subjectInput, subjectCount, 200);
+        });
+
+        messageInput.addEventListener('input', () => {
+            updateCharacterCount(messageInput, messageCount, 2000);
+        });
+
+        // Initialize counters
+        updateCharacterCount(subjectInput, subjectCount, 200);
+        updateCharacterCount(messageInput, messageCount, 2000);
+
+        // Form submission
+        document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+            
+            try {
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Clean up data
+                if (!data.rating || data.rating === '') {
+                    delete data.rating;
+                }
+                
+                const response = await fetch('/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    toastr.success(result.message);
+                    
+                    // Reset form
+                    this.reset();
+                    ratingStars.forEach(star => star.classList.remove('active'));
+                    ratingInput.value = '';
+                    updateCharacterCount(subjectInput, subjectCount, 200);
+                    updateCharacterCount(messageInput, messageCount, 2000);
+                    
+                    // Redirect after delay
+                    setTimeout(() => {
+                        window.location.href = '/feedback';
+                    }, 1500);
+                } else {
+                    toastr.error(result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                toastr.error('An error occurred while submitting feedback');
+            } finally {
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+    </script>
+</body>
+</html>

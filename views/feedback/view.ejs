@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - <%= shop.name %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <style>
+        :root {
+            --primary-color: <%= shop.primary_color || '#007bff' %>;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-container {
+            padding: 20px;
+            background-color: #f5f7fa;
+            min-height: calc(100vh - 70px);
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--primary-color);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .card-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.35em 0.65em;
+        }
+        
+        .badge-new { background-color: #3498db; }
+        .badge-read { background-color: #2ecc71; }
+        .badge-replied { background-color: #f39c12; }
+        .badge-resolved { background-color: #95a5a6; }
+        
+        .rating-stars {
+            color: #f39c12;
+        }
+        
+        .feedback-details {
+            padding: 20px;
+        }
+        
+        .feedback-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .feedback-subject {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .feedback-meta {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .feedback-content {
+            margin-bottom: 30px;
+        }
+        
+        .feedback-message {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .admin-response {
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            margin-top: 30px;
+        }
+        
+        .admin-response h5 {
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        
+        .admin-notes {
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .response-date {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-align: right;
+            margin-top: 10px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .action-buttons {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div>
+                <h1><i class="fas fa-comment-dots me-2"></i>Feedback Details</h1>
+                <p class="text-muted mb-0">View and manage your feedback</p>
+            </div>
+            <div>
+                <a href="/feedback" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Feedback
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge status-badge badge-<%= feedback.status %>">
+                                <%= feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1) %>
+                            </span>
+                        </div>
+                        <div class="text-muted">
+                            ID: <%= feedback.id.slice(0, 8) %>
+                        </div>
+                    </div>
+                    
+                    <div class="feedback-details">
+                        <!-- Feedback Header -->
+                        <div class="feedback-header">
+                            <div class="feedback-subject">
+                                <%= feedback.subject %>
+                            </div>
+                            
+                            <div class="feedback-meta d-flex justify-content-between flex-wrap">
+                                <div>
+                                    <i class="far fa-clock me-1"></i>
+                                    Submitted: <%= new Date(feedback.created_at).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }) %>
+                                </div>
+                                
+                                <% if (feedback.rating) { %>
+                                    <div class="rating-stars">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <i class="fas fa-star<%= i > feedback.rating ? '-o' : '' %>"></i>
+                                        <% } %>
+                                        <span class="ms-2"><%= feedback.rating %>/5</span>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Feedback Content -->
+                        <div class="feedback-content">
+                            <h6 class="fw-semibold mb-3">Your Message:</h6>
+                            <div class="feedback-message">
+                                <%= feedback.message %>
+                            </div>
+                        </div>
+
+                        <!-- Admin Response -->
+                        <% if (feedback.admin_notes) { %>
+                            <div class="admin-response">
+                                <h5><i class="fas fa-reply me-2"></i>Admin Response</h5>
+                                <div class="admin-notes">
+                                    <%= feedback.admin_notes %>
+                                </div>
+                                <div class="response-date">
+                                    <i class="fas fa-history me-1"></i>
+                                    Last updated: <%= new Date(feedback.updated_at).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }) %>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Status:</strong> <%= feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1) %>
+                                <% if (feedback.status === 'new' || feedback.status === 'read') { %>
+                                    - Our team is reviewing your feedback. We'll respond soon.
+                                <% } %>
+                            </div>
+                        <% } %>
+
+                        <!-- Action Buttons -->
+                        <div class="action-buttons">
+                            <% if (feedback.status !== 'resolved' && feedback.status !== 'cancelled') { %>
+                                <button class="btn btn-success resolve-btn">
+                                    <i class="fas fa-check me-1"></i> Mark as Resolved
+                                </button>
+                            <% } %>
+                            
+                            <% if (feedback.status !== 'cancelled') { %>
+                                <button class="btn btn-outline-danger delete-btn">
+                                    <i class="fas fa-trash me-1"></i> Delete
+                                </button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-history me-2"></i>Feedback Timeline</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-primary"></div>
+                                <div class="timeline-content">
+                                    <h6>Feedback Submitted</h6>
+                                    <p class="text-muted mb-0">
+                                        <%= new Date(feedback.created_at).toLocaleDateString('en-US', { 
+                                            month: 'short', 
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        }) %>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <% if (feedback.status === 'read' || feedback.status === 'replied' || feedback.status === 'resolved') { %>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-success"></div>
+                                    <div class="timeline-content">
+                                        <h6>Viewed by Admin</h6>
+                                        <p class="text-muted mb-0">Status changed to "Read"</p>
+                                    </div>
+                                </div>
+                            <% } %>
+                            
+                            <% if (feedback.admin_notes) { %>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-warning"></div>
+                                    <div class="timeline-content">
+                                        <h6>Admin Responded</h6>
+                                        <p class="text-muted mb-0">
+                                            <%= new Date(feedback.updated_at).toLocaleDateString('en-US', { 
+                                                month: 'short', 
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            }) %>
+                                        </p>
+                                    </div>
+                                </div>
+                            <% } %>
+                            
+                            <% if (feedback.status === 'resolved') { %>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-info"></div>
+                                    <div class="timeline-content">
+                                        <h6>Resolved</h6>
+                                        <p class="text-muted mb-0">Feedback marked as resolved</p>
+                                    </div>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        // Toastr configuration
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+
+        // Handle resolve button
+        document.querySelector('.resolve-btn')?.addEventListener('click', async function() {
+            if (!confirm('Mark this feedback as resolved?')) {
+                return;
+            }
+            
+            const feedbackId = '<%= feedback.id %>';
+            
+            try {
+                const response = await fetch(`/feedback/${feedbackId}/resolve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    toastr.success(data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toastr.error(data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                toastr.error('An error occurred');
+            }
+        });
+
+        // Handle delete button
+        document.querySelector('.delete-btn')?.addEventListener('click', async function() {
+            if (!confirm('Are you sure you want to delete this feedback? This action cannot be undone.')) {
+                return;
+            }
+            
+            const feedbackId = '<%= feedback.id %>';
+            
+            try {
+                const response = await fetch(`/feedback/${feedbackId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    toastr.success(data.message);
+                    setTimeout(() => location.href = '/feedback', 1000);
+                } else {
+                    toastr.error(data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                toastr.error('An error occurred');
+            }
+        });
+    </script>
+</body>
+</html>

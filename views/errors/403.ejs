@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Manage Hub</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .error-container {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        .error-icon {
+            font-size: 80px;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .error-code {
+            font-size: 72px;
+            font-weight: 700;
+            color: #343a40;
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+        .error-title {
+            font-size: 24px;
+            color: #495057;
+            margin-bottom: 20px;
+        }
+        .error-message {
+            color: #6c757d;
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+        .error-details {
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        .error-details p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .error-details i {
+            width: 25px;
+            color: #6c757d;
+        }
+        .required-badge {
+            background: #007bff;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .role-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .role-tag {
+            background: #e9ecef;
+            color: #495057;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .btn-home {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 5px;
+        }
+        .btn-home:hover {
+            background: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-back {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 5px;
+        }
+        .btn-back:hover {
+            background: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .lock-icon {
+            font-size: 24px;
+            margin-top: 20px;
+            color: #dc3545;
+        }
+        @media (max-width: 480px) {
+            .error-container {
+                padding: 20px;
+            }
+            .btn-home, .btn-back {
+                display: block;
+                width: 100%;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="fas fa-lock"></i>
+        </div>
+        <div class="error-code">403</div>
+        <div class="error-title"><%= title %></div>
+        <div class="error-message">
+            <%= message || 'You do not have permission to access this page.' %>
+        </div>
+        
+        <% if (requiredRole) { %>
+        <div class="error-details">
+            <p><i class="fas fa-user-tag"></i> <strong>Required Role:</strong></p>
+            <div class="role-list">
+                <% if (Array.isArray(requiredRole)) { %>
+                    <% requiredRole.forEach(role => { %>
+                        <span class="role-tag"><%= role %></span>
+                    <% }); %>
+                <% } else { %>
+                    <span class="role-tag"><%= requiredRole %></span>
+                <% } %>
+            </div>
+            
+            <% if (userRole) { %>
+            <p class="mt-2"><i class="fas fa-user"></i> <strong>Your Role:</strong> 
+                <span class="role-tag"><%= userRole %></span>
+            </p>
+            <% } %>
+        </div>
+        <% } %>
+        
+        <% if (requiredPermission) { %>
+        <div class="error-details">
+            <p><i class="fas fa-key"></i> <strong>Required Permission:</strong> 
+                <span class="role-tag"><%= requiredPermission %></span>
+            </p>
+        </div>
+        <% } %>
+        
+        <div>
+            <a href="javascript:history.back()" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Go Back
+            </a>
+            <a href="/dashboard" class="btn-home">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+        </div>
+        
+        <div class="lock-icon">
+            <i class="fas fa-shield-alt"></i> Access Denied
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+<!-- <%- include('../partials/header', { title: 'Access Denied', shop: shop }) %>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Access Denied
+                    </h4>
+                </div>
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-exclamation-triangle text-danger" style="font-size: 5rem;"></i>
+                    
+                    <h3 class="mt-4">403 - Forbidden</h3>
+                    
+                    <p class="text-muted mb-4">
+                        <%= message || 'You don\'t have permission to access this page.' %>
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <strong>Your Role:</strong> <%= userRole || session?.roleName || 'Not logged in' %>
+                    </div>
+                    
+                    <% if (requiredRoles && requiredRoles.length) { %>
+                        <div class="alert alert-warning">
+                            <small>
+                                <strong>Required Roles:</strong><br>
+                                <% requiredRoles.forEach(role => { %>
+                                    <span class="badge bg-secondary me-1"><%= role %></span>
+                                <% }) %>
+                            </small>
+                        </div>
+                    <% } %>
+                    
+                    <div class="mt-4">
+                        <a href="/dashboard" class="btn btn-primary me-2">
+                            <i class="fas fa-home me-2"></i>
+                            Go to Dashboard
+                        </a>
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Go Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %> -->

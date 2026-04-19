@@ -1,0 +1,2244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics - <%= shop.name %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4e73df;
+            --success: #1cc88a;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --info: #36b9cc;
+            --secondary: #858796;
+            --dark: #5a5c69;
+            --light: #f8f9fc;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 20px;
+            background-color: #f5f7fa;
+            min-height: calc(100vh - 70px);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--dark);
+        }
+
+        .datetime {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .shop-info {
+            text-align: right;
+        }
+
+        .report-nav {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-tabs {
+            border-bottom: none;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: var(--secondary);
+            padding: 10px 20px;
+            font-weight: 500;
+            border-radius: 5px;
+            margin-right: 5px;
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .report-section {
+            display: none;
+        }
+
+        .report-section.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-right: 20px;
+        }
+
+        .stat-info h3 {
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .stat-info p {
+            margin: 5px 0 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section-header h2 {
+            font-size: 1.2rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            color: var(--dark);
+        }
+
+        .section-header h2 i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        .search-filter-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table th {
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 0.85rem;
+            text-align: left;
+            padding: 15px;
+            background: #f8f9fc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .table tr:hover td {
+            background-color: #f8f9fc;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+
+        .stock-badge {
+            min-width: 70px;
+        }
+
+        .variance-positive {
+            color: var(--success);
+        }
+
+        .variance-negative {
+            color: var(--danger);
+        }
+
+        .variance-neutral {
+            color: var(--warning);
+        }
+
+        .export-btn {
+            margin-left: 10px;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            .report-nav {
+                display: none !important;
+            }
+            
+            .export-btn {
+                display: none !important;
+            }
+            
+            body {
+                font-size: 12pt;
+            }
+            
+            .table {
+                font-size: 10pt;
+            }
+        }
+
+        .filter-row {
+            margin-bottom: 15px;
+        }
+
+        .card-summary {
+            background: #f8f9fc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .summary-item.total {
+            font-weight: bold;
+            border-top: 1px solid #dee2e6;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+
+        .progress-thin {
+            height: 8px;
+            margin-top: 5px;
+        }
+
+        .data-card {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .data-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body data-shop-currency="<%= shop.currency %>">
+    <script>
+        window.shopData = {
+            currency: '<%= shop.currency %>',
+            name: '<%= shop.name %>',
+            primaryColor: '<%= shop.primary_color %>',
+            secondaryColor: '<%= shop.secondary_color %>'
+        };
+    </script>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div>
+                <h1><i class="fas fa-chart-bar me-2"></i>Reports & Analytics</h1>
+                <p class="datetime" id="datetime"></p>
+            </div>
+            <div class="shop-info">
+                <p><i class="fas fa-store"></i> <%= shop.name %></p>
+                <p class="text-muted small">Period: <%= fromDate %> to <%= toDate %></p>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card bg-primary" onclick="showReport('bills')">
+                <div class="stat-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= stats.bills.totalBills || 0 %></h3>
+                    <p>Total Bills</p>
+                </div>
+            </div>
+
+            <div class="stat-card bg-success" onclick="showReport('products')">
+                <div class="stat-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= stats.products.totalProducts || 0 %></h3>
+                    <p>Total Products</p>
+                </div>
+            </div>
+
+            <div class="stat-card bg-info" onclick="showReport('suppliers')">
+                <div class="stat-icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= stats.suppliers.totalSuppliers || 0 %></h3>
+                    <p>Suppliers</p>
+                </div>
+            </div>
+
+            <div class="stat-card bg-warning" onclick="showReport('employees')">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= stats.employees.totalEmployees || 0 %></h3>
+                    <p>Employees</p>
+                </div>
+            </div>
+
+            <div class="stat-card bg-danger" onclick="showReport('raw-materials')">
+                <div class="stat-icon">
+                    <i class="fas fa-flask"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= stats.rawMaterials.totalRawMaterials || 0 %></h3>
+                    <p>Raw Materials</p>
+                </div>
+            </div>
+
+            <div class="stat-card bg-secondary" onclick="showReport('production')">
+                <div class="stat-icon">
+                    <i class="fas fa-industry"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= stats.bills.totalRevenue ? (stats.bills.totalRevenue / 1000).toFixed(1) + 'k' : '0' %></h3>
+                    <p>Revenue (<%= shop.currency %>)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Navigation -->
+        <div class="report-nav">
+            <ul class="nav nav-tabs" id="reportTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" onclick="showReport('overview')">
+                        <i class="fas fa-home me-1"></i> Overview
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showReport('bills')">
+                        <i class="fas fa-receipt me-1"></i> Bills
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showReport('products')">
+                        <i class="fas fa-box me-1"></i> Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showReport('suppliers')">
+                        <i class="fas fa-truck me-1"></i> Suppliers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showReport('employees')">
+                        <i class="fas fa-users me-1"></i> Employees
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showReport('raw-materials')">
+                        <i class="fas fa-flask me-1"></i> Raw Materials
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showReport('production')">
+                        <i class="fas fa-industry me-1"></i> Production
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Date Filter -->
+        <div class="search-filter-card">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">From Date</label>
+                    <input type="date" class="form-control" id="fromDate" value="<%= fromDate %>">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">To Date</label>
+                    <input type="date" class="form-control" id="toDate" value="<%= toDate %>">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Report Type</label>
+                    <select class="form-select" id="reportType">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="applyFilters()">
+                        <i class="fas fa-filter me-1"></i> Apply
+                    </button>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                        <i class="fas fa-sync-alt me-1"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Content -->
+        <div id="reportsContent">
+            <!-- Overview Report -->
+            <div id="overviewReport" class="report-section active">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-chart-line"></i> Revenue Trend</h2>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-chart-pie"></i> Payment Methods</h2>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="paymentMethodChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-star"></i> Top Products</h2>
+                            </div>
+                            <div id="topProductsList">
+                                <!-- Will be populated by JavaScript -->
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-exclamation-triangle"></i> Stock Alerts</h2>
+                            </div>
+                            <div id="stockAlertsList">
+                                <!-- Will be populated by JavaScript -->
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-warning" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bills Report -->
+            <div id="billsReport" class="report-section">
+                <div class="card">
+                    <div class="section-header">
+                        <h2><i class="fas fa-receipt"></i> Bills Report</h2>
+                        <button class="btn btn-success export-btn" onclick="exportReport('bills')">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                    </div>
+                    
+                    <div class="card-summary">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Bills:</span>
+                                    <span id="totalBillsCount">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Revenue:</span>
+                                    <span id="totalRevenue"><%= shop.currency %> 0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Average Bill:</span>
+                                    <span id="averageBill"><%= shop.currency %> 0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Due:</span>
+                                    <span id="totalDue" class="text-danger"><%= shop.currency %> 0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="chart-container">
+                                <canvas id="billsTrendChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="chart-container">
+                                <canvas id="billsPaymentChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>Detailed Bills</h5>
+                        <div class="table-responsive">
+                            <table class="table" id="billsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Bill #</th>
+                                        <th>Customer</th>
+                                        <th>Phone</th>
+                                        <th>Amount</th>
+                                        <th>Paid</th>
+                                        <th>Due</th>
+                                        <th>Method</th>
+                                        <th>Date</th>
+                                        <th>Created By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Report -->
+            <div id="productsReport" class="report-section">
+                <div class="card">
+                    <div class="section-header">
+                        <h2><i class="fas fa-box"></i> Products Report</h2>
+                        <button class="btn btn-success export-btn" onclick="exportReport('products')">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                    </div>
+
+                    <div class="card-summary">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Products:</span>
+                                    <span id="totalProductsCount">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Active Products:</span>
+                                    <span id="activeProductsCount">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Stock Value:</span>
+                                    <span id="totalStockValue"><%= shop.currency %> 0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Low Stock Items:</span>
+                                    <span id="lowStockCount" class="text-danger">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="chart-container">
+                                <canvas id="productSalesChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="chart-container">
+                                <canvas id="productCategoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card data-card">
+                                <div class="card-body">
+                                    <h6 class="card-title">Top Selling Products</h6>
+                                    <div id="topSellingProducts">
+                                        <!-- Will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card data-card">
+                                <div class="card-body">
+                                    <h6 class="card-title">Recent Stock Movements</h6>
+                                    <div id="stockMovementsList">
+                                        <!-- Will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>Products Inventory</h5>
+                        <div class="table-responsive">
+                            <table class="table" id="productsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Category</th>
+                                        <th>SKU</th>
+                                        <th>Current Stock</th>
+                                        <th>Avg Cost</th>
+                                        <th>Selling Price</th>
+                                        <th>Stock Value</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suppliers Report -->
+            <div id="suppliersReport" class="report-section">
+                <div class="card">
+                    <div class="section-header">
+                        <h2><i class="fas fa-truck"></i> Suppliers Report</h2>
+                        <button class="btn btn-success export-btn" onclick="exportReport('suppliers')">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                    </div>
+
+                    <div class="card-summary">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Suppliers:</span>
+                                    <span id="totalSuppliersCount">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Balance:</span>
+                                    <span id="totalSuppliersBalance"><%= shop.currency %> 0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Debit:</span>
+                                    <span id="totalSuppliersDebit"><%= shop.currency %> 0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Credit:</span>
+                                    <span id="totalSuppliersCredit"><%= shop.currency %> 0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="suppliersBalanceChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="suppliersTypeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>Suppliers Ledger</h5>
+                        <div class="table-responsive">
+                            <table class="table" id="suppliersTable">
+                                <thead>
+                                    <tr>
+                                        <th>Supplier</th>
+                                        <th>Contact</th>
+                                        <th>Type</th>
+                                        <th>Total Debit</th>
+                                        <th>Total Credit</th>
+                                        <th>Balance</th>
+                                        <th>Last Purchase</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>Recent Transactions</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Supplier</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Description</th>
+                                        <th>Created By</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="supplierTransactions">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employees Report -->
+            <div id="employeesReport" class="report-section">
+                <div class="card">
+                    <div class="section-header">
+                        <h2><i class="fas fa-users"></i> Employees Report</h2>
+                        <button class="btn btn-success export-btn" onclick="exportReport('employees')">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                    </div>
+
+                    <div class="card-summary">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Employees:</span>
+                                    <span id="totalEmployeesCount">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Active Employees:</span>
+                                    <span id="activeEmployeesCount">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Salary:</span>
+                                    <span id="totalSalary"><%= shop.currency %> 0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Loans:</span>
+                                    <span id="totalLoans"><%= shop.currency %> 0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="salaryDistributionChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="loanDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>Employees List</h5>
+                        <div class="table-responsive">
+                            <table class="table" id="employeesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Role</th>
+                                        <th>Salary</th>
+                                        <th>Months Paid</th>
+                                        <th>Total Paid</th>
+                                        <th>Loan Balance</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card data-card">
+                                <div class="card-body">
+                                    <h6 class="card-title">Salary by Month</h6>
+                                    <div id="salaryByMonth">
+                                        <!-- Will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card data-card">
+                                <div class="card-body">
+                                    <h6 class="card-title">Loan Summary</h6>
+                                    <div id="loanSummary">
+                                        <!-- Will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Raw Materials Report -->
+            <div id="rawMaterialsReport" class="report-section">
+                <div class="card">
+                    <div class="section-header">
+                        <h2><i class="fas fa-flask"></i> Raw Materials Report</h2>
+                        <button class="btn btn-success export-btn" onclick="exportReport('raw-materials')">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                    </div>
+
+                    <div class="card-summary">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Materials:</span>
+                                    <span id="totalMaterialsCount">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Stock Value:</span>
+                                    <span id="totalMaterialsValue"><%= shop.currency %> 0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Low Stock Items:</span>
+                                    <span id="lowMaterialsCount" class="text-danger">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Total Stock:</span>
+                                    <span id="totalMaterialsStock">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="rawMaterialsStockChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="rawMaterialsCategoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>Raw Materials Inventory</h5>
+                        <div class="table-responsive">
+                            <table class="table" id="rawMaterialsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th>SKU</th>
+                                        <th>Category</th>
+                                        <th>Current Stock</th>
+                                        <th>Min Level</th>
+                                        <th>Max Level</th>
+                                        <th>Cost Price</th>
+                                        <th>Stock Value</th>
+                                        <th>Supplier</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>Stock Movements</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Material</th>
+                                        <th>Type</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Cost</th>
+                                        <th>Total Cost</th>
+                                        <th>Reference</th>
+                                        <th>Batch</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rawMaterialMovements">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Production Report -->
+            <!-- Production Report Section - Updated -->
+            <div id="productionReport" class="report-section">
+                <div class="card">
+                    <div class="section-header">
+                        <h2><i class="fas fa-industry"></i> Production Report</h2>
+                        <button class="btn btn-success export-btn" onclick="exportReport('production')">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                    </div>
+
+                    <div class="card-summary">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Products Sold:</span>
+                                    <span id="totalProductsSold">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Expected Usage:</span>
+                                    <span id="totalExpectedUsage">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Actual Usage:</span>
+                                    <span id="totalActualUsage">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Variance:</span>
+                                    <span id="totalVariance" class="text-danger">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Cost Impact:</span>
+                                    <span id="totalCostImpact" class="text-danger"><%= shop.currency %> 0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Possible Theft Cases:</span>
+                                    <span id="possibleTheftCases" class="text-danger">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Low Stock Items:</span>
+                                    <span id="lowStockIngredients" class="text-warning">0</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-item">
+                                    <span>Variance %:</span>
+                                    <span id="variancePercentage" class="text-danger">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="usageComparisonChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="varianceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Theft Detection Alert -->
+                    <div class="alert alert-danger mt-4" id="theftAlert" style="display: none;">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Theft Detection Alert</h5>
+                        <p id="theftAlertMessage">No theft detected in the selected period.</p>
+                    </div>
+
+                    <!-- Usage vs Expected Table -->
+                    <div class="mt-4">
+                        <h5><i class="fas fa-balance-scale me-2"></i> Usage vs Expected Analysis</h5>
+                        <div class="table-responsive">
+                            <table class="table" id="usageAnalysisTable">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Ingredient</th>
+                                        <th>Units Sold</th>
+                                        <th>Expected Usage</th>
+                                        <th>Actual Usage</th>
+                                        <th>Variance</th>
+                                        <th>Variance %</th>
+                                        <th>Status</th>
+                                        <th>Cost Impact</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Possible Theft Cases -->
+                    <div class="mt-4" id="theftDetectionSection" style="display: none;">
+                        <h5 class="text-danger"><i class="fas fa-user-secret me-2"></i> Possible Theft Cases</h5>
+                        <div class="table-responsive">
+                            <table class="table table-danger">
+                                <thead>
+                                    <tr>
+                                        <th>Ingredient</th>
+                                        <th>Product</th>
+                                        <th>Expected</th>
+                                        <th>Actual</th>
+                                        <th>Missing</th>
+                                        <th>Value</th>
+                                        <th>Confidence</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="theftDetectionTable">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Raw Material Movements -->
+                    <div class="mt-4">
+                        <h5><i class="fas fa-exchange-alt me-2"></i> Raw Material Movements</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Ingredient</th>
+                                        <th>Movement Type</th>
+                                        <th>Reference</th>
+                                        <th>Quantity</th>
+                                        <th>Total Cost</th>
+                                        <th>Transactions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ingredientMovementsTable">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        // Toastr configuration
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+
+        // Global variables
+        let charts = {};
+        let currentReport = 'overview';
+        let reportData = {};
+
+        // Update datetime
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-IN', options);
+        }
+        setInterval(updateDateTime, 60000);
+        updateDateTime();
+
+        // Show report section
+        function showReport(reportType) {
+            currentReport = reportType;
+            
+            // Update active tab
+            document.querySelectorAll('#reportTabs .nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`#reportTabs a[onclick="showReport('${reportType}')"]`).classList.add('active');
+            
+            // Show active section
+            document.querySelectorAll('.report-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(reportType + 'Report').classList.add('active');
+            
+            // Load report data
+            loadReportData(reportType);
+        }
+
+        // Apply filters
+        // Apply filters
+        function applyFilters() {
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const reportType = document.getElementById('reportType').value;
+            
+            // Update URL without reloading page
+            const url = new URL(window.location);
+            url.searchParams.set('fromDate', fromDate);
+            url.searchParams.set('toDate', toDate);
+            url.searchParams.set('type', reportType);
+            window.history.pushState({}, '', url);
+            
+            // Reload the current report
+            loadReportData(currentReport);
+        }
+
+        function resetFilters() {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            document.getElementById('fromDate').value = firstDay.toISOString().slice(0, 10);
+            document.getElementById('toDate').value = today.toISOString().slice(0, 10);
+            document.getElementById('reportType').value = 'monthly';
+        }
+
+        // Load report data
+        async function loadReportData(reportType) {
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const type = document.getElementById('reportType').value;
+
+            try {
+                const response = await fetch(`/reports/${reportType}?fromDate=${fromDate}&toDate=${toDate}&type=${type}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    reportData[reportType] = data;
+                    renderReport(reportType, data);
+                } else {
+                    toastr.error(data.message || 'Failed to load report data');
+                }
+            } catch (error) {
+                console.error('Error loading report:', error);
+                toastr.error('Error loading report data');
+            }
+        }
+
+        // Render report
+        function renderReport(reportType, data) {
+            switch(reportType) {
+                case 'overview':
+                    renderOverview(data);
+                    break;
+                case 'bills':
+                    renderBillsReport(data);
+                    break;
+                case 'products':
+                    renderProductsReport(data);
+                    break;
+                case 'suppliers':
+                    renderSuppliersReport(data);
+                    break;
+                case 'employees':
+                    renderEmployeesReport(data);
+                    break;
+                case 'raw-materials':
+                    renderRawMaterialsReport(data);
+                    break;
+                case 'production':
+                    renderProductionReport(data);
+                    break;
+            }
+        }
+
+        // Overview report
+        function renderOverview(data) {
+            // Revenue Trend Chart
+            if (charts.revenueChart) charts.revenueChart.destroy();
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            charts.revenueChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: data.revenueTrend.map(item => item.period),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: data.revenueTrend.map(item => item.revenue || 0),
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return shopData.currency + ' ' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Payment Methods Chart
+            if (charts.paymentMethodChart) charts.paymentMethodChart.destroy();
+            const paymentCtx = document.getElementById('paymentMethodChart').getContext('2d');
+            charts.paymentMethodChart = new Chart(paymentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.paymentMethods ? data.paymentMethods.map(item => item.method) : [],
+                    datasets: [{
+                        data: data.paymentMethods ? data.paymentMethods.map(item => item.totalAmount || 0) : [],
+                        backgroundColor: [
+                            '#4e73df',
+                            '#1cc88a',
+                            '#f6c23e',
+                            '#e74a3b',
+                            '#36b9cc'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Top Products
+            const topProductsHtml = data.topProducts ? data.topProducts.map(product => `
+                <div class="summary-item">
+                    <span>${escapeHtml(product.name)}</span>
+                    <span>${shopData.currency} ${Number(product.revenue || 0).toFixed(2)}</span>
+                </div>
+            `).join('') : '<p class="text-muted">No data available</p>';
+            document.getElementById('topProductsList').innerHTML = topProductsHtml;
+
+            // Stock Alerts
+            const stockAlertsHtml = data.stockAlerts ? data.stockAlerts.map(alert => `
+                <div class="summary-item">
+                    <span>${escapeHtml(alert.name)}</span>
+                    <span class="badge ${alert.status === 'Low' ? 'bg-danger' : 'bg-warning'}">
+                        ${alert.current_quantity} / ${alert.min_stock_level}
+                    </span>
+                </div>
+            `).join('') : '<p class="text-muted">No stock alerts</p>';
+            document.getElementById('stockAlertsList').innerHTML = stockAlertsHtml;
+        }
+
+        // Bills report
+        function renderBillsReport(data) {
+            // Update summary
+            document.getElementById('totalBillsCount').textContent = data.summary.totalBills;
+            document.getElementById('totalRevenue').textContent = shopData.currency + ' ' + Number(data.summary.totalRevenue).toFixed(2);
+            document.getElementById('averageBill').textContent = shopData.currency + ' ' + (data.summary.totalBills > 0 ? (data.summary.totalRevenue / data.summary.totalBills).toFixed(2) : '0.00');
+            document.getElementById('totalDue').textContent = shopData.currency + ' ' + Number(data.summary.totalDue).toFixed(2);
+
+            // Bills Trend Chart
+            if (charts.billsTrendChart) charts.billsTrendChart.destroy();
+            const trendCtx = document.getElementById('billsTrendChart').getContext('2d');
+            charts.billsTrendChart = new Chart(trendCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.billsByDate.map(item => item.period),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: data.billsByDate.map(item => item.totalRevenue || 0),
+                        backgroundColor: '#4e73df'
+                    }, {
+                        label: 'Bills',
+                        data: data.billsByDate.map(item => item.billCount || 0),
+                        backgroundColor: '#1cc88a',
+                        type: 'line',
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Revenue'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return shopData.currency + ' ' + value;
+                                }
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Number of Bills'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Payment Methods Chart
+            if (charts.billsPaymentChart) charts.billsPaymentChart.destroy();
+            const billsPaymentCtx = document.getElementById('billsPaymentChart').getContext('2d');
+            charts.billsPaymentChart = new Chart(billsPaymentCtx, {
+                type: 'pie',
+                data: {
+                    labels: data.paymentMethods.map(item => item.method),
+                    datasets: [{
+                        data: data.paymentMethods.map(item => item.totalAmount || 0),
+                        backgroundColor: [
+                            '#4e73df',
+                            '#1cc88a',
+                            '#f6c23e',
+                            '#e74a3b',
+                            '#36b9cc'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Bills Table
+            const billsHtml = data.bills.map(bill => `
+                <tr>
+                    <td>${escapeHtml(bill.bill_number)}</td>
+                    <td>${escapeHtml(bill.customer_name || 'Walk-in')}</td>
+                    <td>${escapeHtml(bill.customer_phone || 'N/A')}</td>
+                    <td>${shopData.currency} ${Number(bill.total_amount).toFixed(2)}</td>
+                    <td>${shopData.currency} ${Number(bill.paid_amount).toFixed(2)}</td>
+                    <td class="${bill.due_amount > 0 ? 'text-danger' : 'text-success'}">
+                        ${shopData.currency} ${Number(bill.due_amount).toFixed(2)}
+                    </td>
+                    <td><span class="badge bg-info">${escapeHtml(bill.payment_method || 'Cash')}</span></td>
+                    <td>${bill.bill_date}</td>
+                    <td>${escapeHtml(bill.created_by || 'System')}</td>
+                </tr>
+            `).join('');
+            document.querySelector('#billsTable tbody').innerHTML = billsHtml || '<tr><td colspan="9" class="text-center">No bills found</td></tr>';
+        }
+
+        // Products report
+        function renderProductsReport(data) {
+            // Update summary
+            document.getElementById('totalProductsCount').textContent = data.summary.totalProducts;
+            document.getElementById('activeProductsCount').textContent = data.products.filter(p => p.status === 'active').length;
+            document.getElementById('totalStockValue').textContent = shopData.currency + ' ' + Number(data.summary.totalStockValue).toFixed(2);
+            document.getElementById('lowStockCount').textContent = data.summary.lowStockCount;
+
+            // Product Sales Chart
+            if (charts.productSalesChart) charts.productSalesChart.destroy();
+            if (data.productSales && data.productSales.length > 0) {
+                const salesCtx = document.getElementById('productSalesChart').getContext('2d');
+                charts.productSalesChart = new Chart(salesCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.productSales.slice(0, 10).map(item => item.name),
+                        datasets: [{
+                            label: 'Revenue',
+                            data: data.productSales.slice(0, 10).map(item => item.total_revenue || 0),
+                            backgroundColor: '#4e73df'
+                        }, {
+                            label: 'Quantity Sold',
+                            data: data.productSales.slice(0, 10).map(item => item.total_quantity || 0),
+                            backgroundColor: '#1cc88a',
+                            type: 'line',
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Revenue'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return shopData.currency + ' ' + value;
+                                    }
+                                }
+                            },
+                            y1: {
+                                beginAtZero: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'Quantity'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Product Category Chart
+            if (charts.productCategoryChart) charts.productCategoryChart.destroy();
+            const categories = {};
+            data.products.forEach(product => {
+                const category = product.category || 'Uncategorized';
+                categories[category] = (categories[category] || 0) + 1;
+            });
+
+            const categoryCtx = document.getElementById('productCategoryChart').getContext('2d');
+            charts.productCategoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categories),
+                    datasets: [{
+                        data: Object.values(categories),
+                        backgroundColor: Object.keys(categories).map((_, i) => 
+                            ['#4e73df', '#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc'][i % 5]
+                        )
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Top Selling Products
+            const topSellingHtml = data.productSales.slice(0, 5).map(product => `
+                <div class="summary-item">
+                    <span>${escapeHtml(product.name)}</span>
+                    <span>${product.total_quantity} units</span>
+                    <span>${shopData.currency} ${Number(product.total_revenue).toFixed(2)}</span>
+                </div>
+            `).join('');
+            document.getElementById('topSellingProducts').innerHTML = topSellingHtml || '<p class="text-muted">No sales data</p>';
+
+            // Stock Movements
+            const movementsHtml = data.stockMovements.slice(0, 5).map(movement => `
+                <div class="summary-item">
+                    <span>${escapeHtml(movement.product_name)}</span>
+                    <span>${movement.quantity}</span>
+                    <span>${shopData.currency} ${Number(movement.unit_price).toFixed(2)}</span>
+                    <span>${movement.received_date}</span>
+                </div>
+            `).join('');
+            document.getElementById('stockMovementsList').innerHTML = movementsHtml || '<p class="text-muted">No stock movements</p>';
+
+            // Products Table
+            const productsHtml = data.products.map(product => `
+                <tr>
+                    <td>
+                        <strong>${escapeHtml(product.name)}</strong>
+                        ${product.brand ? `<br><small class="text-muted">${escapeHtml(product.brand)}</small>` : ''}
+                    </td>
+                    <td>${escapeHtml(product.category || 'Uncategorized')}</td>
+                    <td>${escapeHtml(product.sku || 'N/A')}</td>
+                    <td>
+                        <span class="badge ${product.current_quantity <= 5 ? 'bg-danger' : 'bg-success'}">
+                            ${product.current_quantity}
+                        </span>
+                    </td>
+                    <td>${shopData.currency} ${Number(product.avg_cost || 0).toFixed(2)}</td>
+                    <td>${shopData.currency} ${Number(product.selling_price || 0).toFixed(2)}</td>
+                    <td>${shopData.currency} ${Number(product.stock_value || 0).toFixed(2)}</td>
+                    <td>
+                        <span class="badge ${product.status === 'active' ? 'bg-success' : 'bg-secondary'}">
+                            ${product.status}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick="viewProductLedger('${product.id}')">
+                            <i class="fas fa-history"></i> Ledger
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            document.querySelector('#productsTable tbody').innerHTML = productsHtml || '<tr><td colspan="9" class="text-center">No products found</td></tr>';
+        }
+
+        // Suppliers report
+        function renderSuppliersReport(data) {
+            // Update summary
+            document.getElementById('totalSuppliersCount').textContent = data.summary.totalSuppliers;
+            document.getElementById('totalSuppliersBalance').textContent = shopData.currency + ' ' + Number(data.summary.totalBalance).toFixed(2);
+            document.getElementById('totalSuppliersDebit').textContent = shopData.currency + ' ' + Number(data.summary.totalDebit).toFixed(2);
+            document.getElementById('totalSuppliersCredit').textContent = shopData.currency + ' ' + Number(data.summary.totalCredit).toFixed(2);
+
+            // Suppliers Balance Chart
+            if (charts.suppliersBalanceChart) charts.suppliersBalanceChart.destroy();
+            const balanceCtx = document.getElementById('suppliersBalanceChart').getContext('2d');
+            const topSuppliers = data.suppliers.slice(0, 10).filter(s => Math.abs(s.balance) > 0);
+            
+            if (topSuppliers.length > 0) {
+                charts.suppliersBalanceChart = new Chart(balanceCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topSuppliers.map(item => item.name.substring(0, 15)),
+                        datasets: [{
+                            label: 'Balance',
+                            data: topSuppliers.map(item => item.balance || 0),
+                            backgroundColor: topSuppliers.map(item => item.balance >= 0 ? '#1cc88a' : '#e74a3b')
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return shopData.currency + ' ' + value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Suppliers Type Chart
+            if (charts.suppliersTypeChart) charts.suppliersTypeChart.destroy();
+            const supplierTypes = {};
+            data.suppliers.forEach(supplier => {
+                const type = supplier.type || 'both';
+                supplierTypes[type] = (supplierTypes[type] || 0) + 1;
+            });
+
+            const typeCtx = document.getElementById('suppliersTypeChart').getContext('2d');
+            charts.suppliersTypeChart = new Chart(typeCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(supplierTypes).map(key => key.charAt(0).toUpperCase() + key.slice(1)),
+                    datasets: [{
+                        data: Object.values(supplierTypes),
+                        backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Suppliers Table
+            const suppliersHtml = data.suppliers.map(supplier => `
+                <tr>
+                    <td>
+                        <strong>${escapeHtml(supplier.name)}</strong>
+                        ${supplier.contact_person ? `<br><small>${escapeHtml(supplier.contact_person)}</small>` : ''}
+                    </td>
+                    <td>
+                        ${supplier.phone ? escapeHtml(supplier.phone) : ''}
+                        ${supplier.email ? `<br><small>${escapeHtml(supplier.email)}</small>` : ''}
+                    </td>
+                    <td><span class="badge bg-info">${escapeHtml(supplier.type || 'both')}</span></td>
+                    <td>${shopData.currency} ${Number(supplier.total_debit || 0).toFixed(2)}</td>
+                    <td>${shopData.currency} ${Number(supplier.total_credit || 0).toFixed(2)}</td>
+                    <td class="${supplier.balance >= 0 ? 'text-success' : 'text-danger'}">
+                        ${shopData.currency} ${Number(supplier.balance || 0).toFixed(2)}
+                    </td>
+                    <td>${data.purchaseSummary.find(p => p.supplier_name === supplier.name)?.last_purchase?.slice(0, 10) || 'Never'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick="viewSupplierLedger('${supplier.id}')">
+                            <i class="fas fa-history"></i> Ledger
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            document.querySelector('#suppliersTable tbody').innerHTML = suppliersHtml || '<tr><td colspan="8" class="text-center">No suppliers found</td></tr>';
+
+            // Supplier Transactions
+            const transactionsHtml = data.transactions.slice(0, 10).map(transaction => `
+                <tr>
+                    <td>${transaction.transaction_date}</td>
+                    <td>${escapeHtml(transaction.supplier_name)}</td>
+                    <td>
+                        <span class="badge ${transaction.type === 'credit' ? 'bg-success' : 'bg-danger'}">
+                            ${transaction.type}
+                        </span>
+                    </td>
+                    <td>${shopData.currency} ${Number(transaction.amount).toFixed(2)}</td>
+                    <td>${escapeHtml(transaction.description || '')}</td>
+                    <td>${escapeHtml(transaction.created_by || 'System')}</td>
+                </tr>
+            `).join('');
+            document.getElementById('supplierTransactions').innerHTML = transactionsHtml || '<tr><td colspan="6" class="text-center">No transactions found</td></tr>';
+        }
+
+        // Employees report
+        function renderEmployeesReport(data) {
+            // Update summary
+            document.getElementById('totalEmployeesCount').textContent = data.summary.totalEmployees;
+            document.getElementById('activeEmployeesCount').textContent = data.summary.activeEmployees;
+            document.getElementById('totalSalary').textContent = shopData.currency + ' ' + Number(data.summary.totalSalary).toFixed(2);
+            document.getElementById('totalLoans').textContent = shopData.currency + ' ' + Number(data.summary.totalLoans).toFixed(2);
+
+            // Salary Distribution Chart
+            if (charts.salaryDistributionChart) charts.salaryDistributionChart.destroy();
+            const salaryCtx = document.getElementById('salaryDistributionChart').getContext('2d');
+            
+            const salaryRanges = {
+                'Below 20k': 0,
+                '20k - 50k': 0,
+                '50k - 100k': 0,
+                'Above 100k': 0
+            };
+
+            data.employees.forEach(employee => {
+                const salary = employee.salary || 0;
+                if (salary < 20000) salaryRanges['Below 20k']++;
+                else if (salary <= 50000) salaryRanges['20k - 50k']++;
+                else if (salary <= 100000) salaryRanges['50k - 100k']++;
+                else salaryRanges['Above 100k']++;
+            });
+
+            charts.salaryDistributionChart = new Chart(salaryCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(salaryRanges),
+                    datasets: [{
+                        label: 'Number of Employees',
+                        data: Object.values(salaryRanges),
+                        backgroundColor: '#4e73df'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Loan Distribution Chart
+            if (charts.loanDistributionChart) charts.loanDistributionChart.destroy();
+            const loanCtx = document.getElementById('loanDistributionChart').getContext('2d');
+            const employeesWithLoans = data.employees.filter(e => e.total_loan_balance > 0);
+            
+            if (employeesWithLoans.length > 0) {
+                charts.loanDistributionChart = new Chart(loanCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: employeesWithLoans.map(item => item.name),
+                        datasets: [{
+                            data: employeesWithLoans.map(item => item.total_loan_balance),
+                            backgroundColor: employeesWithLoans.map((_, i) => 
+                                ['#4e73df', '#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc'][i % 5]
+                            )
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // Employees Table
+            const employeesHtml = data.employees.map(employee => `
+                <tr>
+                    <td>
+                        <strong>${escapeHtml(employee.name)}</strong>
+                        ${employee.email ? `<br><small>${escapeHtml(employee.email)}</small>` : ''}
+                    </td>
+                    <td>${escapeHtml(employee.role || 'Employee')}</td>
+                    <td>${shopData.currency} ${Number(employee.salary || 0).toFixed(2)}</td>
+                    <td>${employee.salary_months || 0}</td>
+                    <td>${shopData.currency} ${Number(employee.total_salary_paid || 0).toFixed(2)}</td>
+                    <td class="${employee.total_loan_balance > 0 ? 'text-danger' : 'text-success'}">
+                        ${shopData.currency} ${Number(employee.total_loan_balance || 0).toFixed(2)}
+                    </td>
+                    <td>
+                        <span class="badge ${employee.status === 'active' ? 'bg-success' : 'bg-secondary'}">
+                            ${employee.status}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick="viewEmployeeLedger('${employee.id}')">
+                            <i class="fas fa-history"></i> Ledger
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            document.querySelector('#employeesTable tbody').innerHTML = employeesHtml || '<tr><td colspan="8" class="text-center">No employees found</td></tr>';
+
+            // Salary by Month
+            const salaryByMonthHtml = data.salaryByMonth.map(month => `
+                <div class="summary-item">
+                    <span>${month.month}</span>
+                    <span>${shopData.currency} ${Number(month.net_salary || 0).toFixed(2)}</span>
+                    <span>${month.employee_count} employees</span>
+                </div>
+            `).join('');
+            document.getElementById('salaryByMonth').innerHTML = salaryByMonthHtml || '<p class="text-muted">No salary data</p>';
+
+            // Loan Summary
+            const loanSummaryHtml = data.loanSummary.map(loan => `
+                <div class="summary-item">
+                    <span>${escapeHtml(loan.employee_name)}</span>
+                    <span>${shopData.currency} ${Number(loan.total_balance || 0).toFixed(2)}</span>
+                    <span>${loan.active_loans} loans</span>
+                </div>
+            `).join('');
+            document.getElementById('loanSummary').innerHTML = loanSummaryHtml || '<p class="text-muted">No active loans</p>';
+        }
+
+        // Raw Materials report
+        function renderRawMaterialsReport(data) {
+            // Update summary
+            document.getElementById('totalMaterialsCount').textContent = data.summary.totalMaterials;
+            document.getElementById('totalMaterialsValue').textContent = shopData.currency + ' ' + Number(data.summary.totalStockValue).toFixed(2);
+            document.getElementById('lowMaterialsCount').textContent = data.summary.lowStockCount;
+            document.getElementById('totalMaterialsStock').textContent = data.rawMaterials.reduce((sum, rm) => sum + (rm.current_stock || 0), 0).toFixed(2);
+
+            // Raw Materials Stock Chart
+            if (charts.rawMaterialsStockChart) charts.rawMaterialsStockChart.destroy();
+            const stockCtx = document.getElementById('rawMaterialsStockChart').getContext('2d');
+            const topMaterials = data.rawMaterials.slice(0, 10);
+            
+            charts.rawMaterialsStockChart = new Chart(stockCtx, {
+                type: 'bar',
+                data: {
+                    labels: topMaterials.map(item => item.name.substring(0, 15)),
+                    datasets: [{
+                        label: 'Current Stock',
+                        data: topMaterials.map(item => item.current_stock || 0),
+                        backgroundColor: '#4e73df'
+                    }, {
+                        label: 'Min Level',
+                        data: topMaterials.map(item => item.min_stock_level || 0),
+                        backgroundColor: '#e74a3b',
+                        type: 'line'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Raw Materials Category Chart
+            if (charts.rawMaterialsCategoryChart) charts.rawMaterialsCategoryChart.destroy();
+            const categories = {};
+            data.rawMaterials.forEach(material => {
+                const category = material.category || 'Uncategorized';
+                categories[category] = (categories[category] || 0) + 1;
+            });
+
+            const categoryCtx = document.getElementById('rawMaterialsCategoryChart').getContext('2d');
+            charts.rawMaterialsCategoryChart = new Chart(categoryCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(categories),
+                    datasets: [{
+                        data: Object.values(categories),
+                        backgroundColor: Object.keys(categories).map((_, i) => 
+                            ['#4e73df', '#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc'][i % 5]
+                        )
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Raw Materials Table
+            const materialsHtml = data.rawMaterials.map(material => `
+                <tr>
+                    <td>${escapeHtml(material.name)}</td>
+                    <td>${escapeHtml(material.sku || 'N/A')}</td>
+                    <td>${escapeHtml(material.category || 'Uncategorized')}</td>
+                    <td>
+                        <span class="badge ${material.current_stock <= material.min_stock_level ? 'bg-danger' : 'bg-success'}">
+                            ${material.current_stock} ${material.unit_of_measure}
+                        </span>
+                    </td>
+                    <td>${material.min_stock_level}</td>
+                    <td>${material.max_stock_level}</td>
+                    <td>${shopData.currency} ${Number(material.cost_price || 0).toFixed(2)}</td>
+                    <td>${shopData.currency} ${Number(material.stock_value || 0).toFixed(2)}</td>
+                    <td>${escapeHtml(material.supplier_name || 'N/A')}</td>
+                    <td>
+                        <span class="badge ${material.batch_tracking ? 'bg-info' : 'bg-secondary'}">
+                            ${material.batch_tracking ? 'Batch Tracked' : 'Regular'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+            document.querySelector('#rawMaterialsTable tbody').innerHTML = materialsHtml || '<tr><td colspan="10" class="text-center">No raw materials found</td></tr>';
+
+            // Stock Movements
+            const movementsHtml = data.stockMovements.slice(0, 10).map(movement => `
+                <tr>
+                    <td>${movement.movement_date}</td>
+                    <td>${escapeHtml(movement.material_name)}</td>
+                    <td>
+                        <span class="badge ${movement.movement_type === 'in' ? 'bg-success' : movement.movement_type === 'out' ? 'bg-danger' : 'bg-warning'}">
+                            ${movement.movement_type}
+                        </span>
+                    </td>
+                    <td>${movement.quantity}</td>
+                    <td>${shopData.currency} ${Number(movement.unit_cost || 0).toFixed(2)}</td>
+                    <td>${shopData.currency} ${Number(movement.total_cost || 0).toFixed(2)}</td>
+                    <td>${movement.reference_type}</td>
+                    <td>${escapeHtml(movement.batch_number || 'N/A')}</td>
+                </tr>
+            `).join('');
+            document.getElementById('rawMaterialMovements').innerHTML = movementsHtml || '<tr><td colspan="8" class="text-center">No stock movements</td></tr>';
+        }
+
+        // Production report
+        // Production report
+        function renderProductionReport(data) {
+            // Update summary
+            document.getElementById('totalProductsSold').textContent = data.summary.totalProductsSold;
+            document.getElementById('totalExpectedUsage').textContent = data.summary.totalExpectedUsage.toFixed(2);
+            document.getElementById('totalActualUsage').textContent = data.summary.totalActualUsage.toFixed(2);
+            document.getElementById('totalVariance').textContent = data.summary.totalVariance.toFixed(2);
+            document.getElementById('totalCostImpact').textContent = shopData.currency + ' ' + Math.abs(data.summary.totalCostImpact).toFixed(2);
+            document.getElementById('possibleTheftCases').textContent = data.summary.possibleTheftCases;
+            document.getElementById('lowStockIngredients').textContent = data.summary.lowStockIngredients;
+            document.getElementById('variancePercentage').textContent = data.summary.variancePercentage.toFixed(1) + '%';
+
+            // Show/hide theft alert
+            const theftAlert = document.getElementById('theftAlert');
+            const theftDetectionSection = document.getElementById('theftDetectionSection');
+            
+            if (data.summary.possibleTheftCases > 0) {
+                theftAlert.style.display = 'block';
+                theftDetectionSection.style.display = 'block';
+                document.getElementById('theftAlertMessage').textContent = 
+                    `Warning: ${data.summary.possibleTheftCases} possible theft cases detected. Missing raw materials worth ${shopData.currency} ${Math.abs(data.summary.totalCostImpact).toFixed(2)}`;
+            } else {
+                theftAlert.style.display = 'none';
+                theftDetectionSection.style.display = 'none';
+            }
+
+            // Usage Comparison Chart
+            if (charts.usageComparisonChart) charts.usageComparisonChart.destroy();
+            if (data.expectedUsage.length > 0) {
+                const usageCtx = document.getElementById('usageComparisonChart').getContext('2d');
+                const topItems = data.expectedUsage.slice(0, 10);
+                
+                charts.usageComparisonChart = new Chart(usageCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topItems.map(item => item.ingredient.substring(0, 15)),
+                        datasets: [{
+                            label: 'Expected Usage',
+                            data: topItems.map(item => item.expected_usage),
+                            backgroundColor: '#4e73df'
+                        }, {
+                            label: 'Actual Usage',
+                            data: topItems.map(item => item.actual_usage),
+                            backgroundColor: '#1cc88a'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Quantity'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Variance Chart
+            if (charts.varianceChart) charts.varianceChart.destroy();
+            if (data.varianceAnalysis.length > 0) {
+                const varianceCtx = document.getElementById('varianceChart').getContext('2d');
+                const topVariances = data.varianceAnalysis.slice(0, 10);
+                
+                charts.varianceChart = new Chart(varianceCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topVariances.map(item => item.ingredient.substring(0, 15)),
+                        datasets: [{
+                            label: 'Variance %',
+                            data: topVariances.map(item => item.variance_percentage),
+                            backgroundColor: topVariances.map(item => 
+                                item.variance_percentage > 20 ? '#e74a3b' : 
+                                item.variance_percentage > 10 ? '#f6c23e' : 
+                                item.variance_percentage < -20 ? '#dc3545' : 
+                                item.variance_percentage < -10 ? '#fd7e14' : '#1cc88a'
+                            )
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Variance %'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Usage Analysis Table
+            const usageHtml = data.expectedUsage.map(item => `
+                <tr class="${item.status === 'possible_theft' ? 'table-danger' : item.status === 'excess_usage' ? 'table-warning' : ''}">
+                    <td>${escapeHtml(item.product)}</td>
+                    <td>${escapeHtml(item.ingredient)}</td>
+                    <td>${item.units_sold}</td>
+                    <td>${item.expected_usage.toFixed(2)}</td>
+                    <td>${item.actual_usage.toFixed(2)}</td>
+                    <td class="${item.variance > 0 ? 'text-success' : 'text-danger'}">
+                        ${item.variance.toFixed(2)}
+                    </td>
+                    <td class="${Math.abs(item.variance_percentage) > 20 ? 'text-danger' : Math.abs(item.variance_percentage) > 10 ? 'text-warning' : 'text-success'}">
+                        ${item.variance_percentage.toFixed(1)}%
+                    </td>
+                    <td>
+                        <span class="badge ${item.status === 'normal' ? 'bg-success' : item.status === 'excess_usage' ? 'bg-warning' : 'bg-danger'}">
+                            ${item.status.replace('_', ' ')}
+                        </span>
+                    </td>
+                    <td class="${item.variance > 0 ? 'text-success' : 'text-danger'}">
+                        ${shopData.currency} ${(item.variance * item.cost || 0).toFixed(2)}
+                    </td>
+                </tr>
+            `).join('');
+            document.querySelector('#usageAnalysisTable tbody').innerHTML = usageHtml || '<tr><td colspan="9" class="text-center">No usage data found</td></tr>';
+
+            // Theft Detection Table
+            const theftHtml = data.theftDetection.map(item => `
+                <tr>
+                    <td>${escapeHtml(item.ingredient)}</td>
+                    <td>${escapeHtml(item.product)}</td>
+                    <td>${item.expected_usage.toFixed(2)}</td>
+                    <td>${item.actual_usage.toFixed(2)}</td>
+                    <td class="text-danger">${item.missing_amount.toFixed(2)}</td>
+                    <td class="text-danger">${shopData.currency} ${item.estimated_value.toFixed(2)}</td>
+                    <td>
+                        <span class="badge ${item.confidence === 'high' ? 'bg-danger' : 'bg-warning'}">
+                            ${item.confidence}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+            document.querySelector('#theftDetectionTable').innerHTML = theftHtml || '<tr><td colspan="7" class="text-center">No theft cases detected</td></tr>';
+
+            // Ingredient Movements Table
+            const movementsHtml = data.ingredientMovements.map(movement => `
+                <tr>
+                    <td>${escapeHtml(movement.ingredient_name)}</td>
+                    <td>
+                        <span class="badge ${movement.movement_type === 'in' ? 'bg-success' : 'bg-danger'}">
+                            ${movement.movement_type}
+                        </span>
+                    </td>
+                    <td>${escapeHtml(movement.reference_type)}</td>
+                    <td>${movement.total_quantity.toFixed(2)}</td>
+                    <td>${shopData.currency} ${movement.total_cost.toFixed(2)}</td>
+                    <td>${movement.transaction_count}</td>
+                </tr>
+            `).join('');
+            document.querySelector('#ingredientMovementsTable').innerHTML = movementsHtml || '<tr><td colspan="6" class="text-center">No movements found</td></tr>';
+        }
+
+                
+        // Export report
+        async function exportReport(reportType) {
+            try {
+                const response = await fetch(`/reports/download/${reportType}?fromDate=${document.getElementById('fromDate').value}&toDate=${document.getElementById('toDate').value}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${reportType}-report-${new Date().toISOString().slice(0,10)}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    toastr.error('Failed to export report');
+                }
+            } catch (error) {
+                console.error('Error exporting report:', error);
+                toastr.error('Error exporting report');
+            }
+        }
+
+        // View individual ledgers
+        async function viewProductLedger(productId) {
+            try {
+                const response = await fetch(`/products/${productId}/ledger`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Open ledger in modal or new tab
+                    const ledgerWindow = window.open('', '_blank');
+                    ledgerWindow.document.write(`
+                        <html>
+                        <head>
+                            <title>Product Ledger</title>
+                            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                            <style>
+                                body { padding: 20px; }
+                                .table th { background: #f8f9fc; }
+                            </style>
+                        </head>
+                        <body>
+                            <h3>Stock Ledger: ${escapeHtml(data.product.name)}</h3>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Batch</th>
+                                            <th>Quantity</th>
+                                            <th>Buying Price</th>
+                                            <th>Selling Price</th>
+                                            <th>Total Value</th>
+                                            <th>Supplier</th>
+                                            <th>Received By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${data.ledger.map(entry => `
+                                            <tr>
+                                                <td>${new Date(entry.date_added).toLocaleDateString()}</td>
+                                                <td>${escapeHtml(entry.batch_number || 'N/A')}</td>
+                                                <td>${entry.quantity}</td>
+                                                <td>${shopData.currency} ${Number(entry.buying_price).toFixed(2)}</td>
+                                                <td>${shopData.currency} ${Number(entry.selling_price).toFixed(2)}</td>
+                                                <td>${shopData.currency} ${Number(entry.total_value).toFixed(2)}</td>
+                                                <td>${escapeHtml(entry.supplier_name || 'N/A')}</td>
+                                                <td>${escapeHtml(entry.received_by || 'System')}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button class="btn btn-primary mt-3" onclick="window.print()">Print</button>
+                        </body>
+                        </html>
+                    `);
+                }
+            } catch (error) {
+                console.error('Error loading ledger:', error);
+                toastr.error('Error loading ledger');
+            }
+        }
+
+        async function viewSupplierLedger(supplierId) {
+            try {
+                const response = await fetch(`/suppliers/${supplierId}/ledger`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Similar implementation for supplier ledger
+                    // You can create a similar modal or new window
+                }
+            } catch (error) {
+                console.error('Error loading supplier ledger:', error);
+                toastr.error('Error loading supplier ledger');
+            }
+        }
+
+        async function viewEmployeeLedger(employeeId) {
+            try {
+                const response = await fetch(`/employees/${employeeId}/ledger`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Similar implementation for employee ledger
+                }
+            } catch (error) {
+                console.error('Error loading employee ledger:', error);
+                toastr.error('Error loading employee ledger');
+            }
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load initial report
+            loadReportData('overview');
+            
+            // Add event listeners for chart resizing
+            window.addEventListener('resize', function() {
+                Object.values(charts).forEach(chart => {
+                    if (chart) chart.resize();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
