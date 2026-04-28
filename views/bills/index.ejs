@@ -24,7 +24,7 @@
         }
 
         .dashboard-container {
-            padding: 20px;
+            padding: 80px 20px;
             background-color: #f5f7fa;
             min-height: calc(100vh - 70px);
         }
@@ -534,24 +534,7 @@
                             </div>
                         </div>
 
-<<<<<<< HEAD
-                        <div class="transaction-summary">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Subtotal (Sales):</span>
-                                <span id="summarySalesSubtotal"><%= shop.currency || '₹' %>0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Subtotal (Returns):</span>
-                                <span id="summaryReturnsSubtotal"><%= shop.currency || '₹' %>0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Total Discount:</span>
-                                <span id="summaryDiscount">-<%= shop.currency || '₹' %>0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Total Tax:</span>
-                                <span id="summaryTax"><%= shop.currency || '₹' %>0.00</span>
-=======
+
                         <!-- Summary Section - Update this part -->
                         <div class="transaction-summary">
                             <div class="d-flex justify-content-between mb-2">
@@ -569,27 +552,11 @@
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Total Tax:</span>
                                 <span id="summaryTax"><%= shop.currency || 'PKR' %>0.00</span>
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
                                 <span>Net Amount:</span>
-<<<<<<< HEAD
-                                <span id="summaryTotal"><%= shop.currency || '₹' %>0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Amount Paid:</span>
-                                <span id="summaryPaid"><%= shop.currency || '₹' %>0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between fw-bold text-success" id="changeSection">
-                                <span>Change:</span>
-                                <span id="summaryChange"><%= shop.currency || '₹' %>0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between fw-bold text-danger" id="refundSection" style="display: none;">
-                                <span>Refund Due:</span>
-                                <span id="summaryRefund"><%= shop.currency || '₹' %>0.00</span>
-                            </div>
-=======
+
                                 <span id="summaryTotal"><%= shop.currency || 'PKR' %>0.00</span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
@@ -608,7 +575,6 @@
                                 <span>Refund Due:</span>
                                 <span id="summaryRefund"><%= shop.currency || 'PKR' %>0.00</span>
                             </div> -->
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
                         </div>
 
                         <!-- Action Buttons -->
@@ -727,28 +693,16 @@
                     </div>
 
                     <!-- Return with Bill Section -->
-<<<<<<< HEAD
-                    <div id="returnWithBillSection" style="display: none;">
-                        <div class="mb-3">
-                            <label class="form-label">Search Customer Bills</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="customerSearch" placeholder="Enter customer name or phone">
-=======
-                    <!-- Return with Bill Section -->
                     <div id="returnWithBillSection" style="display: none;">
                         <div class="mb-3">
                             <label class="form-label">Search by Customer or Bill Number</label>
                             <div class="input-group">
                                 <input type="text" class="form-control" id="customerSearch" placeholder="Enter customer name, phone, or bill number (e.g., INV-2026-3155)">
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
                                 <button class="btn btn-outline-primary" type="button" id="searchCustomerBillsBtn">
                                     <i class="fas fa-search"></i> Search
                                 </button>
                             </div>
-<<<<<<< HEAD
-=======
                             <small class="text-muted">You can search by customer name, phone number, or bill number</small>
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
                         </div>
 
                         <div id="customerBillsResults" style="display: none;">
@@ -1179,39 +1133,12 @@ function removeItem(index) {
         showToast('Item removed from transaction', 'success');
     }
 }
-
-<<<<<<< HEAD
 function updateSummary() {
-=======
 
-function updateSummary() {
-    console.log('updateSummary called');
-    
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
     if (!Array.isArray(window.transactionItems)) {
         window.transactionItems = [];
     }
 
-<<<<<<< HEAD
-    const salesSubtotal = window.transactionItems
-        .filter(item => item.type === 'sale')
-        .reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-    const returnsSubtotal = window.transactionItems
-        .filter(item => item.type === 'return')
-        .reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-    const totalDiscount = window.transactionItems.reduce((sum, item) => sum + item.discount, 0);
-    const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
-    const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
-
-    const netAmount = salesSubtotal - returnsSubtotal - totalDiscount + taxAmount;
-    const change = paymentAmount - netAmount;
-
-    // Update summary display
-    document.getElementById('summarySalesSubtotal').textContent = `${window.shop.currency}${salesSubtotal.toFixed(2)}`;
-    document.getElementById('summaryReturnsSubtotal').textContent = `${window.shop.currency}${returnsSubtotal.toFixed(2)}`;
-=======
     // Calculate sales and returns separately
     let salesSubtotal = 0;
     let returnsSubtotal = 0;
@@ -1257,84 +1184,10 @@ function updateSummary() {
     document.getElementById('summaryReturnsSubtotal').textContent = `${window.shop.currency}${returnsSubtotal.toFixed(2)}`;
     
     const totalDiscount = salesDiscount + returnsDiscount;
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
     document.getElementById('summaryDiscount').textContent = `-${window.shop.currency}${totalDiscount.toFixed(2)}`;
     document.getElementById('summaryTax').textContent = `${window.shop.currency}${taxAmount.toFixed(2)}`;
     document.getElementById('summaryTotal').textContent = `${window.shop.currency}${netAmount.toFixed(2)}`;
     document.getElementById('summaryPaid').textContent = `${window.shop.currency}${paymentAmount.toFixed(2)}`;
-
-<<<<<<< HEAD
-    // Show change or refund section
-    if (change >= 0) {
-        document.getElementById('changeSection').style.display = 'flex';
-        document.getElementById('refundSection').style.display = 'none';
-        document.getElementById('summaryChange').textContent = `${window.shop.currency}${change.toFixed(2)}`;
-    } else {
-        document.getElementById('changeSection').style.display = 'none';
-        document.getElementById('refundSection').style.display = 'flex';
-        document.getElementById('summaryRefund').textContent = `${window.shop.currency}${Math.abs(change).toFixed(2)}`;
-    }
-}
-
-// async function finalizeTransaction() {
-//     if (window.transactionItems.length === 0) {
-//         showToast('Please add items to the transaction', 'error');
-//         return;
-//     }
-
-//     const customerName = document.getElementById('customerName').value.trim() || 'Walk-in Customer';
-//     const customerPhone = document.getElementById('customerPhone').value.trim();
-//     const paymentMethod = document.getElementById('paymentMethod').value;
-//     const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
-//     const taxAmount = parseFloat(document.getElementById('taxAmount').value) || 0;
-//     const notes = document.getElementById('transactionNotes').value.trim();
-
-//     const transactionData = {
-//         customer_name: customerName,
-//         customer_phone: customerPhone,
-//         payment_method: paymentMethod,
-//         paid_amount: paymentAmount,
-//         tax_amount: taxAmount,
-//         notes: notes,
-//         items: window.transactionItems
-//     };
-
-//     try {
-//         const response = await fetch('/bills', {
-//             method: 'POST',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//             },
-//             body: JSON.stringify(transactionData)
-//         });
-
-//         const data = await response.json();
-
-//         if (data.success) {
-//             showToast('Transaction completed successfully!', 'success');
-//             document.getElementById('printBtn').style.display = 'block';
-//             window.lastBillData = data;
-            
-//             // Reset transaction
-//             window.transactionItems = [];
-//             updateTransactionTable();
-//             updateSummary();
-            
-//             // Clear form
-//             document.getElementById('customerName').value = '';
-//             document.getElementById('customerPhone').value = '';
-//             document.getElementById('paymentAmount').value = '0.00';
-//             document.getElementById('transactionNotes').value = '';
-            
-//         } else {
-//             showToast(data.message || 'Error processing transaction', 'error');
-//         }
-//     } catch (error) {
-//         console.error('Error finalizing transaction:', error);
-//         showToast('Network error. Please try again.', 'error');
-//     }
-// }
-=======
     // **FIX: Show change section logic - handles negative change too**
     const changeSection = document.getElementById('changeSection');
     const summaryChange = document.getElementById('summaryChange');
@@ -1808,7 +1661,6 @@ style.textContent = `
 `;
 
 document.head.appendChild(style);
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 
 async function finalizeTransaction() {
     if (window.transactionItems.length === 0) {
@@ -2064,10 +1916,7 @@ async function searchProductsForReturn(searchTerm) {
 }
 
 // Enhanced customer bill search with suggestions
-<<<<<<< HEAD
-=======
-// Enhanced customer bill search with suggestions - INCLUDES BILL NUMBER SEARCH
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
+
 async function searchCustomerBillsForReturn(searchTerm) {
     try {
         const response = await fetch(`/bills/api/customer-bills?search=${encodeURIComponent(searchTerm)}`);
@@ -2091,11 +1940,7 @@ async function searchCustomerBillsForReturn(searchTerm) {
                 
                 html += `
                     <a href="#" class="list-group-item list-group-item-action select-bill-for-return" 
-<<<<<<< HEAD
-                       data-bill-id="${bill.id}">
-=======
                        data-bill-id="${bill.bill_id_str}">
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
                                 <h6 class="mb-1">
@@ -2109,11 +1954,7 @@ async function searchCustomerBillsForReturn(searchTerm) {
                                 </div>
                             </div>
                             <div class="text-end ms-3">
-<<<<<<< HEAD
-                                <div class="fw-bold text-success">${window.shop.currency}${bill.total_amount}</div>
-=======
                                 <div class="fw-bold text-success">${window.shop.currency}${parseFloat(bill.total_amount).toFixed(2)}</div>
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
                                 <small class="badge bg-primary">${bill.item_count} items</small>
                                 <div class="small text-muted mt-1">${bill.payment_method}</div>
                             </div>
@@ -2140,11 +1981,7 @@ async function searchCustomerBillsForReturn(searchTerm) {
                 </div>
                 <div class="text-center text-muted">
                     <i class="fas fa-search fa-2x mb-2 d-block"></i>
-<<<<<<< HEAD
-                    Try searching by customer name, phone number, or bill number
-=======
                     Try searching by customer name, phone number, or bill number (e.g., INV-2026-3155)
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
                 </div>
             `;
             customerBillsResults.style.display = 'block';

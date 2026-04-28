@@ -24,7 +24,7 @@
         }
 
         .dashboard-container {
-            padding: 20px;
+            padding: 80px 20px;
             background-color: #f5f7fa;
             min-height: calc(100vh - 70px);
         }
@@ -556,7 +556,7 @@
                             <option value="bank" <%= query.paymentMethod === 'bank' ? 'selected' : '' %>>Bank Transfer</option>
                         </select>
                     </div>
-                    <div class="col-md-6" id="customDateRange" style="display: <% if (query.date === 'custom') { %>block<% } else { %>none<% } %>;">
+                    <div class="col-md-6 <%= query.date === 'custom' ? 'd-block' : 'd-none' %>" id="customDateRange">
                         <div class="row g-2">
                             <div class="col-md-6">
                                 <label class="form-label">From Date</label>

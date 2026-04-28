@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Management - <%= (shop && shop.name) || 'My Shop' %></title>
+    <title>Employee Management - <%= (shop && shop.name) || 'My Shop' %>
+    </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -24,7 +26,7 @@
         }
 
         .dashboard-container {
-            padding: 20px;
+            padding: 80px 20px;
             background-color: #f5f7fa;
             min-height: calc(100vh - 70px);
         }
@@ -177,19 +179,178 @@
             color: #6b7280;
         }
 
+        /* Make notifications visible */
+        .custom-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 400px;
+            background: white;
+            border-left: 4px solid;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .custom-notification.alert-success {
+            border-left-color: var(--success);
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .custom-notification.alert-error {
+            border-left-color: var(--danger);
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .custom-notification.alert-info {
+            border-left-color: var(--info);
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .custom-notification.alert-warning {
+            border-left-color: var(--warning);
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        /* Loan modal styles */
+        #loanModal .modal-content {
+            background-color: #fff;
+            color: #333;
+        }
+
+        #loanModal input,
+        #loanModal select,
+        #loanModal textarea {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        #loanModal input:focus,
+        #loanModal select:focus,
+        #loanModal textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        #loanModal .form-label {
+            color: #555;
+            font-weight: 500;
+        }
+
+        #loanModal .nav-tabs .nav-link {
+            color: #555;
+        }
+
+        #loanModal .nav-tabs .nav-link.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* Make sure read-only fields are visible */
+        #loanEmpName {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
         @media (max-width: 768px) {
             .dashboard-header {
                 flex-direction: column;
                 text-align: center;
                 gap: 10px;
             }
-            
+
             .stats-grid {
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Fix for dropdown menu button */
+        .dropdown .btn-outline.border-0 {
+            position: relative;
+            z-index: 10;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .dropdown-menu {
+            z-index: 1050 !important;
+        }
+
+        /* Ensure the employee card doesn't clip the dropdown */
+        .employee-card {
+            overflow: visible !important;
+        }
+
+        .card-body {
+            overflow: visible !important;
+        }
+
+        /* Fix for the three dots button */
+        .employee-card .dropdown {
+            position: static;
+        }
+
+        .employee-card .dropdown .btn {
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            font-size: 1.2rem;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .employee-card .dropdown .btn:hover {
+            background: #f8f9fa;
+            border-radius: 50%;
+        }
+
+        .employee-card .dropdown .btn:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        /* Ensure dropdown appears above everything */
+        .dropdown-menu {
+            position: absolute !important;
+            z-index: 9999 !important;
+        }
+
+        /* Ensure dropdowns work properly */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-toggle::after {
+            display: none;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: auto;
+            margin-top: 0.125rem;
+            z-index: 1000;
+        }
+
+        /* Make sure the card body doesn't clip the dropdown */
+        .card-body {
+            overflow: visible !important;
+        }
+
+        .employee-card {
+            overflow: visible !important;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
+
 <body>
     <!-- Floating Action Button -->
     <button class="floating-action-btn" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
@@ -204,8 +365,12 @@
                 <p class="datetime" id="datetime"></p>
             </div>
             <div class="shop-info">
-                <p><i class="fas fa-store"></i><%= (shop && shop.name) || 'My Shop' %></p>
-                <p><i class="fas fa-map-marker-alt"></i><%= (shop && shop.address) || 'Add shop address' %></p>
+                <p><i class="fas fa-store"></i>
+                    <%= (shop && shop.name) || 'My Shop' %>
+                </p>
+                <p><i class="fas fa-map-marker-alt"></i>
+                    <%= (shop && shop.address) || 'Add shop address' %>
+                </p>
             </div>
         </div>
 
@@ -216,7 +381,9 @@
                     <i class="fas fa-users"></i>
                 </div>
                 <div class="stat-info">
-                    <h3><%= totalStats.totalEmployees %></h3>
+                    <h3>
+                        <%= totalStats.totalEmployees %>
+                    </h3>
                     <p>Total Employees</p>
                 </div>
             </div>
@@ -226,7 +393,9 @@
                     <i class="fas fa-user-check"></i>
                 </div>
                 <div class="stat-info">
-                    <h3><%= totalStats.activeEmployees %></h3>
+                    <h3>
+                        <%= totalStats.activeEmployees %>
+                    </h3>
                     <p>Active Employees</p>
                 </div>
             </div>
@@ -236,7 +405,9 @@
                     <i class="fas fa-money-bill-wave"></i>
                 </div>
                 <div class="stat-info">
-                    <h3><%= totalStats.pendingSalaries %></h3>
+                    <h3>
+                        <%= totalStats.pendingSalaries %>
+                    </h3>
                     <p>Pending Salaries</p>
                 </div>
             </div>
@@ -246,7 +417,9 @@
                     <i class="fas fa-hand-holding-usd"></i>
                 </div>
                 <div class="stat-info">
-                    <h3><%= totalStats.activeLoans %></h3>
+                    <h3>
+                        <%= totalStats.activeLoans %>
+                    </h3>
                     <p>Active Loans</p>
                 </div>
             </div>
@@ -264,7 +437,8 @@
                     </a>
                 </div>
                 <div class="col-md-3 col-6">
-                    <button class="btn btn-outline-success w-100" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                    <button class="btn btn-outline-success w-100" data-bs-toggle="modal"
+                        data-bs-target="#addEmployeeModal">
                         <i class="fas fa-user-plus me-1"></i>Add Employee
                     </button>
                 </div>
@@ -274,7 +448,8 @@
                     </button>
                 </div>
                 <div class="col-md-3 col-6">
-                    <button class="btn btn-outline-warning w-100" data-bs-toggle="modal" data-bs-target="#quickLoanModal">
+                    <button class="btn btn-outline-warning w-100" data-bs-toggle="modal"
+                        data-bs-target="#quickLoanModal">
                         <i class="fas fa-hand-holding-usd me-1"></i>Quick Loan
                     </button>
                 </div>
@@ -292,11 +467,13 @@
                         <label class="form-label">Role</label>
                         <select class="form-select" id="roleFilter">
                             <option value="all">All Roles</option>
-                            <% if (roles && roles.length > 0) { %>
+                            <% if (roles && roles.length> 0) { %>
                                 <% roles.forEach(role=> { %>
-                                    <option value="<%= role.role_name %>" <%= query.role===role.role_name ? 'selected' : '' %>><%= role.role_name %></option>
-                                <% }); %>
-                            <% } %>
+                                    <option value="<%= role.role_name %>" <%=query.role===role.role_name ? 'selected'
+                                        : '' %>><%= role.role_name %>
+                                    </option>
+                                    <% }); %>
+                                        <% } %>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -311,7 +488,8 @@
                         <label class="form-label">Search</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="searchFilter" placeholder="Search by name..." value="<%= query.search || '' %>">
+                            <input type="text" class="form-control" id="searchFilter" placeholder="Search by name..."
+                                value="<%= query.search || '' %>">
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -319,8 +497,10 @@
                         <select class="form-select" id="salaryFilter">
                             <option value="all">All Salaries</option>
                             <option value="low" <%=query.salaryRange==='low' ? 'selected' : '' %>>Below 20,000</option>
-                            <option value="medium" <%=query.salaryRange==='medium' ? 'selected' : '' %>>20,000 - 50,000</option>
-                            <option value="high" <%=query.salaryRange==='high' ? 'selected' : '' %>>Above 50,000</option>
+                            <option value="medium" <%=query.salaryRange==='medium' ? 'selected' : '' %>>20,000 - 50,000
+                            </option>
+                            <option value="high" <%=query.salaryRange==='high' ? 'selected' : '' %>>Above 50,000
+                            </option>
                         </select>
                     </div>
                     <div class="col-md-12">
@@ -341,7 +521,9 @@
         <div class="card">
             <div class="section-header">
                 <h2><i class="fas fa-users"></i> Employees</h2>
-                <span class="badge bg-primary"><%= employees.length %> of <%= totalStats.totalEmployees %> employees</span>
+                <span class="badge bg-primary">
+                    <%= employees.length %> of <%= totalStats.totalEmployees %> employees
+                </span>
             </div>
             <div class="card-body">
                 <% if (employees.length> 0) { %>
@@ -349,33 +531,63 @@
                         <% employees.forEach(emp=> {
                             const currentMonth = new Date().toISOString().slice(0, 7);
                             const showNotPaid = !emp.current_salary || emp.current_salary.status !== 'paid';
-                            const progress = emp.total_active_loans > 0 ? Math.min(100, (emp.total_active_loans / (emp.salary || 1)) * 100) : 0;
+                            const progress = emp.total_active_loans > 0 ? Math.min(100, (emp.total_active_loans /
+                            (emp.salary || 1)) * 100) : 0;
                             %>
                             <div class="col-xl-4 col-lg-6 col-md-6">
                                 <div class="card employee-card h-100">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start mb-3">
                                             <div>
-                                                <h5 class="card-title mb-1"><%= emp.name %></h5>
-                                                <p class="text-muted small mb-0"><%= emp.email %></p>
+                                                <h5 class="card-title mb-1">
+                                                    <%= emp.name %>
+                                                </h5>
+                                                <p class="text-muted small mb-0">
+                                                    <%= emp.email %>
+                                                </p>
                                             </div>
-                                            <div class="dropdown">
-                                                <button class="btn btn-sm btn-outline border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="fas fa-ellipsis-v"></i>
+                                            <div class="dropdown" style="position: relative;">
+                                                <button class="btn" type="button" data-bs-toggle="dropdown"
+                                                    aria-expanded="false"
+                                                    style="background: transparent; border: none; padding: 5px 10px; cursor: pointer;">
+                                                    <i class="fas fa-ellipsis-v"
+                                                        style="color: #6c757d; font-size: 1.2rem;"></i>
                                                 </button>
-                                                <ul class="dropdown-menu" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(-131px, 35px);">
-                                                    <li><a class="dropdown-item view-employee" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-eye me-2"></i>View Details</a></li>
-                                                    <li><a class="dropdown-item edit-employee" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-edit me-2"></i>Edit</a></li>
-                                                    <li><hr class="dropdown-divider"></li>
-                                                    <li><a class="dropdown-item manage-salary" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-money-bill me-2"></i>Manage Salary</a></li>
-                                                    <li><a class="dropdown-item manage-loan" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-hand-holding-usd me-2"></i>Manage Loan</a></li>
-                                                    <li><hr class="dropdown-divider"></li>
+                                                <ul class="dropdown-menu dropdown-menu-end"
+                                                    style="position: absolute; z-index: 1000;">
+                                                    <li><a class="dropdown-item view-employee" href="#"
+                                                            data-emp-id="<%= emp.id %>"><i
+                                                                class="fas fa-eye me-2"></i>View Details</a></li>
+                                                    <li><a class="dropdown-item edit-employee" href="#"
+                                                            data-emp-id="<%= emp.id %>"><i
+                                                                class="fas fa-edit me-2"></i>Edit</a></li>
+                                                    <li>
+                                                        <hr class="dropdown-divider">
+                                                    </li>
+                                                    <li><a class="dropdown-item manage-salary" href="#"
+                                                            data-emp-id="<%= emp.id %>"><i
+                                                                class="fas fa-money-bill me-2"></i>Manage Salary</a>
+                                                    </li>
+                                                    <li><a class="dropdown-item manage-loan" href="#"
+                                                            data-emp-id="<%= emp.id %>"><i
+                                                                class="fas fa-hand-holding-usd me-2"></i>Manage Loan</a>
+                                                    </li>
+                                                    <li>
+                                                        <hr class="dropdown-divider">
+                                                    </li>
                                                     <% if (emp.status==='active' ) { %>
-                                                        <li><a class="dropdown-item deactivate-employee" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-pause me-2"></i>Deactivate</a></li>
-                                                    <% } else { %>
-                                                        <li><a class="dropdown-item activate-employee" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-play me-2"></i>Activate</a></li>
-                                                    <% } %>
-                                                    <li><a class="dropdown-item text-danger delete-employee" href="#" data-emp-id="<%= emp.id %>"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                                        <li><a class="dropdown-item deactivate-employee" href="#"
+                                                                data-emp-id="<%= emp.id %>"><i
+                                                                    class="fas fa-pause me-2"></i>Deactivate</a></li>
+                                                        <% } else { %>
+                                                            <li><a class="dropdown-item activate-employee" href="#"
+                                                                    data-emp-id="<%= emp.id %>"><i
+                                                                        class="fas fa-play me-2"></i>Activate</a></li>
+                                                            <% } %>
+                                                                <li><a class="dropdown-item text-danger delete-employee"
+                                                                        href="#" data-emp-id="<%= emp.id %>"><i
+                                                                            class="fas fa-trash me-2"></i>Delete</a>
+                                                                </li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -383,11 +595,16 @@
                                         <div class="row mb-3">
                                             <div class="col-6">
                                                 <small class="text-muted">Role</small>
-                                                <div><span class="badge bg-secondary"><%= emp.role %></span></div>
+                                                <div><span class="badge bg-secondary">
+                                                        <%= emp.role %>
+                                                    </span></div>
                                             </div>
                                             <div class="col-6">
                                                 <small class="text-muted">Status</small>
-                                                <div><span class="badge <%= emp.status === 'active' ? 'badge-active' : 'badge-inactive' %>"><%= emp.status %></span></div>
+                                                <div><span
+                                                        class="badge <%= emp.status === 'active' ? 'badge-active' : 'badge-inactive' %>">
+                                                        <%= emp.status %>
+                                                    </span></div>
                                             </div>
                                         </div>
 
@@ -395,10 +612,11 @@
                                             <small class="text-muted">Salary</small>
                                             <div class="fw-bold text-primary">
                                                 <% if (emp.salary) { %>
-                                                    <%= shop.currency %> <%= emp.salary.toLocaleString() %>
-                                                <% } else { %>
-                                                    <span class="text-muted">Not set</span>
-                                                <% } %>
+                                                    <%= shop.currency %>
+                                                        <%= emp.salary.toLocaleString() %>
+                                                            <% } else { %>
+                                                                <span class="text-muted">Not set</span>
+                                                                <% } %>
                                             </div>
                                         </div>
 
@@ -407,45 +625,53 @@
                                             <div>
                                                 <% if (showNotPaid) { %>
                                                     <span class="badge bg-danger">Not Paid</span>
-                                                    <button class="btn btn-sm btn-success ms-2 quick-pay-btn" data-emp-id="<%= emp.id %>" data-salary="<%= emp.salary %>">
+                                                    <button class="btn btn-sm btn-success ms-2 quick-pay-btn"
+                                                        data-emp-id="<%= emp.id %>" data-salary="<%= emp.salary %>">
                                                         Pay Now
                                                     </button>
-                                                <% } else { %>
-                                                    <span class="salary-paid">Paid</span>
-                                                <% } %>
+                                                    <% } else { %>
+                                                        <span class="salary-paid">Paid</span>
+                                                        <% } %>
                                             </div>
                                         </div>
 
                                         <div class="mb-3">
                                             <small class="text-muted">Active Loans</small>
-                                            <div class="fw-bold <%= emp.total_active_loans > 0 ? 'loan-active' : 'text-muted' %>">
-                                                <%= shop.currency %> <%= (emp.total_active_loans || 0).toLocaleString() %>
+                                            <div
+                                                class="fw-bold <%= emp.total_active_loans > 0 ? 'loan-active' : 'text-muted' %>">
+                                                <%= shop.currency %>
+                                                    <%= (emp.total_active_loans || 0).toLocaleString() %>
                                             </div>
                                             <% if (emp.total_active_loans> 0) { %>
                                                 <div class="progress mt-1">
-                                                    <div class="progress-bar bg-danger" role="progressbar" style="width: '<%= progress %>';"></div>
+                                                    <div class="progress-bar bg-danger" role="progressbar"
+                                                        style="width: '<%= progress %>';"></div>
                                                 </div>
-                                            <% } %>
+                                                <% } %>
                                         </div>
 
                                         <div class="d-flex gap-1 mt-3">
-                                            <button class="btn btn-sm btn-outline-primary flex-fill view-employee" data-emp-id="<%= emp.id %>" title="View Details">
+                                            <button class="btn btn-sm btn-outline-primary flex-fill view-employee"
+                                                data-emp-id="<%= emp.id %>" title="View Details">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-success flex-fill manage-salary" data-emp-id="<%= emp.id %>" title="Salary">
+                                            <button class="btn btn-sm btn-outline-success flex-fill manage-salary"
+                                                data-emp-id="<%= emp.id %>" title="Salary">
                                                 <i class="fas fa-money-bill"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-warning flex-fill manage-loan" data-emp-id="<%= emp.id %>" title="Loan">
+                                            <button class="btn btn-sm btn-outline-warning flex-fill manage-loan"
+                                                data-emp-id="<%= emp.id %>" title="Loan">
                                                 <i class="fas fa-hand-holding-usd"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-info flex-fill direct-loan-payment" data-emp-id="<%= emp.id %>" title="Loan Payment">
+                                            <button class="btn btn-sm btn-outline-info flex-fill direct-loan-payment"
+                                                data-emp-id="<%= emp.id %>" title="Loan Payment">
                                                 <i class="fas fa-money-check"></i>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        <% }); %>
+                            <% }); %>
                     </div>
 
                     <!-- Pagination -->
@@ -454,38 +680,46 @@
                             <nav aria-label="Page navigation">
                                 <ul class="pagination justify-content-center mb-0">
                                     <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/EmpMgmt?page=<%= currentPage - 1 %><%= buildQueryString(query) %>" aria-label="Previous">
+                                        <a class="page-link"
+                                            href="/EmpMgmt?page=<%= currentPage - 1 %><%= buildQueryString(query) %>"
+                                            aria-label="Previous">
                                             <span aria-hidden="true">&laquo;</span>
                                         </a>
                                     </li>
                                     <% for (let i=1; i <=totalPages; i++) { %>
                                         <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                            <a class="page-link" href="/EmpMgmt?page=<%= i %><%= buildQueryString(query) %>"><%= i %></a>
+                                            <a class="page-link"
+                                                href="/EmpMgmt?page=<%= i %><%= buildQueryString(query) %>">
+                                                <%= i %>
+                                            </a>
                                         </li>
-                                    <% } %>
-                                    <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/EmpMgmt?page=<%= currentPage + 1 %><%= buildQueryString(query) %>" aria-label="Next">
-                                            <span aria-hidden="true">&raquo;</span>
-                                        </a>
-                                    </li>
+                                        <% } %>
+                                            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                                <a class="page-link"
+                                                    href="/EmpMgmt?page=<%= currentPage + 1 %><%= buildQueryString(query) %>"
+                                                    aria-label="Next">
+                                                    <span aria-hidden="true">&raquo;</span>
+                                                </a>
+                                            </li>
                                 </ul>
                             </nav>
                         </div>
-                    <% } %>
-                <% } else { %>
-                    <div class="text-center py-5">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">
-                                <i class="fas fa-users fa-3x text-muted"></i>
-                            </div>
-                            <h5>No employees found</h5>
-                            <p class="text-muted mb-3">No employees match your current filters.</p>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
-                                <i class="fas fa-plus me-2"></i>Add Your First Employee
-                            </button>
-                        </div>
-                    </div>
-                <% } %>
+                        <% } %>
+                            <% } else { %>
+                                <div class="text-center py-5">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-users fa-3x text-muted"></i>
+                                        </div>
+                                        <h5>No employees found</h5>
+                                        <p class="text-muted mb-3">No employees match your current filters.</p>
+                                        <button class="btn btn-primary" data-bs-toggle="modal"
+                                            data-bs-target="#addEmployeeModal">
+                                            <i class="fas fa-plus me-2"></i>Add Your First Employee
+                                        </button>
+                                    </div>
+                                </div>
+                                <% } %>
             </div>
         </div>
     </div>
@@ -503,11 +737,13 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="name" required placeholder="Enter full name">
+                                <input type="text" class="form-control" name="name" required
+                                    placeholder="Enter full name">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" name="email" required placeholder="Enter email address">
+                                <input type="email" class="form-control" name="email" required
+                                    placeholder="Enter email address">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Phone</label>
@@ -521,28 +757,34 @@
                                 <label class="form-label">Role <span class="text-danger">*</span></label>
                                 <select class="form-select" name="role" required>
                                     <option value="">Select Role</option>
-                                    <% if (roles && roles.length > 0) { %>
+                                    <% if (roles && roles.length> 0) { %>
                                         <% roles.forEach(role=> { %>
-                                            <option value="<%= role.role_name %>"><%= role.role_name %></option>
-                                        <% }); %>
-                                    <% } %>
+                                            <option value="<%= role.role_name %>">
+                                                <%= role.role_name %>
+                                            </option>
+                                            <% }); %>
+                                                <% } %>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Salary (<%= shop.currency %>)</label>
-                                <input type="number" class="form-control" name="salary" step="0.01" placeholder="Enter salary amount">
+                                <input type="number" class="form-control" name="salary" step="0.01"
+                                    placeholder="Enter salary amount">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" name="password" required placeholder="Enter password">
+                                <input type="password" class="form-control" name="password" required
+                                    placeholder="Enter password">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" name="confirmPassword" required placeholder="Confirm password">
+                                <input type="password" class="form-control" name="confirmPassword" required
+                                    placeholder="Confirm password">
                             </div>
                             <div class="col-12 mb-3">
                                 <label class="form-label">Notes</label>
-                                <textarea class="form-control" name="notes" rows="3" placeholder="Add any notes about this employee..."></textarea>
+                                <textarea class="form-control" name="notes" rows="3"
+                                    placeholder="Add any notes about this employee..."></textarea>
                             </div>
                         </div>
                     </form>
@@ -568,7 +810,8 @@
                 <div class="modal-body">
                     <form id="salaryForm">
                         <input type="hidden" id="salaryUserId" name="user_id">
-                        <input type="hidden" id="salaryMonth" name="month" value="<%= new Date().toISOString().slice(0, 7) %>">
+                        <input type="hidden" id="salaryMonth" name="month"
+                            value="<%= new Date().toISOString().slice(0, 7) %>">
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -584,18 +827,21 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Bonus (<%= shop.currency %>)</label>
-                                <input type="number" class="form-control" id="salaryBonus" name="bonus" value="0" min="0" step="0.01">
+                                <input type="number" class="form-control" id="salaryBonus" name="bonus" value="0"
+                                    min="0" step="0.01">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Fine/Deduction (<%= shop.currency %>)</label>
-                                <input type="number" class="form-control" id="salaryFine" name="fine" value="0" min="0" step="0.01">
+                                <input type="number" class="form-control" id="salaryFine" name="fine" value="0" min="0"
+                                    step="0.01">
                             </div>
                         </div>
 
                         <div class="mb-3" id="loanDeductionSection">
                             <div class="card">
                                 <div class="card-header bg-light">
-                                    <h6 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Loan Installment Deductions</h6>
+                                    <h6 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Loan Installment
+                                        Deductions</h6>
                                     <small class="text-muted">Installment loans will be auto-deducted</small>
                                 </div>
                                 <div class="card-body p-3" id="loanDeductionList">
@@ -608,7 +854,8 @@
                             <div class="row">
                                 <div class="col-6"><strong>Total Payable:</strong></div>
                                 <div class="col-6 text-end">
-                                    <strong id="totalPayableAmount">0</strong> <%= shop.currency %>
+                                    <strong id="totalPayableAmount">0</strong>
+                                    <%= shop.currency %>
                                 </div>
                             </div>
                         </div>
@@ -616,7 +863,8 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Payment Date</label>
-                                <input type="date" class="form-control" id="salaryPaidOn" name="paid_on" value="<%= new Date().toISOString().split('T')[0] %>">
+                                <input type="date" class="form-control" id="salaryPaidOn" name="paid_on"
+                                    value="<%= new Date().toISOString().split('T')[0] %>">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Payment Method</label>
@@ -630,7 +878,8 @@
 
                         <div class="mb-3">
                             <label class="form-label">Notes</label>
-                            <textarea class="form-control" id="salaryNotes" name="notes" rows="2" placeholder="Add any notes about this payment..."></textarea>
+                            <textarea class="form-control" id="salaryNotes" name="notes" rows="2"
+                                placeholder="Add any notes about this payment..."></textarea>
                         </div>
                     </form>
                 </div>
@@ -655,12 +904,14 @@
                 <div class="modal-body">
                     <ul class="nav nav-tabs mb-3" id="loanTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="new-loan-tab" data-bs-toggle="tab" data-bs-target="#new-loan" type="button" role="tab">
+                            <button class="nav-link active" id="new-loan-tab" data-bs-toggle="tab"
+                                data-bs-target="#new-loan" type="button" role="tab">
                                 <i class="fas fa-plus me-1"></i>New Loan
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="existing-loans-tab" data-bs-toggle="tab" data-bs-target="#existing-loans" type="button" role="tab">
+                            <button class="nav-link" id="existing-loans-tab" data-bs-toggle="tab"
+                                data-bs-target="#existing-loans" type="button" role="tab">
                                 <i class="fas fa-list me-1"></i>Existing Loans
                             </button>
                         </li>
@@ -677,9 +928,12 @@
                                     <input type="text" class="form-control" id="loanEmpName" readonly>
                                 </div>
 
+
                                 <div class="mb-3">
-                                    <label class="form-label">Loan Amount (<%= shop.currency %>) <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="loanAmount" name="amount" required min="1" step="0.01">
+                                    <label class="form-label">Loan Amount (<%= shop.currency %>) <span
+                                                class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="loanAmount" name="amount" required
+                                        min="1" step="0.01">
                                 </div>
 
                                 <div class="mb-3">
@@ -694,23 +948,27 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <label class="form-label">Number of Installments</label>
-                                            <input type="number" class="form-control" id="loanInstallments" name="installments" min="2" max="24" value="3">
+                                            <input type="number" class="form-control" id="loanInstallments"
+                                                name="installments" min="2" max="24" value="3">
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Monthly Installment</label>
-                                            <input type="number" class="form-control" id="loanInstallmentAmount" name="installment_amount" readonly>
+                                            <input type="number" class="form-control" id="loanInstallmentAmount"
+                                                name="installment_amount" readonly>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Reason <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="loanReason" name="reason" required placeholder="e.g., Emergency, Medical, etc.">
+                                    <input type="text" class="form-control" id="loanReason" name="reason" required
+                                        placeholder="e.g., Emergency, Medical, etc.">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Loan Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="loanTakenOn" name="taken_on" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                                    <input type="date" class="form-control" id="loanTakenOn" name="taken_on"
+                                        value="<%= new Date().toISOString().split('T')[0] %>" required>
                                 </div>
                             </form>
                         </div>
@@ -765,11 +1023,13 @@
                                 <label class="form-label">Role <span class="text-danger">*</span></label>
                                 <select class="form-select" id="editRole" name="role" required>
                                     <option value="">Select Role</option>
-                                    <% if (roles && roles.length > 0) { %>
+                                    <% if (roles && roles.length> 0) { %>
                                         <% roles.forEach(role=> { %>
-                                            <option value="<%= role.role_name %>"><%= role.role_name %></option>
-                                        <% }); %>
-                                    <% } %>
+                                            <option value="<%= role.role_name %>">
+                                                <%= role.role_name %>
+                                            </option>
+                                            <% }); %>
+                                                <% } %>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -835,17 +1095,22 @@
                             <select class="form-select" id="quickLoanEmployee" required>
                                 <option value="">Select Employee</option>
                                 <% employees.forEach(emp=> { %>
-                                    <option value="<%= emp.id %>"><%= emp.name %> - <%= emp.role %></option>
-                                <% }); %>
+                                    <option value="<%= emp.id %>">
+                                        <%= emp.name %> - <%= emp.role %>
+                                    </option>
+                                    <% }); %>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Loan Amount (<%= shop.currency %>) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="quickLoanAmount" name="amount" required min="1" step="0.01">
+                            <label class="form-label">Loan Amount (<%= shop.currency %>) <span
+                                        class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="quickLoanAmount" name="amount" required
+                                min="1" step="0.01">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Reason <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="quickLoanReason" name="reason" required placeholder="Short reason for loan">
+                            <input type="text" class="form-control" id="quickLoanReason" name="reason" required
+                                placeholder="Short reason for loan">
                         </div>
                     </form>
                 </div>
@@ -858,7 +1123,6 @@
             </div>
         </div>
     </div>
-
     <!-- Direct Loan Payment Modal -->
     <div class="modal fade" id="directLoanPaymentModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -870,43 +1134,38 @@
                 <div class="modal-body">
                     <form id="directLoanPaymentForm">
                         <input type="hidden" id="directPaymentUserId" name="user_id">
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Employee</label>
                             <input type="text" class="form-control" id="directPaymentEmpName" readonly>
                         </div>
 
-                        <div class="mb-3" id="loanSelectionSection">
-                            <label class="form-label">Select Payment Method</label>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="paymentType" id="payAllLoans" value="all" checked>
-                                <label class="form-check-label" for="payAllLoans">
-                                    <strong>Pay Against All Active Loans (Oldest First)</strong>
-                                </label>
-                            </div>
-                            
-                            <div id="specificLoanSection">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="paymentType" id="paySpecificLoan" value="specific">
-                                    <label class="form-check-label" for="paySpecificLoan">
-                                        <strong>Pay Specific Loan</strong>
-                                    </label>
+                        <div class="mb-3">
+                            <label class="form-label">Select Loans to Pay</label>
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Active Loans</h6>
+                                    <small class="text-muted">Select the loans you want to pay</small>
                                 </div>
-                                
-                                <div class="mt-3" id="loanListContainer">
-                                    <!-- Loans will be loaded here -->
+                                <div class="card-body p-3" id="loanPaymentList">
+                                    <!-- Loans will be populated here with checkboxes -->
+                                    <div class="text-center text-muted py-3">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Loading loans...
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Total Loan Balance (<%= shop.currency %>)</label>
-                                <input type="text" class="form-control" id="totalLoanBalance" readonly>
+                                <label class="form-label">Total Selected Amount (<%= shop.currency %>)</label>
+                                <input type="text" class="form-control" id="totalSelectedAmount" readonly value="0">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Payment Amount (<%= shop.currency %>) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="directPaymentAmount" name="amount" required min="1" step="0.01">
+                                <label class="form-label">Payment Amount (<%= shop.currency %>) <span
+                                            class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="directPaymentAmount" name="amount"
+                                    required min="1" step="0.01">
                             </div>
                         </div>
 
@@ -921,12 +1180,14 @@
 
                         <div class="mb-3">
                             <label class="form-label">Payment Date</label>
-                            <input type="date" class="form-control" id="directPaymentDate" name="payment_date" value="<%= new Date().toISOString().split('T')[0] %>">
+                            <input type="date" class="form-control" id="directPaymentDate" name="payment_date"
+                                value="<%= new Date().toISOString().split('T')[0] %>">
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Description/Notes</label>
-                            <textarea class="form-control" id="directPaymentNotes" name="description" rows="3" placeholder="Enter payment description..."></textarea>
+                            <textarea class="form-control" id="directPaymentNotes" name="description" rows="3"
+                                placeholder="Enter payment description..."></textarea>
                         </div>
                     </form>
                 </div>
@@ -962,18 +1223,18 @@
 
         // Initialize modals
         let modals = {};
-        
+
         function initializeModals() {
             const modalIds = [
                 'addEmployeeModal',
-                'salaryModal', 
+                'salaryModal',
                 'loanModal',
                 'editEmployeeModal',
                 'employeeDetailsModal',
                 'quickLoanModal',
                 'directLoanPaymentModal'
             ];
-            
+
             modalIds.forEach(modalId => {
                 const modalElement = document.getElementById(modalId);
                 if (modalElement) {
@@ -999,7 +1260,7 @@
                     const empId = button.getAttribute('data-emp-id');
                     viewEmployeeDetails(empId);
                 }
-                
+
                 // Edit Employee
                 if (e.target.closest('.edit-employee')) {
                     e.preventDefault();
@@ -1007,7 +1268,7 @@
                     const empId = button.getAttribute('data-emp-id');
                     editEmployee(empId);
                 }
-                
+
                 // Manage Salary
                 if (e.target.closest('.manage-salary')) {
                     e.preventDefault();
@@ -1015,7 +1276,7 @@
                     const empId = button.getAttribute('data-emp-id');
                     manageSalary(empId);
                 }
-                
+
                 // Manage Loan
                 if (e.target.closest('.manage-loan')) {
                     e.preventDefault();
@@ -1023,7 +1284,7 @@
                     const empId = button.getAttribute('data-emp-id');
                     manageLoan(empId);
                 }
-                
+
                 // Direct Loan Payment
                 if (e.target.closest('.direct-loan-payment')) {
                     e.preventDefault();
@@ -1031,7 +1292,7 @@
                     const empId = button.getAttribute('data-emp-id');
                     openDirectLoanPayment(empId);
                 }
-                
+
                 // Quick Pay Salary
                 if (e.target.closest('.quick-pay-btn')) {
                     e.preventDefault();
@@ -1040,7 +1301,7 @@
                     const salary = button.getAttribute('data-salary');
                     quickPaySalary(empId, salary);
                 }
-                
+
                 // Delete Employee (from dropdown)
                 if (e.target.closest('.delete-employee')) {
                     e.preventDefault();
@@ -1048,7 +1309,7 @@
                     const empId = button.getAttribute('data-emp-id');
                     deleteEmployee(empId);
                 }
-                
+
                 // Activate/Deactivate Employee
                 if (e.target.closest('.activate-employee')) {
                     e.preventDefault();
@@ -1056,7 +1317,7 @@
                     const empId = button.getAttribute('data-emp-id');
                     toggleEmployeeStatus(empId, 'active');
                 }
-                
+
                 if (e.target.closest('.deactivate-employee')) {
                     e.preventDefault();
                     const button = e.target.closest('.deactivate-employee');
@@ -1077,7 +1338,7 @@
 
             // Quick actions
             document.getElementById('payAllSalaries')?.addEventListener('click', payAllSalaries);
-            document.getElementById('quickLoanBtn')?.addEventListener('click', function() {
+            document.getElementById('quickLoanBtn')?.addEventListener('click', function () {
                 modals.quickLoanModal?.show();
             });
 
@@ -1116,22 +1377,22 @@
             // Auto-generate email from name
             const nameField = document.querySelector('input[name="name"]');
             const emailField = document.querySelector('input[name="email"]');
-            
+
             if (nameField && emailField) {
-                nameField.addEventListener('blur', function() {
+                nameField.addEventListener('blur', function () {
                     if (!emailField.value && this.value) {
                         const name = this.value.toLowerCase().replace(/\s+/g, '.');
                         emailField.value = name + '@company.com';
                     }
                 });
             }
-            
+
             // Auto-suggest salary based on role
             const roleField = document.querySelector('select[name="role"]');
             const salaryField = document.querySelector('input[name="salary"]');
-            
+
             if (roleField && salaryField) {
-                roleField.addEventListener('change', function() {
+                roleField.addEventListener('change', function () {
                     if (!salaryField.value) {
                         const salaries = {
                             'owner': 100000,
@@ -1140,7 +1401,7 @@
                             'sales': 20000,
                             'worker': 15000
                         };
-                        
+
                         const role = this.value.toLowerCase();
                         if (salaries[role]) {
                             salaryField.value = salaries[role];
@@ -1159,7 +1420,7 @@
                 if (data.success) {
                     const emp = data.employee;
                     const shopCurrency = '<%= shop.currency %>' || 'PKR';
-                    
+
                     let html = `
                     <div class="row">
                         <div class="col-md-4">
@@ -1209,7 +1470,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>`;
-                    
+
                     if (data.salaries && data.salaries.length > 0) {
                         data.salaries.forEach(salary => {
                             html += `
@@ -1226,9 +1487,9 @@
                     } else {
                         html += `<tr><td colspan="7" class="text-center text-muted">No salary records</td></tr>`;
                     }
-                    
+
                     html += `</tbody></table></div></div>`;
-                    
+
                     // Loan History Tab
                     html += `
                         <div class="tab-pane fade" id="loans" role="tabpanel">
@@ -1244,12 +1505,12 @@
                                         </tr>
                                     </thead>
                                     <tbody>`;
-                    
+
                     if (data.loanLedger && data.loanLedger.length > 0) {
                         data.loanLedger.forEach(ledger => {
                             const typeClass = ledger.transaction_type === 'credit' ? 'text-danger' : 'text-success';
                             const typeIcon = ledger.transaction_type === 'credit' ? 'fa-arrow-up' : 'fa-arrow-down';
-                            
+
                             html += `
                                 <tr>
                                     <td>${new Date(ledger.created_at).toLocaleDateString()}</td>
@@ -1262,16 +1523,16 @@
                     } else {
                         html += `<tr><td colspan="5" class="text-center text-muted">No loan records</td></tr>`;
                     }
-                    
+
                     html += `</tbody></table></div>`;
-                    
+
                     // Active Loans Section
                     if (data.activeLoans && data.activeLoans.length > 0) {
                         html += `
                             <div class="mt-4">
                                 <h6 class="mb-3"><i class="fas fa-exclamation-circle text-warning me-2"></i>Active Loans</h6>
                                 <div class="list-group">`;
-                        
+
                         data.activeLoans.forEach(loan => {
                             html += `
                                 <div class="list-group-item">
@@ -1288,10 +1549,10 @@
                                     </div>
                                 </div>`;
                         });
-                        
+
                         html += `</div></div>`;
                     }
-                    
+
                     html += `</div></div></div></div></div>`;
 
                     document.getElementById('employeeDetailsContent').innerHTML = html;
@@ -1450,7 +1711,7 @@
                     let html = '';
                     data.activeLoans.forEach(loan => {
                         const suggestedDeduction = loan.installment_amount || Math.min(loan.total_balance, baseSalary * 0.5);
-                        
+
                         html += `
                         <div class="loan-item mb-3">
                             <div class="form-check">
@@ -1577,34 +1838,65 @@
 
         async function manageLoan(empId) {
             try {
-                const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
+                // Get the employee card element
+                const button = document.querySelector(`[data-emp-id="${empId}"]`);
+                if (!button) {
+                    showNotification('Employee not found', 'error');
+                    return;
+                }
+
+                const row = button.closest('.employee-card');
                 if (!row) {
                     showNotification('Employee card not found', 'error');
                     return;
                 }
 
-                const empName = row.querySelector('.card-title')?.textContent || 'Unknown Employee';
+                // Get employee name from the card
+                const empNameElement = row.querySelector('.card-title');
+                const empName = empNameElement ? empNameElement.textContent : 'Unknown Employee';
 
-                // Reset and fill modal
-                document.getElementById('loanUserId').value = empId;
-                document.getElementById('loanEmpName').value = empName;
-                
-                // Reset form
-                const loanForm = document.getElementById('loanForm');
-                if (loanForm) loanForm.reset();
-                
-                document.getElementById('loanType').value = 'full';
-                document.getElementById('installmentSection').style.display = 'none';
-                document.getElementById('loanTakenOn').valueAsDate = new Date();
+                console.log('Managing loan for employee:', { empId, empName });
 
-                // Load existing loans
+                // Reset and fill modal fields
+                const loanUserId = document.getElementById('loanUserId');
+                const loanEmpName = document.getElementById('loanEmpName');
+
+                if (loanUserId) loanUserId.value = empId;
+                if (loanEmpName) loanEmpName.value = empName;
+
+                // Reset form fields
+                const loanAmount = document.getElementById('loanAmount');
+                const loanReason = document.getElementById('loanReason');
+                const loanType = document.getElementById('loanType');
+                const loanInstallments = document.getElementById('loanInstallments');
+                const installmentSection = document.getElementById('installmentSection');
+
+                if (loanAmount) loanAmount.value = '';
+                if (loanReason) loanReason.value = '';
+                if (loanType) loanType.value = 'full';
+                if (loanInstallments) loanInstallments.value = '3';
+                if (installmentSection) installmentSection.style.display = 'none';
+
+                // Set loan date to today
+                const loanTakenOn = document.getElementById('loanTakenOn');
+                if (loanTakenOn) {
+                    const today = new Date().toISOString().split('T')[0];
+                    loanTakenOn.value = today;
+                }
+
+                // Load existing loans for this employee
                 await loadExistingLoans(empId);
 
-                // Show modal
-                modals.loanModal?.show();
+                // Show the modal
+                if (modals.loanModal) {
+                    modals.loanModal.show();
+                } else {
+                    showNotification('Could not open loan modal', 'error');
+                }
+
             } catch (error) {
                 console.error('Error in manageLoan:', error);
-                showNotification('Error opening loan management', 'error');
+                showNotification('Error opening loan management: ' + error.message, 'error');
             }
         }
 
@@ -1660,178 +1952,369 @@
         }
 
         async function saveLoan() {
-            const form = document.getElementById('loanForm');
-            if (!form) {
-                showNotification('Loan form not found', 'error');
+            const userId = document.getElementById('loanUserId').value;
+            const amount = document.getElementById('loanAmount').value;
+            const reason = document.getElementById('loanReason').value;
+            const loanType = document.getElementById('loanType').value;
+            const installments = document.getElementById('loanInstallments')?.value || 1;
+
+            // Validate required fields
+            if (!userId) {
+                showNotification('Employee not selected. Please try again.', 'error');
                 return;
             }
 
-            const formData = new FormData(form);
+            if (!amount || parseFloat(amount) <= 0) {
+                showNotification('Please enter a valid loan amount', 'error');
+                return;
+            }
+
+            if (!reason || reason.trim() === '') {
+                showNotification('Please enter a reason for the loan', 'error');
+                return;
+            }
+
             const loanData = {
-                amount: parseFloat(formData.get('amount')),
-                description: formData.get('reason'),
-                loan_type: formData.get('loan_type'),
-                installments: formData.get('installments') || 1
+                amount: parseFloat(amount),
+                description: reason.trim(),
+                loan_type: loanType,
+                installments: parseInt(installments)
             };
 
+            console.log('Saving loan with data:', { userId, loanData });
+
             try {
-                showNotification('Saving loan...', 'info');
-                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${formData.get('user_id')}/loan`, {
+                showNotification('Saving loan... Please wait', 'info');
+
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${userId}/loan`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify(loanData)
                 });
 
-                const data = await response.json();
+                // Get response text first to see what's coming back
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
 
-                if (data.success) {
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('Failed to parse JSON:', responseText);
+                    showNotification('Server error: Invalid response format', 'error');
+                    return;
+                }
+
+                if (response.ok && data.success) {
                     modals.loanModal?.hide();
-                    showNotification('Loan added successfully!', 'success');
+                    showNotification('Loan added successfully! Loan #: ' + (data.loanNumber || 'N/A'), 'success');
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    showNotification('Error: ' + (data.message || 'Unknown error'), 'error');
+                    // Show detailed error message
+                    const errorMsg = data.message || data.error || 'Unknown error occurred';
+                    console.error('Loan save error:', errorMsg);
+                    showNotification('Failed to add loan: ' + errorMsg, 'error');
                 }
             } catch (error) {
                 console.error('Error saving loan:', error);
-                showNotification('Error saving loan', 'error');
+                showNotification('Error saving loan: ' + error.message, 'error');
             }
         }
 
         async function openDirectLoanPayment(empId) {
             try {
-                const row = document.querySelector(`[data-emp-id="${empId}"]`).closest('.employee-card');
+                console.log('Opening direct payment for empId:', empId);
+
+                // Get the employee card element
+                const button = document.querySelector(`[data-emp-id="${empId}"]`);
+                if (!button) {
+                    showNotification('Employee not found', 'error');
+                    return;
+                }
+
+                const row = button.closest('.employee-card');
                 if (!row) {
                     showNotification('Employee card not found', 'error');
                     return;
                 }
 
-                const empName = row.querySelector('.card-title')?.textContent || 'Unknown Employee';
-                
-                // Reset and fill modal
-                document.getElementById('directPaymentUserId').value = empId;
-                document.getElementById('directPaymentEmpName').value = empName;
-                document.getElementById('directLoanPaymentForm').reset();
-                document.getElementById('directPaymentDate').valueAsDate = new Date();
-                document.getElementById('payAllLoans').checked = true;
-                
+                // Get employee name from the card
+                let empName = 'Unknown Employee';
+                const empNameElement = row.querySelector('.card-title');
+                if (empNameElement) {
+                    empName = empNameElement.textContent.trim();
+                }
+
+                console.log('Found employee name:', empName);
+                console.log('Employee ID:', empId);
+
+                // Get modal elements
+                const directPaymentUserId = document.getElementById('directPaymentUserId');
+                const directPaymentEmpName = document.getElementById('directPaymentEmpName');
+
+                if (!directPaymentUserId || !directPaymentEmpName) {
+                    console.error('Modal elements not found');
+                    showNotification('Error: Modal elements not found', 'error');
+                    return;
+                }
+
+                // Set values
+                directPaymentUserId.value = empId;
+                directPaymentEmpName.value = empName;
+
+                // Reset form fields
+                const directPaymentAmount = document.getElementById('directPaymentAmount');
+                const directPaymentNotes = document.getElementById('directPaymentNotes');
+                const directPaymentMethod = document.getElementById('directPaymentMethod');
+                const directPaymentDate = document.getElementById('directPaymentDate');
+
+                if (directPaymentAmount) directPaymentAmount.value = '';
+                if (directPaymentNotes) directPaymentNotes.value = '';
+                if (directPaymentMethod) directPaymentMethod.value = 'cash';
+                if (directPaymentDate) {
+                    const today = new Date().toISOString().split('T')[0];
+                    directPaymentDate.value = today;
+                }
+
+                // Reset total selected amount
+                const totalSelectedAmount = document.getElementById('totalSelectedAmount');
+                if (totalSelectedAmount) totalSelectedAmount.value = '0';
+
                 // Load employee loans
                 await loadEmployeeLoansForPayment(empId);
-                
+
                 // Show modal
-                modals.directLoanPaymentModal?.show();
+                const modalElement = document.getElementById('directLoanPaymentModal');
+                if (modalElement) {
+                    let modalInstance = bootstrap.Modal.getInstance(modalElement);
+                    if (!modalInstance) {
+                        modalInstance = new bootstrap.Modal(modalElement);
+                        modals.directLoanPaymentModal = modalInstance;
+                    }
+                    modalInstance.show();
+                    console.log('Modal shown');
+                } else {
+                    showNotification('Could not open payment modal', 'error');
+                }
+
             } catch (error) {
                 console.error('Error opening direct payment modal:', error);
-                showNotification('Error opening payment modal', 'error');
+                showNotification('Error opening payment modal: ' + error.message, 'error');
             }
         }
 
         async function loadEmployeeLoansForPayment(empId) {
+            const loanList = document.getElementById('loanPaymentList');
+            if (!loanList) return;
+
+            loanList.innerHTML = '<div class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin me-2"></i>Loading loans...</div>';
+
             try {
                 const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}`);
                 const data = await response.json();
 
-                if (data.success) {
-                    const totalBalance = data.totalLoanBalance || 0;
-                    const activeLoans = data.activeLoans || [];
-                    
-                    // Update total balance
-                    document.getElementById('totalLoanBalance').value = totalBalance.toLocaleString();
-                    
-                    // Load specific loans list
-                    const loanListContainer = document.getElementById('loanListContainer');
-                    if (loanListContainer && activeLoans.length > 0) {
-                        let html = '<div class="list-group mt-2">';
-                        activeLoans.forEach(loan => {
-                            html += `
-                            <div class="list-group-item">
-                                <div class="form-check">
-                                    <input class="form-check-input loan-radio" type="radio" name="selectedLoan" 
-                                        id="loan-${loan.id}" value="${loan.id}">
-                                    <label class="form-check-label w-100" for="loan-${loan.id}">
-                                        <div class="d-flex justify-content-between">
-                                            <div>
-                                                <strong>${loan.loan_number}</strong><br>
-                                                <small class="text-muted">${loan.description}</small>
-                                            </div>
-                                            <div class="text-end">
-                                                <strong class="text-danger">${loan.total_balance.toLocaleString()}</strong><br>
-                                                <small class="text-muted">Installment: ${loan.installment_amount ? loan.installment_amount.toLocaleString() : 'N/A'}</small>
-                                            </div>
-                                        </div>
-                                    </label>
+                if (data.success && data.activeLoans && data.activeLoans.length > 0) {
+                    // This is the HTML for each loan item
+                let html = '';
+                    data.activeLoans.forEach(loan => {
+                        html += `
+                    <div class="loan-item mb-3 border-bottom pb-2">
+                        <div class="form-check">
+                            <input class="form-check-input loan-checkbox" type="checkbox" 
+                                data-loan-id="${loan.id}" 
+                                data-loan-balance="${loan.total_balance}"
+                                id="loan-${loan.id}">
+                            <label class="form-check-label w-100" for="loan-${loan.id}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>${loan.loan_number}</strong>
+                                        <small class="text-muted d-block">${loan.description || 'No description'}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="text-danger fw-bold">Balance: ${parseFloat(loan.total_balance).toLocaleString()}</span>
+                                        <small class="text-muted d-block">Installment: ${loan.installment_amount ? parseFloat(loan.installment_amount).toLocaleString() : 'N/A'}</small>
+                                    </div>
                                 </div>
-                            </div>`;
+                            </label>
+                        </div>
+                        <div class="mt-2 ms-4">
+                            <label class="form-label small">Payment Amount for this Loan</label>
+                            <input type="number" class="form-control form-control-sm loan-payment-amount" 
+                                data-loan-id="${loan.id}"
+                                data-max-amount="${loan.total_balance}"
+                                placeholder="Leave empty for full balance"
+                                min="0" max="${loan.total_balance}" step="0.01" disabled>
+                            <small class="text-muted">Enter specific amount or leave empty to pay full balance</small>
+                        </div>
+                    </div>`;
+                    });
+                    loanList.innerHTML = html;
+
+                    // Add event listeners for checkboxes
+                    document.querySelectorAll('.loan-checkbox').forEach(checkbox => {
+                        checkbox.addEventListener('change', function () {
+                            const loanId = this.getAttribute('data-loan-id');
+                            const amountInput = document.querySelector(`.loan-payment-amount[data-loan-id="${loanId}"]`);
+                            if (amountInput) {
+                                amountInput.disabled = !this.checked;
+                                if (!this.checked) {
+                                    amountInput.value = '';
+                                }
+                            }
+                            calculateTotalSelectedAmount();
                         });
-                        html += '</div>';
-                        loanListContainer.innerHTML = html;
-                    } else {
-                        document.getElementById('specificLoanSection').style.display = 'none';
-                        if (loanListContainer) {
-                            loanListContainer.innerHTML = '<div class="alert alert-warning">No active loans found</div>';
-                        }
-                    }
+                    });
+
+                    // Add event listeners for amount inputs
+                    document.querySelectorAll('.loan-payment-amount').forEach(input => {
+                        input.addEventListener('input', function () {
+                            const maxAmount = parseFloat(this.getAttribute('data-max-amount'));
+                            let value = parseFloat(this.value);
+                            if (isNaN(value)) value = 0;
+                            if (value > maxAmount) {
+                                this.value = maxAmount;
+                                showNotification(`Amount cannot exceed balance of ${maxAmount.toLocaleString()}`, 'warning');
+                            }
+                            calculateTotalSelectedAmount();
+                        });
+                    });
+                } else {
+                    loanList.innerHTML = '<div class="text-center text-muted py-3">No active loans found for this employee</div>';
                 }
             } catch (error) {
                 console.error('Error loading loans:', error);
+                loanList.innerHTML = '<div class="text-center text-danger py-3">Error loading loans</div>';
                 showNotification('Error loading loan data', 'error');
             }
         }
 
-        async function processDirectPayment() {
-            const empId = document.getElementById('directPaymentUserId').value;
-            const amount = document.getElementById('directPaymentAmount').value;
-            const description = document.getElementById('directPaymentNotes').value;
-            const paymentMethod = document.getElementById('directPaymentMethod').value;
-            const paymentDate = document.getElementById('directPaymentDate').value;
-            
-            if (!amount || parseFloat(amount) <= 0) {
-                showNotification('Please enter a valid payment amount', 'error');
-                return;
-            }
-
-            const paymentType = document.querySelector('input[name="paymentType"]:checked').value;
-            let selectedLoanId = null;
-            
-            if (paymentType === 'specific') {
-                const selectedLoanRadio = document.querySelector('input[name="selectedLoan"]:checked');
-                if (!selectedLoanRadio) {
-                    showNotification('Please select a loan to pay', 'error');
-                    return;
+        function calculateTotalSelectedAmount() {
+            let totalAmount = 0;
+            document.querySelectorAll('.loan-checkbox:checked').forEach(checkbox => {
+                const loanId = checkbox.getAttribute('data-loan-id');
+                const amountInput = document.querySelector(`.loan-payment-amount[data-loan-id="${loanId}"]`);
+                let amount = parseFloat(amountInput?.value);
+                if (isNaN(amount) || amount === 0) {
+                    // If no amount specified, use full balance
+                    amount = parseFloat(checkbox.getAttribute('data-loan-balance'));
                 }
-                selectedLoanId = selectedLoanRadio.value;
-            }
-
-            const paymentData = {
-                amount: parseFloat(amount),
-                loan_id: selectedLoanId,
-                description: `${description} | Method: ${paymentMethod} | Date: ${paymentDate}`,
-                payment_method: paymentMethod
-            };
-
-            try {
-                showNotification('Processing payment...', 'info');
-                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/loan/payment`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(paymentData)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    modals.directLoanPaymentModal?.hide();
-                    showNotification('Payment processed successfully!', 'success');
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    showNotification('Error: ' + (data.message || 'Payment failed'), 'error');
+                if (!isNaN(amount) && amount > 0) {
+                    totalAmount += amount;
                 }
-            } catch (error) {
-                console.error('Error processing payment:', error);
-                showNotification('Error processing payment', 'error');
-            }
+            });
+            document.getElementById('totalSelectedAmount').value = totalAmount.toLocaleString();
+        }
+async function processDirectPayment() {
+    const empId = document.getElementById('directPaymentUserId').value;
+    let totalPaymentAmount = parseFloat(document.getElementById('directPaymentAmount').value);
+    let description = document.getElementById('directPaymentNotes').value;
+    const paymentMethod = document.getElementById('directPaymentMethod').value;
+    const paymentDate = document.getElementById('directPaymentDate').value;
+
+    if (!empId) {
+        showNotification('Employee not selected', 'error');
+        return;
+    }
+
+    if (!totalPaymentAmount || totalPaymentAmount <= 0) {
+        showNotification('Please enter a valid payment amount', 'error');
+        return;
+    }
+
+    // Collect selected loans with their requested payment amounts
+    const selectedLoans = [];
+    let totalRequestedAmount = 0;
+
+    document.querySelectorAll('.loan-checkbox:checked').forEach(checkbox => {
+        const loanId = checkbox.getAttribute('data-loan-id');
+        const loanBalance = parseFloat(checkbox.getAttribute('data-loan-balance'));
+        const amountInput = document.querySelector(`.loan-payment-amount[data-loan-id="${loanId}"]`);
+        let requestedAmount = parseFloat(amountInput?.value);
+        
+        // If no specific amount entered, use the full balance
+        if (isNaN(requestedAmount) || requestedAmount === 0) {
+            requestedAmount = loanBalance;
+        }
+        
+        // Cap at loan balance
+        requestedAmount = Math.min(requestedAmount, loanBalance);
+        
+        if (requestedAmount > 0) {
+            selectedLoans.push({
+                loan_id: loanId,
+                amount: requestedAmount
+            });
+            totalRequestedAmount += requestedAmount;
+        }
+    });
+
+    if (selectedLoans.length === 0) {
+        showNotification('Please select at least one loan to pay', 'error');
+        return;
+    }
+
+    // Validate that payment amount matches total requested amount
+    // Allow small rounding errors (within 0.01)
+    if (Math.abs(totalRequestedAmount - totalPaymentAmount) > 0.01) {
+        showNotification(`Total selected amount (${totalRequestedAmount.toLocaleString()}) must equal payment amount (${totalPaymentAmount.toLocaleString()}). Please adjust the payment amount or the per-loan amounts.`, 'error');
+        return;
+    }
+
+    // Prepare description with default if empty
+    if (!description || description.trim() === '') {
+        description = `Direct loan payment via ${paymentMethod}`;
+    }
+
+    const paymentData = {
+        amount: totalPaymentAmount,
+        loan_payments: selectedLoans,
+        description: `${description} | Method: ${paymentMethod} | Date: ${paymentDate}`,
+        payment_method: paymentMethod
+    };
+
+    console.log('Sending payment data (amounts):', paymentData.loan_payments.map(l => ({ loan_id: l.loan_id, amount: l.amount })));
+
+    try {
+        showNotification('Processing payment...', 'info');
+        const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/loan/payment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(paymentData)
+        });
+
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('Failed to parse JSON:', responseText);
+            showNotification('Server error: Invalid response format', 'error');
+            return;
         }
 
-        function calculateInstallment() {
+        if (response.ok && data.success) {
+            modals.directLoanPaymentModal?.hide();
+            showNotification('Payment processed successfully! Amount paid: ' + totalPaymentAmount.toLocaleString(), 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            const errorMsg = data.message || data.error || 'Payment failed';
+            console.error('Payment error:', errorMsg);
+            showNotification('Error: ' + errorMsg, 'error');
+        }
+    } catch (error) {
+        console.error('Error processing payment:', error);
+        showNotification('Error processing payment: ' + error.message, 'error');
+    }
+}
+function calculateInstallment() {
             const loanAmount = parseFloat(document.getElementById('loanAmount')?.value) || 0;
             const installments = parseInt(document.getElementById('loanInstallments')?.value) || 3;
 
@@ -1920,11 +2403,11 @@
                 // Get all active employees
                 const employees = document.querySelectorAll('.employee-card');
                 let processed = 0;
-                
+
                 for (const empCard of employees) {
                     const empId = empCard.querySelector('.view-employee')?.getAttribute('data-emp-id');
                     const salary = empCard.querySelector('.quick-pay-btn')?.getAttribute('data-salary');
-                    
+
                     if (empId && salary) {
                         const salaryData = {
                             month: new Date().toISOString().slice(0, 7),
@@ -2045,15 +2528,35 @@
 
             // Create notification element
             const notification = document.createElement('div');
-            notification.className = `alert alert-${type} alert-dismissible fade show custom-notification position-fixed`;
-            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;';
+            let alertClass = '';
+            let icon = '';
+
+            switch (type) {
+                case 'success':
+                    alertClass = 'alert-success';
+                    icon = 'fa-check-circle';
+                    break;
+                case 'error':
+                    alertClass = 'alert-danger';
+                    icon = 'fa-exclamation-circle';
+                    break;
+                case 'warning':
+                    alertClass = 'alert-warning';
+                    icon = 'fa-exclamation-triangle';
+                    break;
+                default:
+                    alertClass = 'alert-info';
+                    icon = 'fa-info-circle';
+            }
+
+            notification.className = `alert ${alertClass} alert-dismissible fade show custom-notification`;
             notification.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
-                    <span>${message}</span>
-                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
-                </div>
-            `;
+        <div class="d-flex align-items-center">
+            <i class="fas ${icon} me-2" style="font-size: 1.2rem;"></i>
+            <span style="flex: 1;">${message}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
 
             // Add to page
             document.body.appendChild(notification);
@@ -2065,7 +2568,6 @@
                 }
             }, 5000);
         }
-
         function applyFilters() {
             const roleFilter = document.getElementById('roleFilter').value;
             const statusFilter = document.getElementById('statusFilter').value;
@@ -2088,4 +2590,5 @@
         }
     </script>
 </body>
+
 </html>

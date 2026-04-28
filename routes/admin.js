@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // routes/admin.js
 const express = require('express');
 const router = express.Router();
@@ -792,13 +791,5 @@ router.get('/settings', requireAdmin, async (req, res) => {
         });
     }
 });
-=======
-const express = require('express');
-const router = express.Router();
-const adminController = require('../controllers/adminController');
-
-// Apply all routes from the controller
-router.use('/', adminController);
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 
 module.exports = router;

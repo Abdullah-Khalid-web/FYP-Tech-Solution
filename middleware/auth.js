@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-// middleware/auth.js
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 const { pool } = require('../db');
 
 /**
@@ -40,8 +36,7 @@ function hasPermission(permissionSlug) {
       if (rows[0].allowed) {
         return next(); // user has permission
       } else {
-<<<<<<< HEAD
-=======
+
         // Check for individual user permissions
         const [userPermRows] = await pool.execute(
           `SELECT COUNT(*) AS allowed
@@ -55,7 +50,6 @@ function hasPermission(permissionSlug) {
           return next();
         }
         
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
         req.flash('error', 'You do not have permission to access this page.');
         return res.redirect('/dashboard');
       }
@@ -66,8 +60,5 @@ function hasPermission(permissionSlug) {
   };
 }
 
-<<<<<<< HEAD
 module.exports = { isAuthenticated, hasPermission };
-=======
-module.exports = { isAuthenticated, hasPermission };
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
+
