@@ -13,7 +13,7 @@ from api_client import api_client
 # =============================================================================
 
 @tool
-async def get_daily_sales(date: Optional[str] = None) -> dict:
+async def get_daily_sales(date: str = "") -> dict:
     """
     Get total sales for a specific day.
     
@@ -52,7 +52,7 @@ async def get_top_selling_products(limit: int = 10) -> dict:
 
 
 @tool
-async def get_transactions(date: Optional[str] = None) -> dict:
+async def get_transactions(date: str = "") -> dict:
     """
     Get transaction details for a specific day.
     
@@ -112,7 +112,7 @@ async def get_low_stock_items() -> dict:
 
 
 @tool
-async def get_all_products(category: Optional[str] = None) -> dict:
+async def get_all_products(category: str = "") -> dict:
     """
     Get all products, optionally filtered by category.
     
@@ -167,7 +167,7 @@ async def get_current_bill() -> dict:
 # =============================================================================
 
 @tool
-async def get_staff_list(role: Optional[str] = None) -> dict:
+async def get_staff_list(role: str = "") -> dict:
     """
     Get list of staff members.
     
@@ -184,7 +184,7 @@ async def get_staff_list(role: Optional[str] = None) -> dict:
 
 
 @tool
-async def get_cashier_activity(user_id: int, date: Optional[str] = None) -> dict:
+async def get_cashier_activity(user_id: int, date: str = "") -> dict:
     """
     Get activity logs for a specific cashier.
     
@@ -214,7 +214,7 @@ async def get_staff_performance_metrics() -> dict:
 # =============================================================================
 
 @tool
-async def get_daily_report(date: Optional[str] = None) -> dict:
+async def get_daily_report(date: str = "") -> dict:
     """
     Get daily business report.
     
@@ -239,7 +239,7 @@ async def get_weekly_report() -> dict:
 
 
 @tool
-async def get_expense_report(start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:
+async def get_expense_report(start_date: str = "", end_date: str = "") -> dict:
     """
     Get expense report for a period.
     
@@ -303,7 +303,7 @@ async def get_detected_anomalies() -> dict:
 # =============================================================================
 
 @tool
-async def create_reorder_draft(product_id: int, quantity: int, supplier_id: Optional[int] = None) -> dict:
+async def create_reorder_draft(product_id: int, quantity: int, supplier_id: int = 0) -> dict:
     """
     Create a draft reorder for a product.
     

@@ -53,8 +53,8 @@ class ActionStatus(str, Enum):
 class UserQuery(BaseModel):
     """Input from user (text or transcribed voice)."""
     query: str = Field(..., description="User's natural language query")
-    shop_id: int = Field(default=24, description="Shop ID for multi-tenant support")
-    user_id: Optional[int] = Field(None, description="ID of the user making the query")
+    shop_id: str = Field(default="24", description="Shop ID for multi-tenant support")
+    user_id: Optional[str] = Field(None, description="ID of the user making the query")
     session_id: Optional[str] = Field(None, description="Session ID for conversation context")
     is_voice: bool = Field(default=False, description="Whether the query came from voice input")
 
@@ -62,7 +62,7 @@ class UserQuery(BaseModel):
 class VoiceBillingRequest(BaseModel):
     """Voice billing command request."""
     audio_text: str = Field(..., description="Transcribed audio text")
-    shop_id: int = Field(default=24)
+    shop_id: str = Field(default="24")
     current_bill_id: Optional[int] = Field(None, description="Current active bill ID")
 
 
@@ -70,7 +70,7 @@ class ReorderRequest(BaseModel):
     """Stock reorder request."""
     product_id: Optional[int] = Field(None)
     product_name: Optional[str] = Field(None)
-    shop_id: int = Field(default=24)
+    shop_id: str = Field(default="24")
 
 
 class ReorderApproval(BaseModel):
@@ -84,7 +84,7 @@ class ReorderApproval(BaseModel):
 class ReportRequest(BaseModel):
     """Report narration request."""
     report_type: str = Field(..., description="Type: daily, weekly, monthly, profit_loss, inventory")
-    shop_id: int = Field(default=24)
+    shop_id: str = Field(default="24")
     start_date: Optional[str] = Field(None)
     end_date: Optional[str] = Field(None)
 
@@ -158,7 +158,7 @@ class AnomalyReport(BaseModel):
 class StaffPerformanceReport(BaseModel):
     """Staff performance summary."""
     status: ActionStatus
-    user_id: int
+    user_id: str
     user_name: str
     role: str
     metrics: Dict[str, Any]
@@ -185,7 +185,7 @@ class NarratedReport(BaseModel):
 
 class ToolInput(BaseModel):
     """Base tool input schema."""
-    shop_id: int = 24
+    shop_id: str = "24"
 
 
 class SalesQueryInput(ToolInput):
@@ -212,7 +212,7 @@ class BillingActionInput(ToolInput):
 
 class StaffQueryInput(ToolInput):
     """Input for staff query tools."""
-    user_id: Optional[int] = None
+    user_id: Optional[str] = None
     role: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None

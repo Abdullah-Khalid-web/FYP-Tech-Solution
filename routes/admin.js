@@ -4,11 +4,23 @@ const router = express.Router();
 const { pool } = require('../db');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const { v4: uuidv4 } = require('uuid');
 
-// Admin credentials (you can change these later)
+// Helper function to convert UUID to binary
+function uuidToBinary(uuid) {
+    return Buffer.from(uuid.replace(/-/g, ''), 'hex');
+}
+
+// Helper function to convert binary to UUID
+function binaryToUuid(buffer) {
+    const hex = buffer.toString('hex');
+    return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`;
+}
+
+// Admin credentials
 const ADMIN_CREDENTIALS = {
     username: 'aa',
-    password: 'aa' // You'll change this later
+    password: 'aa'
 };
 
 // Admin login page
@@ -27,8 +39,11 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+        // Create a dummy admin user ID
+        const adminUuid = uuidv4();
+        
         req.session.admin = {
-            id: 1,
+            id: uuidToBinary(adminUuid), // Store as binary for database
             username: username,
             loginTime: new Date()
         };
@@ -52,7 +67,7 @@ const requireAdmin = (req, res, next) => {
     if (req.session.admin) {
         next();
     } else {
-        res.redirect('/admin/login');
+        res.redirect('/admin');
     }
 };
 
@@ -65,7 +80,7 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
                 COUNT(*) as totalShops,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as activeShops,
                 SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactiveShops,
-                SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) as blockedShops
+                SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as blockedShops
             FROM shops
         `);
 
@@ -83,14 +98,25 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
         const [recentShops] = await pool.execute(`
             SELECT s.*, sub.plan_name, sub.expires_at, sub.status as subscription_status
             FROM shops s
-            LEFT JOIN subscriptions sub ON s.id = sub.shop_id AND sub.status = 'active'
+            LEFT JOIN (
+                SELECT * FROM subscriptions 
+                WHERE status = 'active' 
+                ORDER BY created_at DESC
+            ) sub ON s.id = sub.shop_id
             ORDER BY s.created_at DESC
             LIMIT 5
         `);
 
+        // Convert binary UUIDs to string for template
+        const processedShops = recentShops.map(shop => ({
+            ...shop,
+            id: binaryToUuid(shop.id)
+        }));
+
         // Get expiring subscriptions (within 7 days)
         const [expiringSubscriptions] = await pool.execute(`
-            SELECT s.name as shop_name, sub.*, DATEDIFF(sub.expires_at, CURDATE()) as days_remaining
+            SELECT s.name as shop_name, sub.*, 
+                   DATEDIFF(sub.expires_at, CURDATE()) as days_remaining
             FROM subscriptions sub
             JOIN shops s ON sub.shop_id = s.id
             WHERE sub.status = 'active' 
@@ -98,74 +124,31 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
             ORDER BY sub.expires_at ASC
         `);
 
+        // Process subscriptions to convert UUIDs
+        const processedSubscriptions = expiringSubscriptions.map(sub => ({
+            ...sub,
+            id: binaryToUuid(sub.id),
+            shop_id: binaryToUuid(sub.shop_id)
+        }));
+
         res.render('admin/dashboard', {
             title: 'Admin Dashboard',
-            layout: false,
-            currentPage: 'dashboard',
             stats: shops[0],
             subscriptionStats: subscriptions[0],
-            recentShops: recentShops,
-            expiringSubscriptions: expiringSubscriptions,
+            recentShops: processedShops,
+            expiringSubscriptions: processedSubscriptions,
             admin: req.session.admin
         });
     } catch (err) {
         console.error('Error loading admin dashboard:', err);
         res.status(500).render('admin/error', {
             title: 'Error',
-            message: 'Failed to load dashboard'
+            message: 'Failed to load dashboard: ' + err.message
         });
     }
 });
 
 // Shops management
-// router.get('/shops', requireAdmin, async (req, res) => {
-//     try {
-//         const { status, search } = req.query;
-        
-//         let query = `
-//             SELECT s.*, 
-//                    sub.plan_name, 
-//                    sub.expires_at, 
-//                    sub.status as subscription_status,
-//                    (SELECT COUNT(*) FROM users u WHERE u.shop_id = s.id AND u.status = 'active') as user_count,
-//                    (SELECT COUNT(*) FROM shop_${s.id}_products p WHERE p.status = 'active') as product_count
-//             FROM shops s
-//             LEFT JOIN subscriptions sub ON s.id = sub.shop_id AND sub.status = 'active'
-//         `;
-        
-//         const params = [];
-        
-//         if (status && status !== 'all') {
-//             query += ' WHERE s.status = ?';
-//             params.push(status);
-//         }
-        
-//         if (search) {
-//             query += params.length ? ' AND' : ' WHERE';
-//             query += ' (s.name LIKE ? OR s.email LIKE ?)';
-//             params.push(`%${search}%`, `%${search}%`);
-//         }
-        
-//         query += ' ORDER BY s.created_at DESC';
-        
-//         const [shops] = await pool.execute(query, params);
-        
-//         res.render('admin/shops', {
-//             title: 'Manage Shops',
-//             shops: shops,
-//             currentStatus: status || 'all',
-//             searchQuery: search || '',
-//             admin: req.session.admin
-//         });
-//     } catch (err) {
-//         console.error('Error loading shops:', err);
-//         res.status(500).render('admin/error', {
-//             title: 'Error',
-//             message: 'Failed to load shops'
-//         });
-//     }
-// });
-// Shops management - FIXED VERSION
 router.get('/shops', requireAdmin, async (req, res) => {
     try {
         const { status, search } = req.query;
@@ -177,19 +160,23 @@ router.get('/shops', requireAdmin, async (req, res) => {
                    sub.status as subscription_status,
                    (SELECT COUNT(*) FROM users u WHERE u.shop_id = s.id AND u.status = 'active') as user_count
             FROM shops s
-            LEFT JOIN subscriptions sub ON s.id = sub.shop_id AND sub.status = 'active'
+            LEFT JOIN (
+                SELECT * FROM subscriptions 
+                WHERE status = 'active'
+                ORDER BY created_at DESC
+            ) sub ON s.id = sub.shop_id
+            WHERE 1=1
         `;
         
         const params = [];
         
         if (status && status !== 'all') {
-            query += ' WHERE s.status = ?';
+            query += ' AND s.status = ?';
             params.push(status);
         }
         
         if (search) {
-            query += params.length ? ' AND' : ' WHERE';
-            query += ' (s.name LIKE ? OR s.email LIKE ?)';
+            query += ' AND (s.name LIKE ? OR s.email LIKE ?)';
             params.push(`%${search}%`, `%${search}%`);
         }
         
@@ -197,27 +184,30 @@ router.get('/shops', requireAdmin, async (req, res) => {
         
         const [shops] = await pool.execute(query, params);
         
-        // For product counts, we'll handle it separately to avoid errors if shop tables don't exist
+        // Convert binary UUIDs to string and get product counts
         const shopsWithStats = await Promise.all(shops.map(async (shop) => {
+            let productCount = 0;
             try {
-                const [products] = await pool.execute(`SELECT COUNT(*) as total FROM shop_${shop.id}_products WHERE status = 'active'`);
-                return {
-                    ...shop,
-                    product_count: products[0].total
-                };
+                // Instead of shop-specific tables, use the main products table
+                const [products] = await pool.execute(
+                    'SELECT COUNT(*) as total FROM products WHERE shop_id = ? AND status = "active"',
+                    [shop.id]
+                );
+                productCount = products[0].total;
             } catch (error) {
-                // If shop table doesn't exist or there's an error, return 0
-                return {
-                    ...shop,
-                    product_count: 0
-                };
+                console.log('Error getting product count for shop:', error.message);
+                productCount = 0;
             }
+            
+            return {
+                ...shop,
+                id: binaryToUuid(shop.id),
+                product_count: productCount
+            };
         }));
         
         res.render('admin/shops', {
             title: 'Manage Shops',
-            layout: false,
-            currentPage: 'shops',
             shops: shopsWithStats,
             currentStatus: status || 'all',
             searchQuery: search || '',
@@ -232,11 +222,11 @@ router.get('/shops', requireAdmin, async (req, res) => {
     }
 });
 
-
 // Shop details
 router.get('/shops/:id', requireAdmin, async (req, res) => {
     try {
         const shopId = req.params.id;
+        const shopIdBinary = uuidToBinary(shopId);
         
         const [shops] = await pool.execute(`
             SELECT s.*, 
@@ -249,7 +239,7 @@ router.get('/shops/:id', requireAdmin, async (req, res) => {
             FROM shops s
             LEFT JOIN subscriptions sub ON s.id = sub.shop_id AND sub.status = 'active'
             WHERE s.id = ?
-        `, [shopId]);
+        `, [shopIdBinary]);
         
         if (shops.length === 0) {
             return res.status(404).render('admin/error', {
@@ -258,23 +248,51 @@ router.get('/shops/:id', requireAdmin, async (req, res) => {
             });
         }
         
+        // Convert shop ID back to string for display
+        const shop = {
+            ...shops[0],
+            id: shopId
+        };
+        
         const [users] = await pool.execute(`
             SELECT * FROM users 
             WHERE shop_id = ? 
             ORDER BY created_at DESC
-        `, [shopId]);
+        `, [shopIdBinary]);
+        
+        // Convert user IDs to string
+        const processedUsers = users.map(user => ({
+            ...user,
+            id: binaryToUuid(user.id),
+            shop_id: binaryToUuid(user.shop_id),
+            role_id: user.role_id ? binaryToUuid(user.role_id) : null
+        }));
         
         const [subscriptions] = await pool.execute(`
             SELECT * FROM subscriptions 
             WHERE shop_id = ? 
             ORDER BY created_at DESC
-        `, [shopId]);
+        `, [shopIdBinary]);
         
-        // Try to get shop statistics (might fail if shop tables don't exist)
+        // Convert subscription IDs to string
+        const processedSubscriptions = subscriptions.map(sub => ({
+            ...sub,
+            id: binaryToUuid(sub.id),
+            shop_id: binaryToUuid(sub.shop_id)
+        }));
+        
+        // Get shop statistics from main tables
         let shopStats = {};
         try {
-            const [products] = await pool.execute(`SELECT COUNT(*) as total FROM shop_${shopId}_products WHERE status = 'active'`);
-            const [bills] = await pool.execute(`SELECT COUNT(*) as total, COALESCE(SUM(total_amount), 0) as revenue FROM shop_${shopId}_bills WHERE status = 'active'`);
+            const [products] = await pool.execute(
+                'SELECT COUNT(*) as total FROM products WHERE shop_id = ? AND status = "active"',
+                [shopIdBinary]
+            );
+            
+            const [bills] = await pool.execute(
+                'SELECT COUNT(*) as total, COALESCE(SUM(total_amount), 0) as revenue FROM bills WHERE shop_id = ?',
+                [shopIdBinary]
+            );
             
             shopStats = {
                 totalProducts: products[0].total,
@@ -291,12 +309,10 @@ router.get('/shops/:id', requireAdmin, async (req, res) => {
         }
         
         res.render('admin/shop-details', {
-            title: `Shop: ${shops[0].name}`,
-            layout: false,
-            currentPage: 'shops',
-            shop: shops[0],
-            users: users,
-            subscriptions: subscriptions,
+            title: `Shop: ${shop.name}`,
+            shop: shop,
+            users: processedUsers,
+            subscriptions: processedSubscriptions,
             stats: shopStats,
             admin: req.session.admin
         });
@@ -304,7 +320,7 @@ router.get('/shops/:id', requireAdmin, async (req, res) => {
         console.error('Error loading shop details:', err);
         res.status(500).render('admin/error', {
             title: 'Error',
-            message: 'Failed to load shop details'
+            message: 'Failed to load shop details: ' + err.message
         });
     }
 });
@@ -314,8 +330,9 @@ router.put('/api/shops/:id/status', requireAdmin, async (req, res) => {
     try {
         const shopId = req.params.id;
         const { status } = req.body;
+        const shopIdBinary = uuidToBinary(shopId);
         
-        if (!['active', 'inactive', 'blocked'].includes(status)) {
+        if (!['active', 'inactive', 'suspended'].includes(status)) {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid status'
@@ -324,8 +341,15 @@ router.put('/api/shops/:id/status', requireAdmin, async (req, res) => {
         
         await pool.execute(
             'UPDATE shops SET status = ?, updated_at = NOW() WHERE id = ?',
-            [status, shopId]
+            [status, shopIdBinary]
         );
+        
+        // Log the action
+        const actionId = uuidv4();
+        await pool.execute(`
+            INSERT INTO admin_actions (id, admin_id, shop_id, action_type, details, created_at)
+            VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, NOW())
+        `, [actionId, req.session.admin.id, shopIdBinary, 'shop_status_update', JSON.stringify({ status })]);
         
         res.json({
             success: true,
@@ -335,7 +359,7 @@ router.put('/api/shops/:id/status', requireAdmin, async (req, res) => {
         console.error('Error updating shop status:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to update shop status'
+            message: 'Failed to update shop status: ' + err.message
         });
     }
 });
@@ -344,6 +368,7 @@ router.put('/api/shops/:id/status', requireAdmin, async (req, res) => {
 router.post('/api/shops/:id/extend-subscription', requireAdmin, async (req, res) => {
     try {
         const shopId = req.params.id;
+        const shopIdBinary = uuidToBinary(shopId);
         const { days, reason } = req.body;
         
         if (!days || days <= 0) {
@@ -358,7 +383,7 @@ router.post('/api/shops/:id/extend-subscription', requireAdmin, async (req, res)
             SELECT * FROM subscriptions 
             WHERE shop_id = ? AND status = 'active'
             ORDER BY created_at DESC LIMIT 1
-        `, [shopId]);
+        `, [shopIdBinary]);
         
         if (subscriptions.length === 0) {
             return res.status(400).json({
@@ -377,10 +402,17 @@ router.post('/api/shops/:id/extend-subscription', requireAdmin, async (req, res)
         );
         
         // Log the extension
+        const actionId = uuidv4();
         await pool.execute(`
-            INSERT INTO admin_actions (admin_id, shop_id, action_type, details, created_at)
-            VALUES (?, ?, 'subscription_extension', ?, NOW())
-        `, [req.session.admin.id, shopId, JSON.stringify({ days, reason, old_expiry: subscription.expires_at, new_expiry: newExpiryDate })]);
+            INSERT INTO admin_actions (id, admin_id, shop_id, action_type, details, created_at)
+            VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, NOW())
+        `, [actionId, req.session.admin.id, shopIdBinary, 'subscription_extension', 
+            JSON.stringify({ 
+                days, 
+                reason, 
+                old_expiry: subscription.expires_at, 
+                new_expiry: newExpiryDate 
+            })]);
         
         res.json({
             success: true,
@@ -391,38 +423,42 @@ router.post('/api/shops/:id/extend-subscription', requireAdmin, async (req, res)
         console.error('Error extending subscription:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to extend subscription'
+            message: 'Failed to extend subscription: ' + err.message
         });
     }
 });
 
-// User management
+// User management - CORRECTED VERSION
 router.get('/users', requireAdmin, async (req, res) => {
     try {
         const { shop_id, status, search } = req.query;
         
         let query = `
-            SELECT u.*, s.name as shop_name, s.email as shop_email
+            SELECT 
+                u.*, 
+                s.name as shop_name, 
+                s.email as shop_email,
+                r.role_name as role_name
             FROM users u
             JOIN shops s ON u.shop_id = s.id
+            LEFT JOIN roles r ON u.role_id = r.id
+            WHERE 1=1
         `;
         
         const params = [];
         
-        if (shop_id) {
-            query += ' WHERE u.shop_id = ?';
+        if (shop_id && shop_id !== 'all') {
+            query += ' AND u.shop_id = UUID_TO_BIN(?)';
             params.push(shop_id);
         }
         
         if (status && status !== 'all') {
-            query += params.length ? ' AND' : ' WHERE';
-            query += ' u.status = ?';
+            query += ' AND u.status = ?';
             params.push(status);
         }
         
         if (search) {
-            query += params.length ? ' AND' : ' WHERE';
-            query += ' (u.name LIKE ? OR u.email LIKE ? OR s.name LIKE ?)';
+            query += ' AND (u.name LIKE ? OR u.email LIKE ? OR s.name LIKE ?)';
             params.push(`%${search}%`, `%${search}%`, `%${search}%`);
         }
         
@@ -430,16 +466,24 @@ router.get('/users', requireAdmin, async (req, res) => {
         
         const [users] = await pool.execute(query, params);
         
+        // Convert binary UUIDs to string
+        const processedUsers = users.map(user => ({
+            ...user,
+            id: binaryToUuid(user.id),
+            shop_id: binaryToUuid(user.shop_id),
+            role_id: user.role_id ? binaryToUuid(user.role_id) : null,
+            // Add role property for template compatibility
+            role: user.role_name ? user.role_name.toLowerCase() : 'other'
+        }));
+        
         // Get shops for filter
-        const [shops] = await pool.execute('SELECT id, name FROM shops ORDER BY name');
+        const [shops] = await pool.execute('SELECT BIN_TO_UUID(id) as id, name FROM shops ORDER BY name');
         
         res.render('admin/users', {
             title: 'Manage Users',
-            layout: false,
-            currentPage: 'users',
-            users: users,
+            users: processedUsers,
             shops: shops,
-            currentShopId: shop_id || '',
+            currentShopId: shop_id || 'all',
             currentStatus: status || 'all',
             searchQuery: search || '',
             admin: req.session.admin
@@ -448,7 +492,7 @@ router.get('/users', requireAdmin, async (req, res) => {
         console.error('Error loading users:', err);
         res.status(500).render('admin/error', {
             title: 'Error',
-            message: 'Failed to load users'
+            message: 'Failed to load users: ' + err.message
         });
     }
 });
@@ -457,6 +501,7 @@ router.get('/users', requireAdmin, async (req, res) => {
 router.put('/api/users/:id/status', requireAdmin, async (req, res) => {
     try {
         const userId = req.params.id;
+        const userIdBinary = uuidToBinary(userId);
         const { status } = req.body;
         
         if (!['active', 'inactive'].includes(status)) {
@@ -468,7 +513,7 @@ router.put('/api/users/:id/status', requireAdmin, async (req, res) => {
         
         await pool.execute(
             'UPDATE users SET status = ?, updated_at = NOW() WHERE id = ?',
-            [status, userId]
+            [status, userIdBinary]
         );
         
         res.json({
@@ -479,7 +524,7 @@ router.put('/api/users/:id/status', requireAdmin, async (req, res) => {
         console.error('Error updating user status:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to update user status'
+            message: 'Failed to update user status: ' + err.message
         });
     }
 });
@@ -493,12 +538,13 @@ router.get('/feedback', requireAdmin, async (req, res) => {
             SELECT f.*, s.name as shop_name, s.email as shop_email
             FROM feedback f
             JOIN shops s ON f.shop_id = s.id
+            WHERE 1=1
         `;
         
         const params = [];
         
         if (status && status !== 'all') {
-            query += ' WHERE f.status = ?';
+            query += ' AND f.status = ?';
             params.push(status);
         }
         
@@ -506,11 +552,16 @@ router.get('/feedback', requireAdmin, async (req, res) => {
         
         const [feedback] = await pool.execute(query, params);
         
+        // Convert binary UUIDs to string
+        const processedFeedback = feedback.map(item => ({
+            ...item,
+            id: binaryToUuid(item.id),
+            shop_id: binaryToUuid(item.shop_id)
+        }));
+        
         res.render('admin/feedback', {
             title: 'Customer Feedback',
-            layout: false,
-            currentPage: 'feedback',
-            feedback: feedback,
+            feedback: processedFeedback,
             currentStatus: status || 'all',
             admin: req.session.admin
         });
@@ -518,22 +569,21 @@ router.get('/feedback', requireAdmin, async (req, res) => {
         console.error('Error loading feedback:', err);
         res.status(500).render('admin/error', {
             title: 'Error',
-            message: 'Failed to load feedback'
+            message: 'Failed to load feedback: ' + err.message
         });
     }
 });
 
-// Add these routes before module.exports
-
-// API route for feedback notes (add this to your existing admin.js)
+// Update feedback notes
 router.put('/api/feedback/:id/notes', requireAdmin, async (req, res) => {
     try {
         const feedbackId = req.params.id;
+        const feedbackIdBinary = uuidToBinary(feedbackId);
         const { notes } = req.body;
         
         await pool.execute(
             'UPDATE feedback SET admin_notes = ?, updated_at = NOW() WHERE id = ?',
-            [notes, feedbackId]
+            [notes, feedbackIdBinary]
         );
         
         res.json({
@@ -544,16 +594,16 @@ router.put('/api/feedback/:id/notes', requireAdmin, async (req, res) => {
         console.error('Error updating feedback notes:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to update notes'
+            message: 'Failed to update notes: ' + err.message
         });
     }
 });
-
 
 // Update feedback status
 router.put('/api/feedback/:id/status', requireAdmin, async (req, res) => {
     try {
         const feedbackId = req.params.id;
+        const feedbackIdBinary = uuidToBinary(feedbackId);
         const { status } = req.body;
         
         if (!['new', 'read', 'replied', 'resolved'].includes(status)) {
@@ -565,7 +615,7 @@ router.put('/api/feedback/:id/status', requireAdmin, async (req, res) => {
         
         await pool.execute(
             'UPDATE feedback SET status = ?, updated_at = NOW() WHERE id = ?',
-            [status, feedbackId]
+            [status, feedbackIdBinary]
         );
         
         res.json({
@@ -576,24 +626,7 @@ router.put('/api/feedback/:id/status', requireAdmin, async (req, res) => {
         console.error('Error updating feedback status:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to update feedback status'
-        });
-    }
-});
-
-
-// System settings page (you can expand this)
-router.get('/settings', requireAdmin, async (req, res) => {
-    try {
-        res.render('admin/settings', {
-            title: 'System Settings',
-            admin: req.session.admin
-        });
-    } catch (err) {
-        console.error('Error loading settings:', err);
-        res.status(500).render('admin/error', {
-            title: 'Error',
-            message: 'Failed to load settings'
+            message: 'Failed to update feedback status: ' + err.message
         });
     }
 });
@@ -602,15 +635,13 @@ router.get('/settings', requireAdmin, async (req, res) => {
 router.get('/subscriptions', requireAdmin, async (req, res) => {
     try {
         const [plans] = await pool.execute(`
-            SELECT * FROM pricing_plans 
+            SELECT *, BIN_TO_UUID(id) as uuid FROM pricing_plans 
             WHERE status = 'active'
             ORDER BY monthly_price ASC
         `);
 
         res.render('admin/subscriptions', {
             title: 'Subscription Plans',
-            layout: false,
-            currentPage: 'subscriptions',
             plans: plans,
             admin: req.session.admin
         });
@@ -618,7 +649,7 @@ router.get('/subscriptions', requireAdmin, async (req, res) => {
         console.error('Error loading subscription plans:', err);
         res.status(500).render('admin/error', {
             title: 'Error',
-            message: 'Failed to load subscription plans'
+            message: 'Failed to load subscription plans: ' + err.message
         });
     }
 });
@@ -642,10 +673,12 @@ router.post('/api/subscriptions', requireAdmin, async (req, res) => {
             featuresJson = Array.isArray(features) ? features : features.split(',').map(f => f.trim());
         }
 
+        const planId = uuidv4();
+        
         await pool.execute(`
-            INSERT INTO pricing_plans (name, description, monthly_price, quarterly_price, yearly_price, features, status)
-            VALUES (?, ?, ?, ?, ?, ?, 'active')
-        `, [name, description || null, monthly_price, quarterly_price, yearly_price, JSON.stringify(featuresJson)]);
+            INSERT INTO pricing_plans (id, name, description, monthly_price, quarterly_price, yearly_price, features, status)
+            VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, 'active')
+        `, [planId, name, description || null, monthly_price, quarterly_price, yearly_price, JSON.stringify(featuresJson)]);
 
         res.json({
             success: true,
@@ -655,7 +688,7 @@ router.post('/api/subscriptions', requireAdmin, async (req, res) => {
         console.error('Error creating subscription plan:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to create subscription plan'
+            message: 'Failed to create subscription plan: ' + err.message
         });
     }
 });
@@ -664,6 +697,7 @@ router.post('/api/subscriptions', requireAdmin, async (req, res) => {
 router.put('/api/subscriptions/:id', requireAdmin, async (req, res) => {
     try {
         const planId = req.params.id;
+        const planIdBinary = uuidToBinary(planId);
         const { name, description, monthly_price, quarterly_price, yearly_price, features, status } = req.body;
 
         // Parse features if provided
@@ -676,7 +710,7 @@ router.put('/api/subscriptions/:id', requireAdmin, async (req, res) => {
             UPDATE pricing_plans 
             SET name = ?, description = ?, monthly_price = ?, quarterly_price = ?, yearly_price = ?, features = ?, status = ?, updated_at = NOW()
             WHERE id = ?
-        `, [name, description || null, monthly_price, quarterly_price, yearly_price, JSON.stringify(featuresJson), status, planId]);
+        `, [name, description || null, monthly_price, quarterly_price, yearly_price, JSON.stringify(featuresJson), status, planIdBinary]);
 
         res.json({
             success: true,
@@ -686,7 +720,7 @@ router.put('/api/subscriptions/:id', requireAdmin, async (req, res) => {
         console.error('Error updating subscription plan:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to update subscription plan'
+            message: 'Failed to update subscription plan: ' + err.message
         });
     }
 });
@@ -695,10 +729,11 @@ router.put('/api/subscriptions/:id', requireAdmin, async (req, res) => {
 router.delete('/api/subscriptions/:id', requireAdmin, async (req, res) => {
     try {
         const planId = req.params.id;
+        const planIdBinary = uuidToBinary(planId);
 
         await pool.execute(
             'UPDATE pricing_plans SET status = "inactive", updated_at = NOW() WHERE id = ?',
-            [planId]
+            [planIdBinary]
         );
 
         res.json({
@@ -709,7 +744,7 @@ router.delete('/api/subscriptions/:id', requireAdmin, async (req, res) => {
         console.error('Error deleting subscription plan:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to delete subscription plan'
+            message: 'Failed to delete subscription plan: ' + err.message
         });
     }
 });
@@ -718,10 +753,11 @@ router.delete('/api/subscriptions/:id', requireAdmin, async (req, res) => {
 router.get('/api/subscriptions/:id', requireAdmin, async (req, res) => {
     try {
         const planId = req.params.id;
+        const planIdBinary = uuidToBinary(planId);
         
         const [plans] = await pool.execute(`
-            SELECT * FROM pricing_plans WHERE id = ?
-        `, [planId]);
+            SELECT *, BIN_TO_UUID(id) as uuid FROM pricing_plans WHERE id = ?
+        `, [planIdBinary]);
         
         if (plans.length === 0) {
             return res.status(404).json({
@@ -735,7 +771,23 @@ router.get('/api/subscriptions/:id', requireAdmin, async (req, res) => {
         console.error('Error fetching plan:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to fetch plan'
+            message: 'Failed to fetch plan: ' + err.message
+        });
+    }
+});
+
+// System settings page
+router.get('/settings', requireAdmin, async (req, res) => {
+    try {
+        res.render('admin/settings', {
+            title: 'System Settings',
+            admin: req.session.admin
+        });
+    } catch (err) {
+        console.error('Error loading settings:', err);
+        res.status(500).render('admin/error', {
+            title: 'Error',
+            message: 'Failed to load settings: ' + err.message
         });
     }
 });

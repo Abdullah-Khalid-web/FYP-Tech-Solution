@@ -46,6 +46,7 @@ router.get('/analytics/anomalies', aiDataController.getAnomalies);
 // =========================================================================
 // Staff
 // =========================================================================
+router.get('/users', aiDataController.getStaffList);
 router.get('/users/performance', aiDataController.getStaffPerformance);
 
 module.exports = router;
