@@ -6,27 +6,20 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const flash = require('express-flash');
 const expressLayouts = require('express-ejs-layouts');
-<<<<<<< HEAD
 const cors = require('cors');
-const { pool } = require('./db');
-=======
 const { pool } = require('./db');
 const RoleHelper = require('./helpers/roleHelper');
 const permissionHelper = require('./helpers/permissionHelper');
 const { isAuthenticated } = require('./middleware/auth');
 const roleAuth = require('./middleware/roleAuth');
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 
 const app = express();
 
 /* ------------------ MIDDLEWARE ------------------ */
-<<<<<<< HEAD
 app.use(cors({
   origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:3000'],
   credentials: true,
 }));
-=======
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -56,10 +49,8 @@ app.set('layout', 'layouts/layout');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-<<<<<<< HEAD
 /* ------------------ DEFAULT GLOBALS ------------------ */
 // This sets defaults that will be used if user is not logged in
-=======
 // Make role helper available in all views
 app.use((req, res, next) => {
     res.locals.roleHelper = new RoleHelper(req.session);
@@ -78,7 +69,6 @@ app.use(async (req, res, next) => {
 });
 
 /* ------------------ DEFAULT GLOBALS ------------------ */
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 app.use((req, res, next) => {
   // Initialize with defaults
   res.locals.user = null;
@@ -106,20 +96,11 @@ app.use((req, res, next) => {
 app.use(async (req, res, next) => {
   try {
     if (req.session.userId) {
-<<<<<<< HEAD
-      // Fetch user details
-=======
-      // Fetch user details with role information
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
+      // Fetch user details - FIXED QUERY
       const [users] = await pool.execute(
         `SELECT 
           BIN_TO_UUID(u.id) AS id,
           u.name,
-<<<<<<< HEAD
-          u.role_id,
-          BIN_TO_UUID(u.shop_id) AS shop_id
-        FROM users u
-=======
           u.email,
           u.phone,
           u.cnic,
@@ -130,7 +111,6 @@ app.use(async (req, res, next) => {
           BIN_TO_UUID(u.shop_id) AS shop_id
         FROM users u
         LEFT JOIN roles r ON u.role_id = r.id
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
         WHERE u.id = UUID_TO_BIN(?)`,
         [req.session.userId]
       );
@@ -138,19 +118,6 @@ app.use(async (req, res, next) => {
       if (users.length > 0) {
         const user = users[0];
         
-<<<<<<< HEAD
-        // Store user in res.locals
-        res.locals.user = {
-          id: user.id,
-          username: user.name,
-          role_id: user.role_id,
-          shopId: user.shop_id
-        };
-
-        // Also update session for backward compatibility
-        req.session.username = user.name;
-        req.session.shopId = user.shop_id;
-=======
         // Store complete user in res.locals
         res.locals.user = {
           id: user.id,
@@ -166,12 +133,19 @@ app.use(async (req, res, next) => {
           profile_picture: user.profile_picture
         };
 
-        // Update session with any missing data
+        // Update session with user data
         req.session.roleName = user.role_name || req.session.roleName || 'No Role';
         req.session.roleId = user.role_id || req.session.roleId;
         req.session.username = user.name;
         req.session.userEmail = user.email;
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
+        req.session.shopId = user.shop_id;
+
+        // console.log('User loaded in middleware:', {
+        //   name: user.name,
+        //   role: user.role_name,
+        //   roleId: user.role_id,
+        //   shopId: user.shop_id
+        // });
 
         // Fetch shop details if shop_id exists
         if (user.shop_id) {
@@ -193,10 +167,6 @@ app.use(async (req, res, next) => {
 
           if (shops.length > 0) {
             const shop = shops[0];
-<<<<<<< HEAD
-            // Store shop in res.locals
-=======
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
             res.locals.shop = {
               id: shop.id,
               name: shop.name || 'Manage Hub',
@@ -210,15 +180,10 @@ app.use(async (req, res, next) => {
             };
           }
         }
-<<<<<<< HEAD
-      }
-=======
-
-        console.log('User loaded in middleware:', {
-          name: user.name,
-          role: user.role_name,
-          shopId: user.shop_id
-        });
+      } else {
+        // User ID exists in session but user not found in database
+        console.log('User not found in database for ID:', req.session.userId);
+        res.locals.user = null;
       }
     } else {
       // Not logged in - set defaults
@@ -233,7 +198,6 @@ app.use(async (req, res, next) => {
         primary_color: '#007bff',
         secondary_color: '#6c757d'
       };
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
     }
     next();
   } catch (err) {
@@ -265,7 +229,6 @@ app.get('/', (req, res) => {
   res.render('index', { title: 'Home' });
 });
 
-<<<<<<< HEAD
 /* ------------------ STATIC PUBLIC PAGES ------------------ */
 app.get('/about', (req, res) => res.render('about', { title: 'About Us' }));
 app.get('/contact', (req, res) => res.render('contact', { title: 'Contact Us' }));
@@ -294,7 +257,6 @@ app.use('/suppliers', require('./routes/suppliers'));
 /* ------------- AI INTEGRATION ROUTES ------------- */
 app.use('/api/ai', require('./routes/ai'));            // Frontend → Backend → AI proxy
 app.use('/api', require('./routes/aiDataApi'));          // AI module → Backend data endpoints
-=======
 /* ------------------ PUBLIC ROUTES (NO AUTH NEEDED) ------------------ */
 app.use('/', require('./routes/auth/login'));
 app.use('/', require('./routes/auth/logout'));
@@ -392,7 +354,6 @@ app.use(async (req, res, next) => {
     
     next();
 });
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 
 /* ------------------ 404 ------------------ */
 app.use((req, res) => {

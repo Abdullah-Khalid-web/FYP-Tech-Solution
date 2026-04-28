@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap');
 
@@ -184,23 +183,12 @@ html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link.active-badge:hov
             <%= typeof shop !== 'undefined' && shop ? shop.name : 'Manage Hub' %>
         </a>
         
-=======
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">
-            <% if (shop && shop.logo) { %>
-                <img src="<%= shop.logo %>" alt="<%= shop.name %>"
-                    style="height:30px; margin-right:10px; border-radius:5px;">
-            <% } %>
-            <%= shop ? shop.name : 'Manage Hub' %>
-        </a>
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">
-<<<<<<< HEAD
             <ul class="navbar-nav ms-auto align-items-lg-center">
                 <% if (typeof user !== 'undefined' && user && user.username) { %>
                     <li class="nav-item">
@@ -223,30 +211,12 @@ html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link.active-badge:hov
                 <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
                     <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeToggle">
                         🌓 <span class="d-lg-none d-xl-inline">Theme</span>
-=======
-            <ul class="navbar-nav ms-auto">
-                <% if (user && user.username) { %>
-                    <li class="nav-item"><a class="nav-link" href="/user_profile">Hi, <%= user.username %></a></li>
-                    <li class="nav-item"><a class="nav-link" href="/products">Products</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/bills">Billing</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/reports">Sales-Reports</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/ALLbills">List-Bills</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
-                <% } else { %>
-                    <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/register">Subscribe</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/admin">Admin</a></li>
-                <% } %>
-                <li class="nav-item">
-                    <button class="btn btn-sm btn-outline-light me-2" onclick="toggleTheme()" id="themeToggle">
-                        🌓 Theme
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
+
                     </button>
                 </li>
             </ul>
         </div>
     </div>
-<<<<<<< HEAD
 </nav>
 
 <script>
@@ -271,6 +241,4 @@ window.addEventListener("scroll", function() {
     }
 });
 </script>
-=======
-</nav>
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
+

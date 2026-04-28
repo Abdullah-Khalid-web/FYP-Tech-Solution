@@ -646,7 +646,7 @@ router.post('/api/EmpMgmt/:id/loan', getShopDetails, async (req, res) => {
                 success: false,
                 message: 'Amount and description are required'
             });
-        }
+        } 
 
         // Check if employee exists
         const [[employee]] = await pool.execute(`
@@ -753,7 +753,9 @@ router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) =>
     let connection;
     try {
         const employeeId = req.params.id;
-        const { amount, description, loan_id, payment_method } = req.body;
+        const { amount, description, payment_method, loan_payments } = req.body;
+
+        console.log('Payment request received:', { employeeId, amount, payment_method, loan_payments });
 
         if (!amount || amount <= 0) {
             return res.status(400).json({
@@ -762,12 +764,19 @@ router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) =>
             });
         }
 
+        if (!loan_payments || loan_payments.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please select at least one loan to pay'
+            });
+        }
+
         // Check if employee exists
-        const [[employee]] = await pool.execute(`
+        const [employees] = await pool.execute(`
             SELECT id FROM users WHERE id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)
         `, [employeeId, req.session.shopId]);
 
-        if (!employee) {
+        if (employees.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: 'Employee not found'
@@ -777,115 +786,114 @@ router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) =>
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        let paymentAmount = parseFloat(amount);
+        let totalAppliedAmount = 0;
         let processedLoans = [];
 
-        if (loan_id) {
-            // Pay specific loan
-            const [loan] = await connection.execute(`
-                SELECT id, total_balance FROM user_loan 
+        // Process each selected loan
+        for (const loanPayment of loan_payments) {
+            const loanId = loanPayment.loan_id;
+            let paymentAmount = parseFloat(loanPayment.amount);
+            
+            if (paymentAmount <= 0) continue;
+            
+            // Get current loan details
+            const [loans] = await connection.execute(`
+                SELECT id, total_balance, total_paid, total_amount, loan_number 
+                FROM user_loan 
                 WHERE id = UUID_TO_BIN(?) AND user_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?) AND status = 'active'
-            `, [loan_id, employeeId, req.session.shopId]);
+            `, [loanId, employeeId, req.session.shopId]);
 
-            if (loan.length === 0) {
-                await connection.rollback();
-                return res.status(404).json({
-                    success: false,
-                    message: 'Active loan not found'
-                });
+            if (loans.length === 0) {
+                console.log(`Loan ${loanId} not found or already paid`);
+                continue;
             }
 
-            const loanRecord = loan[0];
+            const loanRecord = loans[0];
             const paymentToLoan = Math.min(paymentAmount, loanRecord.total_balance);
             
-            // Record loan repayment in ledger
-            const ledgerId = crypto.randomBytes(16);
-            await connection.execute(`
-                INSERT INTO user_loan_ledger (id, loan_id, shop_id, user_id, transaction_type, amount, description, payment_method, reference_type, created_by)
-                VALUES (?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), 'debit', ?, ?, ?, 'direct_payment', UUID_TO_BIN(?))
-            `, [
-                ledgerId,
-                loan_id,
-                req.session.shopId,
-                employeeId,
-                paymentToLoan,
-                description || 'Direct loan payment',
-                payment_method || 'cash',
-                req.session.userId || null
-            ]);
-
-            processedLoans.push({
-                loan_id: loan_id,
-                amount: paymentToLoan,
-                remaining: loanRecord.total_balance - paymentToLoan
-            });
-
-        } else {
-            // Pay against all active loans (FIFO - oldest first)
-            const [activeLoans] = await connection.execute(`
-                SELECT id, total_balance FROM user_loan 
-                WHERE user_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?) AND status = 'active'
-                ORDER BY loan_date ASC
-            `, [employeeId, req.session.shopId]);
-
-            let remainingPayment = paymentAmount;
-
-            for (const loan of activeLoans) {
-                if (remainingPayment <= 0) break;
-
-                const loanBalance = parseFloat(loan.total_balance);
-                const paymentToLoan = Math.min(remainingPayment, loanBalance);
+            if (paymentToLoan > 0) {
+                const newTotalPaid = parseFloat(loanRecord.total_paid) + paymentToLoan;
+                const newTotalBalance = parseFloat(loanRecord.total_balance) - paymentToLoan;
+                const newStatus = newTotalBalance <= 0 ? 'paid' : 'active';
                 
-                if (paymentToLoan > 0) {
-                    // Record loan repayment in ledger
-                    const ledgerId = crypto.randomBytes(16);
-                    await connection.execute(`
-                        INSERT INTO user_loan_ledger (id, loan_id, shop_id, user_id, transaction_type, amount, description, payment_method, reference_type, created_by)
-                        VALUES (?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), 'debit', ?, ?, ?, 'direct_payment', UUID_TO_BIN(?))
-                    `, [
-                        ledgerId,
-                        loan.id,
-                        req.session.shopId,
-                        employeeId,
-                        paymentToLoan,
-                        `${description || 'Direct payment'} - Partial payment`,
-                        payment_method || 'cash',
-                        req.session.userId || null
-                    ]);
-
-                    processedLoans.push({
-                        loan_id: loan.id,
-                        amount: paymentToLoan,
-                        remaining: loanBalance - paymentToLoan
-                    });
-
-                    remainingPayment -= paymentToLoan;
-                }
-            }
-
-            if (remainingPayment > 0) {
-                // Return overpayment as change or record as advance
+                console.log(`Processing payment of ${paymentToLoan} to loan ${loanRecord.loan_number}`);
+                console.log(`Old balance: ${loanRecord.total_balance}, New balance: ${newTotalBalance}`);
+                
+                // Update loan balance
                 await connection.execute(`
-                    INSERT INTO user_loan_ledger (id, shop_id, user_id, transaction_type, amount, description, payment_method, reference_type, created_by)
-                    VALUES (?, UUID_TO_BIN(?), UUID_TO_BIN(?), 'debit', ?, ?, ?, 'adjustment', UUID_TO_BIN(?))
+                    UPDATE user_loan 
+                    SET total_paid = ?, total_balance = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)
+                `, [newTotalPaid, newTotalBalance, newStatus, loanId, req.session.shopId]);
+                
+                // Record loan repayment in ledger
+                const ledgerId = crypto.randomBytes(16);
+                await connection.execute(`
+                    INSERT INTO user_loan_ledger (id, loan_id, shop_id, user_id, transaction_type, amount, description, payment_method, reference_type, created_by)
+                    VALUES (?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), 'debit', ?, ?, ?, 'direct_payment', UUID_TO_BIN(?))
                 `, [
-                    crypto.randomBytes(16),
+                    ledgerId,
+                    loanId,
                     req.session.shopId,
                     employeeId,
-                    remainingPayment,
-                    `Change from overpayment: ${description || 'Direct payment'}`,
+                    paymentToLoan,
+                    `${description || 'Direct payment'} - Payment towards ${loanRecord.loan_number}`,
                     payment_method || 'cash',
                     req.session.userId || null
                 ]);
+
+                processedLoans.push({
+                    loan_id: loanId,
+                    loan_number: loanRecord.loan_number,
+                    amount: paymentToLoan,
+                    previous_balance: loanRecord.total_balance,
+                    new_balance: newTotalBalance,
+                    status: newStatus
+                });
+                
+                totalAppliedAmount += paymentToLoan;
+            }
+        }
+
+        // Check if total applied amount matches the payment amount
+        const paymentAmount = parseFloat(amount);
+        if (totalAppliedAmount < paymentAmount) {
+            const difference = paymentAmount - totalAppliedAmount;
+            console.log(`Payment amount (${paymentAmount}) exceeds total applied (${totalAppliedAmount}) by ${difference}`);
+            
+            // Record the excess as advance payment
+            if (difference > 0) {
+                const ledgerId = crypto.randomBytes(16);
+                await connection.execute(`
+                    INSERT INTO user_loan_ledger (id, shop_id, user_id, transaction_type, amount, description, payment_method, reference_type, created_by)
+                    VALUES (?, UUID_TO_BIN(?), UUID_TO_BIN(?), 'credit', ?, ?, ?, 'advance_payment', UUID_TO_BIN(?))
+                `, [
+                    ledgerId,
+                    req.session.shopId,
+                    employeeId,
+                    difference,
+                    `Advance payment / Overpayment: ${description || 'Direct payment'}`,
+                    payment_method || 'cash',
+                    req.session.userId || null
+                ]);
+                
+                processedLoans.push({
+                    type: 'advance',
+                    amount: difference,
+                    message: `Amount credited as advance: ${difference}`
+                });
             }
         }
 
         await connection.commit();
 
+        console.log('Payment processed successfully:', processedLoans);
+
         res.json({
             success: true,
             message: 'Loan payment processed successfully',
             amountPaid: paymentAmount,
+            amountApplied: totalAppliedAmount,
             processedLoans: processedLoans
         });
 
@@ -894,13 +902,13 @@ router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) =>
         console.error('Error processing loan payment:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to process loan payment'
+            message: 'Failed to process loan payment: ' + err.message,
+            error: err.sqlMessage
         });
     } finally {
         if (connection) connection.release();
     }
 });
-
 // DELETE /api/employees/:id - Delete employee
 router.delete('/api/EmpMgmt/:id', getShopDetails, async (req, res) => {
     let connection;

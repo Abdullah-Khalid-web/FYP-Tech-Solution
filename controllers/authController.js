@@ -21,38 +21,6 @@ exports.showLogin = (req, res) => {
 };
 
 /* LOGIN */
-<<<<<<< HEAD
-exports.login = async (req, res) => {
-  const { name, password } = req.body;
-
-  if (!name || !password) {
-    return res.render('auth/login', { title: 'Login', error: 'Username and password are required' });
-  }
-
-  try {
-    const [rows] = await pool.execute(
-      'SELECT id, name, password, shop_id FROM users WHERE name = ? LIMIT 1',
-      [name]
-    );
-
-    if (!rows.length) {
-      return res.render('auth/login', { title: 'Login', error: 'Invalid credentials' });
-    }
-
-    const user = rows[0];
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.render('auth/login', { title: 'Login', error: 'Invalid credentials' });
-
-    // Store UUID in session
-    req.session.userId = binToUuid(user.id);
-    req.session.shopId = user.shop_id ? binToUuid(user.shop_id) : null;
-    req.session.username = user.name;
-
-    res.redirect('/dashboard');
-  } catch (err) {
-    console.error('Login error:', err);
-    res.render('auth/login', { title: 'Login', error: 'Login failed' });
-=======
 // controllers/authController.js (login function)
 exports.login = async (req, res) => {
   const { email, password, rememberMe } = req.body;
@@ -149,19 +117,11 @@ exports.login = async (req, res) => {
       title: 'Login', 
       error: 'Login failed. Please try again.' 
     });
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
   }
 };
 
 /* LOGOUT */
 exports.logout = (req, res) => {
-<<<<<<< HEAD
-  req.session.destroy(() => {
-    res.clearCookie('managehub.sid');
-    res.redirect('/login');
-  });
-};
-=======
   const username = req.session?.username;
   
   req.session.destroy((err) => {
@@ -174,28 +134,3 @@ exports.logout = (req, res) => {
   });
 };
 
-
-
-// <!-- In any EJS view -->
-// <% if (await permission.hasPermission('products.create')) { %>
-//     <a href="/products/create" class="btn btn-primary">Add Product</a>
-// <% } %>
-
-// <!-- Show/Hide based on permissions -->
-// <% if (userPermissions?.byModule?.products) { %>
-//     <div class="card">
-//         <div class="card-header">Products</div>
-//         <div class="card-body">
-//             <!-- Product content -->
-//         </div>
-//     </div>
-// <% } %>
-
-// <!-- Conditional rendering based on multiple permissions -->
-// <% if (await permission.hasAnyPermission(['products.edit', 'products.delete'])) { %>
-//     <div class="btn-group">
-//         <a href="/products/<%= product.id %>/edit" class="btn btn-sm btn-warning">Edit</a>
-//         <a href="/products/<%= product.id %>/delete" class="btn btn-sm btn-danger">Delete</a>
-//     </div>
-// <% } %>
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
