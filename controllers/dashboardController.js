@@ -7,16 +7,7 @@ const MIN_STOCK = 5;
 ================================ */
 exports.renderDashboard = async (req, res) => {
   try {
-    const shopId = req.session.shopId;
-    const user = req.session.user;
-
-    const [[shop]] = await pool.execute(
-      `SELECT BIN_TO_UUID(id) id, name, address 
-       FROM shops WHERE id = UUID_TO_BIN(?)`,
-      [shopId]
-    );
-
-    res.render('dashboard', { user, shop });
+    res.render('dashboard');
   } catch (err) {
     console.error(err);
     res.status(500).send('Dashboard load failed');
@@ -28,7 +19,7 @@ exports.renderDashboard = async (req, res) => {
 ================================ */
 exports.getStats = async (req, res) => {
   try {
-    const shopId = req.session.shopId;
+    const shopId = req.session.shopId || null;
 
     const [[products]] = await pool.execute(
       `SELECT COUNT(*) count FROM products 
@@ -75,7 +66,7 @@ exports.getStats = async (req, res) => {
 ================================ */
 exports.getRecentSales = async (req, res) => {
   try {
-    const shopId = req.session.shopId;
+    const shopId = req.session.shopId || null;
 
     const [rows] = await pool.execute(
       `SELECT 
@@ -102,7 +93,7 @@ exports.getRecentSales = async (req, res) => {
 ================================ */
 exports.getLowStock = async (req, res) => {
   try {
-    const shopId = req.session.shopId;
+    const shopId = req.session.shopId || null;
 
     const [rows] = await pool.execute(
       `SELECT 
@@ -130,7 +121,7 @@ exports.getLowStock = async (req, res) => {
 ================================ */
 exports.getSalesGraph = async (req, res) => {
   try {
-    const shopId = req.session.shopId;
+    const shopId = req.session.shopId || null;
 
     const [rows] = await pool.execute(
       `SELECT 
@@ -149,4 +140,58 @@ exports.getSalesGraph = async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Graph failed' });
   }
+};
+
+/* ===============================
+   DAILY SUMMARY
+================================ */
+exports.getDailySummary = async (req, res) => {
+  try {
+    const shopId = req.session.shopId || null;
+
+    const [[sales]] = await pool.execute(
+      `SELECT IFNULL(SUM(total_amount),0) as todaySales, COUNT(*) as totalTransactions
+       FROM bills
+       WHERE shop_id = UUID_TO_BIN(?) AND DATE(created_at) = CURDATE()`,
+      [shopId]
+    );
+
+    const [topProducts] = await pool.execute(
+      `SELECT p.name, SUM(bi.quantity) as quantity
+       FROM bill_items bi
+       JOIN bills b ON b.id = bi.bill_id
+       JOIN products p ON p.id = bi.product_id
+       WHERE b.shop_id = UUID_TO_BIN(?) AND DATE(b.created_at) = CURDATE()
+       GROUP BY p.id
+       ORDER BY quantity DESC LIMIT 5`,
+      [shopId]
+    );
+
+    const [[lowStock]] = await pool.execute(
+      `SELECT COUNT(*) as count FROM inventory i
+       WHERE i.shop_id = UUID_TO_BIN(?) AND i.current_quantity < ?`,
+      [shopId, MIN_STOCK]
+    );
+
+    res.json({
+      todaySales: sales.todaySales,
+      totalTransactions: sales.totalTransactions,
+      topProducts: topProducts,
+      lowStockItems: lowStock.count
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Daily summary failed' });
+  }
+};
+
+/* ===============================
+   ACTIVITY LOG
+================================ */
+exports.getActivity = async (req, res) => {
+  // Mock activity to prevent 404s
+  res.json([
+    { type: 'sale', description: 'New sale recorded', timestamp: new Date() },
+    { type: 'inventory', description: 'Stock updated', timestamp: new Date(Date.now() - 3600000) }
+  ]);
 };

@@ -566,3 +566,39 @@ exports.getStaffPerformance = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch staff performance' });
   }
 };
+
+/**
+ * GET /api/users
+ * Returns list of staff members
+ */
+exports.getStaffList = async (req, res) => {
+  try {
+    const shopId = req.aiShopId || req.query.shop_id;
+    const roleId = req.query.role || '';
+    if (!shopId) return res.status(400).json({ error: 'shop_id required' });
+
+    let query = `
+      SELECT 
+         BIN_TO_UUID(u.id) AS user_id,
+         u.name,
+         u.role_id,
+         u.email,
+         u.status
+       FROM users u
+       WHERE u.shop_id = UUID_TO_BIN(?)
+       AND u.status = 'active'
+    `;
+    const params = [shopId];
+
+    if (roleId) {
+      query += ` AND LOWER(u.role_id) LIKE ?`;
+      params.push(`%${roleId.toLowerCase()}%`);
+    }
+
+    const [rows] = await pool.execute(query, params);
+    res.json({ staff: rows, count: rows.length });
+  } catch (err) {
+    console.error('[AI Data] getStaffList error:', err);
+    res.status(500).json({ error: 'Failed to fetch staff list' });
+  }
+};

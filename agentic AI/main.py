@@ -295,7 +295,7 @@ async def check_anomalies(transaction_id: Optional[int] = None):
 
 @app.get("/api/staff/performance")
 async def get_staff_performance(
-    user_id: Optional[int] = None,
+    user_id: Optional[str] = None,
     role: Optional[str] = None,
     period: str = "weekly"
 ):
