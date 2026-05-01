@@ -5,6 +5,7 @@
 body {
     background-color: #f8fafc;
     font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow-x: hidden;
 }
 
 .auth-wrapper {
@@ -12,8 +13,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem 0;
+    padding: 6rem 1rem 2rem;
     position: relative;
+    margin-top: 2rem;
+    overflow: hidden;
 }
 
 /* Background elements */
@@ -139,6 +142,30 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+html[data-theme="dark"] .auth-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+html[data-theme="dark"] .auth-header h2 {
+    color: #f8fafc;
+}
+
+html[data-theme="dark"] .modern-label {
+    color: #94a3b8;
+}
+
+html[data-theme="dark"] .modern-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+html[data-theme="dark"] .modern-input:focus {
+    background: #1e293b;
+    border-color: #0ea5e9;
 }
 
 </style>
