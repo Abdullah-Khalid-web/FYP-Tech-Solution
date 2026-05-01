@@ -1,101 +1,240 @@
 <style>
-    .modern-footer {
-        background: #0f172a;
-        /* Custom slate requested by user */
-        color: #ffffff;
-        padding: 60px 0 30px;
-        margin-top: 80px;
+    .premium-footer {
+        background-color: #ffffff;
+        color: #475569;
+        padding: 4rem 0 2rem;
+        margin-top: 5rem;
         font-family: 'Plus Jakarta Sans', sans-serif;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
         position: relative;
-        border-top: 5px solid #ffffff;
+        z-index: 10;
+        transition: all 0.3s ease;
     }
 
-    .modern-footer a {
-        color: #ffffff;
+    html[data-theme="dark"] .premium-footer {
+        background-color: #0f172a;
+        color: #94a3b8;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .premium-footer a {
+        color: #64748b;
         text-decoration: none;
-        transition: opacity 0.3s ease;
+        transition: all 0.3s ease;
         font-weight: 500;
+        font-size: 0.95rem;
     }
 
-    .modern-footer a:hover {
-        color: #ffffff;
-        opacity: 0.8;
+    html[data-theme="dark"] .premium-footer a {
+        color: #94a3b8;
+    }
+
+    .premium-footer a:hover {
+        color: #0ea5e9;
+        transform: translateX(4px);
+        display: inline-block;
+    }
+
+    .footer-brand h4 {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
+        font-size: 1.6rem;
+        color: #0f172a;
+        margin-bottom: 1rem;
+    }
+
+    html[data-theme="dark"] .footer-brand h4 {
+        color: #f8fafc;
+    }
+
+    .footer-heading {
+        font-family: 'Outfit', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 1.5rem;
+    }
+
+    html[data-theme="dark"] .footer-heading {
+        color: #f8fafc;
     }
 
     .footer-divider {
         height: 1px;
-        background: rgba(255, 255, 255, 0.3);
-        margin: 30px 0;
+        background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
+        margin: 3rem 0 2rem;
+    }
+
+    html[data-theme="dark"] .footer-divider {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    }
+
+    .footer-bottom-text {
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-align: center;
+        letter-spacing: 0.5px;
+    }
+
+    .admin-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(14, 165, 233, 0.1);
+        color: #0ea5e9 !important;
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        border-radius: 50px;
+        padding: 8px 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .admin-btn:hover {
+        background: #0ea5e9;
+        color: #ffffff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+    }
+    
+    html[data-theme="dark"] .admin-btn {
+        background: rgba(56, 189, 248, 0.1);
+        color: #38bdf8 !important;
+        border-color: rgba(56, 189, 248, 0.2);
+    }
+    html[data-theme="dark"] .admin-btn:hover {
+        background: #38bdf8;
+        color: #0f172a !important;
+    }
+
+    .footer-contact-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .footer-contact-icon {
+        width: 35px;
+        height: 35px;
+        border-radius: 10px;
+        background: rgba(15, 23, 42, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f172a;
+    }
+
+    html[data-theme="dark"] .footer-contact-icon {
+        background: rgba(255, 255, 255, 0.05);
+        color: #f8fafc;
+    }
+
+    .footer-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .footer-list li {
+        margin-bottom: 0.8rem;
     }
 </style>
 
-<footer class="modern-footer">
+<footer class="premium-footer">
     <div class="container">
-        <div class="row gy-4">
-            <div class="col-lg-3 text-center text-lg-start">
-                <h4 style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.5rem; color: #ffffff;">
-                    <%= typeof shop !=='undefined' && shop ? shop.name : 'Manage Hub' %>
-                </h4>
-                <p class="mb-0 mt-3" style="color: #ffffff; font-size: 0.95rem;">
-                    &copy; <%= new Date().getFullYear() %> All Rights Reserved.
+        <div class="row gy-5">
+            <!-- Brand Column -->
+            <div class="col-lg-5 pe-lg-5">
+                <div class="footer-brand">
+                    <h4>
+                        <i class="fas fa-layer-group" style="color: #0ea5e9; margin-right: 8px;"></i>
+                        <%= typeof shop !=='undefined' && shop ? shop.name : 'Manage Hub' %>
+                    </h4>
+                </div>
+                <p style="line-height: 1.7; font-size: 0.95rem; margin-bottom: 1.5rem;">
+                    Empowering modern retail with intelligent management solutions. Streamline your operations, boost sales, and grow your business with our cutting-edge SaaS platform.
                 </p>
-                <% if (typeof shop !=='undefined' && shop && shop.address) { %>
-                    <p class="mt-2 small" style="margin-bottom: 0; color: #ffffff;">
-                        <%= shop.address %>
-                    </p>
-                    <% } %>
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #f1f5f9; color: #0f172a; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#0ea5e9'; this.style.color='white';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#0f172a';">
+                        <i class="fab fa-twitter"></i>
+                    </div>
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #f1f5f9; color: #0f172a; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#0ea5e9'; this.style.color='white';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#0f172a';">
+                        <i class="fab fa-linkedin-in"></i>
+                    </div>
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #f1f5f9; color: #0f172a; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#0ea5e9'; this.style.color='white';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#0f172a';">
+                        <i class="fab fa-facebook-f"></i>
+                    </div>
+                </div>
             </div>
 
-            <div class="col-lg-3 text-center border-lg-start border-lg-end"
-                style="border-color: rgba(255,255,255,0.3) !important;">
-                <h6 class="text-uppercase mb-3" style="letter-spacing: 1px; color: #ffffff; font-weight: 800;">Contact
-                    Us</h6>
-                <% if (typeof shop !=='undefined' && shop && shop.phone) { %>
-                    <p class="mb-1"><a href="tel:<%= shop.phone %>">
-                            <%= shop.phone %>
-                        </a></p>
-                    <% } else { %>
-                        <p class="mb-1"><a href="tel:+923331223334444">+92 333 1223334444</a></p>
-                        <% } %>
-
-                            <% if (typeof shop !=='undefined' && shop && shop.email) { %>
-                                <p class="mb-0"><a href="mailto:<%= shop.email %>">
-                                        <%= shop.email %>
-                                    </a></p>
-                                <% } else { %>
-                                    <p class="mb-0"><a
-                                            href="mailto:NextGenTechSolution@gmail.com">NextGenTechSolution@gmail.com</a>
-                                    </p>
-                                    <% } %>
-            </div>
-
-            <div class="col-lg-3 text-center text-lg-start ps-lg-4">
-                <h6 class="text-uppercase mb-3" style="letter-spacing: 1px; color: #ffffff; font-weight: 800;">Quick
-                    Links</h6>
-                <ul class="list-unstyled mb-0" style="line-height: 1.8;">
-                    <li><a href="/about">About Us</a></li>
-                    <li><a href="/contact">Contact</a></li>
-                    <li><a href="/privacy">Privacy Policy</a></li>
+            <!-- Support -->
+            <div class="col-lg-3 col-md-6">
+                <h6 class="footer-heading">Support</h6>
+                <ul class="footer-list">
+                    <li><a href="/about"><i class="fas fa-angle-right" style="color: #0ea5e9; margin-right: 5px;"></i> About Us</a></li>
+                    <li><a href="/contact"><i class="fas fa-angle-right" style="color: #0ea5e9; margin-right: 5px;"></i> Contact</a></li>
+                    <li><a href="/privacy"><i class="fas fa-angle-right" style="color: #0ea5e9; margin-right: 5px;"></i> Privacy Policy</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right" style="color: #0ea5e9; margin-right: 5px;"></i> Help Center</a></li>
                 </ul>
             </div>
 
-            <div class="col-lg-3 text-center text-lg-end">
-                <h6 class="text-uppercase mb-3" style="letter-spacing: 1px; color: #ffffff; font-weight: 800;">Powered
-                    By</h6>
-                <p class="mb-1" style="color: #ffffff;"><strong>NextGen TechSolution</strong></p>
-                <div class="mt-3">
-                    <a href="/admin" class="btn btn-sm"
-                        style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: #ffffff; border-radius: 50px; padding: 6px 15px; font-weight: 600;">Admin
-                        Panel</a>
+            <!-- Contact & Admin -->
+            <div class="col-lg-4">
+                <h6 class="footer-heading">Contact Us</h6>
+                
+                <div class="footer-contact-item">
+                    <div class="footer-contact-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div>
+                        <% if (typeof shop !=='undefined' && shop && shop.address) { %>
+                            <span style="font-size: 0.9rem;"><%= shop.address %></span>
+                        <% } else { %>
+                            <span style="font-size: 0.9rem;">NextGenTech Solution, Quetta, Pakistan</span>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="footer-contact-item">
+                    <div class="footer-contact-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div>
+                        <% if (typeof shop !=='undefined' && shop && shop.email) { %>
+                            <a href="mailto:<%= shop.email %>" style="transform: none;"><%= shop.email %></a>
+                        <% } else { %>
+                            <a href="mailto:NextGenTechSolution@gmail.com" style="transform: none;">NextGenTechSolution@gmail.com</a>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="footer-contact-item">
+                    <div class="footer-contact-icon">
+                        <i class="fas fa-phone-alt"></i>
+                    </div>
+                    <div>
+                        <% if (typeof shop !=='undefined' && shop && shop.phone) { %>
+                            <a href="tel:<%= shop.phone %>" style="transform: none;"><%= shop.phone %></a>
+                        <% } else { %>
+                            <a href="tel:+923331223334444" style="transform: none;">+92 333 1223334444</a>
+                        <% } %>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="footer-divider"></div>
 
-        <div class="text-center">
-            <small style="color: #ffffff; font-weight: 500;">Manage Hub Ecosystem — Crafted for Retail
-                Intelligence</small>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center footer-bottom-text">
+            <div>
+                &copy; <%= new Date().getFullYear() %> <%= typeof shop !=='undefined' && shop ? shop.name : 'Manage Hub' %>. All Rights Reserved.
+            </div>
+            <div class="mt-2 mt-md-0">
+                Crafted with <i class="fas fa-heart" style="color: #ef4444;"></i> by NextGen TechSolution
+            </div>
         </div>
     </div>
 </footer>

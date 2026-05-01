@@ -65,6 +65,13 @@ router.get('/logout', (req, res) => {
 // Middleware to check if admin is logged in
 const requireAdmin = (req, res, next) => {
     if (req.session.admin) {
+        // Disable global layout for protected admin routes
+        const originalRender = res.render;
+        res.render = function (view, options, callback) {
+            options = options || {};
+            options.layout = false;
+            originalRender.call(this, view, options, callback);
+        };
         next();
     } else {
         res.redirect('/admin');
@@ -332,7 +339,7 @@ router.put('/api/shops/:id/status', requireAdmin, async (req, res) => {
         const { status } = req.body;
         const shopIdBinary = uuidToBinary(shopId);
         
-        if (!['active', 'inactive', 'suspended'].includes(status)) {
+        if (!['active', 'inactive', 'suspended', 'blocked'].includes(status)) {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid status'
@@ -344,12 +351,16 @@ router.put('/api/shops/:id/status', requireAdmin, async (req, res) => {
             [status, shopIdBinary]
         );
         
-        // Log the action
-        const actionId = uuidv4();
-        await pool.execute(`
-            INSERT INTO admin_actions (id, admin_id, shop_id, action_type, details, created_at)
-            VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, NOW())
-        `, [actionId, req.session.admin.id, shopIdBinary, 'shop_status_update', JSON.stringify({ status })]);
+        // Log the action (non-blocking)
+        try {
+            const actionId = uuidv4();
+            await pool.execute(`
+                INSERT INTO admin_actions (id, admin_id, shop_id, action_type, details, created_at)
+                VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, NOW())
+            `, [actionId, req.session.admin.id, shopIdBinary, 'shop_status_update', JSON.stringify({ status })]);
+        } catch (logErr) {
+            console.log('Could not log admin action:', logErr.message);
+        }
         
         res.json({
             success: true,
@@ -401,18 +412,22 @@ router.post('/api/shops/:id/extend-subscription', requireAdmin, async (req, res)
             [newExpiryDate, subscription.id]
         );
         
-        // Log the extension
-        const actionId = uuidv4();
-        await pool.execute(`
-            INSERT INTO admin_actions (id, admin_id, shop_id, action_type, details, created_at)
-            VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, NOW())
-        `, [actionId, req.session.admin.id, shopIdBinary, 'subscription_extension', 
-            JSON.stringify({ 
-                days, 
-                reason, 
-                old_expiry: subscription.expires_at, 
-                new_expiry: newExpiryDate 
-            })]);
+        // Log the extension (non-blocking)
+        try {
+            const actionId = uuidv4();
+            await pool.execute(`
+                INSERT INTO admin_actions (id, admin_id, shop_id, action_type, details, created_at)
+                VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, NOW())
+            `, [actionId, req.session.admin.id, shopIdBinary, 'subscription_extension', 
+                JSON.stringify({ 
+                    days, 
+                    reason, 
+                    old_expiry: subscription.expires_at, 
+                    new_expiry: newExpiryDate 
+                })]);
+        } catch (logErr) {
+            console.log('Could not log admin action:', logErr.message);
+        }
         
         res.json({
             success: true,
@@ -525,6 +540,94 @@ router.put('/api/users/:id/status', requireAdmin, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update user status: ' + err.message
+        });
+    }
+});
+
+// Get single user
+router.get('/api/users/:id', requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const userIdBinary = uuidToBinary(userId);
+        
+        const [users] = await pool.execute(`
+            SELECT u.*, s.name as shop_name, r.role_name
+            FROM users u
+            JOIN shops s ON u.shop_id = s.id
+            LEFT JOIN roles r ON u.role_id = r.id
+            WHERE u.id = ?
+        `, [userIdBinary]);
+        
+        if (users.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        const user = {
+            ...users[0],
+            id: userId,
+            shop_id: binaryToUuid(users[0].shop_id),
+            role_id: users[0].role_id ? binaryToUuid(users[0].role_id) : null
+        };
+        
+        res.json({ success: true, user });
+    } catch (err) {
+        console.error('Error fetching user:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch user: ' + err.message
+        });
+    }
+});
+
+// Update user
+router.put('/api/users/:id', requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const userIdBinary = uuidToBinary(userId);
+        const { name, email, status, salary } = req.body;
+        
+        await pool.execute(`
+            UPDATE users SET name = ?, email = ?, status = ?, salary = ?, updated_at = NOW() WHERE id = ?
+        `, [name, email, status, salary, userIdBinary]);
+        
+        res.json({
+            success: true,
+            message: 'User updated successfully'
+        });
+    } catch (err) {
+        console.error('Error updating user:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update user: ' + err.message
+        });
+    }
+});
+
+// Reset user password
+router.post('/api/users/:id/reset-password', requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const userIdBinary = uuidToBinary(userId);
+        
+        const hashedPassword = await bcrypt.hash('password123', 10);
+        
+        await pool.execute(
+            'UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?',
+            [hashedPassword, userIdBinary]
+        );
+        
+        res.json({
+            success: true,
+            message: 'Password reset successfully'
+        });
+    } catch (err) {
+        console.error('Error resetting password:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to reset password: ' + err.message
         });
     }
 });
@@ -708,7 +811,7 @@ router.put('/api/subscriptions/:id', requireAdmin, async (req, res) => {
 
         await pool.execute(`
             UPDATE pricing_plans 
-            SET name = ?, description = ?, monthly_price = ?, quarterly_price = ?, yearly_price = ?, features = ?, status = ?, updated_at = NOW()
+            SET name = ?, description = ?, monthly_price = ?, quarterly_price = ?, yearly_price = ?, features = ?, status = ?
             WHERE id = ?
         `, [name, description || null, monthly_price, quarterly_price, yearly_price, JSON.stringify(featuresJson), status, planIdBinary]);
 
