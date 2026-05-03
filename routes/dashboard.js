@@ -42,5 +42,6 @@ router.get('/api/dashboard/low-stock', isAuthenticated, dashboardController.getL
 router.get('/api/dashboard/sales-graph', isAuthenticated, dashboardController.getSalesGraph);
 router.get('/api/dashboard/daily-summary', isAuthenticated, dashboardController.getDailySummary);
 router.get('/api/dashboard/activity', isAuthenticated, dashboardController.getActivity);
+router.post('/api/dashboard/reorder', isAuthenticated, dashboardController.reorderProduct);
 
 module.exports = router;

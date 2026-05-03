@@ -3,7 +3,7 @@ const router = express.Router();
 const { pool } = require('../db');
 const ExcelJS = require('exceljs');
 
-// Middleware to get shop-specific details
+// Middleware to get shop-specific details (UPDATED)
 const getShopDetails = async (req, res, next) => {
     if (!req.session.shopId) {
         return res.status(403).json({ success: false, message: 'Shop not identified' });
@@ -11,7 +11,7 @@ const getShopDetails = async (req, res, next) => {
 
     try {
         const [shops] = await pool.execute(
-            'SELECT * FROM shops WHERE id = UUID_TO_BIN(?)',
+            'SELECT *, BIN_TO_UUID(id) as uuid FROM shops WHERE id = UUID_TO_BIN(?)',
             [req.session.shopId]
         );
 
@@ -21,11 +21,13 @@ const getShopDetails = async (req, res, next) => {
 
         req.shop = {
             id: req.session.shopId,
+            uuid: shops[0].uuid,
             name: shops[0].name || 'My Shop',
             logo: shops[0].logo ? `/uploads/${shops[0].logo}` : '/images/default-logo.png',
             currency: shops[0].currency || 'PKR',
             primary_color: shops[0].primary_color || '#007bff',
-            secondary_color: shops[0].secondary_color || '#6c757d'
+            secondary_color: shops[0].secondary_color || '#6c757d',
+            address: shops[0].address
         };
 
         next();
@@ -34,7 +36,6 @@ const getShopDetails = async (req, res, next) => {
         res.status(500).json({ success: false, message: 'Error fetching shop details' });
     }
 };
-
 // GET /reports - Main reports page
 router.get('/', getShopDetails, async (req, res) => {
     try {
@@ -230,6 +231,7 @@ router.get('/', getShopDetails, async (req, res) => {
 //     }
 // });
 // GET /reports/bills - Bills report
+// GET /reports/bills - Bills report (FIXED FOR BINARY UUIDs)
 router.get('/bills', getShopDetails, async (req, res) => {
     try {
         const fromDate = req.query.fromDate || new Date().toISOString().slice(0, 8) + '01';
@@ -256,7 +258,10 @@ router.get('/bills', getShopDetails, async (req, res) => {
                 break;
         }
 
-        // Get bills summary by date
+        // Convert shop_id to binary for query
+        const shopIdBinary = uuidToBin(req.session.shopId);
+
+        // Get bills summary by date - FIXED: Use UUID_TO_BIN helper
         const [billsByDate] = await pool.execute(`
             SELECT 
                 DATE_FORMAT(created_at, ?) as period,
@@ -269,16 +274,17 @@ router.get('/bills', getShopDetails, async (req, res) => {
             WHERE shop_id = UUID_TO_BIN(?) 
             AND DATE(created_at) BETWEEN ? AND ?
             GROUP BY ${groupBy}
-            ORDER BY created_at DESC
+            ORDER BY MIN(created_at) DESC
         `, [dateFormat, req.session.shopId, fromDate, toDate]);
 
-        // Get top products
+        // Get top products - FIXED: Handle binary UUIDs
         const [topProducts] = await pool.execute(`
             SELECT 
                 p.name as productName,
                 COUNT(bi.id) as saleCount,
                 SUM(bi.quantity) as totalQuantity,
-                SUM(bi.total_price) as totalRevenue
+                SUM(bi.total_price) as totalRevenue,
+                BIN_TO_UUID(p.id) as productId
             FROM bill_items bi
             JOIN products p ON bi.product_id = p.id
             JOIN bills b ON bi.bill_id = b.id
@@ -292,7 +298,7 @@ router.get('/bills', getShopDetails, async (req, res) => {
         // Get payment method distribution
         const [paymentMethods] = await pool.execute(`
             SELECT 
-                COALESCE(payment_method, 'unknown') as method,
+                COALESCE(payment_method, 'Cash') as method,
                 COUNT(*) as billCount,
                 SUM(total_amount) as totalAmount
             FROM bills 
@@ -301,9 +307,10 @@ router.get('/bills', getShopDetails, async (req, res) => {
             GROUP BY payment_method
         `, [req.session.shopId, fromDate, toDate]);
 
-        // Get detailed bills
+        // Get detailed bills with human-readable IDs
         const [bills] = await pool.execute(`
             SELECT 
+                BIN_TO_UUID(b.id) as id,
                 b.bill_number,
                 b.customer_name,
                 b.customer_phone,
@@ -315,6 +322,7 @@ router.get('/bills', getShopDetails, async (req, res) => {
                 b.due_amount,
                 b.payment_method,
                 DATE(b.created_at) as bill_date,
+                b.created_at,
                 u.name as created_by
             FROM bills b
             LEFT JOIN users u ON b.created_by = u.id
@@ -324,7 +332,7 @@ router.get('/bills', getShopDetails, async (req, res) => {
             LIMIT 100
         `, [req.session.shopId, fromDate, toDate]);
 
-        // Calculate summary
+        // Calculate summary with proper number handling
         const summary = {
             totalBills: billsByDate.reduce((sum, item) => sum + (parseInt(item.billCount) || 0), 0),
             totalRevenue: billsByDate.reduce((sum, item) => sum + (parseFloat(item.totalRevenue) || 0), 0),
@@ -344,7 +352,7 @@ router.get('/bills', getShopDetails, async (req, res) => {
         console.error('Error loading bills report:', err);
         res.status(500).json({
             success: false,
-            message: 'Failed to load bills report'
+            message: 'Failed to load bills report: ' + err.message
         });
     }
 });

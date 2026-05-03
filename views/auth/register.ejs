@@ -1,174 +1,428 @@
-<%- include('../partials/header', { title: 'Shop Registration', shop: shop }) %>
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Your Shop | <%= typeof shop !=='undefined' && shop ? shop.name : 'Manage Hub' %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-md-10 col-lg-8">
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-          <h4 class="mb-0">Register Your Shop</h4>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        .split-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* FORM CONTAINER */
+        .form-panel {
+            background-color: #ffffff;
+            padding: 4rem 3rem;
+            max-width: 850px;
+            margin: 4rem auto;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        html[data-theme="dark"] .form-panel {
+            background-color: #1e293b;
+            border-color: #334155;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .form-header {
+            margin-bottom: 3rem;
+        }
+
+        .form-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            color: #0f172a;
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-header p {
+            color: #64748b;
+            font-size: 1rem;
+        }
+
+        .form-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #0ea5e9;
+        }
+
+        .modern-label {
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .modern-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #0f172a;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .modern-input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+        }
+
+        .price-preview-box {
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            height: 100%;
+        }
+
+        .premium-btn {
+            width: 100%;
+            padding: 1.1rem;
+            background: #0f172a;
+            color: #ffffff;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.2);
+            margin-top: 1rem;
+        }
+
+        .premium-btn:hover {
+            background: #0ea5e9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
+        }
+
+        .alert-modern {
+            border-radius: 12px;
+            border: none;
+            padding: 1rem 1.2rem;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .alert-error {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+        .alert-success {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        /* Dark Mode Overrides */
+        html[data-theme="dark"] body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        html[data-theme="dark"] .form-header h2 {
+            color: #f8fafc;
+        }
+
+        html[data-theme="dark"] .form-header p,
+        html[data-theme="dark"] .section-title span,
+        html[data-theme="dark"] .text-muted {
+            color: #94a3b8 !important;
+        }
+
+        html[data-theme="dark"] .section-title {
+            color: #f8fafc;
+            border-bottom-color: #334155;
+        }
+
+        html[data-theme="dark"] .modern-label {
+            color: #cbd5e1;
+        }
+
+        html[data-theme="dark"] .modern-input {
+            background-color: #0f172a;
+            border-color: #334155;
+            color: #f8fafc;
+        }
+
+        html[data-theme="dark"] .modern-input:focus {
+            background-color: #1e293b;
+            border-color: #0ea5e9;
+        }
+
+        html[data-theme="dark"] .price-preview-box {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        html[data-theme="dark"] .price-preview-box .border-bottom {
+            border-bottom-color: #334155 !important;
+        }
+
+        html[data-theme="dark"] .price-preview-box strong {
+            color: #f8fafc !important;
+        }
+
+        html[data-theme="dark"] .price-preview-box #calculatedPrice,
+        html[data-theme="dark"] .price-preview-box #savings {
+            color: #0ea5e9 !important;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 991.98px) {
+            .form-panel {
+                margin: 2rem 1rem;
+                padding: 3rem 1.5rem;
+            }
+        }
+    </style>
+    <script>
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        });
+    </script>
+</head>
+<body>
+
+<div class="split-layout">
+    <!-- REGISTRATION FORM -->
+    <div class="form-panel">
+        <div class="form-header">
+            <h2>Create Your Account</h2>
+            <p>Fill out the information below to set up your store and get started.</p>
         </div>
-        <div class="card-body">
-          <% if (error) { %>
-            <div class="alert alert-danger"><%= error %></div>
-          <% } %>
-          <% if (success) { %>
-            <div class="alert alert-success"><%= success %></div>
-          <% } %>
 
-          <form action="/register" method="POST" enctype="multipart/form-data">
-            <h5 class="mb-3">Shop Information</h5>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="shopName" class="form-label">Shop Name *</label>
-                <input type="text" class="form-control" id="shopName" name="shopName" required>
-              </div>
-
-              <div class="col-md-6 mb-3">
-                <label for="plan" class="form-label">Subscription Plan *</label>
-                <select class="form-select" id="plan" name="plan" required>
-                  <option value="">Select Plan</option>
-                  <% plans.forEach(p => { %>
-                    <option value="<%= p.name %>"
-                      data-monthly="<%= p.monthly_price %>"
-                      data-quarterly="<%= p.quarterly_price %>"
-                      data-yearly="<%= p.yearly_price %>">
-                      <%= p.name.toUpperCase() %> - PKR <%= p.monthly_price.toLocaleString() %>/month
-                    </option>
-                  <% }) %>
-                </select>
-              </div>
+        <% if (error) { %>
+            <div class="alert-modern alert-error">
+                <i class="fas fa-exclamation-circle fs-5"></i> <%= error %>
             </div>
+        <% } %>
+        <% if (success) { %>
+            <div class="alert-modern alert-success">
+                <i class="fas fa-check-circle fs-5"></i> <%= success %>
+            </div>
+        <% } %>
 
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label class="form-label">Subscription Duration *</label>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="subscriptionDuration" value="monthly" id="monthly" checked>
-                  <label class="form-check-label" for="monthly">Monthly</label>
+        <form action="/register" method="POST" enctype="multipart/form-data">
+            
+            <!-- Step 1: Shop Information -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-store"></i> Shop Information
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="subscriptionDuration" value="quarterly" id="quarterly">
-                  <label class="form-check-label" for="quarterly">Quarterly</label>
+                
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label for="shopName" class="modern-label">Shop Name *</label>
+                        <input type="text" class="modern-input" id="shopName" name="shopName" required placeholder="e.g., My Retail Store">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="modern-label">Shop Email *</label>
+                        <input type="email" class="modern-input" id="email" name="email" required placeholder="shop@example.com">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="phone" class="modern-label">Shop Phone</label>
+                        <input type="tel" class="modern-input" id="phone" name="phone" placeholder="+92 300 0000000">
+                    </div>
+                    <div class="col-md-12">
+                        <label for="address" class="modern-label">Physical Address</label>
+                        <input type="text" class="modern-input" id="address" name="address" placeholder="Full address">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="currency" class="modern-label">Primary Currency</label>
+                        <select class="modern-input form-select" id="currency" name="currency">
+                            <option value="PKR">PKR (Pakistani Rupee)</option>
+                            <option value="USD">USD (US Dollar)</option>
+                            <option value="EUR">EUR (Euro)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="logo" class="modern-label">Shop Logo (Optional)</label>
+                        <input type="file" class="modern-input" id="logo" name="logo" accept="image/*">
+                    </div>
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="subscriptionDuration" value="yearly" id="yearly">
-                  <label class="form-check-label" for="yearly">Yearly</label>
+            </div>
+
+            <!-- Step 2: Subscription Plan -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-gem"></i> Subscription Plan
                 </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">Price Preview</label>
-                <div class="border p-2">
-                  <strong>Plan:</strong> <span id="selectedPlan">-</span><br>
-                  <strong>Duration:</strong> <span id="selectedDuration">-</span><br>
-                  <strong>Price:</strong> <span id="calculatedPrice">PKR 0</span><br>
-                  <strong>Savings:</strong> <span id="savings">PKR 0</span>
+                
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label for="plan" class="modern-label">Select Plan *</label>
+                            <select class="modern-input form-select" id="plan" name="plan" required>
+                                <option value="">Choose a plan...</option>
+                                <% plans.forEach(p => { %>
+                                    <option value="<%= p.name %>"
+                                        data-monthly="<%= p.monthly_price %>"
+                                        data-quarterly="<%= p.quarterly_price %>"
+                                        data-yearly="<%= p.yearly_price %>">
+                                        <%= p.name.toUpperCase() %>
+                                    </option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="modern-label">Billing Cycle *</label>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="subscriptionDuration" value="monthly" id="monthly" checked>
+                                    <label class="form-check-label" for="monthly">Monthly</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="subscriptionDuration" value="quarterly" id="quarterly">
+                                    <label class="form-check-label" for="quarterly">Quarterly</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="subscriptionDuration" value="yearly" id="yearly">
+                                    <label class="form-check-label" for="yearly">Yearly (Save 20%)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="price-preview-box">
+                            <h6 class="mb-3" style="font-weight: 700; color: #475569;">Price Summary</h6>
+                            <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
+                                <span class="text-muted">Plan Selected:</span>
+                                <strong id="selectedPlan" style="color: #0f172a;">-</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
+                                <span class="text-muted">Billing Cycle:</span>
+                                <strong id="selectedDuration" style="color: #0f172a;">-</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
+                                <span class="text-muted">Total Savings:</span>
+                                <strong id="savings" style="color: #10b981;">PKR 0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mt-3">
+                                <span style="font-weight: 600; color: #0f172a; font-size: 1.1rem;">Total Due:</span>
+                                <strong id="calculatedPrice" style="color: #0ea5e9; font-size: 1.2rem;">PKR 0</strong>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
 
-            <hr class="my-4">
-            <h5 class="mb-3">Payment Method</h5>
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label for="paymentMethod" class="form-label">Payment Method *</label>
-                <select class="form-select" id="paymentMethod" name="paymentMethod" required>
-                  <option value="">Select Payment Method</option>
-                  <option value="credit_card">Credit Card</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="jazzcash">JazzCash</option>
-                  <option value="easypaisa">EasyPaisa</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label for="paymentDetails" class="form-label">Payment Reference / Details</label>
-                <input type="text" class="form-control" id="paymentDetails" name="paymentDetails">
-              </div>
+            <!-- Step 3: Payment Details -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-credit-card"></i> Payment Information
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="paymentMethod" class="modern-label">Payment Method *</label>
+                        <select class="modern-input form-select" id="paymentMethod" name="paymentMethod" required>
+                            <option value="">Select Method...</option>
+                            <option value="credit_card">Credit Card</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="jazzcash">JazzCash</option>
+                            <option value="easypaisa">EasyPaisa</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="paymentDetails" class="modern-label">Transaction Reference ID</label>
+                        <input type="text" class="modern-input" id="paymentDetails" name="paymentDetails" placeholder="e.g. TID-123456789">
+                    </div>
+                </div>
             </div>
 
-            <hr class="my-4">
-            <h5 class="mb-3">Shop Details</h5>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="email" class="form-label">Shop Email *</label>
-                <input type="email" class="form-control" id="email" name="email" required>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="phone" class="form-label">Shop Phone</label>
-                <input type="tel" class="form-control" id="phone" name="phone">
-              </div>
+            <!-- Step 4: Owner Credentials -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-user-shield"></i> Owner Credentials
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="ownerName" class="modern-label">Full Name *</label>
+                        <input type="text" class="modern-input" id="ownerName" name="ownerName" required placeholder="John Doe">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cnic" class="modern-label">CNIC / ID Number *</label>
+                        <input type="text" class="modern-input" id="cnic" name="cnic" required placeholder="00000-0000000-0">
+                    </div>
+                    <div class="col-md-12">
+                        <label for="ownerEmail" class="modern-label">Personal Email (Login ID) *</label>
+                        <input type="email" class="modern-input" id="ownerEmail" name="ownerEmail" required placeholder="owner@example.com">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="ownerphone" class="modern-label">Personal Phone *</label>
+                        <input type="text" class="modern-input" id="ownerphone" name="ownerphone" required placeholder="+92 300 0000000">
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <label for="ownerPassword" class="modern-label">Password *</label>
+                        <input type="password" class="modern-input" id="ownerPassword" name="ownerPassword" required minlength="6" placeholder="Create a strong password">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="confirmPassword" class="modern-label">Confirm Password *</label>
+                        <input type="password" class="modern-input" id="confirmPassword" name="confirmPassword" required placeholder="Repeat password">
+                    </div>
+                </div>
             </div>
 
-            <div class="mb-3">
-              <label for="address" class="form-label">Shop Address</label>
-              <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+            <button type="submit" class="premium-btn">Create Your Shop Account</button>
+            
+            <div class="text-center mt-4">
+                <span style="color: #64748b;">Already have an account?</span> 
+                <a href="/login" style="color: #0ea5e9; font-weight: 700; text-decoration: none;">Sign in here</a>
             </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="currency" class="form-label">Currency</label>
-                <select class="form-select" id="currency" name="currency">
-                  <option value="PKR">PKR</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="logo" class="form-label">Shop Logo</label>
-                <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
-              </div>
-            </div>
-
-            <hr class="my-4">
-            <h5 class="mb-3">Owner Information</h5>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="ownerName" class="form-label">Full Name *</label>
-                <input type="text" class="form-control" id="ownerName" name="ownerName" required>
-              </div>
-                <div class="col-md-6 mb-3">
-                <label for="ownerEmail" class="form-label">Email *</label>
-                <input type="email" class="form-control" id="ownerEmail" name="ownerEmail" required>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="ownerphone" class="form-label">Phone *</label>
-                <input type="text" class="form-control" id="ownerphone" name="ownerphone" required>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="cnic" class="form-label">CNIC *</label>
-                <input type="text" class="form-control" id="cnic" name="cnic" required>
-              </div>
-
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="ownerPassword" class="form-label">Password *</label>
-                <input type="password" class="form-control" id="ownerPassword" name="ownerPassword" required minlength="6">
-                <div class="form-text">Minimum 6 characters</div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="confirmPassword" class="form-label">Confirm Password *</label>
-                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
-              </div>
-            </div>
-
-            <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-primary btn-lg">Register Shop</button>
-            </div>
-          </form>
-
-          <div class="mt-3 text-center">
-            <p>Already have an account? <a href="/login">Login here</a></p>
-          </div>
-        </div>
-      </div>
+        </form>
     </div>
-  </div>
 </div>
 
 <script>
+// Price Calculation Logic
 const planSelect = document.getElementById('plan');
 const durationRadios = document.querySelectorAll('input[name="subscriptionDuration"]');
 const priceSpan = document.getElementById('calculatedPrice');
@@ -178,7 +432,11 @@ const durationSpan = document.getElementById('selectedDuration');
 
 function updatePrice() {
   const selectedOption = planSelect.options[planSelect.selectedIndex];
-  if (!selectedOption || !selectedOption.dataset.monthly) return;
+  if (!selectedOption || !selectedOption.dataset.monthly) {
+      planSpan.textContent = "-";
+      priceSpan.textContent = "PKR 0";
+      return;
+  }
 
   const monthly = parseFloat(selectedOption.dataset.monthly);
   const quarterly = parseFloat(selectedOption.dataset.quarterly);
@@ -206,3 +464,6 @@ function updatePrice() {
 planSelect.addEventListener('change', updatePrice);
 durationRadios.forEach(r => r.addEventListener('change', updatePrice));
 </script>
+
+</body>
+</html>

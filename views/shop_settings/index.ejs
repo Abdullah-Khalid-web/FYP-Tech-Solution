@@ -24,8 +24,8 @@
             min-height: 100vh;
         }
 
-        .settings-container {
-            padding: 20px;
+        .dashboard-container {
+            padding: 80px 20px;
             margin: 0 auto;
             min-height: 100vh;
         }
@@ -561,7 +561,7 @@
         <div class="spinner"></div>
     </div>
 
-    <div class="settings-container">
+    <div class="dashboard-container">
         <!-- Header -->
         <div class="settings-header">
             <div>
@@ -571,14 +571,15 @@
                 <p class="text-muted mb-0">Manage your shop configuration and subscriptions</p>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <div class="position-relative">
-                    <img src="<%= shop.logo || '/images/default-shop.png' %>" 
-                         alt="Shop Logo" 
-                         class="shop-logo" 
-                         id="shopLogo"
-                         onerror="this.onerror=null; this.src='/images/default-shop.png';">
-                    <div class="logo-loading" id="logoLoading" style="display: none;"></div>
-                </div>
+<div class="position-relative">
+    <img src="<%= shop.logo || '/images/default-shop.png' %>" 
+         alt="Shop Logo" 
+         class="shop-logo" 
+         id="shopLogo"
+         style="width: 60px; height: 60px; object-fit: cover;"
+         onerror="this.onerror=null; this.src='/images/default-shop.png'">
+    <div class="logo-loading" id="logoLoading" style="display: none;"></div>
+</div>
                 <div>
                     <h5 class="mb-1"><%= shop.name %></h5>
                     <span class="badge <%= shop.status === 'active' ? 'status-active' : shop.status === 'inactive' ? 'status-inactive' : 'status-suspended' %> status-badge">
@@ -902,213 +903,250 @@
                     </div>
                 </div>
 
-                <!-- Plans Tab -->
-                <div class="tab-pane fade" id="plans">
-                    <div class="section-header">
-                        <h2><i class="fas fa-gem me-2"></i> Choose Your Plan</h2>
-<<<<<<< HEAD
-                        <span class="badge bg-info">Current: <%= shop.plan %></span>
-                    </div>
+<!-- Plans Tab -->
+<div class="tab-pane fade" id="plans">
+    <div class="section-header">
+        <h2><i class="fas fa-gem me-2"></i> Choose Your Plan</h2>
+        <span class="badge bg-primary">Current: <%= shop.plan || 'Free' %></span>
+    </div>
 
-                    <% if (pricingPlans.length > 0) { %>
-                        <div class="row">
-                            <% pricingPlans.forEach((plan, index) => { 
-                                const isPopular = index === 1; // Make second plan popular
-=======
-                        <span class="badge bg-info">Current: <%= shop.plan || 'Free' %></span>
-                    </div>
-
-                    <% if (pricingPlans && pricingPlans.length > 0) { %>
-                        <div class="row">
-                            <% pricingPlans.forEach((plan, index) => { 
-                                const isPopular = index === 1; // Make second plan popular
-                                
-                                // Safely extract features
-                                let featuresList = [];
-                                try {
-                                    if (plan.features) {
-                                        const parsed = JSON.parse(plan.features);
-                                        
-                                        // Check if parsed is an array
-                                        if (Array.isArray(parsed)) {
-                                            featuresList = parsed;
-                                        } 
-                                        // Check if parsed has features_list array
-                                        else if (parsed && parsed.features_list && Array.isArray(parsed.features_list)) {
-                                            featuresList = parsed.features_list;
-                                        }
-                                        // Check if parsed has features array
-                                        else if (parsed && parsed.features && Array.isArray(parsed.features)) {
-                                            featuresList = parsed.features;
-                                        }
-                                        // Check for any array property in the object
-                                        else if (parsed && typeof parsed === 'object') {
-                                            for (let key in parsed) {
-                                                if (Array.isArray(parsed[key])) {
-                                                    featuresList = parsed[key];
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                } catch (e) {
-                                    console.error('Error parsing features for plan', plan.name, e);
-                                    // If parsing fails, try to use the raw string if it's comma-separated
-                                    if (typeof plan.features === 'string' && plan.features.includes(',')) {
-                                        featuresList = plan.features.split(',').map(f => f.trim());
+    <% if (pricingPlans && pricingPlans.length > 0) { %>
+        <div class="row">
+            <% pricingPlans.forEach((plan, index) => { 
+                const isPopular = index === 1; // Make second plan popular
+                // Parse features safely
+                let featuresList = [];
+                if (plan.features) {
+                    try {
+                        const parsedFeatures = typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features;
+                        // Check if parsedFeatures has features_list array
+                        if (parsedFeatures && Array.isArray(parsedFeatures.features_list)) {
+                            featuresList = parsedFeatures.features_list;
+                        } 
+                        // Check if parsedFeatures is directly an array
+                        else if (Array.isArray(parsedFeatures)) {
+                            featuresList = parsedFeatures;
+                        }
+                        // If it's an object with other structure, try to get first few properties
+                        else if (typeof parsedFeatures === 'object') {
+                            // Get common feature properties
+                            const featureProps = ['max_products', 'max_users', 'max_customers', 'inventory_basic', 'reports_basic', 'email_support'];
+                            featureProps.forEach(prop => {
+                                if (parsedFeatures[prop]) {
+                                    let value = parsedFeatures[prop];
+                                    if (typeof value === 'boolean') {
+                                        featuresList.push(prop.replace(/_/g, ' ').charAt(0).toUpperCase() + prop.slice(1).replace(/_/g, ' '));
+                                    } else if (typeof value === 'number' || typeof value === 'string') {
+                                        featuresList.push(`${prop.replace(/_/g, ' ').charAt(0).toUpperCase() + prop.slice(1).replace(/_/g, ' ')}: ${value}`);
                                     }
                                 }
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
-                            %>
-                                <div class="col-md-4 mb-4">
-                                    <div class="plan-card <%= isPopular ? 'popular' : '' %>">
-                                        <h4 class="mb-3"><%= plan.name %></h4>
-                                        <div class="price">
-<<<<<<< HEAD
-                                            <%= shop.currency %> 
-                                            <% if (plan.monthly_price > 0) { %>
-                                                <%= plan.monthly_price.toLocaleString() %>
-=======
-                                            <%= shop.currency || 'PKR' %> 
-                                            <% if (plan.monthly_price && plan.monthly_price > 0) { %>
-                                                <%= Number(plan.monthly_price).toLocaleString() %>
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
-                                                <span class="price-period">/month</span>
-                                            <% } else { %>
-                                                <span>Free</span>
-                                            <% } %>
-                                        </div>
-                                        
-                                        <% if (plan.description) { %>
-                                            <p class="text-muted mb-4"><%= plan.description %></p>
-                                        <% } %>
-
-<<<<<<< HEAD
-                                        <ul class="plan-features">
-                                            <% if (plan.features) { 
-                                                const features = JSON.parse(plan.features);
-                                                features.forEach(feature => { %>
-                                                    <li><i class="fas fa-check"></i> <%= feature %></li>
-                                                <% });
-                                            } %>
-                                        </ul>
-
-                                        <button type="button" class="btn <%= isPopular ? 'btn-custom' : 'btn-outline-custom' %> w-100 mt-3"
-                                                data-bs-toggle="modal" data-bs-target="#subscribeModal"
-                                                data-plan-id="<%= plan.plan_id %>" 
-=======
-                                        <!-- Features List -->
-                                        <% if (featuresList.length > 0) { %>
-                                            <ul class="plan-features">
-                                                <% featuresList.forEach(feature => { %>
-                                                    <li><i class="fas fa-check text-success me-2"></i> <%= feature %></li>
-                                                <% }); %>
-                                            </ul>
-                                        <% } else { %>
-                                            <p class="text-muted text-center">No features listed</p>
-                                        <% } %>
-
-                                        <button type="button" class="btn <%= isPopular ? 'btn-custom' : 'btn-outline-custom' %> w-100 mt-3"
-                                                data-bs-toggle="modal" data-bs-target="#subscribeModal"
-                                                data-plan-id="<%= plan.id || plan.plan_id %>" 
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
-                                                data-plan-name="<%= plan.name %>"
-                                                onclick="selectPlan(this)">
-                                            <% if (shop.plan === plan.name) { %>
-                                                <i class="fas fa-check me-2"></i> Current Plan
-                                            <% } else { %>
-                                                <i class="fas fa-arrow-up me-2"></i> 
-<<<<<<< HEAD
-                                                <%= plan.monthly_price > 0 ? 'Upgrade Now' : 'Select Free' %>
-=======
-                                                <%= (plan.monthly_price && plan.monthly_price > 0) ? 'Upgrade Now' : 'Select Free' %>
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
-                                            <% } %>
-                                        </button>
-
-                                        <% if (plan.quarterly_price || plan.yearly_price) { %>
-                                            <div class="mt-3 text-center">
-                                                <small class="text-muted">
-                                                    Save 
-<<<<<<< HEAD
-                                                    <% if (plan.quarterly_price) { %>
-                                                        <%= Math.round((1 - (plan.quarterly_price / 3) / plan.monthly_price) * 100) %>%
-                                                        with quarterly
-                                                    <% } %>
-                                                    <% if (plan.yearly_price) { %>
-=======
-                                                    <% if (plan.quarterly_price && plan.monthly_price > 0) { %>
-                                                        <%= Math.round((1 - (plan.quarterly_price / 3) / plan.monthly_price) * 100) %>%
-                                                        with quarterly
-                                                    <% } %>
-                                                    <% if (plan.yearly_price && plan.monthly_price > 0) { %>
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
-                                                        <%= Math.round((1 - (plan.yearly_price / 12) / plan.monthly_price) * 100) %>%
-                                                        with yearly
-                                                    <% } %>
-                                                </small>
-                                            </div>
-                                        <% } %>
-                                    </div>
-                                </div>
-                            <% }); %>
-                        </div>
-                    <% } else { %>
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            No pricing plans available at the moment.
-                        </div>
-                    <% } %>
-
-                    <!-- FAQ Section -->
-                    <div class="mt-5">
-                        <div class="section-header">
-                            <h2><i class="fas fa-question-circle me-2"></i> Frequently Asked Questions</h2>
+                            });
+                        }
+                    } catch(e) {
+                        console.error('Error parsing features for plan', plan.name, e);
+                        featuresList = ['Premium features included'];
+                    }
+                }
+                
+                // If still empty, add default features based on plan name
+                if (featuresList.length === 0) {
+                    if (plan.name === 'Free' || plan.monthly_price === 0) {
+                        featuresList = ['Basic features', 'Limited products', 'Email support', '7 days backup'];
+                    } else if (plan.name.toLowerCase().includes('starter')) {
+                        featuresList = ['Up to 1000 products', '2 user accounts', 'Basic reports', 'Email support', '30 days backup'];
+                    } else if (plan.name.toLowerCase().includes('professional')) {
+                        featuresList = ['Up to 10,000 products', '10 user accounts', 'Advanced reports', 'Priority support', 'API access', '90 days backup'];
+                    } else if (plan.name.toLowerCase().includes('business')) {
+                        featuresList = ['Unlimited products', '25 user accounts', 'Premium analytics', 'Dedicated support', 'Full API access', '365 days backup', 'Multi-store support'];
+                    } else {
+                        featuresList = [`${plan.name} plan features`, 'Full access to modules', 'Premium support'];
+                    }
+                }
+                
+                // Limit features to first 5 for display
+                const displayFeatures = featuresList.slice(0, 5);
+            %>
+                <div class="col-md-4 mb-4">
+                    <div class="plan-card <%= isPopular ? 'popular' : '' %>">
+                        <h4 class="mb-3"><%= plan.name %></h4>
+                        <div class="price">
+                            <%= shop.currency || 'PKR' %> 
+                            <% if (plan.monthly_price > 0) { %>
+                                <%= parseFloat(plan.monthly_price).toLocaleString() %>
+                                <span class="price-period">/month</span>
+                            <% } else { %>
+                                <span>Free</span>
+                            <% } %>
                         </div>
                         
-                        <div class="accordion" id="faqAccordion">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                        When will my new subscription start?
-                                    </button>
-                                </h2>
-                                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        Your new subscription will start immediately after your current active subscription expires. 
-                                        This ensures you don't lose any remaining days on your current plan.
-                                    </div>
-                                </div>
+                        <% if (plan.description) { %>
+                            <p class="text-muted mb-4"><%= plan.description %></p>
+                        <% } %>
+
+                        <ul class="plan-features">
+                            <% displayFeatures.forEach(feature => { %>
+                                <li><i class="fas fa-check-circle text-success me-2"></i> <%= feature %></li>
+                            <% }); %>
+                            <% if (featuresList.length > 5) { %>
+                                <li class="text-muted"><small>+ <%= featuresList.length - 5 %> more features</small></li>
+                            <% } %>
+                        </ul>
+
+                        <button type="button" class="btn <%= isPopular ? 'btn-custom' : 'btn-outline-custom' %> w-100 mt-3"
+                                data-bs-toggle="modal" data-bs-target="#subscribeModal"
+                                data-plan-id="<%= plan.plan_id || plan.id %>" 
+                                data-plan-name="<%= plan.name %>"
+                                data-plan-monthly="<%= plan.monthly_price %>"
+                                data-plan-quarterly="<%= plan.quarterly_price || plan.monthly_price * 2.7 %>"
+                                data-plan-yearly="<%= plan.yearly_price || plan.monthly_price * 10 %>"
+                                onclick="selectPlan(this)">
+                            <% if (shop.plan === plan.name) { %>
+                                <i class="fas fa-check me-2"></i> Current Plan
+                            <% } else { %>
+                                <i class="fas fa-arrow-up me-2"></i> 
+                                <%= plan.monthly_price > 0 ? 'Upgrade Now' : 'Select Free' %>
+                            <% } %>
+                        </button>
+
+                        <% if (plan.quarterly_price || plan.yearly_price) { %>
+                            <div class="mt-3 text-center">
+                                <small class="text-muted">
+                                    Save 
+                                    <% if (plan.quarterly_price && plan.quarterly_price > 0 && plan.monthly_price > 0) { %>
+                                        <%= Math.round((1 - (plan.quarterly_price / 3) / plan.monthly_price) * 100) %>%
+                                        with quarterly
+                                    <% } %>
+                                    <% if (plan.yearly_price && plan.yearly_price > 0 && plan.monthly_price > 0) { %>
+                                        <%= Math.round((1 - (plan.yearly_price / 12) / plan.monthly_price) * 100) %>%
+                                        with yearly
+                                    <% } %>
+                                </small>
                             </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                        Can I cancel my subscription anytime?
-                                    </button>
-                                </h2>
-                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        Yes, you can cancel your subscription at any time. After cancellation, 
-                                        you'll continue to have access to premium features until the end of your current billing period.
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                        What happens if I downgrade my plan?
-                                    </button>
-                                </h2>
-                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        When you downgrade, the changes take effect at the start of your next billing cycle. 
-                                        You'll keep all your data, but some features may become limited based on your new plan.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <% } %>
                     </div>
                 </div>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            No pricing plans available at the moment. Please contact support.
+        </div>
+        
+        <!-- Default plans if none in database -->
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="plan-card">
+                    <h4 class="mb-3">Free</h4>
+                    <div class="price">
+                        <%= shop.currency || 'PKR' %> 0
+                        <span class="price-period">/month</span>
+                    </div>
+                    <p class="text-muted mb-4">Perfect for small businesses just starting out</p>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Up to 100 products</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> 1 user account</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Basic reports</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Email support</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> 7 days backup</li>
+                    </ul>
+                    <button class="btn btn-outline-custom w-100 mt-3" disabled>
+                        <i class="fas fa-check me-2"></i> Current Plan
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="plan-card popular">
+                    <h4 class="mb-3">Professional</h4>
+                    <div class="price">
+                        <%= shop.currency || 'PKR' %> 69.99
+                        <span class="price-period">/month</span>
+                    </div>
+                    <p class="text-muted mb-4">Advanced features for growing businesses</p>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Up to 10,000 products</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> 10 user accounts</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Advanced reports</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Priority support</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> API access</li>
+                    </ul>
+                    <button class="btn btn-custom w-100 mt-3" data-bs-toggle="modal" data-bs-target="#subscribeModal">
+                        <i class="fas fa-arrow-up me-2"></i> Upgrade Now
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="plan-card">
+                    <h4 class="mb-3">Business</h4>
+                    <div class="price">
+                        <%= shop.currency || 'PKR' %> 149.99
+                        <span class="price-period">/month</span>
+                    </div>
+                    <p class="text-muted mb-4">Complete solution for established businesses</p>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Unlimited products</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> 25 user accounts</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Premium analytics</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Dedicated support</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Multi-store support</li>
+                    </ul>
+                    <button class="btn btn-outline-custom w-100 mt-3" data-bs-toggle="modal" data-bs-target="#subscribeModal">
+                        <i class="fas fa-arrow-up me-2"></i> Upgrade Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    <% } %>
+
+    <!-- FAQ Section -->
+    <div class="mt-5">
+        <div class="section-header">
+            <h2><i class="fas fa-question-circle me-2"></i> Frequently Asked Questions</h2>
+        </div>
+        
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                        When will my new subscription start?
+                    </button>
+                </h2>
+                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Your new subscription will start immediately after your current active subscription expires. 
+                        This ensures you don't lose any remaining days on your current plan.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                        Can I cancel my subscription anytime?
+                    </button>
+                </h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Yes, you can cancel your subscription at any time. After cancellation, 
+                        you'll continue to have access to premium features until the end of your current billing period.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                        What happens if I downgrade my plan?
+                    </button>
+                </h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        When you downgrade, the changes take effect at the start of your next billing cycle. 
+                        You'll keep all your data, but some features may become limited based on your new plan.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
                 <!-- Danger Zone Tab -->
                 <div class="tab-pane fade" id="danger">
@@ -1581,6 +1619,8 @@
                 tab.show();
             }
         }
+
+        
 
         // Status select warning
         document.getElementById('statusSelect')?.addEventListener('change', function() {

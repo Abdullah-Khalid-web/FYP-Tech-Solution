@@ -1,0 +1,34 @@
+Implementation of the Forget password in the login page.
+Feedback is in the dashborad should be dynamic in protofolio page and the user can see the feedback in the portfolio page.
+The subscribtion plan is not visible in the Portfolio page.
+There must be a page for the subscribtion plan and the user can subscribe to the plan from that page.
+In user side pages there are some issues in the UI of the dark mode 
+I want where AI suggest the user about how to enhance the business and how to increase the sales and how to manage the inventory and how to manage the employees and how to manage the customers and how to manage the finances and how to manage the marketing and how to manage the operations and how to manage the strategy and how to manage the growth and how to manage the innovation and how to manage the sustainability and how to manage the risk and how to manage the compliance and how to manage the ethics and how to manage the leadership and how to manage the culture and how to manage the communication and how to manage the collaboration and how to manage the creativity and how to manage the productivity and how to manage the performance and how to manage the customer satisfaction and how to manage the employee satisfaction and how to manage the stakeholder satisfaction.
+Payment Gateway Integration - Implemented payment gateway integration using Stripe API for secure and seamless transactions.
+Make Sure to add the credentials in the .env file for Stripe API integration 
+Make Sure to add the credentials in the .env file for the Contact Module.
+When i dedicat the loan in the user mgmt then the loan dedect twice 
+The font emp mgmt is changed
+Need Cash Deposit page
+Need page where user can put feedback and any queries and the admin can see the feedback and queries in the dashboard and can reply to the user.
+In dashboard if the subscribtion is near to end then shows a notification 
+In user profile page the nav bar is visible of the not logged in user 
+In dashborad the Recent Activities are not visible and recent sales (Fixed)
+Logo visiblity issue in the shop setting and user profile page (Fixed)
+In dashborad reorder not working (Fixed)
+Error in registeration page (Fixed)
+Setting page not working (Fixed)
+Report Page not working (Fixed)
+
+
+
+
+
+
+
+
+
+Ramaing Features:
+Multi-language support (Urdu and English)
+Offline functionality for inventory management and sales tracking that work without an internet connection, syncing data when back online. Also work with electron js for desktop application.
+Make sure the AL model fetch the data from the database and give the answer/suggestion to the user based on the data of the shop/user.

@@ -6,6 +6,12 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
 
+// Disable global layout for all admin routes
+router.use((req, res, next) => {
+    res.locals.layout = false;
+    next();
+});
+
 // Helper function to convert UUID to binary
 function uuidToBinary(uuid) {
     return Buffer.from(uuid.replace(/-/g, ''), 'hex');

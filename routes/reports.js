@@ -1,22 +1,35 @@
+// Replace your entire reports.js file with this
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
 const ExcelJS = require('exceljs');
 
-// Middleware to get shop-specific table prefix
-const getShopPrefix = async (req, res, next) => {
+// Helper function to convert UUID to binary
+function uuidToBin(uuid) {
+    if (!uuid) return null;
+    const hex = uuid.replace(/-/g, '');
+    return Buffer.from(hex, 'hex');
+}
+
+// Helper function to convert binary UUID to string
+function binToUuid(bin) {
+    if (!bin) return null;
+    const hex = bin.toString('hex');
+    return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20,32)}`;
+}
+
+// Middleware to get shop details
+const getShopDetails = async (req, res, next) => {
     if (!req.session.shopId) {
         return res.status(403).json({ success: false, message: 'Shop not identified' });
     }
-    
-    req.tablePrefix = `shop_${req.session.shopId}_`;
-    
+
     try {
         const [shops] = await pool.execute(
-            'SELECT * FROM shops WHERE id = ?',
+            'SELECT * FROM shops WHERE id = UUID_TO_BIN(?)',
             [req.session.shopId]
         );
-        
+
         req.shop = {
             id: req.session.shopId,
             name: shops[0]?.name || 'My Shop',
@@ -25,7 +38,7 @@ const getShopPrefix = async (req, res, next) => {
             primary_color: shops[0]?.primary_color || '#007bff',
             secondary_color: shops[0]?.secondary_color || '#6c757d'
         };
-        
+
         next();
     } catch (err) {
         console.error('Error fetching shop details:', err);
@@ -41,14 +54,13 @@ const getShopPrefix = async (req, res, next) => {
     }
 };
 
-// GET /reports/daily - Daily reports page
-router.get('/', getShopPrefix, async (req, res) => {
+// GET /reports - Daily reports page
+router.get('/', getShopDetails, async (req, res) => {
     try {
         res.render('reports/daily', {
             title: 'Daily Reports',
             shop: req.shop
         });
-
     } catch (err) {
         console.error('Error loading daily reports:', err);
         res.status(500).render('error', {
@@ -57,115 +69,9 @@ router.get('/', getShopPrefix, async (req, res) => {
     }
 });
 
-// Test route to check database connection and table structure
-router.get('/api/reports/debug', getShopPrefix, async (req, res) => {
+// API: GET /api/reports - Get daily reports data - FIXED for your schema
+router.get('/api/reports', getShopDetails, async (req, res) => {
     try {
-        // console.log('🔍 Debug route called for shop:', req.session.shopId);
-        // console.log('📊 Table prefix:', req.tablePrefix);
-
-        const results = {
-            shopId: req.session.shopId,
-            tablePrefix: req.tablePrefix,
-            tables: {},
-            dataCounts: {},
-            sampleData: {},
-            errors: []
-        };
-
-        // Check if bills table exists
-        try {
-            const [billsTables] = await pool.execute(
-                `SHOW TABLES LIKE '${req.tablePrefix}bills'`
-            );
-            results.tables.bills = billsTables.length > 0;
-            // console.log('✅ Bills table exists:', results.tables.bills);
-
-            if (results.tables.bills) {
-                // Get bills count
-                const [billsCount] = await pool.execute(
-                    `SELECT COUNT(*) as count FROM ${req.tablePrefix}bills`
-                );
-                results.dataCounts.bills = billsCount[0].count;
-                // console.log('📈 Total bills:', results.dataCounts.bills);
-
-                // Get date range of bills
-                const [dateRange] = await pool.execute(
-                    `SELECT MIN(created_at) as earliest, MAX(created_at) as latest 
-                     FROM ${req.tablePrefix}bills`
-                );
-                results.dateRange = dateRange[0];
-                // console.log('📅 Bill date range:', results.dateRange);
-
-                // Get sample bills
-                if (results.dataCounts.bills > 0) {
-                    const [sampleBills] = await pool.execute(
-                        `SELECT * FROM ${req.tablePrefix}bills ORDER BY created_at DESC LIMIT 3`
-                    );
-                    results.sampleData.bills = sampleBills;
-                    // console.log('📋 Sample bills:', sampleBills);
-                }
-            }
-        } catch (tableError) {
-            results.errors.push('Bills table error: ' + tableError.message);
-            console.error('❌ Bills table error:', tableError);
-        }
-
-        // Check if bill_items table exists
-        try {
-            const [itemsTables] = await pool.execute(
-                `SHOW TABLES LIKE '${req.tablePrefix}bill_items'`
-            );
-            results.tables.bill_items = itemsTables.length > 0;
-
-            if (results.tables.bill_items) {
-                const [itemsCount] = await pool.execute(
-                    `SELECT COUNT(*) as count FROM ${req.tablePrefix}bill_items`
-                );
-                results.dataCounts.bill_items = itemsCount[0].count;
-            }
-        } catch (itemsError) {
-            results.errors.push('Bill items table error: ' + itemsError.message);
-        }
-
-        // Check if we can run a sample report query
-        try {
-            const defaultEndDate = new Date();
-            const defaultStartDate = new Date();
-            defaultStartDate.setDate(defaultEndDate.getDate() - 30);
-
-            const [sampleReport] = await pool.execute(
-                `SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as revenue 
-                 FROM ${req.tablePrefix}bills 
-                 WHERE DATE(created_at) BETWEEN ? AND ?`,
-                [defaultStartDate.toISOString().split('T')[0], defaultEndDate.toISOString().split('T')[0]]
-            );
-            results.sampleQuery = sampleReport[0];
-            // console.log('🔎 Sample query result:', results.sampleQuery);
-        } catch (queryError) {
-            results.errors.push('Sample query error: ' + queryError.message);
-        }
-
-        res.json({
-            success: true,
-            ...results,
-            suggestions: generateSuggestions(results)
-        });
-
-    } catch (err) {
-        console.error('💥 Debug route error:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Debug failed: ' + err.message,
-            error: err.toString()
-        });
-    }
-});
-
-// API: GET /api/reports - Get daily reports data (FIXED VERSION)
-router.get('/api/reports', getShopPrefix, async (req, res) => {
-    try {
-        // console.log('API Reports called with query:', req.query);
-        
         const {
             startDate,
             endDate,
@@ -177,6 +83,7 @@ router.get('/api/reports', getShopPrefix, async (req, res) => {
         } = req.query;
 
         const offset = (page - 1) * limit;
+        const shopIdBinary = uuidToBin(req.session.shopId);
 
         // Set default dates if not provided
         const defaultEndDate = new Date();
@@ -186,21 +93,24 @@ router.get('/api/reports', getShopPrefix, async (req, res) => {
         const finalStartDate = startDate || defaultStartDate.toISOString().split('T')[0];
         const finalEndDate = endDate || defaultEndDate.toISOString().split('T')[0];
 
-        // console.log('Using date range:', finalStartDate, 'to', finalEndDate);
+        console.log('📅 Date range:', finalStartDate, 'to', finalEndDate);
+        console.log('🏪 Shop ID:', req.session.shopId);
 
-        // Build where conditions - FIXED: Use table alias for JOIN queries
-        let whereConditions = ['1=1'];
-        let queryParams = [];
+        // Build where conditions for the bills table
+        let whereConditions = ['b.shop_id = UUID_TO_BIN(?)'];
+        let queryParams = [req.session.shopId];
 
-        // Always filter by date range - FIXED: Use table alias for JOIN safety
+        // Date filter
         whereConditions.push('DATE(b.created_at) BETWEEN ? AND ?');
         queryParams.push(finalStartDate, finalEndDate);
 
+        // Payment method filter
         if (paymentMethod && paymentMethod !== 'all') {
             whereConditions.push('b.payment_method = ?');
             queryParams.push(paymentMethod);
         }
 
+        // Sales range filter
         if (salesRange && salesRange !== 'all') {
             switch (salesRange) {
                 case 'low':
@@ -216,116 +126,79 @@ router.get('/api/reports', getShopPrefix, async (req, res) => {
         }
 
         const whereClause = whereConditions.join(' AND ');
-        // console.log('Where clause:', whereClause);
-        // console.log('Query params:', queryParams);
+        console.log('🔍 Where clause:', whereClause);
 
-        // Check if bills table exists first
-        const tableName = `${req.tablePrefix}bills`;
-        const [tables] = await pool.execute(
-            `SHOW TABLES LIKE '${tableName}'`
-        );
+        // Get total count
+        const [countResult] = await pool.execute(`
+            SELECT COUNT(*) as total 
+            FROM bills b
+            WHERE ${whereClause}
+        `, queryParams);
+        
+        const total = countResult[0]?.total || 0;
+        console.log('📊 Total bills found:', total);
 
-        if (tables.length === 0) {
-            console.log('No bills table found for shop:', req.session.shopId);
-            return res.json({
-                success: true,
-                reports: [],
-                totalPages: 0,
-                stats: getEmptyStats(),
-                charts: getEmptyCharts(),
-                message: 'No bills data available. Please create some sales first.'
-            });
-        }
+        // Get paginated reports with item counts
+        const [reports] = await pool.execute(`
+            SELECT 
+                BIN_TO_UUID(b.id) as id,
+                b.bill_number,
+                b.customer_name,
+                b.customer_phone,
+                b.subtotal,
+                b.discount,
+                b.tax,
+                b.total_amount,
+                b.paid_amount,
+                b.due_amount,
+                b.payment_method,
+                b.notes,
+                DATE(b.created_at) as bill_date,
+                b.created_at,
+                u.name as created_by,
+                COALESCE((
+                    SELECT COUNT(*) 
+                    FROM bill_items bi 
+                    WHERE bi.bill_id = b.id
+                ), 0) as items_count
+            FROM bills b
+            LEFT JOIN users u ON b.created_by = u.id
+            WHERE ${whereClause}
+            ORDER BY b.created_at DESC
+            LIMIT ? OFFSET ?
+        `, [...queryParams, parseInt(limit), parseInt(offset)]);
 
-        // Get reports with proper error handling
-        let reports = [];
-        let total = 0;
-        let stats = getEmptyStats();
+        console.log('📋 Reports found:', reports.length);
 
-        try {
-            // Get reports - FIXED: Use table aliases consistently in JOIN queries
-            [reports] = await pool.execute(`
-                SELECT b.*, 
-                       COUNT(bi.id) as items_count
-                FROM ${tableName} b
-                LEFT JOIN ${req.tablePrefix}bill_items bi ON b.id = bi.bill_id
-                WHERE ${whereClause}
-                GROUP BY b.id
-                ORDER BY b.created_at DESC
-                LIMIT ? OFFSET ?
-            `, [...queryParams, parseInt(limit), parseInt(offset)]);
+        // Get stats
+        const [statsResult] = await pool.execute(`
+            SELECT 
+                COALESCE(SUM(b.total_amount), 0) as totalRevenue,
+                COUNT(*) as totalSales,
+                COUNT(DISTINCT b.customer_phone) as totalCustomers,
+                COALESCE(AVG(b.total_amount), 0) as avgTransaction
+            FROM bills b
+            WHERE ${whereClause.replace(/b\./g, '')}
+        `, queryParams.map(p => p === req.session.shopId ? req.session.shopId : p));
 
-            // console.log('Found reports:', reports.length);
+        const stats = {
+            totalRevenue: parseFloat(statsResult[0]?.totalRevenue) || 0,
+            totalSales: parseInt(statsResult[0]?.totalSales) || 0,
+            totalCustomers: parseInt(statsResult[0]?.totalCustomers) || 0,
+            avgTransaction: parseFloat(statsResult[0]?.avgTransaction) || 0,
+            revenueTrend: 0,
+            salesTrend: 0,
+            customersTrend: 0,
+            transactionTrend: 0
+        };
 
-            // Get total count - FIXED: Use simple query without JOIN for count
-            const simpleWhereConditions = ['1=1'];
-            const simpleQueryParams = [finalStartDate, finalEndDate];
-            
-            simpleWhereConditions.push('DATE(created_at) BETWEEN ? AND ?');
-            
-            if (paymentMethod && paymentMethod !== 'all') {
-                simpleWhereConditions.push('payment_method = ?');
-                simpleQueryParams.push(paymentMethod);
-            }
+        console.log('📈 Stats:', stats);
 
-            if (salesRange && salesRange !== 'all') {
-                switch (salesRange) {
-                    case 'low':
-                        simpleWhereConditions.push('total_amount < 1000');
-                        break;
-                    case 'medium':
-                        simpleWhereConditions.push('total_amount BETWEEN 1000 AND 5000');
-                        break;
-                    case 'high':
-                        simpleWhereConditions.push('total_amount > 5000');
-                        break;
-                }
-            }
-
-            const simpleWhereClause = simpleWhereConditions.join(' AND ');
-
-            const [[countResult]] = await pool.execute(`
-                SELECT COUNT(*) as total 
-                FROM ${tableName} 
-                WHERE ${simpleWhereClause}
-            `, simpleQueryParams);
-            total = countResult.total;
-
-            // Get stats - FIXED: Use simple query without JOIN for stats
-            const [[statsResult]] = await pool.execute(`
-                SELECT 
-                    COALESCE(SUM(total_amount), 0) as totalRevenue,
-                    COUNT(*) as totalSales,
-                    COUNT(DISTINCT customer_phone) as totalCustomers,
-                    COALESCE(AVG(total_amount), 0) as avgTransaction
-                FROM ${tableName} 
-                WHERE ${simpleWhereClause}
-            `, simpleQueryParams);
-
-            stats = {
-                totalRevenue: parseFloat(statsResult.totalRevenue) || 0,
-                totalSales: parseInt(statsResult.totalSales) || 0,
-                totalCustomers: parseInt(statsResult.totalCustomers) || 0,
-                avgTransaction: parseFloat(statsResult.avgTransaction) || 0,
-                revenueTrend: 5.2,
-                salesTrend: 3.1,
-                customersTrend: 2.4,
-                transactionTrend: 1.8
-            };
-
-            // console.log('Stats calculated:', stats);
-
-        } catch (dbError) {
-            // console.error('Database query error:', dbError);
-            // Return empty data but don't fail the request
-            reports = [];
-            total = 0;
-            stats = getEmptyStats();
-        }
-
-        // Get chart data
-        const salesTrend = await getSalesTrend(req.tablePrefix, finalStartDate, finalEndDate, timePeriod);
-        const paymentMethods = await getPaymentMethods(req.tablePrefix, finalStartDate, finalEndDate);
+        // Get sales trend data
+        const salesTrend = await getSalesTrend(req.session.shopId, finalStartDate, finalEndDate, timePeriod);
+        
+        // Get payment methods data
+        const paymentMethods = await getPaymentMethods(req.session.shopId, finalStartDate, finalEndDate);
 
         res.json({
             success: true,
@@ -348,15 +221,95 @@ router.get('/api/reports', getShopPrefix, async (req, res) => {
     }
 });
 
+// Helper function to get sales trend
+async function getSalesTrend(shopId, startDate, endDate, timePeriod) {
+    try {
+        let groupBy, dateFormat;
+
+        switch (timePeriod) {
+            case 'weekly':
+                groupBy = 'YEARWEEK(created_at)';
+                dateFormat = '%Y Week %v';
+                break;
+            case 'monthly':
+                groupBy = 'DATE_FORMAT(created_at, "%Y-%m")';
+                dateFormat = '%M %Y';
+                break;
+            default: // daily
+                groupBy = 'DATE(created_at)';
+                dateFormat = '%b %d, %Y';
+        }
+
+        const [data] = await pool.execute(`
+            SELECT 
+                DATE_FORMAT(created_at, ?) as label,
+                COALESCE(SUM(total_amount), 0) as total
+            FROM bills
+            WHERE shop_id = UUID_TO_BIN(?)
+            AND DATE(created_at) BETWEEN ? AND ?
+            GROUP BY ${groupBy}
+            ORDER BY MIN(created_at)
+        `, [dateFormat, shopId, startDate, endDate]);
+
+        return {
+            labels: data.map(item => item.label),
+            data: data.map(item => parseFloat(item.total) || 0)
+        };
+    } catch (err) {
+        console.error('Error getting sales trend:', err);
+        return { labels: [], data: [] };
+    }
+}
+
+// Helper function to get payment methods distribution
+async function getPaymentMethods(shopId, startDate, endDate) {
+    try {
+        const [data] = await pool.execute(`
+            SELECT 
+                COALESCE(payment_method, 'Cash') as method,
+                COALESCE(SUM(total_amount), 0) as total
+            FROM bills
+            WHERE shop_id = UUID_TO_BIN(?)
+            AND DATE(created_at) BETWEEN ? AND ?
+            GROUP BY payment_method
+            ORDER BY total DESC
+        `, [shopId, startDate, endDate]);
+
+        return {
+            labels: data.map(item => item.method),
+            data: data.map(item => parseFloat(item.total) || 0)
+        };
+    } catch (err) {
+        console.error('Error getting payment methods:', err);
+        return { labels: ['Cash'], data: [0] };
+    }
+}
+
 // API: GET /api/reports/bills/:id - Get bill details
-router.get('/api/reports/bills/:id', getShopPrefix, async (req, res) => {
+router.get('/api/reports/bills/:id', getShopDetails, async (req, res) => {
     try {
         const billId = req.params.id;
 
-        const [[bill]] = await pool.execute(
-            `SELECT * FROM ${req.tablePrefix}bills WHERE id = ?`,
-            [billId]
-        );
+        const [[bill]] = await pool.execute(`
+            SELECT 
+                BIN_TO_UUID(b.id) as id,
+                b.bill_number,
+                b.customer_name,
+                b.customer_phone,
+                b.subtotal,
+                b.discount,
+                b.tax,
+                b.total_amount,
+                b.paid_amount,
+                b.due_amount,
+                b.payment_method,
+                b.notes,
+                b.created_at,
+                u.name as created_by
+            FROM bills b
+            LEFT JOIN users u ON b.created_by = u.id
+            WHERE b.id = UUID_TO_BIN(?)
+        `, [billId]);
 
         if (!bill) {
             return res.status(404).json({
@@ -365,10 +318,16 @@ router.get('/api/reports/bills/:id', getShopPrefix, async (req, res) => {
             });
         }
 
-        const [items] = await pool.execute(
-            `SELECT * FROM ${req.tablePrefix}bill_items WHERE bill_id = ?`,
-            [billId]
-        );
+        const [items] = await pool.execute(`
+            SELECT 
+                bi.quantity,
+                bi.unit_price,
+                bi.total_price,
+                p.name as product_name
+            FROM bill_items bi
+            LEFT JOIN products p ON bi.product_id = p.id
+            WHERE bi.bill_id = UUID_TO_BIN(?)
+        `, [billId]);
 
         res.json({
             success: true,
@@ -385,12 +344,11 @@ router.get('/api/reports/bills/:id', getShopPrefix, async (req, res) => {
     }
 });
 
-// API: GET /api/reports/export - Export reports (FIXED)
-router.get('/api/reports/export', getShopPrefix, async (req, res) => {
+// API: GET /api/reports/export - Export reports to Excel
+router.get('/api/reports/export', getShopDetails, async (req, res) => {
     try {
-        const { startDate, endDate, paymentMethod, salesRange } = req.query;
+        const { startDate, endDate, paymentMethod } = req.query;
 
-        // Set default dates
         const defaultEndDate = new Date();
         const defaultStartDate = new Date();
         defaultStartDate.setDate(defaultEndDate.getDate() - 30);
@@ -398,9 +356,8 @@ router.get('/api/reports/export', getShopPrefix, async (req, res) => {
         const finalStartDate = startDate || defaultStartDate.toISOString().split('T')[0];
         const finalEndDate = endDate || defaultEndDate.toISOString().split('T')[0];
 
-        // FIXED: Use table alias for JOIN queries
-        let whereConditions = ['DATE(b.created_at) BETWEEN ? AND ?'];
-        let queryParams = [finalStartDate, finalEndDate];
+        let whereConditions = ['b.shop_id = UUID_TO_BIN(?)', 'DATE(b.created_at) BETWEEN ? AND ?'];
+        let queryParams = [req.session.shopId, finalStartDate, finalEndDate];
 
         if (paymentMethod && paymentMethod !== 'all') {
             whereConditions.push('b.payment_method = ?');
@@ -410,20 +367,33 @@ router.get('/api/reports/export', getShopPrefix, async (req, res) => {
         const whereClause = whereConditions.join(' AND ');
 
         const [reports] = await pool.execute(`
-            SELECT b.*, 
-                   COUNT(bi.id) as items_count
-            FROM ${req.tablePrefix}bills b
-            LEFT JOIN ${req.tablePrefix}bill_items bi ON b.id = bi.bill_id
+            SELECT 
+                b.bill_number,
+                b.customer_name,
+                b.customer_phone,
+                b.subtotal,
+                b.discount,
+                b.tax,
+                b.total_amount,
+                b.paid_amount,
+                b.due_amount,
+                b.payment_method,
+                DATE(b.created_at) as bill_date,
+                u.name as created_by,
+                COALESCE((
+                    SELECT COUNT(*) 
+                    FROM bill_items bi 
+                    WHERE bi.bill_id = b.id
+                ), 0) as items_count
+            FROM bills b
+            LEFT JOIN users u ON b.created_by = u.id
             WHERE ${whereClause}
-            GROUP BY b.id
             ORDER BY b.created_at DESC
         `, queryParams);
 
-        // Create Excel workbook
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Daily Reports');
 
-        // Add headers
         worksheet.columns = [
             { header: 'Date', key: 'date', width: 15 },
             { header: 'Bill Number', key: 'bill_number', width: 20 },
@@ -434,14 +404,16 @@ router.get('/api/reports/export', getShopPrefix, async (req, res) => {
             { header: 'Discount', key: 'discount', width: 15 },
             { header: 'Tax', key: 'tax', width: 15 },
             { header: 'Total', key: 'total_amount', width: 15 },
+            { header: 'Paid', key: 'paid_amount', width: 15 },
+            { header: 'Due', key: 'due_amount', width: 15 },
             { header: 'Payment Method', key: 'payment_method', width: 15 },
-            { header: 'Status', key: 'status', width: 15 }
+            { header: 'Status', key: 'status', width: 15 },
+            { header: 'Created By', key: 'created_by', width: 15 }
         ];
 
-        // Add data
         reports.forEach(report => {
             worksheet.addRow({
-                date: new Date(report.created_at).toLocaleDateString(),
+                date: new Date(report.bill_date).toLocaleDateString(),
                 bill_number: report.bill_number,
                 customer_name: report.customer_name || 'Walk-in Customer',
                 customer_phone: report.customer_phone || '',
@@ -450,16 +422,17 @@ router.get('/api/reports/export', getShopPrefix, async (req, res) => {
                 discount: parseFloat(report.discount),
                 tax: parseFloat(report.tax),
                 total_amount: parseFloat(report.total_amount),
+                paid_amount: parseFloat(report.paid_amount),
+                due_amount: parseFloat(report.due_amount),
                 payment_method: report.payment_method || 'Cash',
-                status: report.due_amount > 0 ? 'Partial' : 'Paid'
+                status: parseFloat(report.due_amount) > 0 ? 'Partial' : (parseFloat(report.due_amount) < 0 ? 'Overpaid' : 'Paid'),
+                created_by: report.created_by || 'System'
             });
         });
 
-        // Set response headers
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename=daily-reports-${new Date().toISOString().split('T')[0]}.xlsx`);
 
-        // Send workbook
         await workbook.xlsx.write(res);
         res.end();
 
@@ -472,227 +445,536 @@ router.get('/api/reports/export', getShopPrefix, async (req, res) => {
     }
 });
 
-// Add this route to create sample data for testing
-router.post('/api/reports/create-sample-data', getShopPrefix, async (req, res) => {
-    let connection;
-    try {
-        connection = await pool.getConnection();
-        await connection.beginTransaction();
+// ============================================
+// SUPPLIER PAYMENT REPORT
+// ============================================
 
-        // console.log('Creating sample data for shop:', req.session.shopId);
-        
-        // Create sample bills
-        const sampleBills = [
-            {
-                bill_number: 'INV-001',
-                customer_name: 'John Customer',
-                customer_phone: '0300-1234567',
-                subtotal: 2500.00,
-                discount: 100.00,
-                tax: 375.00,
-                total_amount: 2775.00,
-                paid_amount: 2775.00,
-                due_amount: 0.00,
-                payment_method: 'cash',
-                created_by: req.session.userId || 1
-            },
-            {
-                bill_number: 'INV-002', 
-                customer_name: 'Sarah Client',
-                customer_phone: '0300-7654321',
-                subtotal: 1800.00,
-                discount: 50.00,
-                tax: 262.50,
-                total_amount: 2012.50,
-                paid_amount: 1500.00,
-                due_amount: 512.50,
-                payment_method: 'card',
-                created_by: req.session.userId || 1
-            },
-            {
-                bill_number: 'INV-003',
-                customer_name: 'Walk-in Customer',
-                customer_phone: null,
-                subtotal: 500.00,
-                discount: 0.00,
-                tax: 75.00,
-                total_amount: 575.00,
-                paid_amount: 575.00,
-                due_amount: 0.00,
-                payment_method: 'digital',
-                created_by: req.session.userId || 1
-            }
-        ];
-
-        for (const bill of sampleBills) {
-            const [result] = await connection.execute(
-                `INSERT INTO ${req.tablePrefix}bills 
-                 (bill_number, customer_name, customer_phone, subtotal, discount, tax, 
-                  total_amount, paid_amount, due_amount, payment_method, created_by, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-                [
-                    bill.bill_number, bill.customer_name, bill.customer_phone,
-                    bill.subtotal, bill.discount, bill.tax, bill.total_amount,
-                    bill.paid_amount, bill.due_amount, bill.payment_method, bill.created_by
-                ]
-            );
-
-            const billId = result.insertId;
-
-            // Create sample bill items
-            const sampleItems = [
-                { product_name: 'Product A', quantity: 2, unit_price: 500, discount: 0, total_price: 1000 },
-                { product_name: 'Product B', quantity: 1, unit_price: 1500, discount: 100, total_price: 1400 }
-            ];
-
-            for (const item of sampleItems) {
-                await connection.execute(
-                    `INSERT INTO ${req.tablePrefix}bill_items 
-                     (bill_id, product_name, quantity, unit_price, discount, total_price)
-                     VALUES (?, ?, ?, ?, ?, ?)`,
-                    [billId, item.product_name, item.quantity, item.unit_price, item.discount, item.total_price]
-                );
-            }
-        }
-
-        await connection.commit();
-        
-        res.json({
-            success: true,
-            message: 'Sample data created successfully! Refresh the reports page to see data.'
-        });
-
-    } catch (err) {
-        if (connection) await connection.rollback();
-        // console.error('Error creating sample data:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to create sample data: ' + err.message
-        });
-    } finally {
-        if (connection) connection.release();
-    }
+// GET /reports/supplier-payments - Supplier payment report page
+router.get('/supplier-payments', getShopDetails, async (req, res) => {
+  try {
+    res.render('reports/supplier-payments', {
+      title: 'Supplier Payment Report',
+      shop: req.shop
+    });
+  } catch (err) {
+    console.error('Error loading supplier payments report:', err);
+    res.status(500).render('error', { message: 'Failed to load report' });
+  }
 });
 
-// Helper functions - FIXED: No unnecessary aliases
-async function getSalesTrend(tablePrefix, startDate, endDate, timePeriod) {
-    try {
-        let groupBy, dateFormat;
+// API: GET /api/reports/supplier-payments - Get supplier payment data
+router.get('/api/supplier-payments', getShopDetails, async (req, res) => {
+  try {
+    const { startDate, endDate, supplierId } = req.query;
+    const shopId = req.session.shopId;
 
-        switch (timePeriod) {
-            case 'weekly':
-                groupBy = 'YEAR(created_at), WEEK(created_at)';
-                dateFormat = 'Week %v';
-                break;
-            case 'monthly':
-                groupBy = 'YEAR(created_at), MONTH(created_at)';
-                dateFormat = '%M %Y';
-                break;
-            default: // daily
-                groupBy = 'DATE(created_at)';
-                dateFormat = '%b %d';
-        }
+    let whereClause = 's.shop_id = UUID_TO_BIN(?)';
+    let params = [shopId];
 
-        const [data] = await pool.execute(`
-            SELECT 
-                DATE_FORMAT(created_at, ?) as label,
-                COALESCE(SUM(total_amount), 0) as total
-            FROM ${tablePrefix}bills
-            WHERE DATE(created_at) BETWEEN ? AND ?
-            GROUP BY ${groupBy}
-            ORDER BY MIN(created_at)
-        `, [dateFormat, startDate, endDate]);
-
-        return {
-            labels: data.map(item => item.label),
-            data: data.map(item => parseFloat(item.total) || 0)
-        };
-    } catch (err) {
-        console.error('Error getting sales trend:', err);
-        return {
-            labels: [],
-            data: []
-        };
+    if (supplierId && supplierId !== 'all') {
+      whereClause += ' AND s.id = UUID_TO_BIN(?)';
+      params.push(supplierId);
     }
-}
 
-async function getPaymentMethods(tablePrefix, startDate, endDate) {
-    try {
-        const [data] = await pool.execute(`
-            SELECT 
-                COALESCE(payment_method, 'Cash') as method,
-                COALESCE(SUM(total_amount), 0) as total
-            FROM ${tablePrefix}bills
-            WHERE DATE(created_at) BETWEEN ? AND ?
-            GROUP BY payment_method
-        `, [startDate, endDate]);
-
-        return {
-            labels: data.map(item => item.method),
-            data: data.map(item => parseFloat(item.total) || 0)
-        };
-    } catch (err) {
-        console.error('Error getting payment methods:', err);
-        return {
-            labels: ['Cash'],
-            data: [0]
-        };
+    if (startDate && endDate) {
+      whereClause += ' AND DATE(st.created_at) BETWEEN ? AND ?';
+      params.push(startDate, endDate);
     }
-}
 
-function getEmptyStats() {
-    return {
-        totalRevenue: 0,
-        totalSales: 0,
-        totalCustomers: 0,
-        avgTransaction: 0,
-        revenueTrend: 0,
-        salesTrend: 0,
-        customersTrend: 0,
-        transactionTrend: 0
+    // Get supplier payment summary
+    const [suppliers] = await pool.execute(`
+      SELECT 
+        BIN_TO_UUID(s.id) as id,
+        s.name,
+        s.contact_person,
+        s.phone,
+        s.email,
+        s.type,
+        COALESCE((
+          SELECT SUM(st.amount) 
+          FROM supplier_transactions st 
+          WHERE st.supplier_id = s.id 
+          AND st.type = 'debit'
+          AND (DATE(st.created_at) BETWEEN ? AND ? OR (? IS NULL OR ? IS NULL))
+        ), 0) as total_purchases,
+        COALESCE((
+          SELECT SUM(st.amount) 
+          FROM supplier_transactions st 
+          WHERE st.supplier_id = s.id 
+          AND st.type = 'credit'
+          AND (DATE(st.created_at) BETWEEN ? AND ? OR (? IS NULL OR ? IS NULL))
+        ), 0) as total_paid,
+        COALESCE((
+          SELECT SUM(CASE WHEN st.type = 'debit' THEN st.amount ELSE -st.amount END)
+          FROM supplier_transactions st 
+          WHERE st.supplier_id = s.id
+        ), 0) as balance
+      FROM suppliers s
+      WHERE ${whereClause}
+      GROUP BY s.id
+      ORDER BY balance DESC
+    `, [...params, startDate || null, endDate || null, startDate, endDate, startDate || null, endDate || null, startDate, endDate]);
+
+    // Get detailed transactions for each supplier
+    const [transactions] = await pool.execute(`
+      SELECT 
+        BIN_TO_UUID(st.id) as id,
+        BIN_TO_UUID(st.supplier_id) as supplier_id,
+        s.name as supplier_name,
+        st.type,
+        st.amount,
+        st.description,
+        st.reference_type,
+        DATE(st.created_at) as transaction_date,
+        st.created_at,
+        u.name as created_by
+      FROM supplier_transactions st
+      JOIN suppliers s ON st.supplier_id = s.id
+      LEFT JOIN users u ON st.created_by = u.id
+      WHERE s.shop_id = UUID_TO_BIN(?)
+      ${startDate && endDate ? 'AND DATE(st.created_at) BETWEEN ? AND ?' : ''}
+      ORDER BY st.created_at DESC
+      LIMIT 200
+    `, startDate && endDate ? [shopId, startDate, endDate] : [shopId]);
+
+    // Calculate summary
+    const summary = {
+      totalSuppliers: suppliers.length,
+      totalPurchases: suppliers.reduce((sum, s) => sum + parseFloat(s.total_purchases), 0),
+      totalPaid: suppliers.reduce((sum, s) => sum + parseFloat(s.total_paid), 0),
+      totalBalance: suppliers.reduce((sum, s) => sum + parseFloat(s.balance), 0)
     };
-}
 
-function getEmptyCharts() {
-    return {
-        salesTrend: { labels: [], data: [] },
-        paymentMethods: { labels: ['Cash'], data: [0] }
+    res.json({
+      success: true,
+      suppliers: suppliers,
+      transactions: transactions,
+      summary: summary
+    });
+
+  } catch (err) {
+    console.error('Error loading supplier payments:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ============================================
+// USER SALES REPORT
+// ============================================
+
+// GET /reports/user-sales - User sales report page
+router.get('/user-sales', getShopDetails, async (req, res) => {
+  try {
+    res.render('reports/user-sales', {
+      title: 'User Sales Report',
+      shop: req.shop
+    });
+  } catch (err) {
+    console.error('Error loading user sales report:', err);
+    res.status(500).render('error', { message: 'Failed to load report' });
+  }
+});
+
+// API: GET /api/reports/user-sales - Get user sales data
+router.get('/api/user-sales', getShopDetails, async (req, res) => {
+  try {
+    const { startDate, endDate, userId, period = 'daily' } = req.query;
+    const shopId = req.session.shopId;
+
+    // Get sales by user
+    const [userSales] = await pool.execute(`
+      SELECT 
+        BIN_TO_UUID(u.id) as id,
+        u.name,
+        u.email,
+        u.phone,
+        r.role_name as role,
+        COUNT(b.id) as total_bills,
+        COALESCE(SUM(b.total_amount), 0) as total_sales,
+        COALESCE(SUM(b.discount), 0) as total_discounts,
+        COALESCE(SUM(b.tax), 0) as total_tax,
+        COALESCE(AVG(b.total_amount), 0) as avg_bill_value,
+        MIN(b.created_at) as first_sale,
+        MAX(b.created_at) as last_sale
+      FROM users u
+      LEFT JOIN bills b ON b.created_by = u.id AND b.shop_id = UUID_TO_BIN(?)
+      LEFT JOIN roles r ON u.role_id = r.id
+      WHERE u.shop_id = UUID_TO_BIN(?)
+      ${startDate && endDate ? 'AND DATE(b.created_at) BETWEEN ? AND ?' : ''}
+      GROUP BY u.id
+      HAVING total_bills > 0 OR total_sales > 0
+      ORDER BY total_sales DESC
+    `, startDate && endDate ? [shopId, shopId, startDate, endDate] : [shopId, shopId]);
+
+    // Get detailed sales by user with time breakdown
+    let timeGroupBy, dateFormat;
+    switch(period) {
+      case 'daily':
+        timeGroupBy = 'DATE(b.created_at)';
+        dateFormat = '%Y-%m-%d';
+        break;
+      case 'weekly':
+        timeGroupBy = 'YEARWEEK(b.created_at)';
+        dateFormat = 'Week %v, %Y';
+        break;
+      case 'monthly':
+        timeGroupBy = 'DATE_FORMAT(b.created_at, "%Y-%m")';
+        dateFormat = '%M %Y';
+        break;
+      default:
+        timeGroupBy = 'DATE(b.created_at)';
+        dateFormat = '%Y-%m-%d';
+    }
+
+    const [salesByPeriod] = await pool.execute(`
+      SELECT 
+        DATE_FORMAT(b.created_at, ?) as period,
+        u.name as user_name,
+        COUNT(b.id) as bill_count,
+        COALESCE(SUM(b.total_amount), 0) as total
+      FROM bills b
+      JOIN users u ON b.created_by = u.id
+      WHERE b.shop_id = UUID_TO_BIN(?)
+      ${startDate && endDate ? 'AND DATE(b.created_at) BETWEEN ? AND ?' : ''}
+      GROUP BY ${timeGroupBy}, u.id
+      ORDER BY b.created_at DESC
+    `, dateFormat && startDate && endDate ? [dateFormat, shopId, startDate, endDate] : [dateFormat, shopId]);
+
+    // Calculate summary
+    const summary = {
+      totalUsers: userSales.length,
+      totalSales: userSales.reduce((sum, u) => sum + parseFloat(u.total_sales), 0),
+      totalBills: userSales.reduce((sum, u) => sum + parseInt(u.total_bills), 0),
+      avgBillValue: userSales.length > 0 ? userSales.reduce((sum, u) => sum + parseFloat(u.avg_bill_value), 0) / userSales.length : 0
     };
-}
 
-// Helper function to generate suggestions based on debug results
-function generateSuggestions(results) {
-    const suggestions = [];
+    res.json({
+      success: true,
+      userSales: userSales,
+      salesByPeriod: salesByPeriod,
+      summary: summary
+    });
 
-    if (!results.tables.bills) {
-        suggestions.push({
-            type: 'critical',
-            message: 'Bills table does not exist for your shop.',
-            action: 'Create the bills table or run shop setup again.'
-        });
-    } else if (results.dataCounts.bills === 0) {
-        suggestions.push({
-            type: 'warning', 
-            message: 'Bills table exists but has no sales data.',
-            action: 'Create some sales or use the sample data endpoint.'
-        });
-    } else if (results.sampleQuery && results.sampleQuery.revenue === 0) {
-        suggestions.push({
-            type: 'info',
-            message: 'Data exists but none in the last 30 days.',
-            action: 'Try changing the date range or check if sales dates are correct.'
-        });
+  } catch (err) {
+    console.error('Error loading user sales:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ============================================
+// PRODUCT SALES REPORT
+// ============================================
+
+// GET /reports/product-sales - Product sales report page
+router.get('/product-sales', getShopDetails, async (req, res) => {
+  try {
+    res.render('reports/product-sales', {
+      title: 'Product Sales Report',
+      shop: req.shop
+    });
+  } catch (err) {
+    console.error('Error loading product sales report:', err);
+    res.status(500).render('error', { message: 'Failed to load report' });
+  }
+});
+
+// API: GET /api/reports/product-sales - Get product sales data
+router.get('/api/product-sales', getShopDetails, async (req, res) => {
+  try {
+    const { startDate, endDate, category, sortBy = 'quantity' } = req.query;
+    const shopId = req.session.shopId;
+
+    let whereClause = 'b.shop_id = UUID_TO_BIN(?)';
+    let params = [shopId];
+
+    if (startDate && endDate) {
+      whereClause += ' AND DATE(b.created_at) BETWEEN ? AND ?';
+      params.push(startDate, endDate);
     }
 
-    if (results.dateRange && results.dateRange.earliest) {
-        suggestions.push({
-            type: 'info',
-            message: `Your sales data ranges from ${new Date(results.dateRange.earliest).toLocaleDateString()} to ${new Date(results.dateRange.latest).toLocaleDateString()}`,
-            action: 'Adjust date range to match your sales period.'
-        });
+    if (category && category !== 'all') {
+      whereClause += ' AND p.category = ?';
+      params.push(category);
     }
 
-    return suggestions;
-}
+    // Get product sales data
+    const [products] = await pool.execute(`
+      SELECT 
+        BIN_TO_UUID(p.id) as id,
+        p.name,
+        p.brand,
+        p.category,
+        p.sku,
+        p.status,
+        COUNT(DISTINCT b.id) as times_sold,
+        SUM(bi.quantity) as total_quantity_sold,
+        COALESCE(SUM(bi.total_price), 0) as total_revenue,
+        COALESCE(AVG(bi.unit_price), 0) as avg_selling_price,
+        COALESCE(AVG(i.current_quantity), 0) as current_stock,
+        SUM(bi.total_price) / NULLIF(SUM(bi.quantity), 0) as avg_price_per_unit
+      FROM products p
+      LEFT JOIN bill_items bi ON bi.product_id = p.id
+      LEFT JOIN bills b ON bi.bill_id = b.id AND ${whereClause}
+      LEFT JOIN inventory i ON i.product_id = p.id
+      WHERE p.shop_id = UUID_TO_BIN(?)
+      GROUP BY p.id
+      HAVING total_quantity_sold > 0 OR total_revenue > 0
+      ORDER BY 
+        CASE ? 
+          WHEN 'quantity' THEN total_quantity_sold 
+          WHEN 'revenue' THEN total_revenue 
+          WHEN 'times' THEN times_sold 
+          ELSE total_quantity_sold 
+        END DESC
+    `, [...params, shopId, sortBy]);
+
+    // Get categories for filter
+    const [categories] = await pool.execute(`
+      SELECT DISTINCT category 
+      FROM products 
+      WHERE shop_id = UUID_TO_BIN(?) AND category IS NOT NULL AND category != ''
+      ORDER BY category
+    `, [shopId]);
+
+    // Get top products by revenue
+    const [topProducts] = await pool.execute(`
+      SELECT 
+        p.name,
+        SUM(bi.quantity) as quantity,
+        SUM(bi.total_price) as revenue
+      FROM bill_items bi
+      JOIN products p ON bi.product_id = p.id
+      JOIN bills b ON bi.bill_id = b.id
+      WHERE b.shop_id = UUID_TO_BIN(?)
+      ${startDate && endDate ? 'AND DATE(b.created_at) BETWEEN ? AND ?' : ''}
+      GROUP BY p.id
+      ORDER BY revenue DESC
+      LIMIT 10
+    `, startDate && endDate ? [shopId, startDate, endDate] : [shopId]);
+
+    // Summary
+    const summary = {
+      totalProducts: products.length,
+      totalQuantitySold: products.reduce((sum, p) => sum + parseFloat(p.total_quantity_sold), 0),
+      totalRevenue: products.reduce((sum, p) => sum + parseFloat(p.total_revenue), 0),
+      avgPrice: products.length > 0 ? products.reduce((sum, p) => sum + parseFloat(p.avg_price_per_unit), 0) / products.length : 0
+    };
+
+    res.json({
+      success: true,
+      products: products,
+      categories: categories.map(c => c.category),
+      topProducts: topProducts,
+      summary: summary
+    });
+
+  } catch (err) {
+    console.error('Error loading product sales:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ============================================
+// RAW MATERIAL CONSUMPTION REPORT
+// ============================================
+
+// GET /reports/raw-consumption - Raw material consumption report
+router.get('/raw-consumption', getShopDetails, async (req, res) => {
+  try {
+    res.render('reports/raw-consumption', {
+      title: 'Raw Material Consumption Report',
+      shop: req.shop
+    });
+  } catch (err) {
+    console.error('Error loading raw consumption report:', err);
+    res.status(500).render('error', { message: 'Failed to load report' });
+  }
+});
+
+// API: GET /api/reports/raw-consumption - Get raw material consumption data
+router.get('/api/raw-consumption', getShopDetails, async (req, res) => {
+  try {
+    const { startDate, endDate, category } = req.query;
+    const shopId = req.session.shopId;
+
+    let whereClause = 'rm.shop_id = UUID_TO_BIN(?)';
+    let params = [shopId];
+
+    if (category && category !== 'all') {
+      whereClause += ' AND rm.category = ?';
+      params.push(category);
+    }
+
+    // Get raw materials with consumption data
+    const [rawMaterials] = await pool.execute(`
+      SELECT 
+        BIN_TO_UUID(rm.id) as id,
+        rm.name,
+        rm.sku,
+        rm.category,
+        rm.unit_of_measure,
+        rm.current_stock,
+        rm.min_stock_level,
+        rm.max_stock_level,
+        rm.cost_price,
+        COALESCE((
+          SELECT SUM(CASE WHEN movement_type = 'in' THEN quantity ELSE 0 END)
+          FROM raw_material_stock_movements 
+          WHERE raw_material_id = rm.id
+          ${startDate && endDate ? 'AND movement_date BETWEEN ? AND ?' : ''}
+        ), 0) as total_incoming,
+        COALESCE((
+          SELECT SUM(CASE WHEN movement_type = 'out' THEN quantity ELSE 0 END)
+          FROM raw_material_stock_movements 
+          WHERE raw_material_id = rm.id
+          ${startDate && endDate ? 'AND movement_date BETWEEN ? AND ?' : ''}
+        ), 0) as total_outgoing,
+        COALESCE((
+          SELECT SUM(CASE 
+            WHEN movement_type = 'out' AND reference_type = 'production' THEN quantity 
+            ELSE 0 
+          END)
+          FROM raw_material_stock_movements 
+          WHERE raw_material_id = rm.id
+          ${startDate && endDate ? 'AND movement_date BETWEEN ? AND ?' : ''}
+        ), 0) as total_used_in_production,
+        (rm.current_stock * rm.cost_price) as stock_value
+      FROM raw_materials rm
+      WHERE ${whereClause}
+      ORDER BY total_outgoing DESC
+    `, startDate && endDate ? [...params, startDate, endDate, startDate, endDate, startDate, endDate] : params);
+
+    // Get consumption by product
+    const [consumptionByProduct] = await pool.execute(`
+      SELECT 
+        p.name as product_name,
+        rm.name as raw_material,
+        i.quantity_required,
+        i.unit,
+        COUNT(DISTINCT b.id) as times_produced,
+        SUM(bi.quantity) * i.quantity_required as expected_consumption
+      FROM ingredients i
+      JOIN products p ON i.main_product_id = p.id
+      JOIN raw_materials rm ON i.raw_material_id = rm.id
+      JOIN bill_items bi ON bi.product_id = p.id
+      JOIN bills b ON bi.bill_id = b.id
+      WHERE b.shop_id = UUID_TO_BIN(?)
+      ${startDate && endDate ? 'AND DATE(b.created_at) BETWEEN ? AND ?' : ''}
+      GROUP BY p.id, rm.id
+      ORDER BY expected_consumption DESC
+      LIMIT 20
+    `, startDate && endDate ? [shopId, startDate, endDate] : [shopId]);
+
+    // Get categories
+    const [categories] = await pool.execute(`
+      SELECT DISTINCT category 
+      FROM raw_materials 
+      WHERE shop_id = UUID_TO_BIN(?) AND category IS NOT NULL
+      ORDER BY category
+    `, [shopId]);
+
+    // Summary
+    const summary = {
+      totalMaterials: rawMaterials.length,
+      totalIncoming: rawMaterials.reduce((sum, rm) => sum + parseFloat(rm.total_incoming), 0),
+      totalOutgoing: rawMaterials.reduce((sum, rm) => sum + parseFloat(rm.total_outgoing), 0),
+      totalUsedInProduction: rawMaterials.reduce((sum, rm) => sum + parseFloat(rm.total_used_in_production), 0),
+      totalStockValue: rawMaterials.reduce((sum, rm) => sum + parseFloat(rm.stock_value), 0),
+      lowStockCount: rawMaterials.filter(rm => rm.current_stock <= rm.min_stock_level).length
+    };
+
+    res.json({
+      success: true,
+      rawMaterials: rawMaterials,
+      consumptionByProduct: consumptionByProduct,
+      categories: categories.map(c => c.category),
+      summary: summary
+    });
+
+  } catch (err) {
+    console.error('Error loading raw consumption:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ============================================
+// EXPORT FUNCTIONS
+// ============================================
+
+// Export supplier payments report
+router.get('/export/supplier-payments', getShopDetails, async (req, res) => {
+  try {
+    const { startDate, endDate, supplierId } = req.query;
+    const shopId = req.session.shopId;
+
+    let whereClause = 's.shop_id = UUID_TO_BIN(?)';
+    let params = [shopId];
+
+    if (supplierId && supplierId !== 'all') {
+      whereClause += ' AND s.id = UUID_TO_BIN(?)';
+      params.push(supplierId);
+    }
+
+    const [suppliers] = await pool.execute(`
+      SELECT 
+        s.name,
+        s.contact_person,
+        s.phone,
+        s.email,
+        COALESCE((
+          SELECT SUM(st.amount) 
+          FROM supplier_transactions st 
+          WHERE st.supplier_id = s.id AND st.type = 'debit'
+        ), 0) as total_purchases,
+        COALESCE((
+          SELECT SUM(st.amount) 
+          FROM supplier_transactions st 
+          WHERE st.supplier_id = s.id AND st.type = 'credit'
+        ), 0) as total_paid,
+        COALESCE((
+          SELECT SUM(CASE WHEN st.type = 'debit' THEN st.amount ELSE -st.amount END)
+          FROM supplier_transactions st 
+          WHERE st.supplier_id = s.id
+        ), 0) as balance
+      FROM suppliers s
+      WHERE ${whereClause}
+      ORDER BY balance DESC
+    `, params);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Supplier Payments');
+
+    worksheet.columns = [
+      { header: 'Supplier Name', key: 'name', width: 25 },
+      { header: 'Contact Person', key: 'contact_person', width: 20 },
+      { header: 'Phone', key: 'phone', width: 15 },
+      { header: 'Email', key: 'email', width: 25 },
+      { header: 'Total Purchases', key: 'total_purchases', width: 18 },
+      { header: 'Total Paid', key: 'total_paid', width: 15 },
+      { header: 'Balance', key: 'balance', width: 15 }
+    ];
+
+    suppliers.forEach(supplier => {
+      worksheet.addRow({
+        name: supplier.name,
+        contact_person: supplier.contact_person || '-',
+        phone: supplier.phone || '-',
+        email: supplier.email || '-',
+        total_purchases: parseFloat(supplier.total_purchases).toFixed(2),
+        total_paid: parseFloat(supplier.total_paid).toFixed(2),
+        balance: parseFloat(supplier.balance).toFixed(2)
+      });
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=supplier-payments-${new Date().toISOString().split('T')[0]}.xlsx`);
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (err) {
+    console.error('Error exporting supplier payments:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 module.exports = router;
