@@ -1,6 +1,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
-<!-- dashboard.ejs -->
 <div class="dashboard-container">
   <!-- Welcome Header with Date/Time -->
   <div class="dashboard-header">
@@ -107,31 +107,24 @@
             </div>
             <p>Daily Report</p>
           </a>
-          
-          <!-- <a href="/inventory" class="action-card">
-            <div class="action-icon bg-dark">
-              <i class="fas fa-warehouse"></i>
-            </div>
-            <p>Inventory</p>
-          </a> -->
 
           <a href="/shop_setting" class="action-card">
             <div class="action-icon bg-dark">
-              <i class="fas fa-warehouse"></i>
+              <i class="fas fa-cog"></i>
             </div>
             <p>Shop Setting</p>
           </a>
 
           <a href="/expenses" class="action-card">
             <div class="action-icon bg-secondary">
-              <i class="fas fa-warehouse"></i>
+              <i class="fas fa-money-bill"></i>
             </div>
-            <p>Shop Expenses</p>
+            <p>Expenses</p>
           </a>
 
           <a href="/raw" class="action-card">
             <div class="action-icon bg-primary">
-              <i class="fas fa-warehouse"></i>
+              <i class="fas fa-box"></i>
             </div>
             <p>Raw Material</p>
           </a>
@@ -145,7 +138,6 @@
           <a href="/ALLbills" class="view-all">View All</a>
         </div>
         <div class="sales-list" id="recentSales">
-          <!-- Will be populated by JavaScript -->
           <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i> Loading recent sales...
           </div>
@@ -171,7 +163,6 @@
               </tr>
             </thead>
             <tbody id="lowStockTable">
-              <!-- Will be populated by JavaScript -->
               <tr>
                 <td colspan="3" class="text-center">
                   <i class="fas fa-spinner fa-spin"></i> Loading...
@@ -189,7 +180,6 @@
           <a href="/activity" class="view-all">View All</a>
         </div>
         <div class="activity-list" id="recentActivity">
-          <!-- Will be populated by JavaScript -->
           <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i> Loading activities...
           </div>
@@ -218,42 +208,72 @@
       </div>
     </div>
   </div>
-  
 
-  <div class="card">
-    <h3>Sales (Last 7 Days)</h3>
-    <canvas id="salesChart" height="100"></canvas>
+  <!-- Graph Controls -->
+  <div class="card mb-3">
+    <div class="section-header">
+      <h2><i class="fas fa-chart-line"></i> Analytics Dashboard</h2>
+    </div>
+    <div class="card-body">
+      <!-- Chart Type Filters -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Data Type</label>
+        <div class="btn-group w-100 flex-wrap" role="group">
+          <button type="button" class="btn btn-outline-primary chart-filter-btn" data-type="sales" onclick="changeChartType('sales')">
+            <i class="fas fa-chart-line"></i> Sales
+          </button>
+          <button type="button" class="btn btn-outline-danger chart-filter-btn" data-type="expenses" onclick="changeChartType('expenses')">
+            <i class="fas fa-money-bill-wave"></i> Expenses
+          </button>
+          <button type="button" class="btn btn-outline-success chart-filter-btn" data-type="users" onclick="changeChartType('users')">
+            <i class="fas fa-users"></i> Users
+          </button>
+          <button type="button" class="btn btn-outline-warning chart-filter-btn" data-type="products" onclick="changeChartType('products')">
+            <i class="fas fa-box"></i> Products
+          </button>
+          <button type="button" class="btn btn-outline-info chart-filter-btn" data-type="suppliers" onclick="changeChartType('suppliers')">
+            <i class="fas fa-truck"></i> Suppliers
+          </button>
+        </div>
+      </div>
+      
+      <!-- Date Range Filters -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Date Range</label>
+        <div class="btn-group w-100 mb-2 flex-wrap" role="group">
+          <button type="button" class="btn btn-outline-secondary date-filter-btn" data-days="7" onclick="changeDateRange(7)">
+            <i class="fas fa-calendar-week"></i> Last 7 Days
+          </button>
+          <button type="button" class="btn btn-outline-secondary date-filter-btn" data-days="30" onclick="changeDateRange(30)">
+            <i class="fas fa-calendar-month"></i> Last 30 Days
+          </button>
+          <button type="button" class="btn btn-outline-secondary date-filter-btn" data-days="90" onclick="changeDateRange(90)">
+            <i class="fas fa-calendar"></i> Last 90 Days
+          </button>
+        </div>
+        <div class="row g-2">
+          <div class="col-md-5">
+            <input type="date" class="form-control" id="customStartDate" placeholder="Start Date">
+          </div>
+          <div class="col-md-5">
+            <input type="date" class="form-control" id="customEndDate" placeholder="End Date">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-primary w-100" onclick="applyCustomDates()">
+              <i class="fas fa-search"></i> Apply
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-
+  <!-- Single Graph Card -->
+  <div class="card">
+    <h3>Analytics Overview</h3>
+    <canvas id="mainSalesChart" height="100"></canvas>
+  </div>
 </div>
-
-<script>
-async function loadSalesGraph() {
-  const res = await fetch('/api/dashboard/sales-graph');
-  const data = await res.json();
-
-  const labels = data.map(d => d.date);
-  const values = data.map(d => d.total);
-
-  new Chart(document.getElementById('salesChart'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Sales',
-        data: values,
-        borderWidth: 2,
-        tension: 0.3,
-        fill: true
-      }]
-    }
-  });
-}
-
-document.addEventListener('DOMContentLoaded', loadSalesGraph);
-</script>
-
 
 <style>
   /* Dashboard Styles */
@@ -500,6 +520,12 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
     align-items: center;
     padding: 10px 0;
     border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .sale-item:hover {
+    background-color: #f8f9fc;
   }
 
   .sale-item:last-child {
@@ -645,6 +671,52 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
   .bg-secondary { background-color: var(--secondary); }
   .bg-dark { background-color: var(--dark); }
 
+  /* Button active states */
+  .chart-filter-btn.active,
+  .date-filter-btn.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .btn-outline-primary.active {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  .btn-outline-secondary.active {
+    background-color: var(--secondary);
+    color: white;
+  }
+
+  /* Loading overlay */
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
   /* Scrollbar styling */
   ::-webkit-scrollbar {
     width: 6px;
@@ -653,8 +725,6 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
   ::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 10px;
-  margin: 5px 0;
-  background-clip: content-box;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -668,6 +738,12 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
 </style>
 
 <script>
+  let salesChart = null;
+  let currentChartType = 'sales';
+  let currentDays = 7;
+  let customStartDate = null;
+  let customEndDate = null;
+
   // Update datetime every second
   function updateDateTime() {
     const now = new Date();
@@ -684,13 +760,17 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
   }
   
   setInterval(updateDateTime, 1000);
-  updateDateTime(); // Initial call
+  updateDateTime();
 
-  // Fetch dashboard data from API
+  // Fetch dashboard data
   document.addEventListener('DOMContentLoaded', function() {
     fetchDashboardData();
+    loadSalesGraph();
     
-    // Check if we should show daily summary modal (e.g., on first login of the day)
+    // Set active default states
+    document.querySelector('.chart-filter-btn[data-type="sales"]').classList.add('active');
+    document.querySelector('.date-filter-btn[data-days="7"]').classList.add('active');
+    
     const lastSummaryShown = localStorage.getItem('lastSummaryShown');
     const today = new Date().toDateString();
     
@@ -706,7 +786,7 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
       .then(response => response.json())
       .then(data => {
         document.getElementById('totalProducts').textContent = data.totalProducts.toLocaleString();
-        document.getElementById('todaySales').textContent = data.todaySales.toLocaleString('en-IN');
+        document.getElementById('todaySales').textContent = formatMoney(data.todaySales);
         document.getElementById('totalEmployees').textContent = data.totalEmployees;
         document.getElementById('lowStockItems').textContent = data.lowStockItems;
       })
@@ -729,10 +809,11 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
           saleItem.className = 'sale-item';
           saleItem.innerHTML = `
             <div class="sale-info">
-              <div class="sale-id">Sale #${sale.id}</div>
-              <div class="sale-time">${new Date(sale.createdAt).toLocaleTimeString()}</div>
+              <div class="sale-id">${sale.bill_number}</div>
+              <div class="sale-time">${new Date(sale.createdAt).toLocaleString()}</div>
+              <small class="text-muted">${sale.customer_name || 'Walk-in Customer'}</small>
             </div>
-            <div class="sale-amount">₹${sale.totalAmount.toLocaleString('en-IN')}</div>
+            <div class="sale-amount">${formatMoney(sale.totalAmount)}</div>
           `;
           saleItem.onclick = () => window.location.href = `/bills/${sale.id}`;
           salesList.appendChild(saleItem);
@@ -759,10 +840,10 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
         data.forEach(item => {
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td class="badge badge-danger">${item.name}</td>
-            <td><span class="badge-danger">${item.quantity} left</span></td>
+            <td><strong>${item.name}</strong><br><small class="text-muted">SKU: ${item.sku || 'N/A'}</small></td>
+            <td><span class="badge bg-danger">${item.current_quantity} left</span></td>
             <td>
-              <button class="btn btn-sm btn-primary" onclick="reorderProduct(${item.id})">
+              <button class="btn btn-sm btn-primary" onclick="reorderProduct('${item.id}', '${item.name}')">
                 <i class="fas fa-shopping-cart"></i> Reorder
               </button>
             </td>
@@ -790,16 +871,16 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
           
           if (activity.type === 'sale') {
             iconClass = 'success';
-            icon = 'fa-rupee-sign';
-          } else if (activity.type === 'inventory') {
-            iconClass = 'warning';
-            icon = 'fa-box';
-          } else if (activity.type === 'employee') {
+            icon = 'fa-receipt';
+          } else if (activity.type === 'product') {
             iconClass = 'info';
-            icon = 'fa-user';
-          } else if (activity.type === 'alert') {
+            icon = 'fa-box';
+          } else if (activity.type === 'user') {
+            iconClass = 'warning';
+            icon = 'fa-user-plus';
+          } else if (activity.type === 'inventory') {
             iconClass = 'danger';
-            icon = 'fa-exclamation-triangle';
+            icon = 'fa-warehouse';
           }
           
           const activityItem = document.createElement('div');
@@ -834,47 +915,263 @@ document.addEventListener('DOMContentLoaded', loadSalesGraph);
     return `${days} day${days === 1 ? '' : 's'} ago`;
   }
 
-  function reorderProduct(productId) {
-    // Show reorder modal or directly add to purchase list
-    console.log('Reorder product:', productId);
-    // In a real app, you would implement this functionality
-    alert(`Reorder requested for product ID: ${productId}`);
+  function formatMoney(amount) {
+    const num = parseFloat(amount) || 0;
+    return new Intl.NumberFormat('en-PK', {
+      style: 'currency',
+      currency: 'PKR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(num);
   }
 
+  // Reorder product
+  async function reorderProduct(productId, productName) {
+    const quantity = prompt(`Enter quantity to reorder for ${productName}:`, 50);
+    if (!quantity) return;
+    
+    if (confirm(`Confirm reorder of ${quantity} units of ${productName}?`)) {
+      const loading = document.createElement('div');
+      loading.className = 'loading-overlay';
+      loading.innerHTML = '<div class="spinner"></div>';
+      document.body.appendChild(loading);
+      
+      try {
+        const response = await fetch('/api/dashboard/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId, quantity: parseInt(quantity) })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert(result.message);
+          fetchDashboardData();
+        } else {
+          alert('Failed to process reorder: ' + (result.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Reorder error:', error);
+        alert('Failed to process reorder. Please try again.');
+      } finally {
+        document.body.removeChild(loading);
+      }
+    }
+  }
+
+  // Sales Graph with Filters
+  async function loadSalesGraph() {
+    let url = `/api/dashboard/sales-graph?type=${currentChartType}&days=${currentDays}`;
+    
+    if (customStartDate && customEndDate) {
+      url = `/api/dashboard/sales-graph?type=${currentChartType}&startDate=${customStartDate}&endDate=${customEndDate}`;
+    }
+    
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch graph data');
+      
+      const data = await response.json();
+      
+      const labels = data.map(d => d.date);
+      const values = data.map(d => d.total);
+      
+      const ctx = document.getElementById('mainSalesChart').getContext('2d');
+      
+      if (salesChart) {
+        salesChart.destroy();
+      }
+      
+      // Chart colors based on type
+      const chartColors = {
+        sales: { border: '#4e73df', background: 'rgba(78, 115, 223, 0.1)' },
+        expenses: { border: '#e74a3b', background: 'rgba(231, 74, 59, 0.1)' },
+        users: { border: '#1cc88a', background: 'rgba(28, 200, 138, 0.1)' },
+        products: { border: '#f6c23e', background: 'rgba(246, 194, 62, 0.1)' },
+        suppliers: { border: '#36b9cc', background: 'rgba(54, 185, 204, 0.1)' }
+      };
+      
+      const colors = chartColors[currentChartType] || chartColors.sales;
+      
+      salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: getChartLabel(),
+            data: values,
+            borderColor: colors.border,
+            backgroundColor: colors.background,
+            borderWidth: 3,
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: colors.border,
+            pointBorderColor: '#fff',
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  let value = context.raw;
+                  if (currentChartType === 'sales' || currentChartType === 'expenses') {
+                    return `${context.dataset.label}: ${formatMoney(value)}`;
+                  }
+                  return `${context.dataset.label}: ${value}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => {
+                  if (currentChartType === 'sales' || currentChartType === 'expenses') {
+                    return formatMoney(value);
+                  }
+                  return value;
+                }
+              }
+            }
+          }
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error loading graph:', error);
+      document.getElementById('mainSalesChart').getContext('2d').clearRect(0, 0, 800, 400);
+    }
+  }
+  
+  function getChartLabel() {
+    const labels = {
+      sales: 'Sales Revenue',
+      expenses: 'Expenses',
+      users: 'New Users',
+      products: 'New Products',
+      suppliers: 'New Suppliers'
+    };
+    return labels[currentChartType] || 'Sales Revenue';
+  }
+  
+  function changeChartType(type) {
+    currentChartType = type;
+    loadSalesGraph();
+    
+    // Update active button styles
+    document.querySelectorAll('.chart-filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelector(`.chart-filter-btn[data-type="${type}"]`).classList.add('active');
+  }
+  
+  function changeDateRange(days) {
+    currentDays = days;
+    customStartDate = null;
+    customEndDate = null;
+    
+    // Reset custom date inputs
+    document.getElementById('customStartDate').value = '';
+    document.getElementById('customEndDate').value = '';
+    
+    loadSalesGraph();
+    
+    // Update active button styles
+    document.querySelectorAll('.date-filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelector(`.date-filter-btn[data-days="${days}"]`).classList.add('active');
+  }
+  
+  function applyCustomDates() {
+    const startDate = document.getElementById('customStartDate').value;
+    const endDate = document.getElementById('customEndDate').value;
+    
+    if (startDate && endDate) {
+      if (new Date(startDate) > new Date(endDate)) {
+        alert('Start date cannot be after end date');
+        return;
+      }
+      
+      customStartDate = startDate;
+      customEndDate = endDate;
+      
+      // Remove active class from preset buttons
+      document.querySelectorAll('.date-filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      loadSalesGraph();
+    } else {
+      alert('Please select both start and end dates');
+    }
+  }
+  
   function fetchDailySummary() {
     fetch('/api/dashboard/daily-summary')
       .then(response => response.json())
       .then(data => {
         const modalContent = document.getElementById('dailySummaryContent');
         modalContent.innerHTML = `
-          <div class="summary-item">
+          <div class="summary-item mb-3">
             <h5>Today's Sales</h5>
-            <p>₹${data.todaySales.toLocaleString('en-IN')} from ${data.totalTransactions} transactions</p>
+            <p class="h4 text-success">${formatMoney(data.todaySales)} from ${data.totalTransactions} transactions</p>
           </div>
-          <div class="summary-item">
+          <div class="summary-item mb-3">
             <h5>Top Selling Products</h5>
-            <ol>
-              ${data.topProducts.map(p => `<li>${p.name} (${p.quantity} sold)</li>`).join('')}
-            </ol>
+            ${data.topProducts.length > 0 ? 
+              `<ol class="mb-0">
+                ${data.topProducts.map(p => `<li>${p.name} (${p.quantity} sold)</li>`).join('')}
+              </ol>` : 
+              '<p class="text-muted">No sales yet today</p>'
+            }
           </div>
           <div class="summary-item">
             <h5>Inventory Alerts</h5>
-            <p>${data.lowStockItems} items below minimum stock level</p>
+            <p class="text-warning">${data.lowStockItems} items below minimum stock level</p>
           </div>
         `;
         
-        // Show modal
-        $('#dailySummaryModal').modal('show');
+        const modal = new bootstrap.Modal(document.getElementById('dailySummaryModal'));
+        modal.show();
       })
       .catch(error => {
         console.error('Error fetching daily summary:', error);
-        document.getElementById('dailySummaryContent').textContent = 'Could not load daily summary.';
+        document.getElementById('dailySummaryContent').innerHTML = 'Could not load daily summary.';
       });
   }
-
+  
   function printDailySummary() {
-    // Implement print functionality
-    window.print();
+    const printContent = document.getElementById('dailySummaryContent').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Daily Summary - ${new Date().toLocaleDateString()}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .summary-item { margin-bottom: 20px; }
+            .text-success { color: #28a745; }
+            .text-warning { color: #ffc107; }
+            .h4 { font-size: 1.5rem; }
+          </style>
+        </head>
+        <body>
+          <h1>Daily Summary - ${new Date().toLocaleDateString()}</h1>
+          ${printContent}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
   }
 
   // Refresh data every 30 seconds

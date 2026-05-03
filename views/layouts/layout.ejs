@@ -3,6 +3,72 @@
 
 <head>
     <%- include('../partials/header') %>
+    <style>
+
+        
+
+
+        /* Global Dark Mode Overrides for Hardcoded Styles */
+        html[data-theme="dark"] body {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+        }
+        html[data-theme="dark"] .dashboard-container,
+        html[data-theme="dark"] .main-content {
+            background-color: #0f172a !important;
+        }
+        html[data-theme="dark"] .dashboard-header,
+        html[data-theme="dark"] .card,
+        html[data-theme="dark"] .action-card,
+        html[data-theme="dark"] .stat-card {
+            background-color: #1e293b !important;
+            border-color: #475569 !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+            color: #f8fafc !important;
+        }
+        html[data-theme="dark"] .card h1,
+        html[data-theme="dark"] .card h2,
+        html[data-theme="dark"] .card h3,
+        html[data-theme="dark"] .card h4,
+        html[data-theme="dark"] .card h5,
+        html[data-theme="dark"] .card p,
+        html[data-theme="dark"] .dashboard-header h1,
+        html[data-theme="dark"] .dashboard-header p,
+        html[data-theme="dark"] .action-card p,
+        html[data-theme="dark"] .sale-item .sale-id,
+        html[data-theme="dark"] th,
+        html[data-theme="dark"] td {
+            color: #f8fafc !important;
+        }
+        html[data-theme="dark"] .table tr:hover td {
+            background-color: #334155 !important;
+        }
+        html[data-theme="dark"] .table th,
+        html[data-theme="dark"] .table td {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        html[data-theme="dark"] .modal-content {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
+        html[data-theme="dark"] .modal-header,
+        html[data-theme="dark"] .modal-footer {
+            border-color: #334155 !important;
+        }
+        html[data-theme="dark"] .form-control,
+        html[data-theme="dark"] .form-select {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+        html[data-theme="dark"] .text-muted {
+            color: #94a3b8 !important;
+        }
+        html[data-theme="dark"] .section-header {
+            border-bottom-color: #334155 !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -32,6 +98,7 @@
                     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
 
                     html.setAttribute('data-theme', newTheme);
+                    html.setAttribute('data-bs-theme', newTheme);
                     localStorage.setItem('theme', newTheme);
 
                     // Update button text
@@ -45,6 +112,7 @@
                 document.addEventListener('DOMContentLoaded', function () {
                     const savedTheme = localStorage.getItem('theme') || 'light';
                     document.documentElement.setAttribute('data-theme', savedTheme);
+                    document.documentElement.setAttribute('data-bs-theme', savedTheme);
 
                     // Update button text
                     const themeBtn = document.querySelector('button[onclick="toggleTheme()"]');

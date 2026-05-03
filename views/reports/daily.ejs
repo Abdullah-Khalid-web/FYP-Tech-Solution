@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Reports - <%= shop.name %></title>
+    <title>Business Reports - <%= shop.name %>
+    </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
+   <style>
         :root {
             --primary: #4e73df;
             --success: #1cc88a;
@@ -18,17 +20,135 @@
             --light: #f8f9fc;
         }
 
+        /* Dark mode variables */
+        [data-theme="dark"] {
+            --primary: #4e73df;
+            --success: #1cc88a;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --info: #36b9cc;
+            --secondary: #a0aec0;
+            --dark: #cbd5e0;
+            --light: #1a202c;
+        }
+
         body {
             background-color: #f5f7fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Dark mode body */
+        [data-theme="dark"] body {
+            background-color: #1a1a2e;
+        }
+
+        [data-theme="dark"] .dashboard-header,
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .chart-container,
+        [data-theme="dark"] .action-card {
+            background: #16213e;
+            color: #e2e8f0;
+            border-color: #2d3748;
+        }
+
+        [data-theme="dark"] .dashboard-header h1,
+        [data-theme="dark"] .section-header h2,
+        [data-theme="dark"] .chart-title {
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .table {
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .table th {
+            background: #1a202c;
+            color: #a0aec0;
+            border-bottom-color: #2d3748;
+        }
+
+        [data-theme="dark"] .table td {
+            border-bottom-color: #2d3748;
+        }
+
+        [data-theme="dark"] .table tr:hover td {
+            background-color: #1a202c;
+        }
+
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] .form-select {
+            background-color: #1a202c;
+            border-color: #2d3748;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .form-control:focus,
+        [data-theme="dark"] .form-select:focus {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .badge.bg-light {
+            background-color: #2d3748 !important;
+            color: #e2e8f0 !important;
+        }
+
+        [data-theme="dark"] .modal-content {
+            background-color: #16213e;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .modal-header {
+            border-bottom-color: #2d3748;
+        }
+
+        [data-theme="dark"] .btn-close {
+            filter: invert(1);
+        }
+
+        [data-theme="dark"] .alert-info {
+            background-color: #1a202c;
+            border-color: #2d3748;
+            color: #e2e8f0;
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: transform 0.3s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
         }
 
         .dashboard-container {
-            padding: 20px;
+            padding: 80px 20px;
             background-color: #f5f7fa;
             min-height: calc(100vh - 70px);
         }
 
+        [data-theme="dark"] .dashboard-container {
+            background-color: #1a1a2e;
+        }
+
+        /* Rest of your existing CSS remains the same */
         .dashboard-header {
             display: flex;
             justify-content: space-between;
@@ -40,6 +160,7 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
+        /* ... keep all your other existing CSS styles ... */
         .dashboard-header h1 {
             font-size: 1.8rem;
             margin: 0;
@@ -98,6 +219,10 @@
             border-bottom: 1px solid #eee;
         }
 
+        [data-theme="dark"] .section-header {
+            border-bottom-color: #2d3748;
+        }
+
         .section-header h2 {
             font-size: 1.2rem;
             margin: 0;
@@ -130,6 +255,10 @@
             border: 1px solid #eee;
         }
 
+        [data-theme="dark"] .action-card {
+            border-color: #2d3748;
+        }
+
         .action-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -156,7 +285,7 @@
             font-weight: 500;
         }
 
-        /* Stats Cards */
+        /* Stats Cards - keep original colors */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -233,6 +362,10 @@
             border-radius: 10px;
             overflow: hidden;
             border: 1px solid #e5e7eb;
+        }
+
+        [data-theme="dark"] .table-responsive {
+            border-color: #2d3748;
         }
 
         .table {
@@ -315,13 +448,15 @@
         }
 
         /* Form Controls */
-        .form-control, .form-select {
+        .form-control,
+        .form-select {
             border-radius: 6px;
             border: 1px solid #e5e7eb;
             padding: 8px 12px;
         }
 
-        .form-control:focus, .form-select:focus {
+        .form-control:focus,
+        .form-select:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
         }
@@ -375,7 +510,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Pagination */
@@ -396,13 +533,33 @@
         }
 
         /* Color Classes */
-        .bg-primary { background-color: var(--primary); }
-        .bg-success { background-color: var(--success); }
-        .bg-warning { background-color: var(--warning); }
-        .bg-danger { background-color: var(--danger); }
-        .bg-info { background-color: var(--info); }
-        .bg-secondary { background-color: var(--secondary); }
-        .bg-dark { background-color: var(--dark); }
+        .bg-primary {
+            background-color: var(--primary);
+        }
+
+        .bg-success {
+            background-color: var(--success);
+        }
+
+        .bg-warning {
+            background-color: var(--warning);
+        }
+
+        .bg-danger {
+            background-color: var(--danger);
+        }
+
+        .bg-info {
+            background-color: var(--info);
+        }
+
+        .bg-secondary {
+            background-color: var(--secondary);
+        }
+
+        .bg-dark {
+            background-color: var(--dark);
+        }
 
         /* Scrollbar styling */
         ::-webkit-scrollbar {
@@ -423,21 +580,29 @@
             background: #a8a8a8;
         }
 
+        [data-theme="dark"] ::-webkit-scrollbar-track {
+            background: #1a202c;
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-thumb {
+            background: #4a5568;
+        }
+
         @media (max-width: 768px) {
             .dashboard-header {
                 flex-direction: column;
                 text-align: center;
                 gap: 10px;
             }
-            
+
             .shop-info {
                 text-align: center;
             }
-            
+
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .action-grid {
                 grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             }
@@ -454,8 +619,12 @@
                 <p class="datetime" id="datetime"></p>
             </div>
             <div class="shop-info">
-                <p><i class="fas fa-store"></i> <%= shop.name %></p>
-                <p><i class="fas fa-map-marker-alt"></i> <%= shop.address || 'Add shop address' %></p>
+                <p><i class="fas fa-store"></i>
+                    <%= shop.name %>
+                </p>
+                <p><i class="fas fa-map-marker-alt"></i>
+                    <%= shop.address || 'Add shop address' %>
+                </p>
             </div>
         </div>
 
@@ -471,21 +640,21 @@
                     </div>
                     <p>Back to Dashboard</p>
                 </a>
-                
+
                 <a href="#" class="action-card" id="exportReport">
                     <div class="action-icon bg-success">
                         <i class="fas fa-file-excel"></i>
                     </div>
                     <p>Export to Excel</p>
                 </a>
-                
+
                 <a href="#" class="action-card" id="printReport">
                     <div class="action-icon bg-info">
                         <i class="fas fa-print"></i>
                     </div>
                     <p>Print Report</p>
                 </a>
-                
+
                 <a href="/products" class="action-card">
                     <div class="action-icon bg-warning">
                         <i class="fas fa-boxes"></i>
@@ -495,7 +664,7 @@
             </div>
         </div>
 
-        
+
         <!-- Key Metrics -->
         <div class="stats-grid">
             <div class="stat-card bg-primary">
@@ -639,7 +808,7 @@
             </div>
         </div>
 
-        
+
         <!-- Summary Footer -->
         <div class="row mt-4">
             <div class="col-12">
@@ -748,7 +917,7 @@
             </div>
         </div>
 
-        
+
     </div>
 
     <!-- Bill Details Modal -->
@@ -771,15 +940,15 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <script>
         // Update datetime every second
         function updateDateTime() {
             const now = new Date();
-            const options = { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
                 day: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
@@ -787,600 +956,806 @@
             };
             document.getElementById('datetime').textContent = now.toLocaleDateString('en-IN', options);
         }
-        
+
         setInterval(updateDateTime, 1000);
-        updateDateTime(); // Initial call
+        updateDateTime();
 
-        // Your existing JavaScript code for BusinessReports class remains exactly the same...
-        // Just include all the JavaScript from your original file here
-        // The class BusinessReports and all its methods remain unchanged
-    </script>
-    
-<script>
-    // Daily Reports JavaScript - Simplified for non-technical users
-    class BusinessReports {
-        constructor() {
-            this.currentPage = 1;
-            this.limit = 10;
-            this.filters = {
-                startDate: '',
-                endDate: '',
-                paymentMethod: 'all',
-                salesRange: 'all',
-                timePeriod: 'daily'
-            };
-            this.charts = {};
-            this.init();
-        }
-
-        init() {
-            console.log('🚀 Initializing Business Reports...');
-            this.setupDefaultDates();
-            this.setupEventListeners();
-            this.loadReportData();
-        }
-
-        setupDefaultDates() {
-            const today = new Date();
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(today.getDate() - 7);
-
-            this.filters.startDate = oneWeekAgo.toISOString().split('T')[0];
-            this.filters.endDate = today.toISOString().split('T')[0];
-
-            document.getElementById('startDate').value = this.filters.startDate;
-            document.getElementById('endDate').value = this.filters.endDate;
-
-            console.log('📅 Default dates set:', this.filters.startDate, 'to', this.filters.endDate);
-        }
-
-        setupEventListeners() {
-            // Main action buttons
-            document.getElementById('applyDateRange').addEventListener('click', () => this.updateReport());
-            document.getElementById('resetFilters').addEventListener('click', () => this.resetAllFilters());
-            document.getElementById('resetEmptyFilters').addEventListener('click', () => this.resetAllFilters());
-
-            // Quick actions
-            document.getElementById('exportReport').addEventListener('click', (e) => {
-                e.preventDefault();
-                this.exportToExcel();
-            });
-            document.getElementById('printReport').addEventListener('click', (e) => {
-                e.preventDefault();
-                this.printReport();
-            });
-
-            // Filter changes
-            document.getElementById('quickDateRange').addEventListener('change', (e) => this.handleQuickDate(e.target.value));
-            document.getElementById('paymentMethodFilter').addEventListener('change', (e) => {
-                this.filters.paymentMethod = e.target.value;
-                this.updateReport();
-            });
-            document.getElementById('salesRangeFilter').addEventListener('change', (e) => {
-                this.filters.salesRange = e.target.value;
-                this.updateReport();
-            });
-            document.getElementById('timePeriodFilter').addEventListener('change', (e) => {
-                this.filters.timePeriod = e.target.value;
-                this.updateReport();
-            });
-
-            // Date inputs
-            document.getElementById('startDate').addEventListener('change', (e) => {
-                this.filters.startDate = e.target.value;
-                document.getElementById('quickDateRange').value = 'custom';
-            });
-            document.getElementById('endDate').addEventListener('change', (e) => {
-                this.filters.endDate = e.target.value;
-                document.getElementById('quickDateRange').value = 'custom';
-            });
-        }
-
-        handleQuickDate(range) {
-            const today = new Date();
-            let startDate, endDate;
-
-            switch (range) {
-                case 'today':
-                    startDate = endDate = today;
-                    break;
-                case 'yesterday':
-                    startDate = endDate = new Date(today);
-                    startDate.setDate(today.getDate() - 1);
-                    break;
-                case 'this_week':
-                    startDate = new Date(today);
-                    startDate.setDate(today.getDate() - today.getDay());
-                    endDate = new Date(today);
-                    endDate.setDate(today.getDate() + (6 - today.getDay()));
-                    break;
-                case 'last_week':
-                    startDate = new Date(today);
-                    startDate.setDate(today.getDate() - today.getDay() - 7);
-                    endDate = new Date(today);
-                    endDate.setDate(today.getDate() - today.getDay() - 1);
-                    break;
-                case 'this_month':
-                    startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-                    endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                    break;
-                case 'last_month':
-                    startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                    endDate = new Date(today.getFullYear(), today.getMonth(), 0);
-                    break;
-                default:
-                    return;
+        // Daily Reports JavaScript - Fixed with proper chart updates on filters
+        class BusinessReports {
+            constructor() {
+                this.currentPage = 1;
+                this.limit = 10;
+                this.totalPages = 0;
+                this.allData = null; // Store full API response
+                this.filters = {
+                    startDate: '',
+                    endDate: '',
+                    paymentMethod: 'all',
+                    salesRange: 'all',
+                    timePeriod: 'daily'
+                };
+                this.charts = {};
+                this.init();
             }
 
-            this.filters.startDate = startDate.toISOString().split('T')[0];
-            this.filters.endDate = endDate.toISOString().split('T')[0];
-
-            document.getElementById('startDate').value = this.filters.startDate;
-            document.getElementById('endDate').value = this.filters.endDate;
-
-            this.updateReport();
-        }
-
-        async loadReportData() {
-            this.showLoadingState();
-
-            try {
-                const params = new URLSearchParams({
-                    page: this.currentPage,
-                    limit: this.limit,
-                    ...this.filters
-                });
-
-                console.log('📊 Loading report with filters:', Object.fromEntries(params));
-
-                const response = await fetch(`/reports/api/reports?${params}`);
-
-                if (!response.ok) {
-                    throw new Error(`Server returned ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('✅ Report data received:', data);
-
-                if (data.success) {
-                    this.displayBusinessMetrics(data.stats);
-                    this.displaySalesTable(data.reports);
-                    this.setupPagination(data.totalPages);
-                    this.createVisualCharts(data.charts);
-                    this.hideLoadingState();
-
-                    if (data.message) {
-                        this.showNotification(data.message, 'info');
-                    }
-                } else {
-                    throw new Error(data.message || 'Failed to load report');
-                }
-            } catch (error) {
-                console.error('❌ Error loading report:', error);
-                this.showNotification('Unable to load report data. Please try again.', 'error');
-                this.hideLoadingState();
-            }
-        }
-
-        displayBusinessMetrics(stats) {
-            // Update main metrics
-            document.getElementById('totalRevenue').textContent = this.formatMoney(stats.totalRevenue);
-            document.getElementById('totalSales').textContent = stats.totalSales.toLocaleString();
-            document.getElementById('totalCustomers').textContent = stats.totalCustomers.toLocaleString();
-            document.getElementById('avgTransaction').textContent = this.formatMoney(stats.avgTransaction);
-
-            // Update trends with simple icons
-            this.updateMetricTrend('revenueTrend', stats.revenueTrend);
-            this.updateMetricTrend('salesTrend', stats.salesTrend);
-            this.updateMetricTrend('customersTrend', stats.customersTrend);
-            this.updateMetricTrend('transactionTrend', stats.transactionTrend);
-
-            // Update footer summary
-            document.getElementById('footerTotal').textContent = this.formatMoney(stats.totalRevenue);
-            document.getElementById('footerSubtotal').textContent = this.formatMoney(stats.totalRevenue);
-        }
-
-        updateMetricTrend(elementId, trend) {
-            const element = document.getElementById(elementId);
-            const trendValue = Math.abs(trend);
-
-            if (trend > 0) {
-                element.innerHTML = `<i class="fas fa-arrow-up"></i><span>${trendValue}% increase</span>`;
-                element.className = 'stat-trend trend-up';
-            } else if (trend < 0) {
-                element.innerHTML = `<i class="fas fa-arrow-down"></i><span>${trendValue}% decrease</span>`;
-                element.className = 'stat-trend trend-down';
-            } else {
-                element.innerHTML = `<i class="fas fa-minus"></i><span>No change</span>`;
-                element.className = 'stat-trend trend-neutral';
-            }
-        }
-
-        displaySalesTable(sales) {
-            const tableBody = document.getElementById('reportsTableBody');
-            const emptyState = document.getElementById('emptyState');
-            const tableElement = document.querySelector('.table-responsive');
-
-            if (!sales || sales.length === 0) {
-                tableBody.innerHTML = '';
-                emptyState.style.display = 'block';
-                tableElement.style.display = 'none';
-                document.getElementById('reportCount').textContent = '0';
-                return;
+            init() {
+                console.log('🚀 Initializing Business Reports...');
+                this.setupDefaultDates();
+                this.setupEventListeners();
+                this.loadReportData();
             }
 
-            emptyState.style.display = 'none';
-            tableElement.style.display = 'block';
+            setupDefaultDates() {
+                const today = new Date();
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(today.getDate() - 7);
 
-            let html = '';
-            let totalRevenue = 0;
+                this.filters.startDate = oneWeekAgo.toISOString().split('T')[0];
+                this.filters.endDate = today.toISOString().split('T')[0];
 
-            sales.forEach(sale => {
-                totalRevenue += parseFloat(sale.total_amount);
-                const saleDate = new Date(sale.created_at);
+                document.getElementById('startDate').value = this.filters.startDate;
+                document.getElementById('endDate').value = this.filters.endDate;
 
-                html += `
-                <tr>
-                    <td>
-                        <div class="fw-semibold">${saleDate.toLocaleDateString()}</div>
-                        <small class="text-muted">${saleDate.toLocaleTimeString()}</small>
-                    </td>
-                    <td>
-                        <strong class="text-primary">${sale.bill_number}</strong>
-                    </td>
-                    <td>
-                        <div>${sale.customer_name || 'Walk-in Customer'}</div>
-                        ${sale.customer_phone ? `<small class="text-muted">${sale.customer_phone}</small>` : ''}
-                    </td>
-                    <td class="text-end fw-semibold">${sale.items_count || 0}</td>
-                    <td class="text-end fw-bold text-success">${this.formatMoney(sale.total_amount)}</td>
-                    <td>
-                        <span class="badge bg-light text-dark badge-pill">
-                            ${sale.payment_method || 'Cash'}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge ${sale.due_amount > 0 ? 'bg-warning' : 'bg-success'} badge-pill">
-                            ${sale.due_amount > 0 ? 'Balance Due' : 'Paid'}
-                        </span>
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary view-receipt" data-bill-id="${sale.id}">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                    </td>
-                </tr>
-            `;
-            });
-
-            tableBody.innerHTML = html;
-            document.getElementById('reportCount').textContent = sales.length;
-
-            // Add click events to view buttons
-            document.querySelectorAll('.view-receipt').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const billId = e.target.closest('.view-receipt').getAttribute('data-bill-id');
-                    this.showReceiptDetails(billId);
-                });
-            });
-        }
-
-        setupPagination(totalPages) {
-            const container = document.getElementById('paginationContainer');
-            const pagination = document.getElementById('pagination');
-
-            if (totalPages <= 1) {
-                container.style.display = 'none';
-                return;
+                console.log('📅 Default dates set:', this.filters.startDate, 'to', this.filters.endDate);
             }
 
-            container.style.display = 'block';
+            setupEventListeners() {
+                document.getElementById('applyDateRange').addEventListener('click', () => this.updateReport());
+                document.getElementById('resetFilters').addEventListener('click', () => this.resetAllFilters());
+                document.getElementById('resetEmptyFilters').addEventListener('click', () => this.resetAllFilters());
 
-            let html = '';
-            const maxPages = 5;
-            let startPage = Math.max(1, this.currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + maxPages - 1);
-
-            // Previous
-            html += `<li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="#" data-page="${this.currentPage - 1}">Previous</a>
-                 </li>`;
-
-            // Pages
-            for (let i = startPage; i <= endPage; i++) {
-                html += `<li class="page-item ${i === this.currentPage ? 'active' : ''}">
-                        <a class="page-link" href="#" data-page="${i}">${i}</a>
-                     </li>`;
-            }
-
-            // Next
-            html += `<li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
-                    <a class="page-link" href="#" data-page="${this.currentPage + 1}">Next</a>
-                 </li>`;
-
-            pagination.innerHTML = html;
-
-            // Add page click events
-            pagination.querySelectorAll('.page-link').forEach(link => {
-                link.addEventListener('click', (e) => {
+                document.getElementById('exportReport').addEventListener('click', (e) => {
                     e.preventDefault();
-                    const page = parseInt(link.getAttribute('data-page'));
-                    if (page && page !== this.currentPage) {
-                        this.currentPage = page;
-                        this.loadReportData();
-                    }
+                    this.exportToExcel();
                 });
-            });
-        }
 
-        createVisualCharts(chartData) {
-            this.createSalesChart(chartData.salesTrend);
-            this.createPaymentChart(chartData.paymentMethods);
-        }
+                document.getElementById('printReport').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.printReport();
+                });
 
-        createSalesChart(salesData) {
-            const ctx = document.getElementById('salesChart').getContext('2d');
+                document.getElementById('quickDateRange').addEventListener('change', (e) => this.handleQuickDate(e.target.value));
 
-            if (this.charts.salesChart) {
-                this.charts.salesChart.destroy();
+                // Apply filters without reloading from server
+                document.getElementById('paymentMethodFilter').addEventListener('change', (e) => {
+                    this.filters.paymentMethod = e.target.value;
+                    this.currentPage = 1;
+                    this.applyAllFilters(); // Apply filters to existing data
+                });
+
+                document.getElementById('salesRangeFilter').addEventListener('change', (e) => {
+                    this.filters.salesRange = e.target.value;
+                    this.currentPage = 1;
+                    this.applyAllFilters(); // Apply filters to existing data
+                });
+
+                document.getElementById('timePeriodFilter').addEventListener('change', (e) => {
+                    this.filters.timePeriod = e.target.value;
+                    this.loadReportData(); // Reload from server for time period change
+                });
+
+                document.getElementById('startDate').addEventListener('change', (e) => {
+                    this.filters.startDate = e.target.value;
+                    document.getElementById('quickDateRange').value = 'custom';
+                    this.updateReport();
+                });
+
+                document.getElementById('endDate').addEventListener('change', (e) => {
+                    this.filters.endDate = e.target.value;
+                    document.getElementById('quickDateRange').value = 'custom';
+                    this.updateReport();
+                });
             }
 
-            this.charts.salesChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: salesData.labels,
-                    datasets: [{
-                        label: 'Sales Revenue',
-                        data: salesData.data,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => `Revenue: ${this.formatMoney(context.raw)}`
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: (value) => this.formatMoney(value)
-                            }
-                        }
-                    }
+            handleQuickDate(range) {
+                const today = new Date();
+                let startDate, endDate;
+
+                switch (range) {
+                    case 'today':
+                        startDate = endDate = today;
+                        break;
+                    case 'yesterday':
+                        startDate = endDate = new Date(today);
+                        startDate.setDate(today.getDate() - 1);
+                        break;
+                    case 'this_week':
+                        startDate = new Date(today);
+                        startDate.setDate(today.getDate() - today.getDay());
+                        endDate = new Date(today);
+                        endDate.setDate(today.getDate() + (6 - today.getDay()));
+                        break;
+                    case 'last_week':
+                        startDate = new Date(today);
+                        startDate.setDate(today.getDate() - today.getDay() - 7);
+                        endDate = new Date(today);
+                        endDate.setDate(today.getDate() - today.getDay() - 1);
+                        break;
+                    case 'this_month':
+                        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        break;
+                    case 'last_month':
+                        startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                        endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+                        break;
+                    default:
+                        return;
                 }
-            });
-        }
 
-        createPaymentChart(paymentData) {
-            const ctx = document.getElementById('paymentChart').getContext('2d');
-            const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
+                this.filters.startDate = startDate.toISOString().split('T')[0];
+                this.filters.endDate = endDate.toISOString().split('T')[0];
 
-            if (this.charts.paymentChart) {
-                this.charts.paymentChart.destroy();
+                document.getElementById('startDate').value = this.filters.startDate;
+                document.getElementById('endDate').value = this.filters.endDate;
+
+                this.updateReport();
             }
 
-            this.charts.paymentChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: paymentData.labels,
-                    datasets: [{
-                        data: paymentData.data,
-                        backgroundColor: colors,
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percent = ((context.raw / total) * 100).toFixed(1);
-                                    return `${context.label}: ${this.formatMoney(context.raw)} (${percent}%)`;
+            async loadReportData() {
+                this.showLoadingState();
+
+                try {
+                    const params = new URLSearchParams({
+                        startDate: this.filters.startDate,
+                        endDate: this.filters.endDate,
+                        timePeriod: this.filters.timePeriod,
+                        page: 1,
+                        limit: 1000 // Get more data for accurate filtering
+                    });
+
+                    console.log('📊 Loading report from:', `/reports/api/reports?${params}`);
+
+                    const response = await fetch(`/reports/api/reports?${params}`);
+
+                    if (!response.ok) {
+                        throw new Error(`Server returned ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('✅ Data received:', data);
+
+                    if (data.success) {
+                        // Store full data
+                        this.allData = data;
+                        this.allBillsData = data.reports || [];
+
+                        // Apply filters to the data
+                        this.applyAllFilters();
+
+                        this.hideLoadingState();
+                    } else {
+                        throw new Error(data.message || 'Failed to load report');
+                    }
+                } catch (error) {
+                    console.error('❌ Error loading report:', error);
+                    this.showNotification(error.message, 'error');
+                    this.hideLoadingState();
+                    this.showEmptyStateWithError(error.message);
+                }
+            }
+
+            applyAllFilters() {
+                if (!this.allBillsData || this.allBillsData.length === 0) {
+                    this.displayEmptyState();
+                    return;
+                }
+
+                // Filter bills data
+                let filteredBills = [...this.allBillsData];
+
+                // Apply payment method filter
+                if (this.filters.paymentMethod !== 'all') {
+                    filteredBills = filteredBills.filter(bill =>
+                        (bill.payment_method || 'cash').toLowerCase() === this.filters.paymentMethod.toLowerCase()
+                    );
+                }
+
+                // Apply sales range filter
+                if (this.filters.salesRange !== 'all') {
+                    filteredBills = filteredBills.filter(bill => {
+                        const amount = parseFloat(bill.total_amount);
+                        switch (this.filters.salesRange) {
+                            case 'low': return amount < 1000;
+                            case 'medium': return amount >= 1000 && amount <= 5000;
+                            case 'high': return amount > 5000;
+                            default: return true;
+                        }
+                    });
+                }
+
+                // Calculate filtered stats
+                const filteredStats = this.calculateStats(filteredBills);
+
+                // Calculate filtered chart data
+                const filteredCharts = this.calculateChartData(filteredBills);
+
+                // Update UI with filtered data
+                this.displayBusinessMetrics(filteredStats);
+                this.updateFooterSummary(filteredStats);
+
+                // Paginate the filtered data
+                const start = (this.currentPage - 1) * this.limit;
+                const paginatedBills = filteredBills.slice(start, start + this.limit);
+                this.displaySalesTable(paginatedBills, filteredBills.length);
+
+                // Update charts with filtered data
+                this.createVisualCharts(filteredCharts);
+
+                // Setup pagination
+                const totalPages = Math.ceil(filteredBills.length / this.limit);
+                if (totalPages > 1) {
+                    this.setupPagination(totalPages);
+                } else {
+                    document.getElementById('paginationContainer').style.display = 'none';
+                }
+            }
+
+            calculateStats(bills) {
+                const totalRevenue = bills.reduce((sum, bill) => sum + parseFloat(bill.total_amount || 0), 0);
+                const totalSales = bills.length;
+                const uniqueCustomers = new Set(bills.map(b => b.customer_phone).filter(p => p)).size;
+                const avgTransaction = totalSales > 0 ? totalRevenue / totalSales : 0;
+
+                return {
+                    totalRevenue: totalRevenue,
+                    totalSales: totalSales,
+                    totalCustomers: uniqueCustomers,
+                    avgTransaction: avgTransaction,
+                    revenueTrend: 0,
+                    salesTrend: 0,
+                    customersTrend: 0,
+                    transactionTrend: 0
+                };
+            }
+
+            calculateChartData(bills) {
+                // Calculate payment methods distribution from filtered bills
+                const paymentMethodMap = new Map();
+                bills.forEach(bill => {
+                    const method = bill.payment_method || 'Cash';
+                    const amount = parseFloat(bill.total_amount || 0);
+                    paymentMethodMap.set(method, (paymentMethodMap.get(method) || 0) + amount);
+                });
+
+                const paymentMethods = {
+                    labels: Array.from(paymentMethodMap.keys()),
+                    data: Array.from(paymentMethodMap.values())
+                };
+
+                // Calculate sales trend from filtered bills (group by date)
+                const salesTrendMap = new Map();
+                bills.forEach(bill => {
+                    const date = new Date(bill.created_at || bill.bill_date);
+                    let period;
+
+                    switch (this.filters.timePeriod) {
+                        case 'weekly':
+                            const week = this.getWeekNumber(date);
+                            period = `Week ${week}`;
+                            break;
+                        case 'monthly':
+                            period = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                            break;
+                        default: // daily
+                            period = date.toLocaleDateString();
+                    }
+
+                    const amount = parseFloat(bill.total_amount || 0);
+                    salesTrendMap.set(period, (salesTrendMap.get(period) || 0) + amount);
+                });
+
+                // Sort by date
+                const sortedEntries = Array.from(salesTrendMap.entries()).sort((a, b) => {
+                    return new Date(a[0]) - new Date(b[0]);
+                });
+
+                const salesTrend = {
+                    labels: sortedEntries.map(entry => entry[0]),
+                    data: sortedEntries.map(entry => entry[1])
+                };
+
+                return { paymentMethods, salesTrend };
+            }
+
+            getWeekNumber(date) {
+                const d = new Date(date);
+                d.setHours(0, 0, 0, 0);
+                d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+                const week1 = new Date(d.getFullYear(), 0, 4);
+                return 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+            }
+
+            displayBusinessMetrics(stats) {
+                if (!stats) return;
+
+                document.getElementById('totalRevenue').textContent = this.formatMoney(stats.totalRevenue || 0);
+                document.getElementById('totalSales').textContent = (stats.totalSales || 0).toLocaleString();
+                document.getElementById('totalCustomers').textContent = (stats.totalCustomers || 0).toLocaleString();
+                document.getElementById('avgTransaction').textContent = this.formatMoney(stats.avgTransaction || 0);
+            }
+
+            updateFooterSummary(stats) {
+                document.getElementById('footerTotal').textContent = this.formatMoney(stats?.totalRevenue || 0);
+                document.getElementById('footerSubtotal').textContent = this.formatMoney(stats?.totalRevenue || 0);
+                document.getElementById('footerDiscount').textContent = this.formatMoney(0);
+                document.getElementById('footerTax').textContent = this.formatMoney(0);
+            }
+
+            displaySalesTable(reports, totalCount) {
+                const tableBody = document.getElementById('reportsTableBody');
+                const emptyState = document.getElementById('emptyState');
+                const tableElement = document.querySelector('.table-responsive');
+
+                if (!reports || reports.length === 0) {
+                    tableBody.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    tableElement.style.display = 'none';
+                    document.getElementById('reportCount').textContent = '0';
+                    document.getElementById('paginationContainer').style.display = 'none';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                tableElement.style.display = 'block';
+
+                let html = '';
+
+                reports.forEach(report => {
+                    const saleDate = new Date(report.created_at || report.bill_date);
+                    const itemsCount = report.items_count || 0;
+                    const status = parseFloat(report.due_amount) > 0 ? 'Balance Due' :
+                        (parseFloat(report.due_amount) < 0 ? 'Overpaid' : 'Paid');
+                    const statusClass = parseFloat(report.due_amount) > 0 ? 'bg-warning' :
+                        (parseFloat(report.due_amount) < 0 ? 'bg-info' : 'bg-success');
+
+                    html += `
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">${saleDate.toLocaleDateString()}</div>
+                            <small class="text-muted">${saleDate.toLocaleTimeString()}</small>
+                        </div>
+                        <td>
+                            <strong class="text-primary">${report.bill_number}</strong>
+                        </div>
+                        <td>
+                            <div>${report.customer_name || 'Walk-in Customer'}</div>
+                            ${report.customer_phone ? `<small class="text-muted">${report.customer_phone}</small>` : ''}
+                        </div>
+                        <td class="text-end fw-semibold">${itemsCount}</td>
+                        <td class="text-end fw-bold text-success">${this.formatMoney(report.total_amount)}</td>
+                        <td>
+                            <span class="badge bg-light text-dark badge-pill">
+                                ${report.payment_method || 'Cash'}
+                            </span>
+                        </div>
+                        <td>
+                            <span class="badge ${statusClass} badge-pill">
+                                ${status}
+                            </span>
+                        </div>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary view-receipt" data-bill-id="${report.id}" data-bill-number="${report.bill_number}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </div>
+                    </tr>
+                `;
+                });
+
+                tableBody.innerHTML = html;
+                document.getElementById('reportCount').textContent = totalCount || reports.length;
+
+                // Add click events to view buttons
+                document.querySelectorAll('.view-receipt').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const billId = btn.getAttribute('data-bill-id');
+                        const billNumber = btn.getAttribute('data-bill-number');
+                        await this.fetchBillDetails(billId, billNumber);
+                    });
+                });
+            }
+
+            async fetchBillDetails(billId, billNumber) {
+                try {
+                    const response = await fetch(`/reports/api/reports/bills/${billId}`);
+                    if (!response.ok) throw new Error('Failed to fetch bill details');
+                    const data = await response.json();
+                    if (data.success) {
+                        this.showReceiptDetails(data.bill, data.items);
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error fetching bill details:', error);
+                    this.showNotification('Failed to load bill details', 'error');
+                }
+            }
+
+            showReceiptDetails(bill, items) {
+                document.getElementById('billNumber').textContent = bill.bill_number;
+
+                let itemsHtml = '';
+                if (items && items.length > 0) {
+                    itemsHtml = '<h6 class="fw-semibold mt-3">Items</h6><table class="table table-sm"><thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>';
+                    items.forEach(item => {
+                        itemsHtml += `<tr>
+                        <td>${item.product_name || 'Product'}</td>
+                        <td>${item.quantity}</td>
+                        <td>${this.formatMoney(item.unit_price)}</td>
+                        <td>${this.formatMoney(item.total_price)}</td>
+                    </tr>`;
+                    });
+                    itemsHtml += '</tbody></table>';
+                }
+
+                let html = `
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="fw-semibold">Customer Information</h6>
+                        <p class="mb-1"><strong>Name:</strong> ${bill.customer_name || 'Walk-in Customer'}</p>
+                        ${bill.customer_phone ? `<p class="mb-0"><strong>Phone:</strong> ${bill.customer_phone}</p>` : ''}
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-semibold">Transaction Details</h6>
+                        <p class="mb-1"><strong>Date:</strong> ${new Date(bill.created_at).toLocaleString()}</p>
+                        <p class="mb-0"><strong>Payment:</strong> <span class="badge bg-primary">${bill.payment_method || 'Cash'}</span></p>
+                        <p class="mb-0 mt-2"><strong>Created By:</strong> ${bill.created_by || 'System'}</p>
+                    </div>
+                </div>
+
+                ${itemsHtml}
+
+                <div class="alert alert-info mt-3">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <strong>Subtotal</strong><br>
+                            ${this.formatMoney(bill.subtotal)}
+                        </div>
+                        <div class="col-4">
+                            <strong>Discount</strong><br>
+                            ${this.formatMoney(bill.discount)}
+                        </div>
+                        <div class="col-4">
+                            <strong>Tax</strong><br>
+                            ${this.formatMoney(bill.tax)}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-6 text-center">
+                        <h6>Paid Amount</h6>
+                        <h4 class="text-success">${this.formatMoney(bill.paid_amount)}</h4>
+                    </div>
+                    <div class="col-6 text-center">
+                        <h6>Due Amount</h6>
+                        <h4 class="text-warning">${this.formatMoney(bill.due_amount)}</h4>
+                    </div>
+                </div>
+
+                <hr>
+                
+                <div class="text-center">
+                    <h4 class="text-primary">Total Amount</h4>
+                    <h3 class="text-success fw-bold">${this.formatMoney(bill.total_amount)}</h3>
+                </div>
+            `;
+
+                document.getElementById('billDetailsContent').innerHTML = html;
+                new bootstrap.Modal(document.getElementById('billDetailsModal')).show();
+            }
+
+            setupPagination(totalPages) {
+                const container = document.getElementById('paginationContainer');
+                const pagination = document.getElementById('pagination');
+
+                if (totalPages <= 1) {
+                    container.style.display = 'none';
+                    return;
+                }
+
+                container.style.display = 'block';
+
+                let html = '';
+                const maxPages = 5;
+                let startPage = Math.max(1, this.currentPage - 2);
+                let endPage = Math.min(totalPages, startPage + maxPages - 1);
+
+                if (endPage - startPage < maxPages - 1) {
+                    startPage = Math.max(1, endPage - maxPages + 1);
+                }
+
+                html += `<li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${this.currentPage - 1}">Previous</a>
+             </li>`;
+
+                for (let i = startPage; i <= endPage; i++) {
+                    html += `<li class="page-item ${i === this.currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                 </li>`;
+                }
+
+                html += `<li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${this.currentPage + 1}">Next</a>
+             </li>`;
+
+                pagination.innerHTML = html;
+
+                pagination.querySelectorAll('.page-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = parseInt(link.getAttribute('data-page'));
+                        if (page && page !== this.currentPage && !isNaN(page)) {
+                            this.currentPage = page;
+                            this.applyAllFilters();
+                        }
+                    });
+                });
+            }
+
+            createVisualCharts(charts) {
+                // Create sales chart
+                if (charts?.salesTrend?.labels?.length > 0) {
+                    this.createSalesChart(charts.salesTrend.labels, charts.salesTrend.data);
+                } else {
+                    this.createEmptyChart('salesChart', 'No sales data for selected period');
+                }
+
+                // Create payment chart
+                if (charts?.paymentMethods?.labels?.length > 0) {
+                    this.createPaymentChart(charts.paymentMethods.labels, charts.paymentMethods.data);
+                } else {
+                    this.createEmptyChart('paymentChart', 'No payment data available');
+                }
+            }
+
+            createSalesChart(labels, data) {
+                const ctx = document.getElementById('salesChart').getContext('2d');
+
+                const parent = ctx.canvas.parentElement;
+                const existingMsg = parent.querySelector('.chart-empty-message');
+                if (existingMsg) existingMsg.remove();
+
+                if (this.charts.salesChart) {
+                    this.charts.salesChart.destroy();
+                }
+
+                this.charts.salesChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Sales Revenue',
+                            data: data,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `Revenue: ${this.formatMoney(context.raw)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: (value) => this.formatMoney(value)
                                 }
                             }
                         }
                     }
-                }
-            });
-        }
+                });
+            }
 
-        async showReceiptDetails(billId) {
-            try {
-                const response = await fetch(`/reports/api/reports/bills/${billId}`);
-                const data = await response.json();
+            createPaymentChart(labels, data) {
+                const ctx = document.getElementById('paymentChart').getContext('2d');
 
-                if (data.success) {
-                    this.displayReceiptModal(data.bill, data.items);
-                } else {
-                    throw new Error(data.message);
+                const parent = ctx.canvas.parentElement;
+                const existingMsg = parent.querySelector('.chart-empty-message');
+                if (existingMsg) existingMsg.remove();
+
+                const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'];
+
+                if (this.charts.paymentChart) {
+                    this.charts.paymentChart.destroy();
                 }
-            } catch (error) {
-                console.error('Error loading receipt:', error);
-                this.showNotification('Could not load receipt details', 'error');
+
+                this.charts.paymentChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors.slice(0, labels.length),
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percent = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+                                        return `${context.label}: ${this.formatMoney(context.raw)} (${percent}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            createEmptyChart(canvasId, message) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                if (this.charts[canvasId]) {
+                    this.charts[canvasId].destroy();
+                }
+
+                this.charts[canvasId] = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['No Data'],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: ['#e5e7eb'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        }
+                    }
+                });
+
+                const canvas = document.getElementById(canvasId);
+                const parent = canvas.parentElement;
+                const existingMsg = parent.querySelector('.chart-empty-message');
+                if (!existingMsg) {
+                    const msg = document.createElement('div');
+                    msg.className = 'chart-empty-message';
+                    msg.textContent = message;
+                    msg.style.position = 'absolute';
+                    msg.style.top = '50%';
+                    msg.style.left = '50%';
+                    msg.style.transform = 'translate(-50%, -50%)';
+                    msg.style.color = '#9ca3af';
+                    msg.style.fontSize = '14px';
+                    msg.style.pointerEvents = 'none';
+                    parent.style.position = 'relative';
+                    parent.appendChild(msg);
+                }
+            }
+
+            updateReport() {
+                this.currentPage = 1;
+                this.loadReportData();
+            }
+
+            resetAllFilters() {
+                this.currentPage = 1;
+                this.filters = {
+                    startDate: '',
+                    endDate: '',
+                    paymentMethod: 'all',
+                    salesRange: 'all',
+                    timePeriod: 'daily'
+                };
+
+                document.getElementById('quickDateRange').value = 'this_week';
+                document.getElementById('paymentMethodFilter').value = 'all';
+                document.getElementById('salesRangeFilter').value = 'all';
+                document.getElementById('timePeriodFilter').value = 'daily';
+
+                this.setupDefaultDates();
+                this.loadReportData();
+
+                this.showNotification('All filters have been reset', 'success');
+            }
+
+            displayEmptyState() {
+                const emptyState = document.getElementById('emptyState');
+                const tableElement = document.querySelector('.table-responsive');
+
+                emptyState.style.display = 'block';
+                if (tableElement) tableElement.style.display = 'none';
+                document.getElementById('reportCount').textContent = '0';
+                document.getElementById('paginationContainer').style.display = 'none';
+            }
+
+            async exportToExcel() {
+                try {
+                    const params = new URLSearchParams({
+                        startDate: this.filters.startDate,
+                        endDate: this.filters.endDate
+                    });
+
+                    if (this.filters.paymentMethod !== 'all') {
+                        params.append('paymentMethod', this.filters.paymentMethod);
+                    }
+
+                    window.location.href = `/reports/api/reports/export?${params}`;
+                    this.showNotification('Report export started', 'success');
+                } catch (error) {
+                    console.error('Export error:', error);
+                    this.showNotification('Failed to export report', 'error');
+                }
+            }
+
+            printReport() {
+                window.print();
+            }
+
+            formatMoney(amount) {
+                const num = parseFloat(amount) || 0;
+                return new Intl.NumberFormat('en-PK', {
+                    style: 'currency',
+                    currency: 'PKR',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }).format(num);
+            }
+
+            showLoadingState() {
+                document.getElementById('loadingState').style.display = 'block';
+                document.getElementById('emptyState').style.display = 'none';
+                const tableElement = document.querySelector('.table-responsive');
+                if (tableElement) tableElement.style.display = 'none';
+                document.getElementById('paginationContainer').style.display = 'none';
+            }
+
+            hideLoadingState() {
+                document.getElementById('loadingState').style.display = 'none';
+            }
+
+            showEmptyStateWithError(errorMessage) {
+                const emptyState = document.getElementById('emptyState');
+                const emptyStateIcon = emptyState.querySelector('.empty-state-icon i');
+                const emptyStateTitle = emptyState.querySelector('h5');
+                const emptyStateMessage = emptyState.querySelector('.text-muted');
+
+                if (emptyStateIcon) emptyStateIcon.className = 'fas fa-exclamation-triangle';
+                if (emptyStateTitle) emptyStateTitle.textContent = 'Error Loading Data';
+                if (emptyStateMessage) emptyStateMessage.textContent = errorMessage || 'Unable to load sales data. Please try again later.';
+
+                emptyState.style.display = 'block';
+                document.getElementById('loadingState').style.display = 'none';
+                document.querySelector('.table-responsive').style.display = 'none';
+            }
+
+            showNotification(message, type = 'info') {
+                console.log(`${type.toUpperCase()}: ${message}`);
+                if (type === 'error') {
+                    alert(`Error: ${message}`);
+                }
             }
         }
 
-        displayReceiptModal(bill, items) {
-            document.getElementById('billNumber').textContent = bill.bill_number;
-
-            let html = `
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <h6 class="fw-semibold">Customer Information</h6>
-                    <p class="mb-1"><strong>Name:</strong> ${bill.customer_name || 'Walk-in Customer'}</p>
-                    ${bill.customer_phone ? `<p class="mb-0"><strong>Phone:</strong> ${bill.customer_phone}</p>` : ''}
-                </div>
-                <div class="col-md-6">
-                    <h6 class="fw-semibold">Transaction Details</h6>
-                    <p class="mb-1"><strong>Date:</strong> ${new Date(bill.created_at).toLocaleString()}</p>
-                    <p class="mb-0"><strong>Payment:</strong> <span class="badge bg-primary">${bill.payment_method || 'Cash'}</span></p>
-                </div>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Item</th>
-                            <th class="text-end">Qty</th>
-                            <th class="text-end">Price</th>
-                            <th class="text-end">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-
-            items.forEach(item => {
-                html += `
-                <tr>
-                    <td>${item.product_name}</td>
-                    <td class="text-end">${item.quantity}</td>
-                    <td class="text-end">${this.formatMoney(item.unit_price)}</td>
-                    <td class="text-end fw-semibold">${this.formatMoney(item.total_price)}</td>
-                </tr>
-            `;
-            });
-
-            html += `
-                    </tbody>
-                    <tfoot class="table-light">
-                        <tr>
-                            <td colspan="3" class="text-end fw-semibold">Subtotal:</td>
-                            <td class="text-end fw-semibold">${this.formatMoney(bill.subtotal)}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="3" class="text-end fw-semibold">Discount:</td>
-                            <td class="text-end fw-semibold text-danger">-${this.formatMoney(bill.discount)}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="3" class="text-end fw-semibold">Tax:</td>
-                            <td class="text-end fw-semibold">${this.formatMoney(bill.tax)}</td>
-                        </tr>
-                        <tr class="table-active">
-                            <td colspan="3" class="text-end fw-bold fs-6">Total Amount:</td>
-                            <td class="text-end fw-bold fs-6 text-success">${this.formatMoney(bill.total_amount)}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="3" class="text-end fw-semibold">Amount Paid:</td>
-                            <td class="text-end fw-semibold text-success">${this.formatMoney(bill.paid_amount)}</td>
-                        </tr>
-                        ${bill.due_amount > 0 ? `
-                        <tr class="table-warning">
-                            <td colspan="3" class="text-end fw-bold">Balance Due:</td>
-                            <td class="text-end fw-bold text-warning">${this.formatMoney(bill.due_amount)}</td>
-                        </tr>
-                        ` : ''}
-                    </tfoot>
-                </table>
-            </div>
-        `;
-
-            document.getElementById('billDetailsContent').innerHTML = html;
-            new bootstrap.Modal(document.getElementById('billDetailsModal')).show();
-        }
-
-        updateReport() {
-            this.currentPage = 1;
-            this.loadReportData();
-        }
-
-        resetAllFilters() {
-            this.currentPage = 1;
-            this.filters = {
-                startDate: '',
-                endDate: '',
-                paymentMethod: 'all',
-                salesRange: 'all',
-                timePeriod: 'daily'
-            };
-
-            // Reset UI elements
-            document.getElementById('quickDateRange').value = 'this_week';
-            document.getElementById('paymentMethodFilter').value = 'all';
-            document.getElementById('salesRangeFilter').value = 'all';
-            document.getElementById('timePeriodFilter').value = 'daily';
-
-            this.setupDefaultDates();
-            this.loadReportData();
-
-            this.showNotification('All filters have been reset', 'success');
-        }
-
-        async exportToExcel() {
-            try {
-                const params = new URLSearchParams(this.filters);
-                const response = await fetch(`/reports/api/reports/export?${params}`);
-                const blob = await response.blob();
-
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `business-report-${new Date().toISOString().split('T')[0]}.xlsx`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-
-                this.showNotification('Report exported successfully', 'success');
-            } catch (error) {
-                console.error('Export error:', error);
-                this.showNotification('Failed to export report', 'error');
-            }
-        }
-
-        printReport() {
-            window.print();
-        }
-
-        formatMoney(amount) {
-            return new Intl.NumberFormat('en-PK', {
-                style: 'currency',
-                currency: 'PKR',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(amount);
-        }
-
-        showLoadingState() {
-            document.getElementById('loadingState').style.display = 'block';
-            document.getElementById('emptyState').style.display = 'none';
-            document.querySelector('.table-responsive').style.display = 'none';
-            document.getElementById('paginationContainer').style.display = 'none';
-        }
-
-        hideLoadingState() {
-            document.getElementById('loadingState').style.display = 'none';
-        }
-
-        showNotification(message, type = 'info') {
-            // Simple notification - you can replace with a proper toast library
-            const alertType = type === 'error' ? 'danger' : type;
-            alert(`${type.toUpperCase()}: ${message}`);
-
-            // In production, use: toastr[type](message);
-            // Or implement a proper notification system
-        }
-    }
-
-    // Start the application when page loads
-    document.addEventListener('DOMContentLoaded', function () {
-        new BusinessReports();
-        console.log('📈 Business Reports Dashboard Ready!');
-    });
-</script>
+        // Start the application when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            new BusinessReports();
+            console.log('📈 Business Reports Dashboard Ready!');
+        });
+    </script>
 </body>
+
 </html>
