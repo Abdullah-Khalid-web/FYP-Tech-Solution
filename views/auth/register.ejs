@@ -22,21 +22,20 @@
             min-height: 100vh;
         }
 
-        /* FORM CONTAINER */
         .form-panel {
             background-color: #ffffff;
             padding: 4rem 3rem;
             max-width: 850px;
             margin: 4rem auto;
             border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
             border: 1px solid #e2e8f0;
         }
 
         html[data-theme="dark"] .form-panel {
             background-color: #1e293b;
             border-color: #334155;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
         }
 
         .form-header {
@@ -132,6 +131,11 @@
             box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
         }
 
+        .premium-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
         .alert-modern {
             border-radius: 12px;
             border: none;
@@ -142,18 +146,19 @@
             align-items: center;
             gap: 12px;
         }
+
         .alert-error {
             background: #fef2f2;
             color: #b91c1c;
             border: 1px solid #fecaca;
         }
+
         .alert-success {
             background: #f0fdf4;
             color: #15803d;
             border: 1px solid #bbf7d0;
         }
 
-        /* Dark Mode Overrides */
         html[data-theme="dark"] body {
             background-color: #0f172a;
             color: #f8fafc;
@@ -207,16 +212,52 @@
             color: #0ea5e9 !important;
         }
 
-        /* Mobile Adjustments */
         @media (max-width: 991.98px) {
             .form-panel {
                 margin: 2rem 1rem;
                 padding: 3rem 1.5rem;
             }
         }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #0ea5e9;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: white;
+            margin-top: 15px;
+            font-size: 1rem;
+        }
     </style>
     <script>
-        // Initialize theme on page load
         document.addEventListener('DOMContentLoaded', function () {
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -225,8 +266,12 @@
 </head>
 <body>
 
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Processing payment...</div>
+</div>
+
 <div class="split-layout">
-    <!-- REGISTRATION FORM -->
     <div class="form-panel">
         <div class="form-header">
             <h2>Create Your Account</h2>
@@ -234,24 +279,25 @@
         </div>
 
         <% if (error) { %>
-            <div class="alert-modern alert-error">
-                <i class="fas fa-exclamation-circle fs-5"></i> <%= error %>
-            </div>
+        <div class="alert-modern alert-error">
+            <i class="fas fa-exclamation-circle fs-5"></i>
+            <%= error %>
+        </div>
         <% } %>
         <% if (success) { %>
-            <div class="alert-modern alert-success">
-                <i class="fas fa-check-circle fs-5"></i> <%= success %>
-            </div>
+        <div class="alert-modern alert-success">
+            <i class="fas fa-check-circle fs-5"></i>
+            <%= success %>
+        </div>
         <% } %>
 
-        <form action="/register" method="POST" enctype="multipart/form-data">
-            
+        <form action="/register" method="POST" enctype="multipart/form-data" id="registrationForm">
+
             <!-- Step 1: Shop Information -->
             <div class="form-section">
                 <div class="section-title">
                     <i class="fas fa-store"></i> Shop Information
                 </div>
-                
                 <div class="row g-3">
                     <div class="col-md-12">
                         <label for="shopName" class="modern-label">Shop Name *</label>
@@ -289,14 +335,13 @@
                 <div class="section-title">
                     <i class="fas fa-gem"></i> Subscription Plan
                 </div>
-                
                 <div class="row g-4">
                     <div class="col-lg-6">
                         <div class="mb-3">
                             <label for="plan" class="modern-label">Select Plan *</label>
                             <select class="modern-input form-select" id="plan" name="plan" required>
                                 <option value="">Choose a plan...</option>
-                                <% plans.forEach(p => { %>
+                                <% plans.forEach(p=> { %>
                                     <option value="<%= p.name %>"
                                         data-monthly="<%= p.monthly_price %>"
                                         data-quarterly="<%= p.quarterly_price %>"
@@ -306,7 +351,6 @@
                                 <% }) %>
                             </select>
                         </div>
-                        
                         <div>
                             <label class="modern-label">Billing Cycle *</label>
                             <div class="d-flex flex-column gap-2">
@@ -325,7 +369,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="col-lg-6">
                         <div class="price-preview-box">
                             <h6 class="mb-3" style="font-weight: 700; color: #475569;">Price Summary</h6>
@@ -350,36 +393,13 @@
                 </div>
             </div>
 
-            <!-- Step 3: Payment Details -->
-            <div class="form-section">
-                <div class="section-title">
-                    <i class="fas fa-credit-card"></i> Payment Information
-                </div>
-                
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="paymentMethod" class="modern-label">Payment Method *</label>
-                        <select class="modern-input form-select" id="paymentMethod" name="paymentMethod" required>
-                            <option value="">Select Method...</option>
-                            <option value="credit_card">Credit Card</option>
-                            <option value="bank_transfer">Bank Transfer</option>
-                            <option value="jazzcash">JazzCash</option>
-                            <option value="easypaisa">EasyPaisa</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="paymentDetails" class="modern-label">Transaction Reference ID</label>
-                        <input type="text" class="modern-input" id="paymentDetails" name="paymentDetails" placeholder="e.g. TID-123456789">
-                    </div>
-                </div>
-            </div>
 
-            <!-- Step 4: Owner Credentials -->
+
+            <!-- Step 3: Owner Credentials -->
             <div class="form-section">
                 <div class="section-title">
                     <i class="fas fa-user-shield"></i> Owner Credentials
                 </div>
-                
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label for="ownerName" class="modern-label">Full Name *</label>
@@ -398,7 +418,6 @@
                         <input type="text" class="modern-input" id="ownerphone" name="ownerphone" required placeholder="+92 300 0000000">
                     </div>
                 </div>
-
                 <div class="row g-3 mt-1">
                     <div class="col-md-6">
                         <label for="ownerPassword" class="modern-label">Password *</label>
@@ -411,10 +430,33 @@
                 </div>
             </div>
 
-            <button type="submit" class="premium-btn">Create Your Shop Account</button>
-            
+            <!-- Step 4: Payment Details -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-credit-card"></i> Payment Information
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="paymentMethod" class="modern-label">Payment Method *</label>
+                        <select class="modern-input form-select" id="paymentMethod" name="paymentMethod" required>
+                            <option value="">Select Method...</option>
+                            <option value="stripe">💳 Credit/Debit Card (Stripe)</option>
+                            <option value="bank_transfer">🏦 Bank Transfer</option>
+                            <option value="jazzcash">📱 JazzCash</option>
+                            <option value="easypaisa">📱 EasyPaisa</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="paymentDetails" class="modern-label">Transaction Reference ID</label>
+                        <input type="text" class="modern-input" id="paymentDetails" name="paymentDetails" placeholder="e.g. TID-123456789">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="premium-btn" id="submitBtn">Create Your Shop Account</button>
+
             <div class="text-center mt-4">
-                <span style="color: #64748b;">Already have an account?</span> 
+                <span style="color: #64748b;">Already have an account?</span>
                 <a href="/login" style="color: #0ea5e9; font-weight: 700; text-decoration: none;">Sign in here</a>
             </div>
         </form>
@@ -422,47 +464,211 @@
 </div>
 
 <script>
-// Price Calculation Logic
-const planSelect = document.getElementById('plan');
-const durationRadios = document.querySelectorAll('input[name="subscriptionDuration"]');
-const priceSpan = document.getElementById('calculatedPrice');
-const savingsSpan = document.getElementById('savings');
-const planSpan = document.getElementById('selectedPlan');
-const durationSpan = document.getElementById('selectedDuration');
+    // Price Calculation Logic
+    const planSelect = document.getElementById('plan');
+    const durationRadios = document.querySelectorAll('input[name="subscriptionDuration"]');
+    const priceSpan = document.getElementById('calculatedPrice');
+    const savingsSpan = document.getElementById('savings');
+    const planSpan = document.getElementById('selectedPlan');
+    const durationSpan = document.getElementById('selectedDuration');
 
-function updatePrice() {
-  const selectedOption = planSelect.options[planSelect.selectedIndex];
-  if (!selectedOption || !selectedOption.dataset.monthly) {
-      planSpan.textContent = "-";
-      priceSpan.textContent = "PKR 0";
-      return;
-  }
+    function updatePrice() {
+        const selectedOption = planSelect.options[planSelect.selectedIndex];
+        if (!selectedOption || !selectedOption.dataset.monthly) {
+            planSpan.textContent = "-";
+            priceSpan.textContent = "PKR 0";
+            return;
+        }
 
-  const monthly = parseFloat(selectedOption.dataset.monthly);
-  const quarterly = parseFloat(selectedOption.dataset.quarterly);
-  const yearly = parseFloat(selectedOption.dataset.yearly);
+        const monthly = parseFloat(selectedOption.dataset.monthly);
+        const quarterly = parseFloat(selectedOption.dataset.quarterly);
+        const yearly = parseFloat(selectedOption.dataset.yearly);
+        const duration = document.querySelector('input[name="subscriptionDuration"]:checked').value;
 
-  const duration = document.querySelector('input[name="subscriptionDuration"]:checked').value;
+        let price = monthly;
+        let savings = 0;
 
-  let price = monthly;
-  let savings = 0;
+        if (duration === 'quarterly') {
+            price = quarterly;
+            savings = (monthly * 3) - quarterly;
+        } else if (duration === 'yearly') {
+            price = yearly;
+            savings = (monthly * 12) - yearly;
+        }
 
-  if (duration === 'quarterly') {
-    price = quarterly;
-    savings = (monthly * 3) - quarterly;
-  } else if (duration === 'yearly') {
-    price = yearly;
-    savings = (monthly * 12) - yearly;
-  }
+        planSpan.textContent = selectedOption.text;
+        durationSpan.textContent = duration.charAt(0).toUpperCase() + duration.slice(1);
+        priceSpan.textContent = `PKR ${price.toLocaleString()}`;
+        savingsSpan.textContent = `PKR ${savings.toLocaleString()}`;
+        return price;
+    }
 
-  planSpan.textContent = selectedOption.text;
-  durationSpan.textContent = duration.charAt(0).toUpperCase() + duration.slice(1);
-  priceSpan.textContent = `PKR ${price.toLocaleString()}`;
-  savingsSpan.textContent = `PKR ${savings.toLocaleString()}`;
+    planSelect.addEventListener('change', updatePrice);
+    durationRadios.forEach(r => r.addEventListener('change', updatePrice));
+</script>
+
+<!-- Stripe JS -->
+<script src="https://js.stripe.com/v3/"></script>
+
+<script>
+    let stripe = null;
+    let elements = null;
+    let cardElement = null;
+    
+    const stripePublishableKey = '<%= stripePublishableKey %>';
+    if (stripePublishableKey && stripePublishableKey !== 'undefined' && stripePublishableKey !== '') {
+        stripe = Stripe(stripePublishableKey);
+        console.log('Stripe initialized');
+    }
+
+    document.getElementById('paymentMethod').addEventListener('change', function() {
+        const paymentMethodDiv = document.getElementById('stripePaymentElement');
+        if (this.value === 'stripe' && stripe) {
+            if (!paymentMethodDiv) {
+                const formContainer = document.createElement('div');
+                formContainer.id = 'stripePaymentElement';
+                formContainer.className = 'mt-3';
+                formContainer.innerHTML = `
+                    <div class="card p-3">
+                        <label class="modern-label">Card Details</label>
+                        <div id="card-element" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px;"></div>
+                        <div id="card-errors" class="text-danger mt-2" style="font-size: 0.85rem;"></div>
+                        <div class="mt-2">
+                            <small class="text-muted">Test card: 4242 4242 4242 4242 (any future expiry, any CVC)</small>
+                        </div>
+                    </div>
+                `;
+                const submitBtn = document.querySelector('button[type="submit"]');
+                document.querySelector('form').insertBefore(formContainer, submitBtn);
+                
+                elements = stripe.elements();
+                const style = {
+                    base: {
+                        color: '#32325d',
+                        fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                        fontSmoothing: 'antialiased',
+                        fontSize: '16px',
+                        '::placeholder': { color: '#aab7c4' }
+                    },
+                    invalid: { color: '#fa755a', iconColor: '#fa755a' }
+                };
+                
+                if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                    style.base.color = '#f8fafc';
+                    style.base.backgroundColor = '#0f172a';
+                }
+                
+                cardElement = elements.create('card', { style: style, hidePostalCode: true });
+                cardElement.mount('#card-element');
+                
+                cardElement.on('change', function(event) {
+                    const displayError = document.getElementById('card-errors');
+                    if (event.error) {
+                        displayError.textContent = event.error.message;
+                    } else {
+                        displayError.textContent = '';
+                    }
+                });
+            }
+        } else {
+            if (paymentMethodDiv) {
+                paymentMethodDiv.remove();
+                cardElement = null;
+            }
+        }
+    });
+
+    document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        
+        if (paymentMethod === 'stripe') {
+            e.preventDefault();
+            
+            if (!stripe || !cardElement) {
+                alert('Stripe is not initialized properly. Please refresh the page and try again.');
+                return;
+            }
+            
+            const price = updatePrice();
+            if (!price || price <= 0) {
+                alert('Please select a valid plan');
+                return;
+            }
+            
+            loadingOverlay.classList.add('active');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing Payment...';
+            
+            try {
+                const formData = new FormData(this);
+                const shopData = {
+                    shopName: formData.get('shopName'),
+                    ownerEmail: formData.get('ownerEmail')
+                };
+                
+// In register.ejs, replace the fetch section with this:
+
+const response = await fetch('/create-payment-intent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        amount: price,
+        planName: planSelect.value,
+        duration: document.querySelector('input[name="subscriptionDuration"]:checked').value,
+        shopData: shopData
+    })
+});
+
+// Log the response status
+console.log('Response status:', response.status);
+console.log('Response headers:', response.headers);
+
+const contentType = response.headers.get("content-type");
+if (!contentType || !contentType.includes("application/json")) {
+    const text = await response.text();
+    console.error('Non-JSON response:', text);
+    // Log the first 500 characters to see what HTML it is
+    throw new Error(`Server returned ${contentType || 'unknown content type'}. First 200 chars: ${text.substring(0, 200)}`);
 }
 
-planSelect.addEventListener('change', updatePrice);
-durationRadios.forEach(r => r.addEventListener('change', updatePrice));
+                
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message);
+                
+                const result = await stripe.confirmCardPayment(data.clientSecret, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: {
+                            name: document.getElementById('ownerName').value,
+                            email: document.getElementById('ownerEmail').value
+                        }
+                    }
+                });
+                
+                if (result.error) throw new Error(result.error.message);
+                
+                if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'paymentIntentId';
+                    hiddenInput.value = result.paymentIntent.id;
+                    this.appendChild(hiddenInput);
+                    this.submit();
+                } else {
+                    throw new Error('Payment not completed');
+                }
+            } catch (error) {
+                alert('Payment failed: ' + error.message);
+                loadingOverlay.classList.remove('active');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Create Your Shop Account';
+            }
+        }
+    });
+    
+    updatePrice();
 </script>
 
 </body>

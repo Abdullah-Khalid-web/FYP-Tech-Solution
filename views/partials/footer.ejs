@@ -8,7 +8,13 @@
         border-top: 1px solid rgba(0, 0, 0, 0.05);
         position: relative;
         z-index: 10;
-        transition: all 0.3s ease;
+        transition: margin-left 0.3s ease, width 0.3s ease;
+    }
+
+    /* When sidebar is open on desktop, shift the footer */
+    .sidebar-enabled .premium-footer.with-sidebar {
+        margin-left: 260px;
+        width: calc(100% - 260px);
     }
 
     html[data-theme="dark"] .premium-footer {
@@ -141,9 +147,17 @@
     .footer-list li {
         margin-bottom: 0.8rem;
     }
+
+    /* Responsive for mobile */
+    @media (max-width: 768px) {
+        .sidebar-enabled .premium-footer.with-sidebar {
+            margin-left: 0;
+            width: 100%;
+        }
+    }
 </style>
 
-<footer class="premium-footer">
+<footer class="premium-footer" id="mainFooter">
     <div class="container">
         <div class="row gy-5">
             <!-- Brand Column -->
@@ -238,3 +252,39 @@
         </div>
     </div>
 </footer>
+
+<script>
+    // Function to update footer position based on sidebar state
+    function updateFooterPosition() {
+        const footer = document.getElementById('mainFooter');
+        const sidebar = document.getElementById('sidebar');
+        
+        if (footer && sidebar && sidebar.classList.contains('open')) {
+            footer.classList.add('with-sidebar');
+        } else if (footer) {
+            footer.classList.remove('with-sidebar');
+        }
+    }
+    
+    // Listen for sidebar toggle events
+    if (typeof document !== 'undefined') {
+        // Create a mutation observer to watch for sidebar class changes
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    updateFooterPosition();
+                }
+            });
+        });
+        
+        // Start observing when sidebar exists
+        const checkSidebar = setInterval(function() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                observer.observe(sidebar, { attributes: true });
+                updateFooterPosition();
+                clearInterval(checkSidebar);
+            }
+        }, 100);
+    }
+</script>

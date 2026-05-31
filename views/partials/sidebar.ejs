@@ -1,0 +1,136 @@
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h3><%= typeof shop !== 'undefined' && shop ? shop.name : 'Manage Hub' %></h3>
+        <div class="shop-name">
+            <i class="fas fa-user-circle"></i> <%= user.username || user.name %>
+        </div>
+    </div>
+    
+    <ul class="sidebar-menu">
+        <li>
+            <a href="/dashboard">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="/products">
+                <i class="fas fa-box-open"></i>
+                <span>Products</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="/bills">
+                <i class="fas fa-receipt"></i>
+                <span>Point of Sale</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="/Allbills">
+                <i class="fas fa-list-alt"></i>
+                <span>All Bills</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="/customer">
+                <i class="fas fa-users"></i>
+                <span>Customers</span>
+            </a>
+        </li>
+        
+        <div class="menu-divider"></div>
+        
+        <li>
+            <a href="/expenses">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Expenses</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="/cash-deposits">
+                <i class="fas fa-vault"></i>
+                <span>Cash Deposits</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="/reports">
+                <i class="fas fa-chart-line"></i>
+                <span>Reports</span>
+            </a>
+        </li>
+        
+        <div class="menu-divider"></div>
+        
+        <li>
+            <a href="/EmpMgmt">
+                <i class="fas fa-user-tie"></i>
+                <span>Employees</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="/suppliers">
+                <i class="fas fa-truck"></i>
+                <span>Suppliers</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="/raw">
+                <i class="fas fa-boxes"></i>
+                <span>Raw Materials</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="/alerts">
+                <i class="fas fa-bell"></i>
+                <span>Alerts</span>
+            </a>
+        </li>
+        
+        <div class="menu-divider"></div>
+        
+        <li>
+            <a href="/feedback">
+                <i class="fas fa-comment-dots"></i>
+                <span>Feedback</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="/shop_setting">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="/user_profile">
+                <i class="fas fa-user"></i>
+                <span>My Profile</span>
+            </a>
+        </li>
+        
+        <div class="menu-divider"></div>
+        
+        <li>
+            <a href="/logout" style="color: #f87171;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </li>
+    </ul>
+    
+    <div class="sidebar-footer">
+        <small>&copy; <%= new Date().getFullYear() %> <%= typeof shop !== 'undefined' && shop ? shop.name : 'Manage Hub' %></small>
+    </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>

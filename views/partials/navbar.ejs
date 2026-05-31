@@ -22,12 +22,48 @@
         font-weight: 800;
         font-size: 1.6rem;
         color: #0f172a;
-        /* Dark blue when transparent (on white bg) */
         letter-spacing: -0.02em;
         display: flex;
         align-items: center;
         gap: 12px;
         transition: color 0.4s ease;
+    }
+
+    /* Sidebar Toggle Button in Navbar */
+    .sidebar-toggle-nav {
+        background: transparent;
+        border: none;
+        color: #4b5563;
+        font-size: 1.3rem;
+        cursor: pointer;
+        padding: 8px 12px;
+        margin-right: 10px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sidebar-toggle-nav:hover {
+        background: rgba(0, 0, 0, 0.05);
+        transform: scale(1.05);
+    }
+
+    html[data-theme="dark"] .sidebar-toggle-nav {
+        color: #e2e8f0;
+    }
+
+    html[data-theme="dark"] .sidebar-toggle-nav:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .modern-navbar.scrolled .sidebar-toggle-nav {
+        color: white;
+    }
+
+    .modern-navbar.scrolled .sidebar-toggle-nav:hover {
+        background: rgba(255, 255, 255, 0.1);
     }
 
     /* DARK MODE OVERRIDES */
@@ -46,13 +82,11 @@
 
     .modern-navbar.scrolled .navbar-brand {
         color: #ffffff;
-        /* White text when scrolled */
     }
 
     /* Nav links colors */
     .modern-navbar .nav-link {
         color: #4b5563 !important;
-        /* Dark text when transparent */
         font-weight: 600;
         font-size: 0.95rem;
         padding: 8px 16px !important;
@@ -67,7 +101,6 @@
 
     .modern-navbar.scrolled .nav-link {
         color: rgba(255, 255, 255, 0.8) !important;
-        /* Light text when scrolled */
     }
 
     /* Nav link hover states */
@@ -139,7 +172,6 @@
     .modern-navbar.scrolled .navbar-toggler-icon,
     html[data-theme="dark"] .modern-navbar .navbar-toggler-icon {
         filter: brightness(0) invert(1);
-        /* Makes the hamburger icon white */
     }
 
     .modern-navbar .navbar-toggler:focus {
@@ -176,23 +208,48 @@
     .modern-navbar.scrolled .nav-link.active-badge:hover {
         background: rgba(255, 255, 255, 0.25) !important;
     }
+
+    /* Adjust navbar when sidebar is present */
+    .sidebar-enabled .modern-navbar {
+        transition: margin-left 0.3s ease, width 0.3s ease;
+    }
+
+    .sidebar-enabled .modern-navbar.with-sidebar {
+        margin-left: 260px;
+        width: calc(100% - 260px);
+    }
+
+    @media (max-width: 768px) {
+        .sidebar-enabled .modern-navbar.with-sidebar {
+            margin-left: 0;
+            width: 100%;
+        }
+    }
 </style>
 
 <nav class="navbar navbar-expand-lg modern-navbar fixed-top" id="mainNav">
     <div class="container-fluid px-4">
-        <a class="navbar-brand" href="/">
-            <% if (typeof shop !=='undefined' && shop && shop.logo) { %>
-                <img src="uploads/shop_logos/<%= shop.logo.split('/').pop() %>" alt="<%= shop.name %>"
-                    style="height:36px; border-radius:8px; object-fit: cover;">
+        <div class="d-flex align-items-center">
+            <!-- Sidebar Toggle Button for logged-in users -->
+            <% if (typeof user !== 'undefined' && user && (user.username || user.name)) { %>
+                <button class="sidebar-toggle-nav" id="sidebarToggleNav" title="Toggle Sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+            <% } %>
+            
+            <a class="navbar-brand" href="/">
+                <% if (typeof shop !=='undefined' && shop && shop.logo) { %>
+                    <img src="<%= shop.logo.startsWith('/') ? shop.logo : '/uploads/' + shop.logo.split('/').pop() %>" alt="<%= shop.name %>"
+                        style="height:36px; border-radius:8px; object-fit: cover;">
                 <% } else { %>
                     <div
                         style="width:36px; height:36px; border-radius:8px; background: linear-gradient(135deg, #0f172a, #3b82f6); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.3);">
                         <span style="color: white; font-size: 1.2rem; font-weight: 800;">M</span>
                     </div>
-                    <% } %>
-                        <%= typeof shop !=='undefined' && shop ? shop.name : 'Manage Hub' %>
-        </a>
-
+                <% } %>
+                <%= typeof shop !=='undefined' && shop ? shop.name : 'Manage Hub' %>
+            </a>
+        </div>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
@@ -200,10 +257,10 @@
 
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto align-items-lg-center">
-                <% if (typeof user !=='undefined' && user && user.username) { %>
+                <% if (typeof user !=='undefined' && user && (user.username || user.name)) { %>
                     <li class="nav-item">
                         <a class="nav-link active-badge" href="/user_profile">
-                            <span style="margin-right: 4px;">👋</span> Hi, <%= user.username %>
+                            <span style="margin-right: 4px;">👋</span> Hi, <%= user.username || user.name %>
                         </a>
                     </li>
                     <li class="nav-item"><a class="nav-link" href="/products">Products</a></li>
@@ -212,20 +269,18 @@
                     <li class="nav-item"><a class="nav-link" href="/ALLbills">List Bills</a></li>
                     <li class="nav-item ms-lg-2"><a class="nav-link text-danger logout-btn" href="/logout">Logout</a>
                     </li>
-                    <% } else { %>
-                        <li class="nav-item d-none d-lg-block"><a class="nav-link" href="/about">About</a></li>
-                        <li class="nav-item d-none d-lg-block"><a class="nav-link" href="/contact">Contact</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
-                        <li class="nav-item"><a class="nav-link active-badge" href="/register">Subscribe</a></li>
-                        <li class="nav-item"><a class="nav-link admin-btn ms-2 py-1 mt-1" href="/admin"
-                                style="border: 1px solid rgba(0,0,0,0.1); border-radius: 50px;">Admin</a></li>
-                        <% } %>
-                            <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
-                                <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeToggle">
-                                    🌓 <span class="d-lg-none d-xl-inline">Theme</span>
-
-                                </button>
-                            </li>
+                <% } else { %>
+                    <li class="nav-item d-none d-lg-block"><a class="nav-link" href="/about">About</a></li>
+                    <li class="nav-item d-none d-lg-block"><a class="nav-link" href="/pricing">Plans</a></li>
+                    <li class="nav-item d-none d-lg-block"><a class="nav-link" href="/contact">Contact</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+                    <li class="nav-item"><a class="nav-link active-badge" href="/pricing">Subscribe</a></li>
+                <% } %>
+                <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
+                    <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeToggle">
+                        🌓 <span class="d-lg-none d-xl-inline">Theme</span>
+                    </button>
+                </li>
             </ul>
         </div>
     </div>
@@ -243,13 +298,13 @@
             nav.classList.remove("navbar-light");
             nav.classList.add("navbar-dark");
             if (adminBtn) adminBtn.style.borderColor = "rgba(255,255,255,0.3)";
-            if (logoutBtn) logoutBtn.style.color = "#fecaca"; // Lighter red
+            if (logoutBtn) logoutBtn.style.color = "#fecaca";
         } else {
             nav.classList.remove("scrolled");
             nav.classList.remove("navbar-dark");
             nav.classList.add("navbar-light");
             if (adminBtn) adminBtn.style.borderColor = "rgba(0,0,0,0.1)";
-            if (logoutBtn) logoutBtn.style.color = "#ef4444"; // Dark red
+            if (logoutBtn) logoutBtn.style.color = "#ef4444";
         }
     });
 </script>

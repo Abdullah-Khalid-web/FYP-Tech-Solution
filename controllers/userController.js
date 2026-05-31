@@ -202,6 +202,7 @@ router.get('/', getShopData, async (req, res) => {
             title: 'My Profile',
             user: {
                 id: user.user_uuid,
+                username: user.name,
                 name: user.name,
                 email: user.email,
                 phone: user.phone,

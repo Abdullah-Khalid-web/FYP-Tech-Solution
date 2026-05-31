@@ -37,23 +37,30 @@
                 <div class="p-4 rounded-4" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(0,0,0,0.05);">
                     <h4 class="mb-4" style="font-family: 'Outfit', sans-serif; font-weight: 700; text-align: center;">Send us a message</h4>
                     
-                    <form onsubmit="event.preventDefault(); alert('Thank you for contacting us. We will get back to you shortly.'); this.reset();">
+                    <% if (typeof success !== 'undefined' && success) { %>
+                        <div class="alert alert-success"><%= success %></div>
+                    <% } %>
+                    <% if (typeof error !== 'undefined' && error) { %>
+                        <div class="alert alert-danger"><%= error %></div>
+                    <% } %>
+
+                    <form method="POST" action="/contact">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Full Name</label>
-                                <input type="text" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);">
+                                <input type="text" name="name" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Email Address</label>
-                                <input type="email" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);">
+                                <input type="email" name="email" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);">
                             </div>
                             <div class="col-12">
                                 <label class="form-label" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Subject</label>
-                                <input type="text" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);">
+                                <input type="text" name="subject" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);">
                             </div>
                             <div class="col-12">
                                 <label class="form-label" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Message</label>
-                                <textarea class="form-control px-3 py-2" rows="4" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);"></textarea>
+                                <textarea name="message" class="form-control px-3 py-2" rows="4" required style="border-radius: 10px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.8);"></textarea>
                             </div>
                             <div class="col-12 mt-4 text-center">
                                 <button type="submit" class="btn text-white w-100 py-3 rounded-pill" style="background: linear-gradient(135deg, #0f172a, #3b82f6); font-weight: 700; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">

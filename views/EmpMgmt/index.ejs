@@ -6,8 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Management - <%= (shop && shop.name) || 'My Shop' %>
     </title>
+
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;600;700;800;900&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --primary: #4e73df;
@@ -22,14 +29,17 @@
 
         body {
             background-color: #f5f7fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+
+        /* Rest of your CSS remains the same... */
 
         .dashboard-container {
             padding: 80px 20px;
             background-color: #f5f7fa;
             min-height: calc(100vh - 70px);
         }
+
 
         .dashboard-header {
             display: flex;
@@ -40,6 +50,13 @@
             background: white;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+
+        .dashboard-header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: var(--dark);
         }
 
         .shop-info p {
@@ -347,6 +364,12 @@
         .employee-card {
             overflow: visible !important;
         }
+    </style>
+    <style>
+
+
+
+
     </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
@@ -2118,7 +2141,7 @@
 
                 if (data.success && data.activeLoans && data.activeLoans.length > 0) {
                     // This is the HTML for each loan item
-                let html = '';
+                    let html = '';
                     data.activeLoans.forEach(loan => {
                         html += `
                     <div class="loan-item mb-3 border-bottom pb-2">
@@ -2207,114 +2230,114 @@
             });
             document.getElementById('totalSelectedAmount').value = totalAmount.toLocaleString();
         }
-async function processDirectPayment() {
-    const empId = document.getElementById('directPaymentUserId').value;
-    let totalPaymentAmount = parseFloat(document.getElementById('directPaymentAmount').value);
-    let description = document.getElementById('directPaymentNotes').value;
-    const paymentMethod = document.getElementById('directPaymentMethod').value;
-    const paymentDate = document.getElementById('directPaymentDate').value;
+        async function processDirectPayment() {
+            const empId = document.getElementById('directPaymentUserId').value;
+            let totalPaymentAmount = parseFloat(document.getElementById('directPaymentAmount').value);
+            let description = document.getElementById('directPaymentNotes').value;
+            const paymentMethod = document.getElementById('directPaymentMethod').value;
+            const paymentDate = document.getElementById('directPaymentDate').value;
 
-    if (!empId) {
-        showNotification('Employee not selected', 'error');
-        return;
-    }
+            if (!empId) {
+                showNotification('Employee not selected', 'error');
+                return;
+            }
 
-    if (!totalPaymentAmount || totalPaymentAmount <= 0) {
-        showNotification('Please enter a valid payment amount', 'error');
-        return;
-    }
+            if (!totalPaymentAmount || totalPaymentAmount <= 0) {
+                showNotification('Please enter a valid payment amount', 'error');
+                return;
+            }
 
-    // Collect selected loans with their requested payment amounts
-    const selectedLoans = [];
-    let totalRequestedAmount = 0;
+            // Collect selected loans with their requested payment amounts
+            const selectedLoans = [];
+            let totalRequestedAmount = 0;
 
-    document.querySelectorAll('.loan-checkbox:checked').forEach(checkbox => {
-        const loanId = checkbox.getAttribute('data-loan-id');
-        const loanBalance = parseFloat(checkbox.getAttribute('data-loan-balance'));
-        const amountInput = document.querySelector(`.loan-payment-amount[data-loan-id="${loanId}"]`);
-        let requestedAmount = parseFloat(amountInput?.value);
-        
-        // If no specific amount entered, use the full balance
-        if (isNaN(requestedAmount) || requestedAmount === 0) {
-            requestedAmount = loanBalance;
-        }
-        
-        // Cap at loan balance
-        requestedAmount = Math.min(requestedAmount, loanBalance);
-        
-        if (requestedAmount > 0) {
-            selectedLoans.push({
-                loan_id: loanId,
-                amount: requestedAmount
+            document.querySelectorAll('.loan-checkbox:checked').forEach(checkbox => {
+                const loanId = checkbox.getAttribute('data-loan-id');
+                const loanBalance = parseFloat(checkbox.getAttribute('data-loan-balance'));
+                const amountInput = document.querySelector(`.loan-payment-amount[data-loan-id="${loanId}"]`);
+                let requestedAmount = parseFloat(amountInput?.value);
+
+                // If no specific amount entered, use the full balance
+                if (isNaN(requestedAmount) || requestedAmount === 0) {
+                    requestedAmount = loanBalance;
+                }
+
+                // Cap at loan balance
+                requestedAmount = Math.min(requestedAmount, loanBalance);
+
+                if (requestedAmount > 0) {
+                    selectedLoans.push({
+                        loan_id: loanId,
+                        amount: requestedAmount
+                    });
+                    totalRequestedAmount += requestedAmount;
+                }
             });
-            totalRequestedAmount += requestedAmount;
+
+            if (selectedLoans.length === 0) {
+                showNotification('Please select at least one loan to pay', 'error');
+                return;
+            }
+
+            // Validate that payment amount matches total requested amount
+            // Allow small rounding errors (within 0.01)
+            if (Math.abs(totalRequestedAmount - totalPaymentAmount) > 0.01) {
+                showNotification(`Total selected amount (${totalRequestedAmount.toLocaleString()}) must equal payment amount (${totalPaymentAmount.toLocaleString()}). Please adjust the payment amount or the per-loan amounts.`, 'error');
+                return;
+            }
+
+            // Prepare description with default if empty
+            if (!description || description.trim() === '') {
+                description = `Direct loan payment via ${paymentMethod}`;
+            }
+
+            const paymentData = {
+                amount: totalPaymentAmount,
+                loan_payments: selectedLoans,
+                description: `${description} | Method: ${paymentMethod} | Date: ${paymentDate}`,
+                payment_method: paymentMethod
+            };
+
+            console.log('Sending payment data (amounts):', paymentData.loan_payments.map(l => ({ loan_id: l.loan_id, amount: l.amount })));
+
+            try {
+                showNotification('Processing payment...', 'info');
+                const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/loan/payment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
+
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('Failed to parse JSON:', responseText);
+                    showNotification('Server error: Invalid response format', 'error');
+                    return;
+                }
+
+                if (response.ok && data.success) {
+                    modals.directLoanPaymentModal?.hide();
+                    showNotification('Payment processed successfully! Amount paid: ' + totalPaymentAmount.toLocaleString(), 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    const errorMsg = data.message || data.error || 'Payment failed';
+                    console.error('Payment error:', errorMsg);
+                    showNotification('Error: ' + errorMsg, 'error');
+                }
+            } catch (error) {
+                console.error('Error processing payment:', error);
+                showNotification('Error processing payment: ' + error.message, 'error');
+            }
         }
-    });
-
-    if (selectedLoans.length === 0) {
-        showNotification('Please select at least one loan to pay', 'error');
-        return;
-    }
-
-    // Validate that payment amount matches total requested amount
-    // Allow small rounding errors (within 0.01)
-    if (Math.abs(totalRequestedAmount - totalPaymentAmount) > 0.01) {
-        showNotification(`Total selected amount (${totalRequestedAmount.toLocaleString()}) must equal payment amount (${totalPaymentAmount.toLocaleString()}). Please adjust the payment amount or the per-loan amounts.`, 'error');
-        return;
-    }
-
-    // Prepare description with default if empty
-    if (!description || description.trim() === '') {
-        description = `Direct loan payment via ${paymentMethod}`;
-    }
-
-    const paymentData = {
-        amount: totalPaymentAmount,
-        loan_payments: selectedLoans,
-        description: `${description} | Method: ${paymentMethod} | Date: ${paymentDate}`,
-        payment_method: paymentMethod
-    };
-
-    console.log('Sending payment data (amounts):', paymentData.loan_payments.map(l => ({ loan_id: l.loan_id, amount: l.amount })));
-
-    try {
-        showNotification('Processing payment...', 'info');
-        const response = await fetch(`/EmpMgmt/api/EmpMgmt/${empId}/loan/payment`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(paymentData)
-        });
-
-        const responseText = await response.text();
-        console.log('Raw response:', responseText);
-
-        let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (e) {
-            console.error('Failed to parse JSON:', responseText);
-            showNotification('Server error: Invalid response format', 'error');
-            return;
-        }
-
-        if (response.ok && data.success) {
-            modals.directLoanPaymentModal?.hide();
-            showNotification('Payment processed successfully! Amount paid: ' + totalPaymentAmount.toLocaleString(), 'success');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            const errorMsg = data.message || data.error || 'Payment failed';
-            console.error('Payment error:', errorMsg);
-            showNotification('Error: ' + errorMsg, 'error');
-        }
-    } catch (error) {
-        console.error('Error processing payment:', error);
-        showNotification('Error processing payment: ' + error.message, 'error');
-    }
-}
-function calculateInstallment() {
+        function calculateInstallment() {
             const loanAmount = parseFloat(document.getElementById('loanAmount')?.value) || 0;
             const installments = parseInt(document.getElementById('loanInstallments')?.value) || 3;
 

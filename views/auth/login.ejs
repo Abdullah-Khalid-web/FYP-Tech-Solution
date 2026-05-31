@@ -144,6 +144,11 @@ body {
     gap: 10px;
 }
 
+.alert-success-modern {
+    background: #ecfdf5;
+    color: #047857;
+}
+
 html[data-theme="dark"] .auth-card {
     background: #1e293b;
     border-color: #334155;
@@ -188,6 +193,11 @@ html[data-theme="dark"] .modern-input:focus {
                 <i class="bi bi-exclamation-circle-fill"></i> <%= error %>
             </div>
         <% } %>
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert-modern alert-success-modern">
+                <i class="bi bi-check-circle-fill"></i> <%= success %>
+            </div>
+        <% } %>
         
 <form method="POST" action="/login">
     <div class="form-group">
@@ -198,7 +208,7 @@ html[data-theme="dark"] .modern-input:focus {
     <div class="form-group mb-4">
         <div class="d-flex justify-content-between">
             <label for="password" class="modern-label">Password</label>
-            <a href="#" style="font-size: 0.85rem; color: #0f172a; text-decoration: none; font-weight: 500;">Forgot?</a>
+            <a href="/forgot-password" style="font-size: 0.85rem; color: #0f172a; text-decoration: none; font-weight: 500;">Forgot?</a>
         </div>
         <input type="password" class="modern-input" name="password" placeholder="••••••••" required>
     </div>

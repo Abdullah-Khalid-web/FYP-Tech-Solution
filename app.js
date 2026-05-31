@@ -78,7 +78,8 @@ app.use((req, res, next) => {
   res.locals.shop = {
     id: null,
     name: 'Manage Hub',
-    logo: '/images/default-logo.png',
+    // logo: '/images/default-logo.png',
+    logo: 'uploads/shop_logos/default-logo.png',
     phone: '+92 000000000',
     address: 'NextGenTech Solution, Quetta, Pakistan',
     email: 'NextGenTechSolution@gmail.com',
@@ -170,7 +171,7 @@ app.use(async (req, res, next) => {
             res.locals.shop = {
               id: shop.id,
               name: shop.name || 'Manage Hub',
-              logo: shop.logo ? `/uploads/${shop.logo}` : '/images/default-logo.png',
+              logo: shop.logo ? `/uploads/${shop.logo}` : '/shop_logos/default-logo.png',
               phone: shop.phone || '+92 000000000',
               address: shop.address || 'NextGenTech Solution, Quetta, Pakistan',
               email: shop.email || 'NextGenTechSolution@gmail.com',
@@ -190,7 +191,7 @@ app.use(async (req, res, next) => {
       res.locals.user = null;
       res.locals.shop = {
         name: 'Manage Hub',
-        logo: '/images/default-logo.png',
+        logo: 'uploads/shop_logos/default-logo.png',
         phone: '+92 000000000',
         address: 'NextGenTech Solution, Quetta, Pakistan',
         email: 'NextGenTechSolution@gmail.com',
@@ -206,7 +207,7 @@ app.use(async (req, res, next) => {
     res.locals.user = null;
     res.locals.shop = {
       name: 'Manage Hub',
-      logo: '/images/default-logo.png',
+      logo: 'uploads/shop_logos/default-logo.png',
       phone: '+92 000000000',
       address: 'NextGenTech Solution, Quetta, Pakistan',
       email: 'NextGenTechSolution@gmail.com',
@@ -218,55 +219,97 @@ app.use(async (req, res, next) => {
   }
 });
 
+
+
 /* ------------------ HOME ROUTE ------------------ */
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
   if (req.session.userId) {
     // User is logged in → redirect to dashboard
     return res.redirect('/dashboard');
   }
 
   // User not logged in → show public index page
-  res.render('index', { title: 'Home' });
+  try {
+    const [testimonials] = await pool.execute(
+      `SELECT f.subject, f.message, f.rating, s.name AS shop_name
+       FROM feedback f
+       JOIN shops s ON f.shop_id = s.id
+       WHERE f.status IN ('replied', 'resolved') AND f.rating IS NOT NULL
+       ORDER BY f.created_at DESC
+       LIMIT 6`
+    );
+    res.render('index', { title: 'Home', testimonials });
+  } catch (err) {
+    console.error('Home testimonials error:', err);
+    res.render('index', { title: 'Home', testimonials: [] });
+  }
 });
 
 /* ------------------ STATIC PUBLIC PAGES ------------------ */
 app.get('/about', (req, res) => res.render('about', { title: 'About Us' }));
-app.get('/contact', (req, res) => res.render('contact', { title: 'Contact Us' }));
+app.get('/contact', (req, res) => res.render('contact', {
+  title: 'Contact Us',
+  success: req.query.success,
+  error: req.query.error
+}));
+app.post('/contact', async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+    if (!name || !email || !subject || !message) {
+      return res.redirect('/contact?error=Please complete all fields');
+    }
+
+    const publicShopId = process.env.CONTACT_SHOP_ID || null;
+    const [shops] = publicShopId
+      ? await pool.execute('SELECT BIN_TO_UUID(id) AS id FROM shops WHERE id = UUID_TO_BIN(?) LIMIT 1', [publicShopId])
+      : await pool.execute('SELECT BIN_TO_UUID(id) AS id FROM shops ORDER BY created_at ASC LIMIT 1');
+
+    if (shops.length) {
+      await pool.execute(
+        `INSERT INTO feedback (id, shop_id, subject, message, rating, status)
+         VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), ?, ?, NULL, 'new')`,
+        [
+          shops[0].id,
+          `[Contact] ${subject}`,
+          `From: ${name} <${email}>\n\n${message}`
+        ]
+      );
+    }
+
+    res.redirect('/contact?success=Message sent successfully');
+  } catch (err) {
+    console.error('Contact form error:', err);
+    res.redirect('/contact?error=Unable to send message right now');
+  }
+});
 app.get('/privacy', (req, res) => res.render('privacy', { title: 'Privacy Policy' }));
+app.get('/pricing', async (req, res) => {
+  try {
+    const [pricingPlans] = await pool.execute(
+      `SELECT *, BIN_TO_UUID(id) AS plan_id
+       FROM pricing_plans
+       WHERE status = 'active'
+       ORDER BY monthly_price ASC`
+    );
+    res.render('pricing', { title: 'Subscription Plans', pricingPlans });
+  } catch (err) {
+    console.error('Pricing page error:', err);
+    res.render('pricing', { title: 'Subscription Plans', pricingPlans: [] });
+  }
+});
 
 /* ------------------ ROUTES ------------------ */
 
 app.use('/', require('./routes/auth/login'));
 app.use('/', require('./routes/auth/logout'));
 app.use('/', require('./routes/auth/register'));
-app.use('/', require('./routes/dashboard'));
-
-app.use('/products', require('./routes/products'));
-app.use('/bills', require('./routes/bills'));
-app.use('/Allbills', require('./routes/Allbills'));
-app.use('/EmpMgmt', require('./routes/EmpMgmt'));
-app.use('/reports', require('./routes/reports'));
-app.use('/user_profile', require('./routes/user'));
-app.use('/shop_setting', require('./routes/shop'));
-app.use('/alerts', require('./routes/alerts'));
-app.use('/expenses', require('./routes/expenses'));
-app.use('/raw', require('./routes/raw'));
 app.use('/admin', require('./routes/admin'));
-app.use('/suppliers', require('./routes/suppliers'));
+app.use('/', isAuthenticated, require('./routes/dashboard'));
 
 /* ------------- AI INTEGRATION ROUTES ------------- */
 app.use('/api/ai', require('./routes/ai'));            // Frontend → Backend → AI proxy
 app.use('/api', require('./routes/aiDataApi'));          // AI module → Backend data endpoints
-/* ------------------ PUBLIC ROUTES (NO AUTH NEEDED) ------------------ */
-app.use('/', require('./routes/auth/login'));
-app.use('/', require('./routes/auth/logout'));
-app.use('/', require('./routes/auth/register'));
-
 /* ------------------ PROTECTED ROUTES (AUTHENTICATION REQUIRED) ------------------ */
-
-// Dashboard - requires authentication
-
-app.use('/', isAuthenticated, require('./routes/dashboard'));
 
 // Products - requires authentication (everyone can view products)
 app.use('/products', isAuthenticated, require('./routes/products'));
@@ -287,12 +330,10 @@ app.use('/raw', isAuthenticated, roleAuth.requireInventoryAccess, require('./rou
 
 // Finance routes - requires finance access
 app.use('/expenses', isAuthenticated, roleAuth.requireFinanceAccess, require('./routes/expenses'));
+app.use('/cash-deposits', isAuthenticated, roleAuth.requireFinanceAccess, require('./routes/cashDeposits'));
 
 // Reports - requires report access
 app.use('/reports', isAuthenticated, roleAuth.requireReportAccess, require('./routes/reports'));
-
-// Admin routes - requires admin role
-app.use('/admin', isAuthenticated, roleAuth.requireRole(['Super Admin', 'Admin']), require('./routes/admin'));
 
 // Shop settings - requires settings access
 app.use('/shop_setting', isAuthenticated, roleAuth.requireSettingsAccess, require('./routes/shop'));

@@ -201,7 +201,7 @@ router.get('/', getShopDetails, async (req, res) => {
 
         const totalPages = Math.ceil(total / limit);
 
-        res.render('EmpMgmt', {
+        res.render('EmpMgmt/index', {
             title: 'Employee Management',
             employees: processedEmployees,
             roles: roles,
@@ -538,6 +538,20 @@ router.post('/api/EmpMgmt/:id/salary', getShopDetails, async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
+        // Check before deductions so a retry cannot deduct the same month's loan twice.
+        const [existingSalary] = await connection.execute(`
+            SELECT id, status FROM user_salary 
+            WHERE user_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?) AND month = ?
+        `, [employeeId, req.session.shopId, month]);
+
+        if (existingSalary.length > 0 && existingSalary[0].status === 'paid') {
+            await connection.rollback();
+            return res.status(400).json({
+                success: false,
+                message: 'Salary for this month is already paid. Edit the salary record instead of submitting again.'
+            });
+        }
+
         let netAmount = parseFloat(amount) + (parseFloat(bonus) || 0) - (parseFloat(fine) || 0);
         let totalLoanDeductions = 0;
         let processedLoans = [];
@@ -586,12 +600,6 @@ router.post('/api/EmpMgmt/:id/salary', getShopDetails, async (req, res) => {
 
         // Ensure net amount is not negative
         if (netAmount < 0) netAmount = 0;
-
-        // Check if salary already exists for this month
-        const [existingSalary] = await connection.execute(`
-            SELECT id FROM user_salary 
-            WHERE user_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?) AND month = ?
-        `, [employeeId, req.session.shopId, month]);
 
         const salaryId = crypto.randomBytes(16);
 
@@ -812,19 +820,11 @@ router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) =>
             const paymentToLoan = Math.min(paymentAmount, loanRecord.total_balance);
             
             if (paymentToLoan > 0) {
-                const newTotalPaid = parseFloat(loanRecord.total_paid) + paymentToLoan;
                 const newTotalBalance = parseFloat(loanRecord.total_balance) - paymentToLoan;
                 const newStatus = newTotalBalance <= 0 ? 'paid' : 'active';
                 
                 console.log(`Processing payment of ${paymentToLoan} to loan ${loanRecord.loan_number}`);
                 console.log(`Old balance: ${loanRecord.total_balance}, New balance: ${newTotalBalance}`);
-                
-                // Update loan balance
-                await connection.execute(`
-                    UPDATE user_loan 
-                    SET total_paid = ?, total_balance = ?, status = ?, updated_at = CURRENT_TIMESTAMP
-                    WHERE id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)
-                `, [newTotalPaid, newTotalBalance, newStatus, loanId, req.session.shopId]);
                 
                 // Record loan repayment in ledger
                 const ledgerId = crypto.randomBytes(16);

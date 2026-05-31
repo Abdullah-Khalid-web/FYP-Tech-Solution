@@ -483,3 +483,109 @@ exports.reorderProduct = async (req, res) => {
     res.status(500).json({ error: 'Failed to process reorder' });
   }
 };
+
+exports.getSubscriptionNotice = async (req, res) => {
+  try {
+    const shopId = req.session.shopId;
+    const [rows] = await pool.execute(
+      `SELECT plan_name, expires_at, DATEDIFF(expires_at, CURDATE()) AS days_remaining
+       FROM subscriptions
+       WHERE shop_id = UUID_TO_BIN(?) AND status = 'active'
+       ORDER BY expires_at DESC
+       LIMIT 1`,
+      [shopId]
+    );
+
+    if (!rows.length) {
+      return res.json({ show: true, type: 'warning', message: 'No active subscription found. Choose a plan to keep all features enabled.' });
+    }
+
+    const sub = rows[0];
+    if (sub.days_remaining <= 7) {
+      return res.json({
+        show: true,
+        type: sub.days_remaining <= 2 ? 'danger' : 'warning',
+        message: `${sub.plan_name} subscription expires in ${sub.days_remaining} day${sub.days_remaining === 1 ? '' : 's'}.`
+      });
+    }
+
+    res.json({ show: false });
+  } catch (err) {
+    console.error('Subscription notice failed:', err);
+    res.json({ show: false });
+  }
+};
+
+exports.getBusinessSuggestions = async (req, res) => {
+  try {
+    const shopId = req.session.shopId;
+    const [[sales]] = await pool.execute(
+      `SELECT COALESCE(SUM(total_amount),0) AS month_sales, COUNT(*) AS bill_count
+       FROM bills
+       WHERE shop_id = UUID_TO_BIN(?) AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)`,
+      [shopId]
+    );
+    const [[expenses]] = await pool.execute(
+      `SELECT COALESCE(SUM(amount),0) AS month_expenses
+       FROM expenses
+       WHERE shop_id = UUID_TO_BIN(?) AND expense_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)`,
+      [shopId]
+    );
+    const [[lowStock]] = await pool.execute(
+      `SELECT COUNT(*) AS count
+       FROM products p
+       LEFT JOIN inventory i ON p.id = i.product_id
+       WHERE p.shop_id = UUID_TO_BIN(?) AND COALESCE(i.current_quantity, 0) < ?`,
+      [shopId, MIN_STOCK]
+    );
+    const [[employees]] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM users WHERE shop_id = UUID_TO_BIN(?) AND status = 'active'`,
+      [shopId]
+    );
+
+    const revenue = parseFloat(sales.month_sales || 0);
+    const cost = parseFloat(expenses.month_expenses || 0);
+    const margin = revenue > 0 ? Math.round(((revenue - cost) / revenue) * 100) : 0;
+
+    const suggestions = [
+      {
+        area: 'Sales Growth',
+        action: sales.bill_count < 20
+          ? 'Run a simple weekly offer on your fastest-moving products to increase repeat visits.'
+          : 'Bundle top-selling products with slower items to lift average bill value.',
+        metric: `${sales.bill_count || 0} bills in 30 days`
+      },
+      {
+        area: 'Inventory',
+        action: lowStock.count > 0
+          ? 'Restock low-quantity items first and set reorder levels for products that sell every week.'
+          : 'Stock levels look stable. Review dead stock and discount items with no recent movement.',
+        metric: `${lowStock.count || 0} low-stock items`
+      },
+      {
+        area: 'Finance',
+        action: margin < 20
+          ? 'Review purchase prices and non-essential expenses; your current margin needs protection.'
+          : 'Margin is healthy. Reserve a fixed percentage of profit for growth and emergency cash.',
+        metric: `${margin}% estimated margin`
+      },
+      {
+        area: 'Employees & Customers',
+        action: employees.count > 0
+          ? 'Track cashier performance and customer feedback weekly, then coach staff on the biggest complaint theme.'
+          : 'Add employee records so payroll, responsibility, and performance become easier to manage.',
+        metric: `${employees.count || 0} active employees`
+      },
+      {
+        area: 'Operations & Risk',
+        action: 'Use daily cash deposit checks, subscription alerts, and feedback replies to keep compliance and communication visible.',
+        metric: 'Daily review recommended'
+      }
+    ];
+
+    res.json({ success: true, suggestions });
+  } catch (err) {
+    console.error('Business suggestions failed:', err);
+    res.status(500).json({ success: false, message: 'Unable to load business suggestions' });
+  }
+};

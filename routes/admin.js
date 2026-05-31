@@ -685,7 +685,9 @@ router.put('/api/feedback/:id/notes', requireAdmin, async (req, res) => {
         const { notes } = req.body;
         
         await pool.execute(
-            'UPDATE feedback SET admin_notes = ?, updated_at = NOW() WHERE id = ?',
+            `UPDATE feedback
+             SET admin_notes = ?, status = 'replied', updated_at = NOW()
+             WHERE id = ?`,
             [notes, feedbackIdBinary]
         );
         

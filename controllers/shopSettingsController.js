@@ -4,6 +4,7 @@ const { pool } = require('../db');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
 // Middleware to get shop data
@@ -84,6 +85,81 @@ async function uuidToBin(uuid) {
 async function binToUuid(bin) {
     const [rows] = await pool.execute('SELECT BIN_TO_UUID(?) as uuid', [bin]);
     return rows[0].uuid;
+}
+
+async function activateSubscription(req, { plan_id, duration, payment_method, auto_renew }) {
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const shopIdBin = await uuidToBin(req.session.shopId);
+        const userIdBin = await uuidToBin(req.session.userId);
+        const planIdBin = await uuidToBin(plan_id);
+
+        const [plans] = await connection.execute(`SELECT * FROM pricing_plans WHERE id = ?`, [planIdBin]);
+        if (plans.length === 0) throw new Error('Selected plan not found');
+
+        const plan = plans[0];
+        let price = plan.monthly_price;
+        if (duration === 'quarterly') price = plan.quarterly_price;
+        if (duration === 'yearly') price = plan.yearly_price;
+
+        const [activeSubs] = await connection.execute(
+            `SELECT expires_at FROM subscriptions 
+             WHERE shop_id = ? AND status = 'active' 
+             ORDER BY expires_at DESC LIMIT 1`,
+            [shopIdBin]
+        );
+
+        let startDate = new Date();
+        if (activeSubs.length > 0 && activeSubs[0].expires_at > new Date()) {
+            startDate = new Date(activeSubs[0].expires_at);
+            startDate.setDate(startDate.getDate() + 1);
+        }
+
+        const expiresAt = new Date(startDate);
+        if (duration === 'quarterly') expiresAt.setMonth(expiresAt.getMonth() + 3);
+        else if (duration === 'yearly') expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        else expiresAt.setMonth(expiresAt.getMonth() + 1);
+
+        await connection.execute(
+            `INSERT INTO subscriptions (id, shop_id, plan_name, price, duration, 
+             started_at, expires_at, status, payment_method, auto_renew) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)`,
+            [
+                await uuidToBin(uuidv4()),
+                shopIdBin,
+                plan.name,
+                price,
+                duration,
+                startDate,
+                expiresAt,
+                payment_method || 'manual',
+                auto_renew === 'on' ? 1 : 0
+            ]
+        );
+
+        await connection.execute(`UPDATE shops SET plan = ?, updated_at = NOW() WHERE id = ?`, [plan.name, shopIdBin]);
+
+        await connection.execute(
+            `INSERT INTO admin_actions (id, admin_id, shop_id, action_type, details) 
+             VALUES (?, ?, ?, 'subscription_update', ?)`,
+            [
+                await uuidToBin(uuidv4()),
+                userIdBin,
+                shopIdBin,
+                JSON.stringify({ action: `Subscribed to ${plan.name} (${duration})`, amount: price, expires_at: expiresAt })
+            ]
+        );
+
+        await connection.commit();
+        return { plan, price, expiresAt };
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
 }
 
 // GET /shop-settings - Shop Settings Page
@@ -182,7 +258,7 @@ router.get('/', getShopData, async (req, res) => {
             pricingPlansCount: pricingPlans.length
         });
 
-        res.render('shop_settings', {
+        res.render('shop_settings/index', {
             title: 'Shop Settings',
             shop: {
                 id: req.session.shopId,
@@ -190,7 +266,7 @@ router.get('/', getShopData, async (req, res) => {
                 email: shop.email,
                 phone: shop.phone,
                 address: shop.address,
-                logo: shop.logo ? `/uploads/shop_logos/${shop.logo}` : '/images/default-shop.png',
+                logo: shop.logo ? `/uploads/${shop.logo}` : '/images/default-shop.png',
                 plan: shop.plan,
                 currency: shop.currency,
                 primary_color: shop.primary_color,
@@ -337,6 +413,37 @@ router.post('/subscribe', getShopData, async (req, res) => {
             return res.redirect('/login');
         }
 
+        if (payment_method === 'stripe' && process.env.STRIPE_SECRET_KEY) {
+            const planIdBin = await uuidToBin(plan_id);
+            const [plans] = await pool.execute(`SELECT * FROM pricing_plans WHERE id = ?`, [planIdBin]);
+            if (!plans.length) throw new Error('Selected plan not found');
+
+            const plan = plans[0];
+            let price = plan.monthly_price;
+            if (duration === 'quarterly') price = plan.quarterly_price;
+            if (duration === 'yearly') price = plan.yearly_price;
+
+            const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+            const body = new URLSearchParams({
+                mode: 'payment',
+                success_url: `${baseUrl}/shop_setting/stripe-success?plan_id=${encodeURIComponent(plan_id)}&duration=${encodeURIComponent(duration)}&session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${baseUrl}/shop_setting?error=Stripe payment cancelled`,
+                'line_items[0][price_data][currency]': (process.env.STRIPE_CURRENCY || 'pkr').toLowerCase(),
+                'line_items[0][price_data][product_data][name]': `${plan.name} ${duration} subscription`,
+                'line_items[0][price_data][unit_amount]': String(Math.round(Number(price || 0) * 100)),
+                'line_items[0][quantity]': '1'
+            });
+
+            const response = await axios.post('https://api.stripe.com/v1/checkout/sessions', body, {
+                headers: {
+                    Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+
+            return res.redirect(response.data.url);
+        }
+
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
@@ -456,6 +563,34 @@ router.post('/subscribe', getShopData, async (req, res) => {
 
         console.error('Error creating subscription:', error);
         res.redirect('/shop_setting?error=Failed to process subscription: ' + error.message);
+    }
+});
+
+router.get('/stripe-success', getShopData, async (req, res) => {
+    try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            return res.redirect('/shop_setting?error=Stripe is not configured');
+        }
+
+        const response = await axios.get(`https://api.stripe.com/v1/checkout/sessions/${req.query.session_id}`, {
+            headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}` }
+        });
+
+        if (response.data.payment_status !== 'paid') {
+            return res.redirect('/shop_setting?error=Stripe payment was not completed');
+        }
+
+        await activateSubscription(req, {
+            plan_id: req.query.plan_id,
+            duration: req.query.duration || 'monthly',
+            payment_method: 'stripe',
+            auto_renew: 'off'
+        });
+
+        res.redirect('/shop_setting?success=Stripe payment received and subscription activated');
+    } catch (error) {
+        console.error('Stripe success error:', error.response?.data || error);
+        res.redirect('/shop_setting?error=Failed to verify Stripe payment');
     }
 });
 

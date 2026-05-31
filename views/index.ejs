@@ -1135,6 +1135,26 @@
 
         <div class="marquee-container">
             <div class="marquee-content">
+                <% if (typeof testimonials !== 'undefined' && testimonials && testimonials.length) { %>
+                    <% testimonials.concat(testimonials).forEach(item => { 
+                        const initials = (item.shop_name || 'MH').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+                        const rating = Math.max(1, Math.min(5, Number(item.rating || 5)));
+                    %>
+                    <div class="testimonial-card">
+                        <div style="display: flex; gap: 4px; color: #f59e0b; margin-bottom: 10px;">
+                            <% for (let i = 1; i <= rating; i++) { %><i class="bi bi-star-fill"></i><% } %>
+                        </div>
+                        <p style="color: var(--text-main); font-weight: 500; font-size: 1rem; margin-bottom: 15px;">"<%= item.message.length > 150 ? item.message.slice(0, 150) + '...' : item.message %>"</p>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display:flex; align-items:center; justify-content:center; font-weight:bold;"><%= initials %></div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main);"><%= item.shop_name || 'Manage Hub User' %></div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);"><%= item.subject %></div>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                <% } else { %>
                 <!-- Group 1 -->
                 <div class="testimonial-card">
                     <div style="display: flex; gap: 4px; color: #f59e0b; margin-bottom: 10px;">
@@ -1239,6 +1259,7 @@
                         </div>
                     </div>
                 </div>
+                <% } %>
             </div>
         </div>
 </section>

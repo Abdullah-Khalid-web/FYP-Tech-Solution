@@ -221,20 +221,13 @@ CREATE TABLE `feedback` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Table structure for table `customers`
-<<<<<<< HEAD
-CREATE TABLE customers (
-    id BINARY(16) PRIMARY KEY ,
-=======
+
 CREATE TABLE IF NOT EXISTS customers (
-    id BINARY(16) PRIMARY KEY,
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
-    shop_id BINARY(16) NOT NULL,
+    id BINARY(16) PRIMARY KEY,    shop_id BINARY(16) NOT NULL,
     name VARCHAR(255) NOT NULL,
     phone VARCHAR(50) DEFAULT NULL,
     email VARCHAR(255) DEFAULT NULL,
     address TEXT,
-<<<<<<< HEAD
-=======
     type ENUM('regular', 'wholesale', 'corporate', 'vip') DEFAULT 'regular',
     city VARCHAR(100),
     country VARCHAR(100) DEFAULT 'Pakistan',
@@ -242,25 +235,16 @@ CREATE TABLE IF NOT EXISTS customers (
     reference VARCHAR(255),
     discount DECIMAL(5,2) DEFAULT 0,
     credit_limit DECIMAL(12,2) DEFAULT 0,
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
     UNIQUE KEY unique_phone_per_shop (shop_id, phone),
-<<<<<<< HEAD
     INDEX idx_shop_id (`shop_id`),
     INDEX idx_phone (`phone`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-
-=======
-    INDEX idx_shop_id (shop_id),
-    INDEX idx_phone (phone),
     INDEX idx_email (email),
     INDEX idx_type (type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 -- Create user_loan table (Master loan record)
 CREATE TABLE user_loan (
     id BINARY(16) PRIMARY KEY,
@@ -333,11 +317,7 @@ BEGIN
 END$$
 DELIMITER ;
 
--- Function to generate loan number
-<<<<<<< HEAD
-DROP FUNCTION IF EXISTS generate_loan_number;
-=======
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
+-- Function to generate loan numberDROP FUNCTION IF EXISTS generate_loan_number;
 DELIMITER $$
 CREATE FUNCTION generate_loan_number(shop_prefix VARCHAR(10)) 
 RETURNS VARCHAR(50) DETERMINISTIC
@@ -657,11 +637,8 @@ ALTER TABLE supplier_transactions
 ADD COLUMN reference_type ENUM('stock_in', 'payment', 'adjustment', 'other') DEFAULT 'stock_in' AFTER description,
 ADD COLUMN reference_id BINARY(16) AFTER reference_type,
 ADD COLUMN created_by BINARY(16) AFTER reference_id,
-<<<<<<< HEAD
 ADD CONSTRAINT fk_supplier_tx_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
-=======
 ADD FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 ADD INDEX idx_reference_type (`reference_type`),
 ADD INDEX idx_reference_id (`reference_id`);
 
@@ -716,8 +693,7 @@ ALTER TABLE user_salary
 ADD updated_at TIMESTAMP NULL AFTER created_at;
 
 
-<<<<<<< HEAD
-=======
+
 -- If inventory table is missing min_stock_level
 ALTER TABLE inventory ADD COLUMN min_stock_level DECIMAL(10,3) DEFAULT 10;
 
@@ -730,7 +706,6 @@ UPDATE inventory SET
     min_stock_level = 10
 WHERE current_quantity IS NULL;
 
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
 -- Reset modes
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
@@ -1811,4 +1786,92 @@ INSERT INTO `pricing_plans` (`id`, `name`, `description`, `monthly_price`, `quar
     'grandfathered', true,
     'new_signups', false
  ), 'inactive', NOW() - INTERVAL 60 DAY);
->>>>>>> 8ebba1f72e0d8c7dec787338560c73865fc45c96
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Step 1: Add missing columns to user_cash_submission
+ALTER TABLE `user_cash_submission` 
+ADD COLUMN IF NOT EXISTS `status` ENUM('pending','verified','rejected') DEFAULT 'pending' AFTER `difference`,
+ADD COLUMN IF NOT EXISTS `verified_by` BINARY(16) AFTER `status`,
+ADD COLUMN IF NOT EXISTS `verified_at` TIMESTAMP NULL AFTER `verified_by`,
+ADD COLUMN IF NOT EXISTS `rejection_reason` TEXT AFTER `verified_at`,
+ADD COLUMN IF NOT EXISTS `shift` VARCHAR(50) DEFAULT 'morning' AFTER `notes`,
+ADD COLUMN IF NOT EXISTS `payment_method` VARCHAR(50) DEFAULT 'cash' AFTER `shift`,
+ADD COLUMN IF NOT EXISTS `reference_number` VARCHAR(100) AFTER `payment_method`;
+
+-- Step 2: Add indexes
+ALTER TABLE `user_cash_submission` 
+ADD INDEX IF NOT EXISTS `idx_status` (`status`),
+ADD INDEX IF NOT EXISTS `idx_shift` (`shift`);
+
+-- Step 3: Add foreign key
+ALTER TABLE `user_cash_submission`
+ADD CONSTRAINT `fk_cash_verified_by` 
+FOREIGN KEY (`verified_by`) REFERENCES `users`(`id`) ON DELETE SET NULL;
+
+-- Step 4: Create cash_register table
+CREATE TABLE IF NOT EXISTS `cash_register` (
+    `id` BINARY(16) NOT NULL PRIMARY KEY,
+    `shop_id` BINARY(16) NOT NULL,
+    `user_id` BINARY(16) NOT NULL,
+    `shift_start` DATETIME NOT NULL,
+    `shift_end` DATETIME DEFAULT NULL,
+    `opening_balance` DECIMAL(12,2) NOT NULL,
+    `closing_balance` DECIMAL(12,2) DEFAULT 0.00,
+    `expected_balance` DECIMAL(12,2) DEFAULT 0.00,
+    `difference` DECIMAL(12,2) DEFAULT 0.00,
+    `status` ENUM('open','closed') DEFAULT 'open',
+    `notes` TEXT DEFAULT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
+    
+    FOREIGN KEY (`shop_id`) REFERENCES `shops`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    
+    INDEX `idx_shop_id` (`shop_id`),
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_shift_start` (`shift_start`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+ALTER TABLE `feedback` 
+ADD COLUMN IF NOT EXISTS `user_id` BINARY(16) AFTER `shop_id`,
+ADD COLUMN IF NOT EXISTS `admin_reply` TEXT AFTER `admin_notes`,
+ADD COLUMN IF NOT EXISTS `replied_at` TIMESTAMP NULL AFTER `admin_reply`,
+ADD COLUMN IF NOT EXISTS `replied_by` BINARY(16) AFTER `replied_at`,
+ADD INDEX IF NOT EXISTS `idx_user_id` (`user_id`),
+ADD INDEX IF NOT EXISTS `idx_rating` (`rating`),
+ADD INDEX IF NOT EXISTS `idx_status` (`status`),
+ADD INDEX IF NOT EXISTS `idx_created_at` (`created_at`);
+
+-- Add foreign key for replied_by
+ALTER TABLE `feedback`
+ADD CONSTRAINT `fk_feedback_replied_by` 
+FOREIGN KEY (`replied_by`) REFERENCES `users`(`id`) ON DELETE SET NULL;
+
+-- Create payment_transactions table for Stripe
+CREATE TABLE IF NOT EXISTS `payment_transactions` (
+    `id` BINARY(16) NOT NULL PRIMARY KEY,
+    `transaction_id` VARCHAR(255) NOT NULL,
+    `amount` DECIMAL(12,2) NOT NULL,
+    `currency` VARCHAR(3) NOT NULL,
+    `status` ENUM('pending','completed','failed','refunded') DEFAULT 'pending',
+    `payment_method` VARCHAR(50) DEFAULT 'stripe',
+    `metadata` JSON NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
+    
+    INDEX `idx_transaction_id` (`transaction_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
