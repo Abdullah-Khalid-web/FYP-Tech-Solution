@@ -3,6 +3,7 @@ const router = express.Router();
 const { pool } = require('../../db');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const { sendEmail, getResetPasswordEmail, getPasswordResetSuccessEmail } = require('../../config/email');
 
 function binToUuid(buffer) {
   if (!buffer) return null;
@@ -49,7 +50,7 @@ router.post('/forgot-password', async (req, res) => {
 
   try {
     await ensurePasswordResetTable();
-    const [users] = await pool.execute('SELECT BIN_TO_UUID(id) AS id, email FROM users WHERE email = ? LIMIT 1', [email]);
+    const [users] = await pool.execute('SELECT BIN_TO_UUID(id) AS id, name, email FROM users WHERE email = ? LIMIT 1', [email]);
 
     if (users.length) {
       const token = crypto.randomBytes(32).toString('hex');
@@ -62,12 +63,21 @@ router.post('/forgot-password', async (req, res) => {
 
       const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${token}`;
       console.log(`Password reset link for ${email}: ${resetUrl}`);
+
+      const emailResult = await sendEmail(
+        users[0].email,
+        'Password Reset Request - ManageHub',
+        getResetPasswordEmail(users[0].name, resetUrl)
+      );
+      if (!emailResult.success) {
+        console.error('Password reset email failed:', emailResult.error);
+      }
     }
 
     res.render('auth/forgot-password', {
       title: 'Forgot Password',
       error: null,
-      success: 'If that email exists, a reset link has been generated. Check the server console or configured mail logs.'
+      success: 'If that email exists, a reset link has been generated. Check your email or the server console for the reset link.'
     });
   } catch (err) {
     console.error('Forgot password error:', err);
@@ -76,7 +86,44 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 router.get('/reset-password/:token', async (req, res) => {
-  res.render('auth/reset-password', { title: 'Reset Password', token: req.params.token, error: null });
+  const { token } = req.params;
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+  try {
+    await ensurePasswordResetTable();
+
+    const [tokens] = await pool.execute(
+      `SELECT BIN_TO_UUID(user_id) AS user_id
+       FROM password_reset_tokens
+       WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW()
+       ORDER BY created_at DESC LIMIT 1`,
+      [tokenHash]
+    );
+
+    if (!tokens.length) {
+      return res.render('auth/reset-password', {
+        title: 'Reset Password',
+        error: 'This password reset link is invalid or has expired.',
+        token: null,
+        valid: false
+      });
+    }
+
+    res.render('auth/reset-password', {
+      title: 'Reset Password',
+      error: null,
+      token: token,
+      valid: true
+    });
+  } catch (err) {
+    console.error('Reset password page error:', err);
+    res.render('auth/reset-password', {
+      title: 'Reset Password',
+      error: 'Unable to verify reset link. Please try again.',
+      token: null,
+      valid: false
+    });
+  }
 });
 
 router.post('/reset-password/:token', async (req, res) => {
@@ -84,10 +131,20 @@ router.post('/reset-password/:token', async (req, res) => {
   const tokenHash = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
   if (!password || password.length < 6) {
-    return res.render('auth/reset-password', { title: 'Reset Password', token: req.params.token, error: 'Password must be at least 6 characters' });
+    return res.render('auth/reset-password', {
+      title: 'Reset Password',
+      token: req.params.token,
+      error: 'Password must be at least 6 characters',
+      valid: true
+    });
   }
   if (password !== confirmPassword) {
-    return res.render('auth/reset-password', { title: 'Reset Password', token: req.params.token, error: 'Passwords do not match' });
+    return res.render('auth/reset-password', {
+      title: 'Reset Password',
+      token: req.params.token,
+      error: 'Passwords do not match',
+      valid: true
+    });
   }
 
   try {
@@ -101,17 +158,40 @@ router.post('/reset-password/:token', async (req, res) => {
     );
 
     if (!tokens.length) {
-      return res.render('auth/reset-password', { title: 'Reset Password', token: req.params.token, error: 'Reset link is invalid or expired' });
+      return res.render('auth/reset-password', {
+        title: 'Reset Password',
+        token: req.params.token,
+        error: 'Reset link is invalid or expired',
+        valid: false
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     await pool.execute('UPDATE users SET password = ?, updated_at = NOW() WHERE id = UUID_TO_BIN(?)', [hashedPassword, tokens[0].user_id]);
     await pool.execute('UPDATE password_reset_tokens SET used_at = NOW() WHERE token_hash = ?', [tokenHash]);
 
+    const [users] = await pool.execute(
+      'SELECT name, email FROM users WHERE id = UUID_TO_BIN(?) LIMIT 1',
+      [tokens[0].user_id]
+    );
+
+    if (users.length) {
+      await sendEmail(
+        users[0].email,
+        'Password Changed Successfully - ManageHub',
+        getPasswordResetSuccessEmail(users[0].name)
+      );
+    }
+
     res.redirect('/login?success=Password reset successfully. Please sign in.');
   } catch (err) {
     console.error('Reset password error:', err);
-    res.render('auth/reset-password', { title: 'Reset Password', token: req.params.token, error: 'Unable to reset password' });
+    res.render('auth/reset-password', {
+      title: 'Reset Password',
+      token: req.params.token,
+      error: 'Unable to reset password',
+      valid: true
+    });
   }
 });
 

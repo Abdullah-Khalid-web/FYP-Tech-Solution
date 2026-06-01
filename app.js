@@ -61,10 +61,21 @@ app.use((req, res, next) => {
 // Make permission helper available in all views
 app.use(async (req, res, next) => {
     res.locals.permissionHelper = permissionHelper;
-    res.locals.hasPermission = async (slug) => {
-        if (!req.session?.userId) return false;
-        return await permissionHelper.hasPermission(req.session.userId, slug);
+    res.locals.permission = {
+        hasPermission: async (slug) => {
+            if (!req.session?.userId) return false;
+            if (Array.isArray(req.userPermissionSlugs) && req.userPermissionSlugs.length) {
+                return req.userPermissionSlugs.includes(slug);
+            }
+            return await permissionHelper.hasPermission(req.session.userId, slug);
+        },
+        getUserPermissions: async () => {
+            if (res.locals.userPermissions) return res.locals.userPermissions;
+            if (!req.session?.userId) return { list: [], byModule: {} };
+            return permissionHelper.getUserPermissions(req.session.userId);
+        }
     };
+    res.locals.hasPermission = res.locals.permission.hasPermission;
     next();
 });
 
@@ -219,6 +230,30 @@ app.use(async (req, res, next) => {
   }
 });
 
+app.use(async (req, res, next) => {
+    if (req.session?.userId) {
+        try {
+            const permissionData = await permissionHelper.getUserPermissions(req.session.userId);
+            req.userPermissions = permissionData.list.map(perm => perm.slug);
+            res.locals.userPermissions = permissionData;
+            res.locals.userPermissionSlugs = req.userPermissions;
+            res.locals.currentUser = res.locals.user;
+        } catch (err) {
+            console.error('Error loading user permissions:', err);
+            req.userPermissions = [];
+            res.locals.userPermissions = { list: [], byModule: {} };
+            res.locals.userPermissionSlugs = [];
+            res.locals.currentUser = res.locals.user || null;
+        }
+    } else {
+        req.userPermissions = [];
+        res.locals.userPermissions = { list: [], byModule: {} };
+        res.locals.userPermissionSlugs = [];
+        res.locals.currentUser = null;
+    }
+
+    next();
+});
 
 
 /* ------------------ HOME ROUTE ------------------ */
@@ -300,6 +335,7 @@ app.get('/pricing', async (req, res) => {
 
 /* ------------------ ROUTES ------------------ */
 
+// app.use('/', require('./routes/auth'));
 app.use('/', require('./routes/auth/login'));
 app.use('/', require('./routes/auth/logout'));
 app.use('/', require('./routes/auth/register'));
@@ -346,55 +382,6 @@ app.use('/suppliers', isAuthenticated, require('./routes/suppliers'));
 
 // Feedback - requires authentication
 app.use('/feedback', isAuthenticated, require('./routes/feedback'));
-
-/* ------------------ MAKE PERMISSIONS AVAILABLE IN VIEWS ------------------ */
-app.use(async (req, res, next) => {
-    res.locals.permission = {
-        hasPermission: async (slug) => {
-            if (!req.session?.userId) return false;
-            return await permissionHelper.hasPermission(req.session.userId, slug);
-        },
-        getUserPermissions: async () => {
-            if (!req.session?.userId) return { list: [], byModule: {} };
-            return await permissionHelper.getUserPermissions(req.session.userId);
-        }
-    };
-    
-    // Also make current user permissions available
-    if (req.session?.userId) {
-        try {
-            const [userRows] = await pool.execute(
-                `SELECT 
-                    BIN_TO_UUID(u.id) as id,
-                    u.name,
-                    u.email,
-                    u.phone,
-                    u.cnic,
-                    u.status,
-                    u.profile_picture,
-                    BIN_TO_UUID(u.role_id) as role_id,
-                    r.role_name,
-                    BIN_TO_UUID(u.shop_id) as shop_id
-                FROM users u
-                LEFT JOIN roles r ON u.role_id = r.id
-                WHERE u.id = UUID_TO_BIN(?)`,
-                [req.session.userId]
-            );
-            
-            if (userRows.length) {
-                res.locals.currentUser = userRows[0];
-                
-                // Get user permissions
-                const perms = await permissionHelper.getUserPermissions(req.session.userId);
-                res.locals.userPermissions = perms;
-            }
-        } catch (err) {
-            console.error('Error loading user data:', err);
-        }
-    }
-    
-    next();
-});
 
 /* ------------------ 404 ------------------ */
 app.use((req, res) => {

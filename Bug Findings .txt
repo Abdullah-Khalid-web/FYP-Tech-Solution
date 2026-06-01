@@ -1,14 +1,12 @@
 I want where AI suggest the user about how to enhance the business and how to increase the sales and how to manage the inventory and how to manage the employees and how to manage the customers and how to manage the finances and how to manage the marketing and how to manage the operations and how to manage the strategy and how to manage the growth and how to manage the innovation and how to manage the sustainability and how to manage the risk and how to manage the compliance and how to manage the ethics and how to manage the leadership and how to manage the culture and how to manage the communication and how to manage the collaboration and how to manage the creativity and how to manage the productivity and how to manage the performance and how to manage the customer satisfaction and how to manage the employee satisfaction and how to manage the stakeholder satisfaction.
 Feedback is in the dashborad should be dynamic in protofolio page and the user can see the feedback in the portfolio page.
 The subscribtion plan is not visible in the Portfolio page.
-There must be a page for the subscribtion plan and the user can subscribe to the plan from that page.
 In user side pages there are some issues in the UI of the dark mode 
-Make Sure to add the credentials in the .env file for the Contact Module.
+Make Sure to Contact Page work perfect.
 
-Implementation of the Forget password in the login page. (I will fix it in the next update)
-Payment Gateway Integration - Implemented payment gateway integration using Stripe API for secure and seamless transactions. (I will fix it in the next update)
-Role and premission issue in the user management 
-
+Role and premission issue in the user management (Fixed)
+Implementation of the Forget password in the login page. (Fixed)
+Payment Gateway Integration - Implemented payment gateway integration using Stripe API for secure and seamless transactions. (Fixed)
 Make Sure to add the credentials in the .env file for Stripe API integration (Fixed)
 When i dedicat the loan in the user mgmt then the loan dedect twice (Fixed)
 The font emp mgmt is changed (Fixed)

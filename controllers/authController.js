@@ -1,136 +1,269 @@
-const bcrypt = require('bcryptjs');
-const { pool } = require('../db');
+const crypto = require('crypto');
+const { sendEmail, getResetPasswordEmail, getPasswordResetSuccessEmail } = require('../config/email');
+const { v4: uuidv4 } = require('uuid');
 
-// Convert BINARY(16) to UUID string
-function binToUuid(buffer) {
-  if (!buffer) return null;
-  const hex = buffer.toString('hex');
-  return [
-    hex.substring(0, 8),
-    hex.substring(8, 12),
-    hex.substring(12, 16),
-    hex.substring(16, 20),
-    hex.substring(20, 32)
-  ].join('-');
+// Generate random token
+function generateToken() {
+  return crypto.randomBytes(32).toString('hex');
 }
 
-/* SHOW LOGIN */
-exports.showLogin = (req, res) => {
+/* SHOW FORGOT PASSWORD PAGE */
+exports.showForgotPassword = (req, res) => {
   if (req.session?.userId) return res.redirect('/dashboard');
-  res.render('auth/login', { title: 'Login', error: null });
+  res.render('auth/forget-password', { 
+    title: 'Forgot Password', 
+    error: null, 
+    success: null 
+  });
 };
 
-/* LOGIN */
-// controllers/authController.js (login function)
-exports.login = async (req, res) => {
-  const { email, password, rememberMe } = req.body;
+/* PROCESS FORGOT PASSWORD */
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
 
-  if (!email || !password) {
-    return res.render('auth/login', { 
-      title: 'Login', 
-      error: 'Email and password are required' 
+  if (!email) {
+    return res.render('auth/forget-password', {
+      title: 'Forgot Password',
+      error: 'Email address is required',
+      success: null
     });
   }
 
   try {
-    // Get user with role information
-    const [rows] = await pool.execute(
-      `SELECT 
-        BIN_TO_UUID(u.id) as id,
-        u.name,
-        u.email,
-        u.password,
-        BIN_TO_UUID(u.shop_id) as shop_id,
-        BIN_TO_UUID(u.role_id) as role_id,
-        r.role_name
-      FROM users u
-      LEFT JOIN roles r ON u.role_id = r.id
-      WHERE u.email = ? LIMIT 1`,
+    // Check if user exists with this email
+    const [users] = await pool.execute(
+      `SELECT BIN_TO_UUID(u.id) as id, u.name, u.email, u.status 
+       FROM users u 
+       WHERE u.email = ?`,
       [email]
     );
 
-    if (!rows.length) {
-      return res.render('auth/login', { 
-        title: 'Login', 
-        error: 'Invalid email or password' 
+    if (!users.length) {
+      // Don't reveal if email exists for security
+      return res.render('auth/forget-password', {
+        title: 'Forgot Password',
+        success: 'If an account exists with this email, you will receive a password reset link.',
+        error: null
       });
     }
 
-    const user = rows[0];
-    
+    const user = users[0];
+
     // Check if user is active
-    const [statusCheck] = await pool.execute(
-      'SELECT status FROM users WHERE email = ?',
+    if (user.status !== 'active') {
+      return res.render('auth/forget-password', {
+        title: 'Forgot Password',
+        error: 'Your account is inactive. Please contact support.',
+        success: null
+      });
+    }
+
+    // Delete any existing reset tokens for this email
+    await pool.execute(
+      'DELETE FROM password_resets WHERE email = ? AND expires_at > NOW()',
       [email]
     );
-    
-    if (statusCheck.length && statusCheck[0].status !== 'active') {
-      return res.render('auth/login', { 
-        title: 'Login', 
-        error: 'Your account is inactive. Please contact support.' 
-      });
+
+    // Generate new token
+    const token = generateToken();
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1); // Token expires in 1 hour
+
+    // Save token to database
+    const resetId = uuidv4();
+    await pool.execute(
+      'INSERT INTO password_resets (id, email, token, expires_at, used) VALUES (UUID_TO_BIN(?), ?, ?, ?, 0)',
+      [resetId, email, token, expiresAt]
+    );
+
+    // Generate reset link
+    const resetLink = `${process.env.APP_URL || 'http://localhost:3000'}/reset-password/${token}`;
+
+    // Send email
+    const emailResult = await sendEmail(
+      email,
+      'Password Reset Request - ManageHub',
+      getResetPasswordEmail(user.name, resetLink)
+    );
+
+    if (!emailResult.success) {
+      console.error('Failed to send reset email:', emailResult.error);
+      // Still show success message for security, but log the error
+      console.error('Email sending failed for:', email);
     }
 
-    const match = await bcrypt.compare(password, user.password);
-    
-    if (!match) {
-      return res.render('auth/login', { 
-        title: 'Login', 
-        error: 'Invalid email or password' 
-      });
-    }
-
-    // Store ALL user info in session
-    req.session.userId = user.id;
-    req.session.user = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role_id: user.role_id,
-      role_name: user.role_name || 'No Role',
-      shop_id: user.shop_id
-    };
-    req.session.shopId = user.shop_id;
-    req.session.roleId = user.role_id;
-    req.session.roleName = user.role_name || 'No Role';
-    req.session.username = user.name;
-    req.session.userEmail = user.email;
-
-    // Set session expiry if "remember me" is checked
-    if (rememberMe) {
-      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
-    }
-
-    console.log('User logged in:', {
-      id: user.id,
-      name: user.name,
-      role: user.role_name,
-      shopId: user.shop_id
+    // Show success message
+    res.render('auth/forget-password', {
+      title: 'Forgot Password',
+      success: 'If an account exists with this email, you will receive a password reset link.',
+      error: null
     });
 
-    // Redirect to dashboard
-    res.redirect('/dashboard');
-    
   } catch (err) {
-    console.error('Login error:', err);
-    res.render('auth/login', { 
-      title: 'Login', 
-      error: 'Login failed. Please try again.' 
+    console.error('Forgot password error:', err);
+    res.render('auth/forget-password', {
+      title: 'Forgot Password',
+      error: 'Unable to process request. Please try again later.',
+      success: null
     });
   }
 };
 
-/* LOGOUT */
-exports.logout = (req, res) => {
-  const username = req.session?.username;
-  
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Logout error:', err);
+/* SHOW RESET PASSWORD PAGE */
+exports.showResetPassword = async (req, res) => {
+  const { token } = req.params;
+
+  if (req.session?.userId) return res.redirect('/dashboard');
+
+  try {
+    // Check if token is valid and not expired
+    const [tokens] = await pool.execute(
+      `SELECT * FROM password_resets 
+       WHERE token = ? AND used = 0 AND expires_at > NOW()`,
+      [token]
+    );
+
+    if (!tokens.length) {
+      return res.render('auth/reset-password', {
+        title: 'Reset Password',
+        error: 'This password reset link is invalid or has expired.',
+        success: null,
+        token: null,
+        valid: false
+      });
     }
-    res.clearCookie('managehub.sid');
-    console.log(`User logged out: ${username}`);
-    res.redirect('/login');
-  });
+
+    // Valid token - show reset form
+    res.render('auth/reset-password', {
+      title: 'Reset Password',
+      error: null,
+      success: null,
+      token: token,
+      valid: true
+    });
+
+  } catch (err) {
+    console.error('Show reset password error:', err);
+    res.render('auth/reset-password', {
+      title: 'Reset Password',
+      error: 'Unable to verify reset link. Please try again.',
+      success: null,
+      token: null,
+      valid: false
+    });
+  }
 };
 
+/* PROCESS RESET PASSWORD */
+exports.resetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password, confirm_password } = req.body;
+
+  // Validate passwords
+  if (!password || !confirm_password) {
+    return res.render('auth/reset-password', {
+      title: 'Reset Password',
+      error: 'Please fill in all fields',
+      success: null,
+      token: token,
+      valid: true
+    });
+  }
+
+  if (password !== confirm_password) {
+    return res.render('auth/reset-password', {
+      title: 'Reset Password',
+      error: 'Passwords do not match',
+      success: null,
+      token: token,
+      valid: true
+    });
+  }
+
+  if (password.length < 6) {
+    return res.render('auth/reset-password', {
+      title: 'Reset Password',
+      error: 'Password must be at least 6 characters long',
+      success: null,
+      token: token,
+      valid: true
+    });
+  }
+
+  try {
+    // Verify token is valid
+    const [tokens] = await pool.execute(
+      `SELECT * FROM password_resets 
+       WHERE token = ? AND used = 0 AND expires_at > NOW()`,
+      [token]
+    );
+
+    if (!tokens.length) {
+      return res.render('auth/reset-password', {
+        title: 'Reset Password',
+        error: 'This password reset link is invalid or has expired.',
+        success: null,
+        token: null,
+        valid: false
+      });
+    }
+
+    const resetRecord = tokens[0];
+    const email = resetRecord.email;
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update user's password
+    await pool.execute(
+      'UPDATE users SET password = ?, updated_at = NOW() WHERE email = ?',
+      [hashedPassword, email]
+    );
+
+    // Mark token as used
+    await pool.execute(
+      'UPDATE password_resets SET used = 1 WHERE token = ?',
+      [token]
+    );
+
+    // Delete any other reset tokens for this email
+    await pool.execute(
+      'DELETE FROM password_resets WHERE email = ?',
+      [email]
+    );
+
+    // Get user name for email
+    const [users] = await pool.execute(
+      'SELECT name FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (users.length) {
+      // Send success email
+      await sendEmail(
+        email,
+        'Password Changed Successfully - ManageHub',
+        getPasswordResetSuccessEmail(users[0].name)
+      );
+    }
+
+    // Show success message
+    res.render('auth/reset-password', {
+      title: 'Password Reset Success',
+      error: null,
+      success: 'Your password has been successfully reset. You can now login with your new password.',
+      token: null,
+      valid: false
+    });
+
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.render('auth/reset-password', {
+      title: 'Reset Password',
+      error: 'Unable to reset password. Please try again.',
+      success: null,
+      token: token,
+      valid: true
+    });
+  }
+};
