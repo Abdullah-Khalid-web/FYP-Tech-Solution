@@ -3,3 +3,4 @@ node_modules/
 FYP-Tech-Solution(old)/
 uploads/
 .evn
+.env.*
