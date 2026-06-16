@@ -1,231 +1,334 @@
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap');
-
-    /* Initial Transparent Navbar */
-    .modern-navbar {
-        background: transparent;
-        border-bottom: 1px solid transparent;
-        padding: 18px 0;
-        transition: all 0.4s ease;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-
-    /* Scrolled Blue Navbar */
-    .modern-navbar.scrolled {
-        background: #0f172a;
-        padding: 10px 0;
-        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.3);
-    }
-
-    .modern-navbar .navbar-brand {
-        font-family: 'Outfit', sans-serif;
-        font-weight: 800;
-        font-size: 1.6rem;
-        color: #0f172a;
-        letter-spacing: -0.02em;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        transition: color 0.4s ease;
-    }
-
-    /* Sidebar Toggle Button in Navbar */
-    .sidebar-toggle-nav {
-        background: transparent;
-        border: none;
-        color: #4b5563;
-        font-size: 1.3rem;
-        cursor: pointer;
-        padding: 8px 12px;
-        margin-right: 10px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .sidebar-toggle-nav:hover {
-        background: rgba(0, 0, 0, 0.05);
-        transform: scale(1.05);
-    }
-
-    html[data-theme="dark"] .sidebar-toggle-nav {
-        color: #e2e8f0;
-    }
-
-    html[data-theme="dark"] .sidebar-toggle-nav:hover {
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    .modern-navbar.scrolled .sidebar-toggle-nav {
-        color: white;
-    }
-
-    .modern-navbar.scrolled .sidebar-toggle-nav:hover {
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    /* DARK MODE OVERRIDES */
-    html[data-theme="dark"] .modern-navbar {
-        background: #0f172a;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    html[data-theme="dark"] .modern-navbar.scrolled {
-        background: #0f172a;
-    }
-
-    html[data-theme="dark"] .modern-navbar:not(.scrolled) .navbar-brand {
-        color: #ffffff;
-    }
-
-    .modern-navbar.scrolled .navbar-brand {
-        color: #ffffff;
-    }
-
-    /* Nav links colors */
-    .modern-navbar .nav-link {
-        color: #4b5563 !important;
-        font-weight: 600;
-        font-size: 0.95rem;
-        padding: 8px 16px !important;
-        margin: 0 4px;
-        border-radius: 50px;
-        transition: all 0.3s ease;
-    }
-
-    html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link {
-        color: #e2e8f0 !important;
-    }
-
-    .modern-navbar.scrolled .nav-link {
-        color: rgba(255, 255, 255, 0.8) !important;
-    }
-
-    /* Nav link hover states */
-    .modern-navbar .nav-link:hover {
-        color: #0f172a !important;
-        background: rgba(15, 23, 42, 0.05);
-    }
-
-    html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link:hover {
-        color: #ffffff !important;
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    .modern-navbar.scrolled .nav-link:hover {
-        color: #ffffff !important;
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    .modern-navbar .theme-toggle-btn {
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.05), rgba(59, 130, 246, 0.1));
-        border: 1px solid rgba(15, 23, 42, 0.1);
-        color: #0f172a;
-        border-radius: 50px;
-        padding: 8px 20px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    html[data-theme="dark"] .modern-navbar:not(.scrolled) .theme-toggle-btn {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-        color: #ffffff;
-    }
-
-    .modern-navbar.scrolled .theme-toggle-btn {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-        color: #ffffff;
-    }
-
-    .modern-navbar .theme-toggle-btn:hover {
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.1), rgba(59, 130, 246, 0.2));
-        border-color: rgba(15, 23, 42, 0.2);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.1);
-    }
-
-    html[data-theme="dark"] .modern-navbar:not(.scrolled) .theme-toggle-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    }
-
-    .modern-navbar.scrolled .theme-toggle-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Custom hamburger icon */
-    .modern-navbar .navbar-toggler {
-        border: none;
-        padding: 4px;
-    }
-
-    .modern-navbar.scrolled .navbar-toggler-icon,
-    html[data-theme="dark"] .modern-navbar .navbar-toggler-icon {
-        filter: brightness(0) invert(1);
-    }
-
-    .modern-navbar .navbar-toggler:focus {
-        box-shadow: none;
-        outline: none;
-    }
-
-    /* Special styling for primary actions */
-    .modern-navbar .nav-link.active-badge {
-        background: rgba(15, 23, 42, 0.1) !important;
-        color: #0f172a !important;
-    }
-
-    html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link.active-badge {
-        background: rgba(255, 255, 255, 0.1) !important;
-        color: #ffffff !important;
-    }
-
-    .modern-navbar.scrolled .nav-link.active-badge {
-        background: rgba(255, 255, 255, 0.15) !important;
-        color: #ffffff !important;
-    }
-
-    .modern-navbar .nav-link.active-badge:hover {
-        background: rgba(15, 23, 42, 0.15) !important;
-        color: #1e40af !important;
-    }
-
-    html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link.active-badge:hover {
-        background: rgba(255, 255, 255, 0.2) !important;
-        color: #ffffff !important;
-    }
-
-    .modern-navbar.scrolled .nav-link.active-badge:hover {
-        background: rgba(255, 255, 255, 0.25) !important;
-    }
-
-    /* Adjust navbar when sidebar is present */
-    .sidebar-enabled .modern-navbar {
-        transition: margin-left 0.3s ease, width 0.3s ease;
-    }
-
-    .sidebar-enabled .modern-navbar.with-sidebar {
-        margin-left: 260px;
-        width: calc(100% - 260px);
-    }
-
-    @media (max-width: 768px) {
-        .sidebar-enabled .modern-navbar.with-sidebar {
-            margin-left: 0;
-            width: 100%;
+    <style>
+        /* GLOBAL RESETS & BASE */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    }
-</style>
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f8fafc;
+            transition: background 0.3s ease, color 0.2s ease;
+            padding-top: 85px; /* fixed navbar space */
+        }
+
+        html[data-theme="dark"] body {
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        /* custom scroll */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 12px;
+        }
+
+        /* demo content styling */
+        .hero-demo {
+            padding: 3rem 1.5rem;
+            text-align: center;
+            background: rgba(59,130,246,0.05);
+            border-radius: 2rem;
+            margin: 2rem auto;
+            max-width: 1000px;
+            backdrop-filter: blur(2px);
+        }
+        html[data-theme="dark"] .hero-demo {
+            background: rgba(59,130,246,0.15);
+        }
+        .greeting-card {
+            background: white;
+            border-radius: 28px;
+            padding: 1.8rem;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        html[data-theme="dark"] .greeting-card {
+            background: #1e293b;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.4);
+        }
+        .btn-outline-custom {
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        /* force consistent spacing */
+        .container-fluid {
+            padding-left: 1.8rem;
+            padding-right: 1.8rem;
+        }
+
+        /* Imported styles (exactly as given, plus sidebar dummy handle) */
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap');
+
+        /* Initial Transparent Navbar */
+        .modern-navbar {
+            background: transparent;
+            border-bottom: 1px solid transparent;
+            padding: 18px 0;
+            transition: all 0.4s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Scrolled Blue Navbar */
+        .modern-navbar.scrolled {
+            background: #0f172a;
+            padding: 10px 0;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.3);
+        }
+
+        .modern-navbar .navbar-brand {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: color 0.4s ease;
+        }
+
+        /* Sidebar Toggle Button in Navbar */
+        .sidebar-toggle-nav {
+            background: transparent;
+            border: none;
+            color: #4b5563;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            margin-right: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggle-nav:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.05);
+        }
+
+        html[data-theme="dark"] .sidebar-toggle-nav {
+            color: #e2e8f0;
+        }
+
+        html[data-theme="dark"] .sidebar-toggle-nav:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modern-navbar.scrolled .sidebar-toggle-nav {
+            color: white;
+        }
+
+        .modern-navbar.scrolled .sidebar-toggle-nav:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* DARK MODE OVERRIDES */
+        html[data-theme="dark"] .modern-navbar {
+            background: #0f172a;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        html[data-theme="dark"] .modern-navbar.scrolled {
+            background: #0f172a;
+        }
+
+        html[data-theme="dark"] .modern-navbar:not(.scrolled) .navbar-brand {
+            color: #ffffff;
+        }
+
+        .modern-navbar.scrolled .navbar-brand {
+            color: #ffffff;
+        }
+
+        /* Nav links colors */
+        .modern-navbar .nav-link {
+            color: #4b5563 !important;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 8px 16px !important;
+            margin: 0 4px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+
+        html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link {
+            color: #e2e8f0 !important;
+        }
+
+        .modern-navbar.scrolled .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .modern-navbar .nav-link:hover {
+            color: #0f172a !important;
+            background: rgba(15, 23, 42, 0.05);
+        }
+
+        html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link:hover {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modern-navbar.scrolled .nav-link:hover {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modern-navbar .theme-toggle-btn {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.05), rgba(59, 130, 246, 0.1));
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            color: #0f172a;
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        html[data-theme="dark"] .modern-navbar:not(.scrolled) .theme-toggle-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        .modern-navbar.scrolled .theme-toggle-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        .modern-navbar .theme-toggle-btn:hover {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.1), rgba(59, 130, 246, 0.2));
+            border-color: rgba(15, 23, 42, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.1);
+        }
+
+        html[data-theme="dark"] .modern-navbar:not(.scrolled) .theme-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .modern-navbar.scrolled .theme-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom language button - exactly matching theme button style */
+        .lang-toggle-btn {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.05), rgba(59, 130, 246, 0.1));
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            color: #0f172a;
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background-origin: border-box;
+        }
+
+        html[data-theme="dark"] .modern-navbar:not(.scrolled) .lang-toggle-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        .modern-navbar.scrolled .lang-toggle-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        .lang-toggle-btn:hover {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.1), rgba(59, 130, 246, 0.2));
+            border-color: rgba(15, 23, 42, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.1);
+        }
+
+        html[data-theme="dark"] .modern-navbar:not(.scrolled) .lang-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .modern-navbar.scrolled .lang-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* custom hamburger */
+        .modern-navbar .navbar-toggler {
+            border: none;
+            padding: 4px;
+        }
+
+        .modern-navbar.scrolled .navbar-toggler-icon,
+        html[data-theme="dark"] .modern-navbar .navbar-toggler-icon {
+            filter: brightness(0) invert(1);
+        }
+
+        .modern-navbar .navbar-toggler:focus {
+            box-shadow: none;
+            outline: none;
+        }
+
+        .modern-navbar .nav-link.active-badge {
+            background: rgba(15, 23, 42, 0.1) !important;
+            color: #0f172a !important;
+        }
+
+        html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link.active-badge {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: #ffffff !important;
+        }
+
+        .modern-navbar.scrolled .nav-link.active-badge {
+            background: rgba(255, 255, 255, 0.15) !important;
+            color: #ffffff !important;
+        }
+
+        .modern-navbar .nav-link.active-badge:hover {
+            background: rgba(15, 23, 42, 0.15) !important;
+            color: #1e40af !important;
+        }
+
+        html[data-theme="dark"] .modern-navbar:not(.scrolled) .nav-link.active-badge:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            color: #ffffff !important;
+        }
+
+        .modern-navbar.scrolled .nav-link.active-badge:hover {
+            background: rgba(255, 255, 255, 0.25) !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .lang-toggle-btn span, .theme-toggle-btn span {
+                display: inline !important;
+            }
+        }
+    </style>
 
 <nav class="navbar navbar-expand-lg modern-navbar fixed-top" id="mainNav">
     <div class="container-fluid px-4">
@@ -259,12 +362,11 @@
             <ul class="navbar-nav ms-auto align-items-lg-center">
                 <% if (typeof user !=='undefined' && user && (user.username || user.name)) { %>
                     <li class="nav-item">
-                        <a class="nav-link active-badge" href="/user_profile">
+                        <a class="nav-link" href="/user_profile">
                             <span style="margin-right: 4px;">👋</span> Hi, <%= user.username || user.name %>
                         </a>
                     </li>
-                    <!-- <li class="nav-item ms-lg-2"><a class="nav-link text-danger logout-btn" href="/logout">Logout</a> -->
-                    </li>
+
                 <% } else { %>
                     <li class="nav-item d-none d-lg-block"><a class="nav-link" href="/about">About</a></li>
                     <li class="nav-item d-none d-lg-block"><a class="nav-link" href="/pricing">Plans</a></li>
@@ -275,6 +377,11 @@
                 <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
                     <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeToggle">
                         🌓 <span class="d-lg-none d-xl-inline">Theme</span>
+                    </button>
+                </li>
+                <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
+                    <button class="lang-toggle-btn " onclick="toggleLanguage()">
+                        🌐 <span class="d-lg-none d-xl-inline" id="langText">اردو</span>
                     </button>
                 </li>
             </ul>
