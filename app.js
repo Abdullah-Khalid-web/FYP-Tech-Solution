@@ -39,6 +39,9 @@ app.use(session({
 
 app.use(flash());
 
+/* ------------------ API ROUTES THAT REQUIRE SESSIONS ------------------ */
+app.use('/api/sync', require('./routes/sync'));
+
 /* ------------------ VIEW ENGINE ------------------ */
 app.use(expressLayouts);
 app.set('view engine', 'ejs');
