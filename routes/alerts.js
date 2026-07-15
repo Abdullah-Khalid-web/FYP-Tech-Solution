@@ -20,7 +20,7 @@ const getShopPrefix = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: shops[0]?.name || 'My Shop',
-            logo: shops[0]?.logo ? `/uploads/${shops[0].logo}` : '/images/default-logo.png',
+            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
             currency: shops[0]?.currency || 'PKR',
             primary_color: shops[0]?.primary_color || '#007bff',
             secondary_color: shops[0]?.secondary_color || '#6c757d'
@@ -32,7 +32,7 @@ const getShopPrefix = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: 'My Shop',
-            logo: '/images/default-logo.png',
+            logo: null,
             currency: 'PKR',
             primary_color: '#007bff',
             secondary_color: '#6c757d'
@@ -41,19 +41,25 @@ const getShopPrefix = async (req, res, next) => {
     }
 };
 
+const ALERTS_PRODUCT_QUERY = `
+    SELECT
+        BIN_TO_UUID(p.id) as id, p.name, p.brand, p.category, p.size, p.sku,
+        COALESCE(i.current_quantity, 0) as quantity,
+        COALESCE(i.min_stock_level, 10) as min_stock_alert,
+        CAST(COALESCE(i.avg_cost, 0) AS DECIMAL(10,2)) as buying_price,
+        CAST(COALESCE(i.selling_price, 0) AS DECIMAL(10,2)) as selling_price,
+        p.status
+     FROM products p
+     LEFT JOIN inventory i ON p.id = i.product_id
+     WHERE p.shop_id = UUID_TO_BIN(?)`;
+
 // GET stock alerts page
 router.get('/', getShopPrefix, async (req, res) => {
     try {
-        // Get all products
+        // Get all products with their inventory levels
         const [products] = await pool.execute(
-            `SELECT 
-                id, name, brand, category, size, sku,
-                quantity, min_stock_alert,
-                CAST(buying_price AS DECIMAL(10,2)) as buying_price,
-                CAST(selling_price AS DECIMAL(10,2)) as selling_price,
-                image, status
-             FROM ${req.tablePrefix}products 
-             ORDER BY quantity ASC, name ASC`
+            `${ALERTS_PRODUCT_QUERY} ORDER BY quantity ASC, p.name ASC`,
+            [req.session.shopId]
         );
 
         // Categorize alerts
@@ -96,14 +102,8 @@ router.get('/', getShopPrefix, async (req, res) => {
 router.get('/api', getShopPrefix, async (req, res) => {
     try {
         const [products] = await pool.execute(
-            `SELECT 
-                id, name, brand, category, size, sku,
-                quantity, min_stock_alert,
-                CAST(buying_price AS DECIMAL(10,2)) as buying_price,
-                CAST(selling_price AS DECIMAL(10,2)) as selling_price,
-                image, status
-             FROM ${req.tablePrefix}products 
-             ORDER BY quantity ASC, name ASC`
+            `${ALERTS_PRODUCT_QUERY} ORDER BY quantity ASC, p.name ASC`,
+            [req.session.shopId]
         );
 
         const criticalAlerts = products.filter(product => 
@@ -139,15 +139,10 @@ router.get('/api', getShopPrefix, async (req, res) => {
 router.get('/low-stock', getShopPrefix, async (req, res) => {
     try {
         const [products] = await pool.execute(
-            `SELECT 
-                id, name, brand, category, size, sku,
-                quantity, min_stock_alert,
-                CAST(buying_price AS DECIMAL(10,2)) as buying_price,
-                CAST(selling_price AS DECIMAL(10,2)) as selling_price,
-                image, status
-             FROM ${req.tablePrefix}products 
+            `SELECT * FROM (${ALERTS_PRODUCT_QUERY}) alert_products
              WHERE quantity <= min_stock_alert
-             ORDER BY quantity ASC, name ASC`
+             ORDER BY quantity ASC, name ASC`,
+            [req.session.shopId]
         );
 
         res.render('alerts/low-stock', {
@@ -169,15 +164,10 @@ router.get('/low-stock', getShopPrefix, async (req, res) => {
 router.get('/out-of-stock', getShopPrefix, async (req, res) => {
     try {
         const [products] = await pool.execute(
-            `SELECT 
-                id, name, brand, category, size, sku,
-                quantity, min_stock_alert,
-                CAST(buying_price AS DECIMAL(10,2)) as buying_price,
-                CAST(selling_price AS DECIMAL(10,2)) as selling_price,
-                image, status
-             FROM ${req.tablePrefix}products 
+            `SELECT * FROM (${ALERTS_PRODUCT_QUERY}) alert_products
              WHERE quantity = 0
-             ORDER BY name ASC`
+             ORDER BY name ASC`,
+            [req.session.shopId]
         );
 
         res.render('alerts/out-of-stock', {

@@ -13,7 +13,7 @@ router.get('/dashboard', isAuthenticated, (req, res) => {
   // Get shop data from res.locals (already set by middleware)
   const shop = res.locals.shop || {
     name: 'Manage Hub',
-    logo: '/images/default-logo.png',
+    logo: null,
     phone: '+92 000000000',
     address: 'NextGenTech Solution, Quetta, Pakistan',
     email: 'NextGenTechSolution@gmail.com',

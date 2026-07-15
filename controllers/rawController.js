@@ -31,7 +31,7 @@ const getShopInfo = async (req, res, next) => {
             req.shop = {
                 id: req.shopId,
                 name: shops[0].name || 'My Shop',
-                logo: shops[0].logo ? `/uploads/${shops[0].logo}` : '/images/default-logo.png',
+                logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
                 currency: shops[0].currency || 'PKR',
                 primary_color: shops[0].primary_color || '#007bff',
                 secondary_color: shops[0].secondary_color || '#6c757d'
@@ -40,7 +40,7 @@ const getShopInfo = async (req, res, next) => {
             req.shop = {
                 id: req.shopId,
                 name: 'My Shop',
-                logo: '/images/default-logo.png',
+                logo: null,
                 currency: 'PKR',
                 primary_color: '#007bff',
                 secondary_color: '#6c757d'
@@ -301,13 +301,15 @@ router.post('/materials', getShopInfo, async (req, res) => {
         }
 
         // Insert raw material without cost_price or current_stock
-        const [result] = await pool.execute(
-            `INSERT INTO raw_materials 
-             (id, shop_id, name, sku, barcode, category, description, unit_of_measure, 
+        const materialId = require('crypto').randomUUID();
+        await pool.execute(
+            `INSERT INTO raw_materials
+             (id, shop_id, name, sku, barcode, category, description, unit_of_measure,
               current_stock, min_stock_level, max_stock_level, cost_price,
               batch_tracking, expiry_tracking, is_active, created_by, created_at)
-             VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, 0, ?, ?, 0, ?, ?, ?, UUID_TO_BIN(?), NOW())`,
+             VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, 0, ?, ?, 0, ?, ?, ?, UUID_TO_BIN(?), NOW())`,
             [
+                materialId,
                 req.shopId,
                 name,
                 sku || null,
@@ -319,15 +321,10 @@ router.post('/materials', getShopInfo, async (req, res) => {
                 parseFloat(max_stock_level) || 0,
                 batch_tracking === true || batch_tracking === 'true',
                 expiry_tracking === true || expiry_tracking === 'true',
-                is_active === true || is_active === 'true' || true,
+                is_active !== false && is_active !== 'false',
                 req.session.userId
             ]
         );
-
-        const [newMaterial] = await pool.execute(
-            'SELECT BIN_TO_UUID(id) as id FROM raw_materials WHERE id = LAST_INSERT_ID()'
-        );
-        const materialId = newMaterial[0].id;
 
         res.json({
             success: true,
@@ -369,14 +366,17 @@ router.post('/materials/bulk', getShopInfo, async (req, res) => {
         const insertedIds = [];
 
         // Insert each material
+        const crypto = require('crypto');
         for (const material of materials) {
-            const [result] = await pool.execute(
-                `INSERT INTO raw_materials 
-                 (id, shop_id, name, sku, barcode, category, description, unit_of_measure, 
+            const materialId = crypto.randomUUID();
+            await pool.execute(
+                `INSERT INTO raw_materials
+                 (id, shop_id, name, sku, barcode, category, description, unit_of_measure,
                   current_stock, min_stock_level, max_stock_level, cost_price,
                   batch_tracking, expiry_tracking, is_active, created_by, created_at)
-                 VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, 0, ?, ?, 0, ?, ?, ?, UUID_TO_BIN(?), NOW())`,
+                 VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, 0, ?, ?, 0, ?, ?, ?, UUID_TO_BIN(?), NOW())`,
                 [
+                    materialId,
                     req.shopId,
                     material.name,
                     material.sku || null,
@@ -393,10 +393,7 @@ router.post('/materials/bulk', getShopInfo, async (req, res) => {
                 ]
             );
 
-            const [newMaterial] = await pool.execute(
-                'SELECT BIN_TO_UUID(id) as id FROM raw_materials WHERE id = LAST_INSERT_ID()'
-            );
-            insertedIds.push(newMaterial[0].id);
+            insertedIds.push(materialId);
         }
 
         res.json({
@@ -861,12 +858,14 @@ router.post('/batches', getShopInfo, async (req, res) => {
             }
 
             // Insert stock movement
+            const movementId = require('crypto').randomUUID();
             await connection.execute(
-                `INSERT INTO raw_material_stock_movements 
-                 (id, shop_id, raw_material_id, batch_number, movement_type, quantity, 
+                `INSERT INTO raw_material_stock_movements
+                 (id, shop_id, raw_material_id, batch_number, movement_type, quantity,
                   unit_cost, total_cost, reference_type, reference_id, notes, movement_date, expiry_date, supplier_id, created_by, created_at)
-                 VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(?), UUID_TO_BIN(?), NOW())`,
+                 VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, UUID_TO_BIN(?), ?, ?, ?, UUID_TO_BIN(?), UUID_TO_BIN(?), NOW())`,
                 [
+                    movementId,
                     req.shopId,
                     raw_material_id,
                     batch_number || null,
@@ -897,27 +896,39 @@ router.post('/batches', getShopInfo, async (req, res) => {
                 if (supplier_id) {
                     // Create supplier transaction (debit - we owe money)
                     await connection.execute(
-                        `INSERT INTO supplier_transactions 
+                        `INSERT INTO supplier_transactions
                          (id, shop_id, supplier_id, type, amount, description, reference_type, reference_id, created_by, created_at)
-                         VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), 'debit', ?, ?, 'stock_in', LAST_INSERT_ID(), UUID_TO_BIN(?), NOW())`,
+                         VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), 'debit', ?, ?, 'stock_in', UUID_TO_BIN(?), UUID_TO_BIN(?), NOW())`,
                         [
                             req.shopId,
                             supplier_id,
                             total_cost,
                             `Raw material purchase: ${batch_number || 'No batch'}`,
+                            movementId,
                             req.session.userId
                         ]
                     );
 
-                    // Update supplier balance
-                    await connection.execute(
-                        `INSERT INTO supplier_balance (shop_id, supplier_id, total_debit, total_credit)
-                         VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, 0)
-                         ON DUPLICATE KEY UPDATE 
-                         total_debit = total_debit + VALUES(total_debit),
-                         updated_at = NOW()`,
-                        [req.shopId, supplier_id, total_cost]
+                    // Update supplier balance (portable upsert: SQLite has no ON DUPLICATE KEY UPDATE)
+                    const [existingBalance] = await connection.execute(
+                        `SELECT id FROM supplier_balance WHERE shop_id = UUID_TO_BIN(?) AND supplier_id = UUID_TO_BIN(?)`,
+                        [req.shopId, supplier_id]
                     );
+
+                    if (existingBalance.length === 0) {
+                        await connection.execute(
+                            `INSERT INTO supplier_balance (id, shop_id, supplier_id, total_debit, total_credit)
+                             VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, 0)`,
+                            [req.shopId, supplier_id, total_cost]
+                        );
+                    } else {
+                        await connection.execute(
+                            `UPDATE supplier_balance
+                             SET total_debit = total_debit + ?, updated_at = NOW()
+                             WHERE shop_id = UUID_TO_BIN(?) AND supplier_id = UUID_TO_BIN(?)`,
+                            [total_cost, req.shopId, supplier_id]
+                        );
+                    }
                 }
             } else {
                 // For stock out or adjustment
@@ -1181,19 +1192,30 @@ router.put('/batches/:id', getShopInfo, async (req, res) => {
                         ]
                     );
 
-                    await connection.execute(
-                        `INSERT INTO supplier_balance (shop_id, supplier_id, total_debit, total_credit)
-                         VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, 0)
-                         ON DUPLICATE KEY UPDATE 
-                         total_debit = total_debit + VALUES(total_debit),
-                         updated_at = NOW()`,
-                        [req.shopId, supplier_id, total_cost]
+                    const [existingBalance] = await connection.execute(
+                        `SELECT id FROM supplier_balance WHERE shop_id = UUID_TO_BIN(?) AND supplier_id = UUID_TO_BIN(?)`,
+                        [req.shopId, supplier_id]
                     );
+
+                    if (existingBalance.length === 0) {
+                        await connection.execute(
+                            `INSERT INTO supplier_balance (id, shop_id, supplier_id, total_debit, total_credit)
+                             VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, 0)`,
+                            [req.shopId, supplier_id, total_cost]
+                        );
+                    } else {
+                        await connection.execute(
+                            `UPDATE supplier_balance
+                             SET total_debit = total_debit + ?, updated_at = NOW()
+                             WHERE shop_id = UUID_TO_BIN(?) AND supplier_id = UUID_TO_BIN(?)`,
+                            [total_cost, req.shopId, supplier_id]
+                        );
+                    }
                 }
             } else {
                 // For stock out or adjustment
                 await connection.execute(
-                    `UPDATE raw_materials 
+                    `UPDATE raw_materials
                      SET current_stock = current_stock - ?, updated_at = NOW()
                      WHERE id = UUID_TO_BIN(?)`,
                     [parseFloat(quantity), raw_material_id]

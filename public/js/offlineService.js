@@ -150,6 +150,18 @@ const OfflineService = {
     }
 };
 
+if (typeof window !== 'undefined') {
+    window.OfflineService = OfflineService;
+    window.generateUUID = window.generateUUID || generateUUID;
+    window.initOfflineDB = initOfflineDB;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initOfflineDB().catch((error) => {
+            console.warn('Offline database initialization failed:', error);
+        });
+    });
+}
+
 // ===== HELPER =====
 function generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {

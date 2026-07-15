@@ -8,10 +8,8 @@
     </title>
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;600;700;800;900&display=swap"
         rel="stylesheet">
@@ -247,6 +245,31 @@
             border: 1px solid #ddd;
         }
 
+        html[data-theme="dark"] .custom-notification {
+            background: #1e293b;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        html[data-theme="dark"] .custom-notification.alert-success {
+            background-color: #14532d;
+            color: #bbf7d0;
+        }
+
+        html[data-theme="dark"] .custom-notification.alert-error {
+            background-color: #450a0a;
+            color: #fecaca;
+        }
+
+        html[data-theme="dark"] .custom-notification.alert-info {
+            background-color: #164e63;
+            color: #a5f3fc;
+        }
+
+        html[data-theme="dark"] .custom-notification.alert-warning {
+            background-color: #422006;
+            color: #fde68a;
+        }
+
         #loanModal input:focus,
         #loanModal select:focus,
         #loanModal textarea:focus {
@@ -371,7 +394,6 @@
 
 
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 
 <body>
@@ -1224,7 +1246,6 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Update datetime every second
         function updateDateTime() {

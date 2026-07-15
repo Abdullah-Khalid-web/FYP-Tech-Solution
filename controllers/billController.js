@@ -11,17 +11,6 @@ const generateUUID = () => {
     });
 };
 
-// Convert UUID to binary for MySQL
-const uuidToBin = (uuid) => {
-    return Buffer.from(uuid.replace(/-/g, ''), 'hex');
-};
-
-// Convert binary UUID to string
-const binToUuid = (buffer) => {
-    const hex = buffer.toString('hex');
-    return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`;
-};
-
 // Middleware to get shop details
 const getShopDetails = async (req, res, next) => {
     if (!req.session.shopId) {
@@ -41,15 +30,12 @@ const getShopDetails = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: shops[0].name || 'My Shop',
-            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : '/images/default-logo.png',
+            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
             currency: shops[0].currency || '₹',
             primary_color: shops[0].primary_color || '#007bff',
             secondary_color: shops[0].secondary_color || '#6c757d'
         };
 
-        // Store shop binary ID for database queries
-        req.shopBinaryId = uuidToBin(req.session.shopId);
-        
         next();
     } catch (err) {
         console.error('Error fetching shop details:', err);
@@ -162,13 +148,10 @@ router.post('/', getShopDetails, async (req, res) => {
             throw new Error('No valid product IDs found in transaction items. Please ensure products are selected correctly.');
         }
 
-        // Convert UUID strings to binary
-        const productBinaryIds = productIds.map(id => uuidToBin(id));
-
         // Get all products at once for validation
-        const placeholders = productBinaryIds.map(() => '?').join(',');
+        const placeholders = productIds.map(() => 'UUID_TO_BIN(?)').join(',');
         const [products] = await connection.execute(`
-            SELECT 
+            SELECT
                 BIN_TO_UUID(p.id) as id_str,
                 p.id,
                 p.name,
@@ -179,7 +162,7 @@ router.post('/', getShopDetails, async (req, res) => {
             WHERE p.id IN (${placeholders})
             AND p.shop_id = UUID_TO_BIN(?)
             AND p.status = 'active'
-        `, [...productBinaryIds, req.shop.id]);
+        `, [...productIds, req.shop.id]);
 
         console.log('Found products in database:', products);
 
@@ -243,20 +226,18 @@ router.post('/', getShopDetails, async (req, res) => {
 
         // Generate bill number
         const billNumber = 'INV-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
-        const billId = uuidToBin(generateUUID());
-        const shopBinaryId = uuidToBin(req.shop.id);
-        const userBinaryId = userId ? uuidToBin(userId) : null;
+        const billId = generateUUID();
 
         // Insert bill
         await connection.execute(`
-            INSERT INTO bills 
-            (id, shop_id, bill_number, customer_name, customer_phone, 
-             subtotal, tax, total_amount, paid_amount, due_amount, 
+            INSERT INTO bills
+            (id, shop_id, bill_number, customer_name, customer_phone,
+             subtotal, tax, total_amount, paid_amount, due_amount,
              payment_method, notes, created_by, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(?), NOW())
         `, [
             billId,
-            shopBinaryId,
+            req.shop.id,
             billNumber,
             customer_name || 'Walk-in Customer',
             customer_phone || '',
@@ -267,10 +248,10 @@ router.post('/', getShopDetails, async (req, res) => {
             due,
             payment_method || 'cash',
             notes || '',
-            userBinaryId
+            userId || null
         ]);
 
-        console.log('Bill created with ID:', binToUuid(billId));
+        console.log('Bill created with ID:', billId);
 
         // Insert bill items and update inventory
         for (const item of items) {
@@ -279,19 +260,18 @@ router.post('/', getShopDetails, async (req, res) => {
             const itemTotal = (unitPrice * item.quantity) - (item.discount || 0);
             const itemTax = (unitPrice * item.quantity) * 0.1;
             
-            const billItemId = uuidToBin(generateUUID());
-            const productBinaryId = uuidToBin(item.productId);
+            const billItemId = generateUUID();
 
             // Insert bill item
             await connection.execute(`
                 INSERT INTO bill_items
                 (id, shop_id, bill_id, product_id, quantity, unit_price, total_price, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+                VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, NOW())
             `, [
                 billItemId,
-                shopBinaryId,
+                req.shop.id,
                 billId,
-                productBinaryId,
+                item.productId,
                 item.quantity,
                 unitPrice,
                 itemTotal
@@ -302,21 +282,21 @@ router.post('/', getShopDetails, async (req, res) => {
             // Update inventory
             if (item.type === 'sale') {
                 await connection.execute(`
-                    UPDATE inventory 
+                    UPDATE inventory
                     SET current_quantity = current_quantity - ?,
                         updated_at = NOW()
-                    WHERE product_id = ?
+                    WHERE product_id = UUID_TO_BIN(?)
                     AND shop_id = UUID_TO_BIN(?)
-                `, [item.quantity, productBinaryId, req.shop.id]);
+                `, [item.quantity, item.productId, req.shop.id]);
                 console.log(`Updated stock for sale: ${item.name} -${item.quantity}`);
             } else if (item.type === 'return') {
                 await connection.execute(`
-                    UPDATE inventory 
+                    UPDATE inventory
                     SET current_quantity = current_quantity + ?,
                         updated_at = NOW()
-                    WHERE product_id = ?
+                    WHERE product_id = UUID_TO_BIN(?)
                     AND shop_id = UUID_TO_BIN(?)
-                `, [item.quantity, productBinaryId, req.shop.id]);
+                `, [item.quantity, item.productId, req.shop.id]);
                 console.log(`Updated stock for return: ${item.name} +${item.quantity}`);
             }
         }
@@ -326,7 +306,7 @@ router.post('/', getShopDetails, async (req, res) => {
 
         // Get the complete bill details for response
         const [[billDetails]] = await connection.execute(
-            `SELECT 
+            `SELECT
                 BIN_TO_UUID(id) as id_str,
                 bill_number,
                 customer_name,
@@ -339,25 +319,25 @@ router.post('/', getShopDetails, async (req, res) => {
                 payment_method,
                 notes,
                 created_at
-             FROM bills 
-             WHERE id = ?`,
+             FROM bills
+             WHERE id = UUID_TO_BIN(?)`,
             [billId]
         );
 
         const [billItems] = await connection.execute(
-            `SELECT 
+            `SELECT
                 BIN_TO_UUID(product_id) as product_id_str,
                 quantity,
                 unit_price,
                 total_price
-             FROM bill_items 
-             WHERE bill_id = ?`,
+             FROM bill_items
+             WHERE bill_id = UUID_TO_BIN(?)`,
             [billId]
         );
 
         res.json({
             success: true,
-            billId: binToUuid(billId),
+            billId: billId,
             billNumber: billNumber,
             total: total,
             currency: req.shop.currency,
@@ -464,10 +444,10 @@ router.get('/search', getShopDetails, async (req, res) => {
 // GET /bills/:id/items - Get bill items for return
 router.get('/:id/items', getShopDetails, async (req, res) => {
     try {
-        const billId = uuidToBin(req.params.id);
+        const billId = req.params.id;
 
         const [items] = await pool.execute(`
-            SELECT 
+            SELECT
                 bi.*,
                 BIN_TO_UUID(bi.product_id) as product_id_str,
                 p.sku,
@@ -476,12 +456,12 @@ router.get('/:id/items', getShopDetails, async (req, res) => {
             FROM bill_items bi
             LEFT JOIN products p ON bi.product_id = p.id
             LEFT JOIN inventory i ON p.id = i.product_id
-            WHERE bi.bill_id = ? 
+            WHERE bi.bill_id = UUID_TO_BIN(?)
             AND bi.shop_id = UUID_TO_BIN(?)
         `, [billId, req.shop.id]);
 
         const [[bill]] = await pool.execute(`
-            SELECT 
+            SELECT
                 BIN_TO_UUID(id) as id_str,
                 bill_number,
                 customer_name,
@@ -494,8 +474,8 @@ router.get('/:id/items', getShopDetails, async (req, res) => {
                 payment_method,
                 notes,
                 created_at
-            FROM bills 
-            WHERE id = ? 
+            FROM bills
+            WHERE id = UUID_TO_BIN(?)
             AND shop_id = UUID_TO_BIN(?)
         `, [billId, req.shop.id]);
 
@@ -518,10 +498,10 @@ router.get('/:id/items', getShopDetails, async (req, res) => {
 // GET /bills/:id - Get bill details
 router.get('/:id', getShopDetails, async (req, res) => {
     try {
-        const billId = uuidToBin(req.params.id);
+        const billId = req.params.id;
 
         const [[bill]] = await pool.execute(`
-            SELECT 
+            SELECT
                 BIN_TO_UUID(id) as id_str,
                 bill_number,
                 customer_name,
@@ -534,19 +514,19 @@ router.get('/:id', getShopDetails, async (req, res) => {
                 payment_method,
                 notes,
                 created_at
-            FROM bills 
-            WHERE id = ? 
+            FROM bills
+            WHERE id = UUID_TO_BIN(?)
             AND shop_id = UUID_TO_BIN(?)
         `, [billId, req.shop.id]);
 
         const [items] = await pool.execute(`
-            SELECT 
+            SELECT
                 BIN_TO_UUID(product_id) as product_id_str,
                 quantity,
                 unit_price,
                 total_price
-            FROM bill_items 
-            WHERE bill_id = ? 
+            FROM bill_items
+            WHERE bill_id = UUID_TO_BIN(?)
             AND shop_id = UUID_TO_BIN(?)
         `, [billId, req.shop.id]);
 

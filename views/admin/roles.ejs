@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('partials/admin-head') %>
+    <style>
+        .card {
+            background: var(--sa-white);
+            border-radius: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            border: 1px solid var(--sa-gray-200);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: var(--sa-white);
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--sa-gray-100);
+            border-radius: 14px 14px 0 0;
+            font-weight: 700;
+        }
+        .role-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--sa-gray-100);
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        .role-list-item:last-child { border-bottom: none; }
+        .role-list-item:hover { background-color: var(--sa-gray-50); }
+        .role-list-item.active {
+            background-color: rgba(99, 102, 241, 0.1);
+            border-left: 3px solid #6366f1;
+        }
+        .role-list-item .role-name { font-weight: 600; color: var(--sa-gray-900); }
+        .role-list-item .role-desc { font-size: 0.78rem; color: var(--sa-gray-500); margin-top: 2px; }
+        .role-user-count {
+            font-size: 0.7rem;
+            background: var(--sa-gray-100);
+            color: var(--sa-gray-700);
+            padding: 2px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .module-block { border-bottom: 1px solid var(--sa-gray-100); }
+        .module-block:last-child { border-bottom: none; }
+        .module-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 22px;
+            background: var(--sa-gray-50);
+            cursor: pointer;
+        }
+        .module-title { font-weight: 700; font-size: 0.85rem; color: var(--sa-gray-900); text-transform: capitalize; }
+        .module-body { padding: 14px 22px; display: none; }
+        .module-body.show { display: block; }
+        .perm-check {
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+        .perm-check:hover { background: var(--sa-gray-50); }
+        .perm-check label { font-weight: 500; font-size: 0.88rem; cursor: pointer; }
+        .perm-check small { color: var(--sa-gray-500); }
+        .locked-banner {
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            color: var(--sa-gray-700);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            margin-bottom: 18px;
+        }
+        #saveBar {
+            position: sticky;
+            bottom: 0;
+            background: var(--sa-white);
+            border-top: 1px solid var(--sa-gray-200);
+            padding: 14px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 0 0 14px 14px;
+        }
+        .unsaved-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #f59e0b; display: inline-block; margin-right: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sa-wrapper">
+        <%- include('partials/admin-sidebar') %>
+        <div class="sa-main">
+            <%- include('partials/admin-topbar') %>
+            <div class="sa-content">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Roles list -->
+            <div class="col-lg-4 col-xl-3">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-user-shield me-2"></i>Roles
+                    </div>
+                    <div class="card-body p-0" id="roleList">
+                        <% roles.forEach((role, idx) => { %>
+                        <div class="role-list-item <%= idx === 0 ? 'active' : '' %>"
+                             data-role-id="<%= role.id %>"
+                             data-role-name="<%= role.role_name %>"
+                             data-super-admin="<%= role.role_name === 'Super Admin' ? '1' : '0' %>">
+                            <div>
+                                <div class="role-name"><%= role.role_name %></div>
+                                <div class="role-desc"><%= (role.description || '').slice(0, 60) %><%= (role.description || '').length > 60 ? '…' : '' %></div>
+                            </div>
+                            <span class="role-user-count"><%= role.userCount %> user<%= role.userCount === 1 ? '' : 's' %></span>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permission editor -->
+            <div class="col-lg-8 col-xl-9">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <span><i class="fas fa-lock me-2"></i>Permissions for <span id="activeRoleName" class="text-primary"></span></span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllBtn">Select All</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllBtn">Deselect All</button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="lockedBannerWrap" class="px-3 pt-3" style="display:none;">
+                            <div class="locked-banner">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Super Admin always has full access to every module and can't be edited.
+                            </div>
+                        </div>
+                        <div id="permissionsWrap">
+                            <% let moduleIdx = 0; %>
+                            <% for (const [moduleName, perms] of Object.entries(permissionsByModule)) { %>
+                            <div class="module-block" data-module-index="<%= moduleIdx %>">
+                                <div class="module-header" data-toggle-module="<%= moduleIdx %>">
+                                    <span class="module-title"><i class="fas fa-folder me-2"></i><%= moduleName.replace(/_/g, ' ') %></span>
+                                    <span>
+                                        <button type="button" class="btn btn-sm btn-link p-0 me-3 module-select-all" data-module="<%= moduleIdx %>">Select all</button>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </span>
+                                </div>
+                                <div class="module-body <%= moduleIdx === 0 ? 'show' : '' %>" id="module-body-<%= moduleIdx %>">
+                                    <div class="row">
+                                        <% perms.forEach(perm => { %>
+                                        <div class="col-md-6 perm-check">
+                                            <div class="form-check">
+                                                <input class="form-check-input permission-checkbox" type="checkbox"
+                                                       data-permission-id="<%= perm.id %>" id="perm_<%= perm.id %>">
+                                                <label class="form-check-label" for="perm_<%= perm.id %>">
+                                                    <%= perm.name %>
+                                                    <% if (perm.description) { %><small class="d-block"><%= perm.description %></small><% } %>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <% }); %>
+                                    </div>
+                                </div>
+                            </div>
+                            <% moduleIdx++; } %>
+                        </div>
+                    </div>
+                    <div id="saveBar">
+                        <div id="unsavedIndicator" style="display:none; font-size:0.85rem; color: var(--sa-gray-600);">
+                            <span class="unsaved-dot"></span>You have unsaved changes
+                        </div>
+                        <div id="savedIndicator" style="font-size:0.85rem; color: var(--sa-gray-500);"></div>
+                        <button type="button" class="btn btn-primary" id="savePermissionsBtn">
+                            <i class="fas fa-save me-1"></i>Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const rolePermissionsMap = <%- JSON.stringify(rolePermissionsMap) %>;
+        let currentRoleId = document.querySelector('.role-list-item.active').dataset.roleId;
+        let dirty = false;
+
+        function setDirty(state) {
+            dirty = state;
+            document.getElementById('unsavedIndicator').style.display = state ? 'block' : 'none';
+            if (state) document.getElementById('savedIndicator').textContent = '';
+        }
+
+        function applyRole(item) {
+            const roleId = item.dataset.roleId;
+            const roleName = item.dataset.roleName;
+            const isSuperAdmin = item.dataset.superAdmin === '1';
+
+            document.querySelectorAll('.role-list-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+
+            currentRoleId = roleId;
+            document.getElementById('activeRoleName').textContent = roleName;
+            document.getElementById('lockedBannerWrap').style.display = isSuperAdmin ? 'block' : 'none';
+
+            const assigned = new Set(rolePermissionsMap[roleId] || []);
+            document.querySelectorAll('.permission-checkbox').forEach(cb => {
+                const permId = cb.dataset.permissionId;
+                cb.checked = isSuperAdmin ? true : assigned.has(permId);
+                cb.disabled = isSuperAdmin;
+            });
+
+            document.getElementById('selectAllBtn').disabled = isSuperAdmin;
+            document.getElementById('deselectAllBtn').disabled = isSuperAdmin;
+            document.querySelectorAll('.module-select-all').forEach(btn => btn.disabled = isSuperAdmin);
+            document.getElementById('savePermissionsBtn').disabled = isSuperAdmin;
+
+            setDirty(false);
+            document.getElementById('savedIndicator').textContent = '';
+        }
+
+        document.querySelectorAll('.role-list-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (dirty && !confirm('Discard unsaved changes for this role?')) return;
+                applyRole(item);
+            });
+        });
+
+        document.querySelectorAll('.module-header').forEach(header => {
+            header.addEventListener('click', (e) => {
+                if (e.target.closest('.module-select-all')) return;
+                const idx = header.dataset.toggleModule;
+                document.getElementById('module-body-' + idx).classList.toggle('show');
+            });
+        });
+
+        document.querySelectorAll('.module-select-all').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = btn.dataset.module;
+                document.querySelectorAll('#module-body-' + idx + ' .permission-checkbox').forEach(cb => {
+                    if (!cb.disabled) { cb.checked = true; setDirty(true); }
+                });
+            });
+        });
+
+        document.getElementById('selectAllBtn').addEventListener('click', () => {
+            document.querySelectorAll('.permission-checkbox').forEach(cb => { if (!cb.disabled) cb.checked = true; });
+            setDirty(true);
+        });
+
+        document.getElementById('deselectAllBtn').addEventListener('click', () => {
+            document.querySelectorAll('.permission-checkbox').forEach(cb => { if (!cb.disabled) cb.checked = false; });
+            setDirty(true);
+        });
+
+        document.getElementById('permissionsWrap').addEventListener('change', (e) => {
+            if (e.target.classList.contains('permission-checkbox')) setDirty(true);
+        });
+
+        document.getElementById('savePermissionsBtn').addEventListener('click', async () => {
+            const permissionIds = Array.from(document.querySelectorAll('.permission-checkbox:checked')).map(cb => cb.dataset.permissionId);
+            const btn = document.getElementById('savePermissionsBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
+
+            try {
+                const response = await fetch(`/admin/api/roles/${currentRoleId}/permissions`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ permission_ids: permissionIds })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    rolePermissionsMap[currentRoleId] = permissionIds;
+                    setDirty(false);
+                    document.getElementById('savedIndicator').textContent = data.message;
+                } else {
+                    alert(data.message || 'Failed to save permissions');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save me-1"></i>Save Changes';
+            }
+        });
+
+        // Initialize with the first role selected
+        applyRole(document.querySelector('.role-list-item.active'));
+    </script>
+</body>
+</html>

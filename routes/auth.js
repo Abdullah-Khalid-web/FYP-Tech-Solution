@@ -18,7 +18,16 @@ const transporter = nodemailer.createTransport({
 
 function binToUuid(buffer) {
   if (!buffer) return null;
-  const hex = buffer.toString('hex');
+  if (typeof buffer === 'string') return buffer;
+  
+  // Handle both Buffer and Uint8Array (from SQL.js)
+  let hex;
+  if (buffer instanceof Uint8Array) {
+    hex = Array.from(buffer).map(b => b.toString(16).padStart(2, '0')).join('');
+  } else {
+    hex = buffer.toString('hex');
+  }
+  
   return [
     hex.substring(0, 8),
     hex.substring(8, 12),

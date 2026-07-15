@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %> - <%= shop.name %></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --primary: <%= shop.primary_color || '#4e73df' %>;
@@ -180,6 +178,18 @@
         .subscription-card.expired {
             border-color: var(--danger);
             background: linear-gradient(135deg, #fff5f5, #ffffff);
+        }
+
+        html[data-theme="dark"] .subscription-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+        }
+
+        html[data-theme="dark"] .subscription-card.active {
+            background: linear-gradient(135deg, #052e16, #0f172a);
+        }
+
+        html[data-theme="dark"] .subscription-card.expired {
+            background: linear-gradient(135deg, #450a0a, #0f172a);
         }
 
         .plan-features {
@@ -693,20 +703,35 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Primary Color</label>
                                 <div class="input-group">
-                                    <input type="color" class="form-control form-control-color" 
-                                           name="primary_color" value="<%= shop.primary_color %>" id="primaryColor">
-                                    <span class="input-group-text color-preview" 
-                                          style="background-color: '<%= shop.primary_color %>'" id="primaryPreview"></span>
+                                    <input type="color" class="form-control form-control-color"
+                                           name="primary_color" value="<%= shop.primary_color || '#4e73df' %>" id="primaryColor">
+                                    <span class="input-group-text color-preview"
+                                          style="background-color: <%= shop.primary_color || '#4e73df' %>" id="primaryPreview"></span>
                                 </div>
+                                <small class="text-muted">Used for buttons, links and highlights across the app.</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Secondary Color</label>
                                 <div class="input-group">
-                                    <input type="color" class="form-control form-control-color" 
-                                           name="secondary_color" value="<%= shop.secondary_color %>" id="secondaryColor">
-                                    <span class="input-group-text color-preview" 
-                                          style="background-color: '<%= shop.secondary_color %>'" id="secondaryPreview"></span>
+                                    <input type="color" class="form-control form-control-color"
+                                           name="secondary_color" value="<%= shop.secondary_color || '#858796' %>" id="secondaryColor">
+                                    <span class="input-group-text color-preview"
+                                          style="background-color: <%= shop.secondary_color || '#858796' %>" id="secondaryPreview"></span>
                                 </div>
+                                <small class="text-muted">Used for secondary buttons and muted accents.</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Display Size</label>
+                                <div class="btn-group d-flex" role="group" id="uiZoomGroup">
+                                    <button type="button" class="btn btn-outline-secondary ui-zoom-btn" data-zoom="90">Small</button>
+                                    <button type="button" class="btn btn-outline-secondary ui-zoom-btn" data-zoom="100">Normal</button>
+                                    <button type="button" class="btn btn-outline-secondary ui-zoom-btn" data-zoom="115">Large</button>
+                                    <button type="button" class="btn btn-outline-secondary ui-zoom-btn" data-zoom="130">Extra Large</button>
+                                </div>
+                                <small class="text-muted">Adjust how big everything on screen appears. Applies immediately and is remembered on this device.</small>
                             </div>
                         </div>
 
@@ -790,13 +815,14 @@
                                     <h4 class="mb-1"><%= activeSubscription.plan_name %></h4>
                                     <p class="text-muted mb-0">
                                         <i class="fas fa-calendar-alt me-1"></i>
-                                        <%= activeSubscription.duration.charAt(0).toUpperCase() + activeSubscription.duration.slice(1) %> Plan
+                                        <% const subDuration = activeSubscription.duration || 'monthly'; %>
+                                        <%= subDuration.charAt(0).toUpperCase() + subDuration.slice(1) %> Plan
                                     </p>
                                 </div>
                                 <div class="text-end">
                                     <span class="badge-plan bg-success">Active</span>
                                     <p class="mt-1 mb-0">
-                                        <strong><%= shop.currency %> <%= activeSubscription.price.toLocaleString() %></strong>
+                                        <strong><%= shop.currency %> <%= (activeSubscription.price || 0).toLocaleString() %></strong>
                                     </p>
                                 </div>
                             </div>
@@ -864,28 +890,30 @@
                         </div>
                         
                         <% if (subscriptionHistory.length > 0) { %>
-                            <% subscriptionHistory.forEach(sub => { 
+                            <% subscriptionHistory.forEach(sub => {
                                 const isActive = sub.status === 'active';
                                 const isExpired = sub.status === 'expired';
+                                const subHistDuration = sub.duration || 'monthly';
+                                const subHistStatus = sub.status || 'unknown';
                             %>
                                 <div class="subscription-card <%= isActive ? 'active' : isExpired ? 'expired' : '' %>">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <h5 class="mb-1"><%= sub.plan_name %></h5>
                                             <p class="text-muted mb-1">
-                                                <%= sub.duration.charAt(0).toUpperCase() + sub.duration.slice(1) %> • 
-                                                <%= shop.currency %> <%= sub.price.toLocaleString() %>
+                                                <%= subHistDuration.charAt(0).toUpperCase() + subHistDuration.slice(1) %> •
+                                                <%= shop.currency %> <%= (sub.price || 0).toLocaleString() %>
                                             </p>
                                             <p class="mb-0">
                                                 <small class="text-muted">
-                                                    <%= new Date(sub.started_at).toLocaleDateString() %> - 
+                                                    <%= new Date(sub.started_at).toLocaleDateString() %> -
                                                     <%= new Date(sub.expires_at).toLocaleDateString() %>
                                                 </small>
                                             </p>
                                         </div>
                                         <div class="text-end">
                                             <span class="badge <%= isActive ? 'bg-success' : isExpired ? 'bg-danger' : 'bg-secondary' %>">
-                                                <%= sub.status.charAt(0).toUpperCase() + sub.status.slice(1) %>
+                                                <%= subHistStatus.charAt(0).toUpperCase() + subHistStatus.slice(1) %>
                                             </span>
                                             <p class="mt-1 mb-0">
                                                 <small class="text-muted"><%= sub.payment_method || 'Manual' %></small>
@@ -1510,7 +1538,6 @@
     </div>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Show loading overlay
         function showLoading() {
@@ -1561,6 +1588,30 @@
             document.documentElement.style.setProperty('--secondary', e.target.value);
         });
 
+        // Display size (zoom) buttons — applyUiZoom/setUiZoom are defined globally in layout.ejs
+        (function () {
+            const buttons = document.querySelectorAll('.ui-zoom-btn');
+            const currentZoom = String(localStorage.getItem('uiZoom') || '100');
+
+            function highlightActive(zoom) {
+                buttons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.zoom === String(zoom));
+                });
+            }
+
+            highlightActive(currentZoom);
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const zoom = btn.dataset.zoom;
+                    if (typeof window.setUiZoom === 'function') {
+                        window.setUiZoom(zoom);
+                    }
+                    highlightActive(zoom);
+                });
+            });
+        })();
+
         // Handle form submission
         document.getElementById('shopForm')?.addEventListener('submit', function(e) {
             showLoading();
@@ -1604,11 +1655,13 @@
             
             // Show loading state while image loads
             shopLogo.onload = function() {
-                document.getElementById('logoLoading')?.style.display = 'none';
+                const logoLoadingEl = document.getElementById('logoLoading');
+                if (logoLoadingEl) logoLoadingEl.style.display = 'none';
             };
-            
+
             shopLogo.onloadstart = function() {
-                document.getElementById('logoLoading')?.style.display = 'block';
+                const logoLoadingEl = document.getElementById('logoLoading');
+                if (logoLoadingEl) logoLoadingEl.style.display = 'block';
             };
         }
 

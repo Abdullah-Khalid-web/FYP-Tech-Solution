@@ -1,0 +1,29 @@
+{
+  "appId": "com.nextgentech.managehub",
+  "appName": "ManageHub",
+  "webDir": "www",
+  "server": {
+    "url": "http://10.0.2.2:3000",
+    "cleartext": true,
+    "androidScheme": "http"
+  },
+  "android": {
+    "appendUserAgent": "ManageHubMobileApp/1.0"
+  },
+  "ios": {
+    "appendUserAgent": "ManageHubMobileApp/1.0",
+    "contentInset": "automatic"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#0f172a",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "dark",
+      "backgroundColor": "#0f172a"
+    }
+  }
+}

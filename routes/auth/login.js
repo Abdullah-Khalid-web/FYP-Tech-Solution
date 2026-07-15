@@ -5,9 +5,115 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { sendEmail, getResetPasswordEmail, getPasswordResetSuccessEmail } = require('../../config/email');
 
+function isElectronMode() {
+  return process.env.ELECTRON_START === '1' || process.env.DB_MODE === 'sqlite';
+}
+
+function getMysqlConfig() {
+  return {
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT || 3306),
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'manage_hub1',
+    connectTimeout: 4000
+  };
+}
+
+// First-time offline login: the account was registered on the cloud (MySQL) but this
+// desktop install has never synced it down. If the credentials check out against MySQL,
+// copy the user + shop into the local SQLite database so this and future logins work
+// fully offline, then trigger a full data pull for that shop.
+async function pullAccountFromCloud(email, password) {
+  if (!isElectronMode()) return false;
+
+  const mysql = require('mysql2/promise');
+  let conn;
+  try {
+    conn = await mysql.createConnection(getMysqlConfig());
+
+    const [remoteUsers] = await conn.execute(
+      `SELECT BIN_TO_UUID(id) AS id, name, email, password, phone, cnic, status,
+              BIN_TO_UUID(shop_id) AS shop_id, BIN_TO_UUID(role_id) AS role_id
+       FROM users WHERE email = ? LIMIT 1`,
+      [email]
+    );
+
+    if (!remoteUsers.length) return false;
+    const remoteUser = remoteUsers[0];
+
+    const valid = await bcrypt.compare(password, remoteUser.password);
+    if (!valid) return false;
+
+    if (remoteUser.shop_id) {
+      const [shops] = await conn.execute(
+        `SELECT BIN_TO_UUID(id) AS id, name, email, phone, address, logo, plan, currency,
+                primary_color, secondary_color, status
+         FROM shops WHERE id = UUID_TO_BIN(?) LIMIT 1`,
+        [remoteUser.shop_id]
+      );
+
+      if (shops.length) {
+        const shop = shops[0];
+        await pool.execute(
+          `INSERT OR REPLACE INTO shops (id, name, email, phone, address, logo, plan, currency, primary_color, secondary_color, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [shop.id, shop.name, shop.email, shop.phone, shop.address, shop.logo, shop.plan, shop.currency, shop.primary_color, shop.secondary_color, shop.status]
+        );
+      }
+    }
+
+    if (remoteUser.role_id) {
+      const [roles] = await conn.execute(
+        'SELECT BIN_TO_UUID(id) AS id, role_name, description, status FROM roles WHERE id = UUID_TO_BIN(?) LIMIT 1',
+        [remoteUser.role_id]
+      );
+
+      if (roles.length) {
+        const role = roles[0];
+        await pool.execute(
+          `INSERT OR REPLACE INTO roles (id, role_name, description, status) VALUES (?, ?, ?, ?)`,
+          [role.id, role.role_name, role.description, role.status]
+        );
+      }
+    }
+
+    await pool.execute(
+      `INSERT OR REPLACE INTO users (id, shop_id, role_id, name, email, password, phone, cnic, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [remoteUser.id, remoteUser.shop_id, remoteUser.role_id, remoteUser.name, remoteUser.email, remoteUser.password, remoteUser.phone, remoteUser.cnic, remoteUser.status]
+    );
+
+    // Backfill the rest of this shop's data (products, inventory, bills, etc.) now that
+    // the local users table has a row pointing at this shop_id.
+    try {
+      const syncService = require('../../electron/services/syncService');
+      await syncService.syncDirectlyWithMysql();
+    } catch (syncErr) {
+      console.error('Post-login backfill sync failed (non-fatal):', syncErr.message);
+    }
+
+    return true;
+  } catch (err) {
+    console.error('Cloud account pull failed:', err.message);
+    return false;
+  } finally {
+    if (conn) await conn.end().catch(() => {});
+  }
+}
+
 function binToUuid(buffer) {
   if (!buffer) return null;
-  const hex = buffer.toString('hex');
+  if (typeof buffer === 'string') return buffer;
+
+  // Handle both Buffer and Uint8Array (from SQL.js)
+  let hex;
+  if (buffer instanceof Uint8Array) {
+    hex = Array.from(buffer).map(b => b.toString(16).padStart(2, '0')).join('');
+  } else {
+    hex = buffer.toString('hex');
+  }
+
   return [
     hex.substring(0, 8),
     hex.substring(8, 12),
@@ -198,12 +304,12 @@ router.post('/reset-password/:token', async (req, res) => {
 router.post('/login', async (req, res) => {
 
   console.log('Login attempt - req.body:', req.body); // Debug log
-  
+
   const { email, password } = req.body; // Changed from 'name' to 'email'
-  
+
   if (!email || !password) {
-    return res.render('auth/login', { 
-      title: 'Login', 
+    return res.render('auth/login', {
+      title: 'Login',
       error: 'Email and password are required',
       success: null
     });
@@ -211,14 +317,27 @@ router.post('/login', async (req, res) => {
 
   try {
     // Changed from 'name' to 'email' in query
-    const [users] = await pool.execute(
-      'SELECT id, name, email, password, shop_id FROM users WHERE email = ? LIMIT 1', 
+    let [users] = await pool.execute(
+      'SELECT id, name, email, password, shop_id FROM users WHERE email = ? LIMIT 1',
       [email]
     );
-    
+
+    if (!users.length && isElectronMode()) {
+      // No local account yet — this may be a store registered online that has never
+      // been logged into on this device. Try validating against the cloud and, if it
+      // checks out, pull the account down so it works offline from now on.
+      const pulled = await pullAccountFromCloud(email, password);
+      if (pulled) {
+        [users] = await pool.execute(
+          'SELECT id, name, email, password, shop_id FROM users WHERE email = ? LIMIT 1',
+          [email]
+        );
+      }
+    }
+
     if (!users.length) {
-      return res.render('auth/login', { 
-        title: 'Login', 
+      return res.render('auth/login', {
+        title: 'Login',
         error: 'Invalid email or password',
         success: null
       });
@@ -226,10 +345,10 @@ router.post('/login', async (req, res) => {
 
     const user = users[0];
     const valid = await bcrypt.compare(password, user.password);
-    
+
     if (!valid) {
-      return res.render('auth/login', { 
-        title: 'Login', 
+      return res.render('auth/login', {
+        title: 'Login',
         error: 'Invalid email or password',
         success: null
       });
@@ -250,8 +369,8 @@ router.post('/login', async (req, res) => {
     res.redirect('/dashboard'); // Make sure this route exists
   } catch (err) {
     console.error('Login error:', err);
-    res.render('auth/login', { 
-      title: 'Login', 
+    res.render('auth/login', {
+      title: 'Login',
       error: 'Login failed. Please try again.',
       success: null
     });

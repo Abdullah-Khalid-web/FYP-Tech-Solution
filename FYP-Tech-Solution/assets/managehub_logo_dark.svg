@@ -1,0 +1,43 @@
+<svg width="900" height="300" viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hubGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#C084FC"/>
+    </linearGradient>
+    <linearGradient id="nodeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#67E8F9"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#818CF8" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Icon: central hub with connected nodes -->
+  <g filter="url(#softGlow)">
+    <!-- connecting lines -->
+    <line x1="110" y1="150" x2="60" y2="80" stroke="#A5B4FC" stroke-width="5" stroke-linecap="round"/>
+    <line x1="110" y1="150" x2="60" y2="220" stroke="#A5B4FC" stroke-width="5" stroke-linecap="round"/>
+    <line x1="110" y1="150" x2="180" y2="60" stroke="#A5B4FC" stroke-width="5" stroke-linecap="round"/>
+    <line x1="110" y1="150" x2="180" y2="240" stroke="#A5B4FC" stroke-width="5" stroke-linecap="round"/>
+
+    <!-- outer nodes -->
+    <circle cx="60" cy="80" r="16" fill="url(#nodeGrad)"/>
+    <circle cx="60" cy="220" r="16" fill="url(#nodeGrad)"/>
+    <circle cx="180" cy="60" r="14" fill="url(#nodeGrad)"/>
+    <circle cx="180" cy="240" r="14" fill="url(#nodeGrad)"/>
+
+    <!-- central hub -->
+    <circle cx="110" cy="150" r="42" fill="url(#hubGrad)"/>
+    <!-- checkmark inside hub -->
+    <path d="M92 150 L104 163 L130 133" stroke="#0F0F23" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="230" y="140" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="800">
+    <tspan fill="#F9FAFB">Manage</tspan><tspan fill="#A5B4FC">Hub</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="234" y="180" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="500" fill="#9CA3AF" letter-spacing="2">STREAMLINE. ORGANIZE. DELIVER.</text>
+</svg>

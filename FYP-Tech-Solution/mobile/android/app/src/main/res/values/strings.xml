@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ManageHub</string>
+    <string name="title_activity_main">ManageHub</string>
+    <string name="package_name">com.nextgentech.managehub</string>
+    <string name="custom_url_scheme">com.nextgentech.managehub</string>
+</resources>

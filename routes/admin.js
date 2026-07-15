@@ -6,14 +6,26 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
 
+// The desktop app's local SQLite database stores ids as plain TEXT (no binary
+// conversion — see db.js's UUID_TO_BIN(?)/BIN_TO_UUID() query translation), while
+// MySQL stores them as BINARY(16) and hands back raw Buffers. These two helpers
+// need to know which mode they're in so they don't mangle an id that's already
+// a plain string.
+function isSqliteMode() {
+    return process.env.ELECTRON_START === '1' || process.env.DB_MODE === 'sqlite';
+}
+
 // Helper function to convert UUID to binary
 function uuidToBinary(uuid) {
+    if (isSqliteMode()) return uuid;
     return Buffer.from(uuid.replace(/-/g, ''), 'hex');
 }
 
 // Helper function to convert binary to UUID
-function binaryToUuid(buffer) {
-    const hex = buffer.toString('hex');
+function binaryToUuid(value) {
+    if (!value) return value;
+    if (typeof value === 'string') return value;
+    const hex = value.toString('hex');
     return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`;
 }
 
@@ -733,6 +745,169 @@ router.put('/api/feedback/:id/status', requireAdmin, async (req, res) => {
             success: false,
             message: 'Failed to update feedback status: ' + err.message
         });
+    }
+});
+
+// Toggle whether a feedback entry is featured as a testimonial on the public portfolio page.
+// Uses UUID_TO_BIN(?) in the SQL text (rather than pre-converting the id to a Buffer, like the
+// sibling endpoints above) so this also works correctly against the desktop app's local SQLite
+// database, not just MySQL.
+router.put('/api/feedback/:id/toggle-featured', requireAdmin, async (req, res) => {
+    try {
+        const feedbackId = req.params.id;
+        const { featured } = req.body;
+
+        await pool.execute(
+            'UPDATE feedback SET show_on_website = ?, updated_at = NOW() WHERE id = UUID_TO_BIN(?)',
+            [featured ? 1 : 0, feedbackId]
+        );
+
+        res.json({
+            success: true,
+            message: featured ? 'Feedback will now show on the website' : 'Feedback removed from the website'
+        });
+    } catch (err) {
+        console.error('Error toggling feedback featured flag:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update feedback: ' + err.message
+        });
+    }
+});
+
+// Roles & Permissions management
+router.get('/roles', requireAdmin, async (req, res) => {
+    try {
+        const [roles] = await pool.execute(`
+            SELECT BIN_TO_UUID(id) as id, role_name, description, status
+            FROM roles
+            ORDER BY
+                CASE
+                    WHEN role_name = 'Super Admin' THEN 1
+                    WHEN role_name = 'Admin' THEN 2
+                    WHEN role_name = 'Shop Owner' THEN 3
+                    ELSE 4
+                END,
+                role_name
+        `);
+
+        // Attach a user count to each role so the admin can see impact before editing
+        for (const role of roles) {
+            const [[{ count }]] = await pool.execute(
+                'SELECT COUNT(*) as count FROM users WHERE role_id = UUID_TO_BIN(?)',
+                [role.id]
+            );
+            role.userCount = count;
+        }
+
+        const [permissions] = await pool.execute(`
+            SELECT BIN_TO_UUID(id) as id, name, slug, description, module
+            FROM permissions
+            WHERE status = 'active'
+            ORDER BY module, name
+        `);
+
+        const permissionsByModule = {};
+        permissions.forEach(perm => {
+            if (!permissionsByModule[perm.module]) {
+                permissionsByModule[perm.module] = [];
+            }
+            permissionsByModule[perm.module].push(perm);
+        });
+
+        const [rolePermissionRows] = await pool.execute(`
+            SELECT BIN_TO_UUID(role_id) as role_id, BIN_TO_UUID(permission_id) as permission_id
+            FROM role_permissions
+        `);
+
+        const rolePermissionsMap = {};
+        roles.forEach(role => { rolePermissionsMap[role.id] = []; });
+        rolePermissionRows.forEach(row => {
+            if (!rolePermissionsMap[row.role_id]) rolePermissionsMap[row.role_id] = [];
+            rolePermissionsMap[row.role_id].push(row.permission_id);
+        });
+
+        res.render('admin/roles', {
+            title: 'Roles & Permissions',
+            currentPage: 'roles',
+            roles,
+            permissionsByModule,
+            rolePermissionsMap,
+            admin: req.session.admin
+        });
+    } catch (err) {
+        console.error('Error loading roles:', err);
+        res.status(500).render('admin/error', {
+            title: 'Error',
+            message: 'Failed to load roles: ' + err.message
+        });
+    }
+});
+
+// Update a role's permission set (full replace)
+router.put('/api/roles/:id/permissions', requireAdmin, async (req, res) => {
+    const roleId = req.params.id;
+    let { permission_ids } = req.body;
+    permission_ids = Array.isArray(permission_ids) ? permission_ids : [];
+
+    const conn = await pool.getConnection();
+    try {
+        const [roleRows] = await conn.execute(
+            'SELECT role_name FROM roles WHERE id = UUID_TO_BIN(?)',
+            [roleId]
+        );
+
+        if (roleRows.length === 0) {
+            conn.release();
+            return res.status(404).json({ success: false, message: 'Role not found' });
+        }
+
+        if (roleRows[0].role_name === 'Super Admin') {
+            conn.release();
+            return res.status(400).json({ success: false, message: 'Super Admin always has full access and cannot be edited' });
+        }
+
+        await conn.beginTransaction();
+
+        await conn.execute(
+            'DELETE FROM role_permissions WHERE role_id = UUID_TO_BIN(?)',
+            [roleId]
+        );
+
+        for (const permissionId of permission_ids) {
+            await conn.execute(
+                `INSERT INTO role_permissions (id, role_id, permission_id, created_at)
+                 VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), NOW())`,
+                [roleId, permissionId]
+            );
+        }
+
+        await conn.commit();
+
+        // Log the action (non-blocking)
+        try {
+            const actionId = uuidv4();
+            await pool.execute(`
+                INSERT INTO admin_actions (id, admin_id, shop_id, action_type, details, created_at)
+                VALUES (UUID_TO_BIN(?), ?, NULL, ?, ?, NOW())
+            `, [actionId, req.session.admin.id, 'role_permissions_update', JSON.stringify({ role_id: roleId, permission_count: permission_ids.length })]);
+        } catch (logErr) {
+            console.log('Could not log admin action:', logErr.message);
+        }
+
+        res.json({
+            success: true,
+            message: `Permissions updated for ${roleRows[0].role_name}`
+        });
+    } catch (err) {
+        try { await conn.rollback(); } catch (_) {}
+        console.error('Error updating role permissions:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update permissions: ' + err.message
+        });
+    } finally {
+        conn.release();
     }
 });
 

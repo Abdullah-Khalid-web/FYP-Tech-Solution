@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
+const { requireSettingsView, requireSettingsEdit } = require('../middleware/roleAuth');
 
 // Middleware to get shop data
 const getShopData = async (req, res, next) => {
@@ -25,7 +26,7 @@ const getShopData = async (req, res, next) => {
             email: shops[0]?.email || '',
             phone: shops[0]?.phone || '',
             address: shops[0]?.address || '',
-            logo: shops[0]?.logo ? `/uploads/${shops[0].logo}` : '/images/default-logo.png',
+            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
             plan: shops[0]?.plan || 'Free',
             currency: shops[0]?.currency || 'PKR',
             primary_color: shops[0]?.primary_color || '#4e73df',
@@ -39,7 +40,7 @@ const getShopData = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: 'My Shop',
-            logo: '/images/default-shop.png',
+            logo: null,
             currency: 'PKR',
             primary_color: '#4e73df',
             secondary_color: '#858796',
@@ -83,8 +84,24 @@ async function uuidToBin(uuid) {
 }
 
 async function binToUuid(bin) {
-    const [rows] = await pool.execute('SELECT BIN_TO_UUID(?) as uuid', [bin]);
-    return rows[0].uuid;
+    if (!bin) return null;
+    if (typeof bin === 'string') return bin;
+    
+    // Handle both Buffer and Uint8Array (from SQL.js)
+    let hex;
+    if (bin instanceof Uint8Array) {
+      hex = Array.from(bin).map(b => b.toString(16).padStart(2, '0')).join('');
+    } else {
+      hex = bin.toString('hex');
+    }
+    
+    return [
+      hex.substring(0, 8),
+      hex.substring(8, 12),
+      hex.substring(12, 16),
+      hex.substring(16, 20),
+      hex.substring(20, 32)
+    ].join('-');
 }
 
 async function activateSubscription(req, { plan_id, duration, payment_method, auto_renew }) {
@@ -163,7 +180,7 @@ async function activateSubscription(req, { plan_id, duration, payment_method, au
 }
 
 // GET /shop-settings - Shop Settings Page
-router.get('/', getShopData, async (req, res) => {
+router.get('/', requireSettingsView, getShopData, async (req, res) => {
     try {
         // Debug: Check session data
         console.log('Shop Settings - Session Data:', {
@@ -266,7 +283,7 @@ router.get('/', getShopData, async (req, res) => {
                 email: shop.email,
                 phone: shop.phone,
                 address: shop.address,
-                logo: shop.logo ? `/uploads/${shop.logo}` : '/images/default-shop.png',
+                logo: shop.logo ? `/uploads/${shop.logo}` : null,
                 plan: shop.plan,
                 currency: shop.currency,
                 primary_color: shop.primary_color,
@@ -293,7 +310,7 @@ router.get('/', getShopData, async (req, res) => {
 });
 
 // POST /shop-settings/update - Update Shop Information
-router.post('/update', getShopData, upload.single('logo'), async (req, res) => {
+router.post('/update', requireSettingsEdit, getShopData, upload.single('logo'), async (req, res) => {
     const { name, email, phone, address, currency, primary_color, secondary_color } = req.body;
 
     let connection;
@@ -404,7 +421,7 @@ router.post('/update', getShopData, upload.single('logo'), async (req, res) => {
 });
 
 // POST /shop-settings/subscribe - Create new subscription
-router.post('/subscribe', getShopData, async (req, res) => {
+router.post('/subscribe', requireSettingsEdit, getShopData, async (req, res) => {
     const { plan_id, duration, payment_method, auto_renew } = req.body;
 
     let connection;
@@ -566,7 +583,7 @@ router.post('/subscribe', getShopData, async (req, res) => {
     }
 });
 
-router.get('/stripe-success', getShopData, async (req, res) => {
+router.get('/stripe-success', requireSettingsView, getShopData, async (req, res) => {
     try {
         if (!process.env.STRIPE_SECRET_KEY) {
             return res.redirect('/shop_setting?error=Stripe is not configured');
@@ -595,7 +612,7 @@ router.get('/stripe-success', getShopData, async (req, res) => {
 });
 
 // POST /shop-settings/cancel-subscription - Cancel subscription
-router.post('/cancel-subscription', getShopData, async (req, res) => {
+router.post('/cancel-subscription', requireSettingsEdit, getShopData, async (req, res) => {
     let connection;
     try {
         if (!req.session.userId) {
@@ -652,7 +669,7 @@ router.post('/cancel-subscription', getShopData, async (req, res) => {
 });
 
 // POST /shop-settings/update-status - Update shop status (activate/deactivate)
-router.post('/update-status', getShopData, async (req, res) => {
+router.post('/update-status', requireSettingsEdit, getShopData, async (req, res) => {
     const { status, reason } = req.body;
 
     if (!['active', 'inactive', 'suspended'].includes(status)) {
@@ -723,7 +740,7 @@ router.post('/update-status', getShopData, async (req, res) => {
 });
 
 // POST /shop-settings/backup - Create shop backup
-router.post('/backup', getShopData, async (req, res) => {
+router.post('/backup', requireSettingsEdit, getShopData, async (req, res) => {
     let connection;
     try {
         if (!req.session.userId) {
@@ -778,7 +795,7 @@ router.post('/backup', getShopData, async (req, res) => {
 });
 
 // GET /shop-settings/export-data - Export shop data
-router.get('/export-data', getShopData, async (req, res) => {
+router.get('/export-data', requireSettingsView, getShopData, async (req, res) => {
     try {
         if (!req.session.userId) {
             return res.redirect('/login');
@@ -832,7 +849,7 @@ router.get('/export-data', getShopData, async (req, res) => {
 });
 
 // Debug route to check session
-router.get('/debug', (req, res) => {
+router.get('/debug', requireSettingsView, (req, res) => {
     res.json({
         userId: req.session.userId,
         role: req.session.role,

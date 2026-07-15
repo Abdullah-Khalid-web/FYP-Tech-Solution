@@ -5,8 +5,68 @@
     <%- include('../partials/header') %>
         <style>
             /* Global Dark Mode Overrides for Hardcoded Styles */
+
+            /* Most user-side pages declare their own `:root { --dark: #5a5c69; --secondary: #858796; --light: #f8f9fc; }`.
+               `html[data-theme="dark"]` has higher specificity than a bare `:root`, so redefining these
+               custom properties here wins on every page automatically — fixing low-contrast text
+               (headings/labels using `color: var(--dark)`/`var(--secondary)` outside the selectors
+               explicitly handled below) without having to patch each page's own stylesheet. */
+            html[data-theme="dark"] {
+                --dark: #f1f5f9;
+                --secondary: #cbd5e1;
+                --light: #1e293b;
+            }
+
             html[data-theme="dark"] body {
                 background-color: #0f172a !important;
+                color: #f8fafc !important;
+            }
+
+            /* Card-style boxes that pages define locally with a hardcoded white background
+               (search/filter bars, summary cards, section cards, small stat cards, nav strips). */
+            html[data-theme="dark"] .search-filter-card,
+            html[data-theme="dark"] .summary-card,
+            html[data-theme="dark"] .section-card,
+            html[data-theme="dark"] .stat-card-small,
+            html[data-theme="dark"] .report-nav,
+            html[data-theme="dark"] .search-results,
+            html[data-theme="dark"] .sale-item,
+            html[data-theme="dark"] .product-list,
+            html[data-theme="dark"] .return-option-card.selected,
+            html[data-theme="dark"] .return-quantity-control,
+            html[data-theme="dark"] .feedback-item {
+                background-color: #1e293b !important;
+                border-color: #475569 !important;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+                color: #f8fafc !important;
+            }
+
+            html[data-theme="dark"] .admin-reply {
+                background-color: #0c2f4a !important;
+                border-left-color: #16a34a !important;
+                color: #f8fafc !important;
+            }
+
+            html[data-theme="dark"] .history-item:hover,
+            html[data-theme="dark"] .search-result-item:hover,
+            html[data-theme="dark"] .product-item:hover {
+                background-color: #334155 !important;
+            }
+
+            /* The --dark/--secondary remap above is for TEXT color (the dominant use across
+               pages). A handful of places reuse the same variables as a BACKGROUND with white
+               text (badges, active/hover button states) — those need fixed colors instead,
+               otherwise white-on-white text would result from the remap. */
+            html[data-theme="dark"] .bg-dark,
+            html[data-theme="dark"] .badge-inactive {
+                background-color: #334155 !important;
+                color: #f8fafc !important;
+            }
+
+            html[data-theme="dark"] .bg-secondary,
+            html[data-theme="dark"] .btn-outline-secondary:hover,
+            html[data-theme="dark"] .btn-outline-secondary.active {
+                background-color: #64748b !important;
                 color: #f8fafc !important;
             }
 
@@ -16,6 +76,7 @@
             }
 
             html[data-theme="dark"] .dashboard-header,
+            html[data-theme="dark"] .settings-header,
             html[data-theme="dark"] .card,
             html[data-theme="dark"] .action-card,
             html[data-theme="dark"] .stat-card {
@@ -95,6 +156,18 @@
                 color: #fecaca !important;
                 border-color: #991b1b !important;
             }
+
+            /* Shop's saved Primary/Secondary Color (Shop Settings) — most individual pages
+               declare their own hardcoded `:root { --primary: #4e73df; ... }`. This block has
+               higher specificity (html[data-theme] beats a bare :root) so the shop's chosen
+               colors win everywhere instead of only on the pages that happened to read
+               shop.primary_color themselves. */
+            <% if (typeof shop !== 'undefined' && shop) { %>
+            html[data-theme] {
+                --primary: <%= shop.primary_color || '#4e73df' %> !important;
+                --secondary: <%= shop.secondary_color || '#858796' %> !important;
+            }
+            <% } %>
 
             /* Sidebar Styles - Only for logged-in users */
             .sidebar-enabled {
@@ -213,6 +286,43 @@
                 margin-top: 20px;
             }
 
+            .sync-status {
+                position: fixed;
+                right: 16px;
+                bottom: 16px;
+                z-index: 2000;
+                padding: 8px 12px;
+                border-radius: 999px;
+                font-size: 0.78rem;
+                font-weight: 600;
+                letter-spacing: 0.01em;
+                background: rgba(15, 23, 42, 0.92);
+                color: #e2e8f0;
+                box-shadow: 0 10px 24px rgba(15, 23, 42, 0.24);
+                backdrop-filter: blur(10px);
+            }
+
+            .sync-status.online {
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .sync-status.syncing {
+                background: #dbeafe;
+                color: #1d4ed8;
+            }
+
+            .sync-status.offline,
+            .sync-status.disabled {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            html[data-theme="dark"] .sync-status {
+                background: rgba(15, 23, 42, 0.96);
+                color: #e2e8f0;
+            }
+
             /* Sidebar Toggle Button */
             .sidebar-toggle {
                 position: fixed;
@@ -310,11 +420,32 @@
             .sidebar::-webkit-scrollbar-thumb:hover {
                 background: rgba(255, 255, 255, 0.3);
             }
+
+            /* Mobile app phase-1 view-only banner (see middleware/mobileApp.js) */
+            .mobile-readonly-banner {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: #eff6ff;
+                color: #1e40af;
+                border: 1px solid #bfdbfe;
+                border-radius: 8px;
+                padding: 10px 16px;
+                margin: 16px 20px 0;
+                font-size: 0.9rem;
+            }
+
+            html[data-theme="dark"] .mobile-readonly-banner {
+                background: #0c2f4a;
+                color: #bfdbfe;
+                border-color: #1e40af;
+            }
         </style>
 </head>
 
 <body class="<%= (typeof user !== 'undefined' && user && (user.username || user.name)) ? 'sidebar-enabled' : '' %>">
     <%- include('../partials/navbar') %>
+    <div id="syncStatus" class="sync-status offline">Offline</div>
 
         <!-- Sidebar for logged-in users -->
         <% if (typeof user !=='undefined' && user && (user.username || user.name)) { %>
@@ -322,15 +453,25 @@
                 <% } %>
 
                     <div class="main-content" id="mainContent">
+                        <% const mobileReadOnlyPrefixes = ['/products', '/bills', '/Allbills', '/customer', '/EmpMgmt', '/suppliers', '/feedback', '/reports'];
+                           const isMobileReadOnlyPage = typeof isMobileApp !== 'undefined' && isMobileApp
+                               && typeof currentPath !== 'undefined' && mobileReadOnlyPrefixes.some(p => currentPath.startsWith(p)); %>
+                        <% if (isMobileReadOnlyPage) { %>
+                            <div class="mobile-readonly-banner">
+                                <i class="fas fa-eye"></i>
+                                <span>You're viewing this in read-only mode. Editing is available on the web dashboard.</span>
+                            </div>
+                        <% } %>
                         <%- body %>
                     </div>
 
                     <%- include('../partials/footer') %>
 
-                        <!-- Load all scripts at the end of body -->
-                        <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-                        <script
-                            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+                        <!-- Load remaining scripts at the end of body.
+                             jQuery and Bootstrap JS are already loaded once in <head> (via
+                             partials/header.ejs) — loading them again here re-initializes
+                             every Bootstrap component (dropdowns, tooltips, modals) a second
+                             time on every page, which is a real source of visible jank. -->
                         <script src="/js/translations.js"></script>
 
                         <!-- DataTables JS -->
@@ -359,18 +500,27 @@
                                 }
                             }
 
-                            // Initialize theme on page load
+                            // Theme itself is already applied by the inline script in <head> (before first
+                            // paint, to avoid a flash) — this just syncs the toggle button's label to it.
                             document.addEventListener('DOMContentLoaded', function () {
-                                const savedTheme = localStorage.getItem('theme') || 'light';
-                                document.documentElement.setAttribute('data-theme', savedTheme);
-                                document.documentElement.setAttribute('data-bs-theme', savedTheme);
-
-                                // Update button text
+                                const savedTheme = document.documentElement.getAttribute('data-theme') || 'light';
                                 const themeBtn = document.querySelector('button[onclick="toggleTheme()"]');
                                 if (themeBtn) {
                                     themeBtn.textContent = savedTheme === 'light' ? '🌓 Dark' : '🌓 Light';
                                 }
                             });
+
+                            // Display Size (Settings > Display Size). Zoom itself is already applied by the
+                            // inline script in partials/header.ejs (before first paint); this is what the
+                            // Settings page buttons call to change and persist it.
+                            function applyUiZoom(zoom) {
+                                document.documentElement.style.zoom = zoom + '%';
+                            }
+
+                            window.setUiZoom = function (zoom) {
+                                localStorage.setItem('uiZoom', zoom);
+                                applyUiZoom(zoom);
+                            };
 
                             // Sidebar functionality
 
@@ -381,6 +531,10 @@
                                 const mainContent = document.getElementById('mainContent');
                                 const navbar = document.querySelector('.modern-navbar');
 
+                                // Pages without a dashboard sidebar (login, register, public pages) don't
+                                // render these elements — skip sidebar wiring entirely rather than throwing.
+                                if (!sidebar || !mainContent) return;
+
                                 // Check if sidebar was previously open
                                 const sidebarState = localStorage.getItem('sidebarState');
 
@@ -388,7 +542,7 @@
                                     sidebar.classList.add('open');
                                     mainContent.classList.add('with-sidebar');
                                     if (navbar) navbar.classList.add('with-sidebar');
-                                    if (window.innerWidth <= 768) {
+                                    if (window.innerWidth <= 768 && overlay) {
                                         overlay.classList.add('show');
                                     }
                                     localStorage.setItem('sidebarState', 'open');
@@ -398,7 +552,7 @@
                                     sidebar.classList.remove('open');
                                     mainContent.classList.remove('with-sidebar');
                                     if (navbar) navbar.classList.remove('with-sidebar');
-                                    overlay.classList.remove('show');
+                                    if (overlay) overlay.classList.remove('show');
                                     localStorage.setItem('sidebarState', 'closed');
                                 }
 
@@ -437,9 +591,9 @@
                                             if (sidebarState === 'open') {
                                                 openSidebar();
                                             }
-                                            overlay.classList.remove('show');
+                                            if (overlay) overlay.classList.remove('show');
                                         } else {
-                                            if (sidebar.classList.contains('open')) {
+                                            if (sidebar.classList.contains('open') && overlay) {
                                                 overlay.classList.add('show');
                                             }
                                         }
@@ -460,7 +614,7 @@
                             function applyLanguage(lang) {
                                 const dict = translations[lang];
 
-                                document.querySelectorAll('button,a,span,p,h1,h2,h3,h4,h5,label,th,td')
+                                document.querySelectorAll('button,a,span,p,div,h1,h2,h3,h4,h5,label,th,td')
                                     .forEach(el => {
 
                                         if (el.children.length > 0) return;
@@ -469,10 +623,12 @@
 
                                         if (!original) return;
 
-                                        if (lang === 'en') {
-                                            el.textContent = original;
-                                        } else {
-                                            el.textContent = dict[original] || original;
+                                        const target = lang === 'en' ? original : (dict[original] || original);
+
+                                        // Skip no-op writes so the auto-translate MutationObserver below
+                                        // doesn't retrigger itself on every pass.
+                                        if (el.textContent !== target) {
+                                            el.textContent = target;
                                         }
                                     });
                             }
@@ -489,13 +645,30 @@
                             }
                             
                             function storeOriginalText() {
-                                document.querySelectorAll('button,a,span,p,h1,h2,h3,h4,h5,label,th,td')
+                                const dict = translations.ur;
+
+                                document.querySelectorAll('button,a,span,p,div,h1,h2,h3,h4,h5,label,th,td')
                                     .forEach(el => {
 
                                         if (el.children.length > 0) return;
 
-                                        if (!el.dataset.original) {
-                                            el.dataset.original = el.textContent.trim();
+                                        // Collapse internal whitespace/newlines from multi-line template
+                                        // markup so long paragraphs match dictionary keys exactly.
+                                        const current = el.textContent.trim().replace(/\s+/g, ' ');
+                                        if (!current) return;
+
+                                        const prevOriginal = el.dataset.original;
+
+                                        // An element re-fires the observer both when applyLanguage() writes
+                                        // its own translation and when page JS pushes real new data (e.g. a
+                                        // stat card going from "Loading..." to "1"). Only the latter should
+                                        // update the stored original — otherwise translated text gets
+                                        // captured as if it were the "real" English and never reverts.
+                                        const isOwnTranslation = prevOriginal &&
+                                            (current === prevOriginal || current === (dict[prevOriginal] || prevOriginal));
+
+                                        if (!prevOriginal || !isOwnTranslation) {
+                                            el.dataset.original = current;
                                         }
                                     });
                             }
@@ -515,6 +688,28 @@
                                         : 'English';
                             });
 
+                            // Many pages inject content after load via fetch()+innerHTML (dashboard
+                            // widgets, product/bill/customer tables, etc.), which the one-time passes
+                            // above never see. Watch for new nodes and re-run the translation pass so
+                            // that content is covered too, without having to touch every page's JS.
+                            let translationObserver = null;
+                            let translationObserverTimer = null;
+
+                            function setupAutoTranslateObserver() {
+                                translationObserver = new MutationObserver(() => {
+                                    clearTimeout(translationObserverTimer);
+                                    translationObserverTimer = setTimeout(() => {
+                                        translationObserver.disconnect();
+                                        storeOriginalText();
+                                        applyLanguage(localStorage.getItem('lang') || 'en');
+                                        translationObserver.observe(document.body, { childList: true, subtree: true });
+                                    }, 150);
+                                });
+                                translationObserver.observe(document.body, { childList: true, subtree: true });
+                            }
+
+                            document.addEventListener('DOMContentLoaded', setupAutoTranslateObserver);
+
                         </script>
 
                         <% if (typeof user !=='undefined' && user) { %>
@@ -522,6 +717,8 @@
                             <link rel="stylesheet" href="/css/ai-chat.css">
                             <script src="/js/ai-chat.js" defer></script>
                             <% } %>
+                                <script src="/js/offlineService.js" defer></script>
+                                <script src="/js/syncStatus.js" defer></script>
 </body>
 
 </html>

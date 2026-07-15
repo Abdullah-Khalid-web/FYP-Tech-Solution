@@ -13,9 +13,18 @@ function uuidToBin(uuid) {
 
 // Helper function to convert binary UUID to string
 function binToUuid(bin) {
-    if (!bin) return null;
-    const hex = bin.toString('hex');
-    return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20,32)}`;
+  if (!bin) return null;
+  if (typeof bin === 'string') return bin;
+  
+  // Handle both Buffer and Uint8Array (from SQL.js)
+  let hex;
+  if (bin instanceof Uint8Array) {
+    hex = Array.from(bin).map(b => b.toString(16).padStart(2, '0')).join('');
+  } else {
+    hex = bin.toString('hex');
+  }
+  
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20,32)}`;
 }
 
 // Middleware to get shop details
@@ -33,7 +42,7 @@ const getShopDetails = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: shops[0]?.name || 'My Shop',
-            logo: shops[0]?.logo ? `/uploads/${shops[0].logo}` : '/images/default-logo.png',
+            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
             currency: shops[0]?.currency || 'PKR',
             primary_color: shops[0]?.primary_color || '#007bff',
             secondary_color: shops[0]?.secondary_color || '#6c757d'
@@ -45,7 +54,7 @@ const getShopDetails = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: 'My Shop',
-            logo: '/images/default-logo.png',
+            logo: null,
             currency: 'PKR',
             primary_color: '#007bff',
             secondary_color: '#6c757d'

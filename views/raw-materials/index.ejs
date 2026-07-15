@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Raw Materials Management - <%= (shop && shop.name) || 'My Shop' %></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --primary: #4e73df;
@@ -1410,8 +1408,6 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Global variables
     let currentPage = {
@@ -1490,6 +1486,17 @@
         document.getElementById('bulkAddMaterialModal').addEventListener('hidden.bs.modal', function() {
             resetBulkForm();
         });
+
+        // Real-time filtering: search box debounces as the user types, dropdowns apply immediately
+        let materialSearchDebounce;
+        document.getElementById('materialSearch').addEventListener('input', function() {
+            clearTimeout(materialSearchDebounce);
+            materialSearchDebounce = setTimeout(() => loadMaterials(1), 300);
+        });
+        document.getElementById('materialCategory').addEventListener('change', () => loadMaterials(1));
+        document.getElementById('stockStatus').addEventListener('change', () => loadMaterials(1));
+        document.getElementById('materialStatus').addEventListener('change', () => loadMaterials(1));
+        document.getElementById('materialUnit').addEventListener('change', () => loadMaterials(1));
     }
 
     // Helper functions
@@ -1723,21 +1730,21 @@
         // Previous button
         const prevLi = document.createElement('li');
         prevLi.className = `page-item ${pagination.page === 1 ? 'disabled' : ''}`;
-        prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePageFunction(${pagination.page - 1}); return false;">Previous</a>`;
+        prevLi.innerHTML = `<a class="page-link" href="#" onclick="${changePageFunction.name}(${pagination.page - 1}); return false;">Previous</a>`;
         container.appendChild(prevLi);
 
         // Page numbers
         for (let i = 1; i <= pagination.totalPages; i++) {
             const pageLi = document.createElement('li');
             pageLi.className = `page-item ${pagination.page === i ? 'active' : ''}`;
-            pageLi.innerHTML = `<a class="page-link" href="#" onclick="changePageFunction(${i}); return false;">${i}</a>`;
+            pageLi.innerHTML = `<a class="page-link" href="#" onclick="${changePageFunction.name}(${i}); return false;">${i}</a>`;
             container.appendChild(pageLi);
         }
 
         // Next button
         const nextLi = document.createElement('li');
         nextLi.className = `page-item ${pagination.page === pagination.totalPages ? 'disabled' : ''}`;
-        nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePageFunction(${pagination.page + 1}); return false;">Next</a>`;
+        nextLi.innerHTML = `<a class="page-link" href="#" onclick="${changePageFunction.name}(${pagination.page + 1}); return false;">Next</a>`;
         container.appendChild(nextLi);
     }
 

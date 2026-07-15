@@ -59,7 +59,7 @@ const getShopInfo = async (req, res, next) => {
             req.shop = {
                 id: req.shopId,
                 name: shops[0].name || 'My Shop',
-                logo: shops[0].logo ? `/uploads/${shops[0].logo}` : '/images/default-logo.png',
+                logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
                 currency: shops[0].currency || 'PKR',
                 primary_color: shops[0].primary_color || '#007bff',
                 secondary_color: shops[0].secondary_color || '#6c757d'
@@ -68,7 +68,7 @@ const getShopInfo = async (req, res, next) => {
             req.shop = {
                 id: req.shopId,
                 name: 'My Shop',
-                logo: '/images/default-logo.png',
+                logo: null,
                 currency: 'PKR',
                 primary_color: '#007bff',
                 secondary_color: '#6c757d'
@@ -171,6 +171,10 @@ router.get('/', getShopInfo, async (req, res) => {
 
 // POST create new product (without stock)
 router.post('/', getShopInfo, async (req, res) => {
+    // SQLite (Electron offline mode) cannot maintain transactions across
+    // file-persist boundaries, so we skip BEGIN/COMMIT/ROLLBACK in that mode.
+    const isSqlite = process.env.ELECTRON_START === '1' || process.env.DB_MODE === 'sqlite';
+
     try {
         const {
             name, brand, category, size, sku, barcode,
@@ -185,8 +189,8 @@ router.post('/', getShopInfo, async (req, res) => {
             });
         }
 
-        // Start transaction
-        await pool.query('START TRANSACTION');
+        // Start transaction (MySQL only)
+        if (!isSqlite) await pool.query('START TRANSACTION');
 
         try {
             // Insert product
@@ -244,8 +248,8 @@ router.post('/', getShopInfo, async (req, res) => {
                 [req.shopId, productId]
             );
 
-            // Commit transaction
-            await pool.query('COMMIT');
+            // Commit transaction (MySQL only)
+            if (!isSqlite) await pool.query('COMMIT');
 
             res.json({ 
                 success: true, 
@@ -253,8 +257,10 @@ router.post('/', getShopInfo, async (req, res) => {
                 productId: productId
             });
         } catch (error) {
-            // Rollback on error
-            await pool.query('ROLLBACK');
+            // Rollback on error (MySQL only)
+            if (!isSqlite) {
+                try { await pool.query('ROLLBACK'); } catch (_) {}
+            }
             throw error;
         }
     } catch (err) {
@@ -265,6 +271,7 @@ router.post('/', getShopInfo, async (req, res) => {
         });
     }
 });
+
 
 // GET product details for editing
 router.get('/:id/edit', getShopInfo, async (req, res) => {
@@ -983,6 +990,33 @@ router.post('/:id/toggle-status', getShopInfo, async (req, res) => {
     }
 });
 
+// GET active products list (used by the bulk stock page as a fallback data source)
+router.get('/list/active', getShopInfo, async (req, res) => {
+    try {
+        const [products] = await pool.execute(
+            `SELECT
+                BIN_TO_UUID(p.id) as id,
+                p.name,
+                p.brand,
+                p.category,
+                p.sku,
+                COALESCE(i.current_quantity, 0) as current_stock,
+                COALESCE(i.selling_price, 0) as selling_price,
+                COALESCE(i.avg_cost, 0) as avg_cost
+             FROM products p
+             LEFT JOIN inventory i ON p.id = i.product_id
+             WHERE p.shop_id = UUID_TO_BIN(?) AND p.status = 'active'
+             ORDER BY p.name ASC`,
+            [req.shopId]
+        );
+
+        res.json({ success: true, products: products || [] });
+    } catch (err) {
+        console.error('Error fetching active products:', err);
+        res.status(500).json({ success: false, message: 'Error fetching active products' });
+    }
+});
+
 // GET bulk stock addition page
 router.get('/stock/add', getShopInfo, async (req, res) => {
     try {
@@ -1150,17 +1184,18 @@ router.post('/stock/bulk', getShopInfo, async (req, res) => {
                 // Insert stock entry
                 if (validatedSupplierId) {
                     await pool.execute(
-                        `INSERT INTO stock_in 
-                        (id, shop_id, product_id, batch_number, quantity, 
-                        buying_price, selling_price, total_buying_value,
+                        `INSERT INTO stock_in
+                        (id, shop_id, product_id, batch_number, quantity,
+                        unit_price, buying_price, selling_price, total_buying_value,
                         supplier_id, notes, received_by)
-                        VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, 
-                                ?, ?, ?, UUID_TO_BIN(?), ?, UUID_TO_BIN(?))`,
+                        VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?,
+                                ?, ?, ?, ?, UUID_TO_BIN(?), ?, UUID_TO_BIN(?))`,
                         [
                             req.shopId,
                             product_id,
                             batch_number || null,
                             qty,
+                            buyingPrice,
                             buyingPrice,
                             sellingPrice,
                             entryBuyingValue,
@@ -1171,17 +1206,18 @@ router.post('/stock/bulk', getShopInfo, async (req, res) => {
                     );
                 } else {
                     await pool.execute(
-                        `INSERT INTO stock_in 
-                        (id, shop_id, product_id, batch_number, quantity, 
-                        buying_price, selling_price, total_buying_value,
+                        `INSERT INTO stock_in
+                        (id, shop_id, product_id, batch_number, quantity,
+                        unit_price, buying_price, selling_price, total_buying_value,
                         supplier_id, notes, received_by)
-                        VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, 
-                                ?, ?, ?, NULL, ?, UUID_TO_BIN(?))`,
+                        VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?,
+                                ?, ?, ?, ?, NULL, ?, UUID_TO_BIN(?))`,
                         [
                             req.shopId,
                             product_id,
                             batch_number || null,
                             qty,
+                            buyingPrice,
                             buyingPrice,
                             sellingPrice,
                             entryBuyingValue,

@@ -23,7 +23,7 @@ const getShopDetails = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: shops[0].name || 'My Shop',
-            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : '/images/default-logo.png',
+            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
             currency: shops[0].currency || 'PKR',
             primary_color: shops[0].primary_color || '#007bff',
             secondary_color: shops[0].secondary_color || '#6c757d'
@@ -148,12 +148,13 @@ router.get('/', getShopDetails, async (req, res) => {
             WHERE shop_id = UUID_TO_BIN(?) AND month = ?
         `, [req.session.shopId, currentMonth]);
 
-        // Get active loans total amount
+        // Get active loans total amount (computed rather than trusting the stored
+        // total_balance column, since it's only reliably auto-maintained on MySQL)
         const [activeLoans] = await pool.execute(`
-            SELECT 
+            SELECT
                 BIN_TO_UUID(user_id) as user_id,
-                SUM(total_balance) as total_due
-            FROM user_loan 
+                SUM(total_amount - total_paid) as total_due
+            FROM user_loan
             WHERE shop_id = UUID_TO_BIN(?) AND status = 'active'
             GROUP BY user_id
         `, [req.session.shopId]);
@@ -270,12 +271,12 @@ router.post('/api/EmpMgmt', getShopDetails, async (req, res) => {
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
-        const userId = crypto.randomBytes(16);
+        const userId = crypto.randomUUID();
 
         // Insert new employee
         await connection.execute(`
             INSERT INTO users (id, shop_id, role_id, name, email, phone, cnic, salary, password, status, notes)
-            VALUES (?, UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?, 'active', ?)
+            VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?, 'active', ?)
         `, [userId, req.session.shopId, roleId, name, email, phone || null, cnic || null, salary || null, hashedPassword, notes || null]);
 
         await connection.commit();
@@ -283,7 +284,7 @@ router.post('/api/EmpMgmt', getShopDetails, async (req, res) => {
         res.json({
             success: true,
             message: 'Employee added successfully',
-            employeeId: crypto.createHash('sha256').update(userId).digest('hex')
+            employeeId: userId
         });
 
     } catch (err) {
@@ -466,28 +467,28 @@ router.get('/api/EmpMgmt/:id', getShopDetails, async (req, res) => {
 
         // Get active loans (balance > 0)
         const [activeLoans] = await pool.execute(`
-            SELECT 
+            SELECT
                 BIN_TO_UUID(id) as id,
                 loan_number,
                 loan_type,
                 total_amount,
                 total_paid,
-                total_balance,
+                (total_amount - total_paid) as total_balance,
                 installments,
                 installment_amount,
                 description,
                 loan_date,
                 status,
                 created_at
-            FROM user_loan 
+            FROM user_loan
             WHERE user_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?) AND status = 'active'
             ORDER BY loan_date ASC
         `, [employeeId, req.session.shopId]);
 
         // Calculate total loan balance
         const [[loanBalance]] = await pool.execute(`
-            SELECT COALESCE(SUM(total_balance), 0) as total_balance 
-            FROM user_loan 
+            SELECT COALESCE(SUM(total_amount - total_paid), 0) as total_balance
+            FROM user_loan
             WHERE user_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?) AND status = 'active'
         `, [employeeId, req.session.shopId]);
 
@@ -562,7 +563,7 @@ router.post('/api/EmpMgmt/:id/salary', getShopDetails, async (req, res) => {
                 if (deduction.amount > 0) {
                     // Get current loan balance
                     const [loan] = await connection.execute(`
-                        SELECT id, total_balance, installment_amount FROM user_loan 
+                        SELECT id, (total_amount - total_paid) as total_balance, installment_amount FROM user_loan
                         WHERE id = UUID_TO_BIN(?) AND user_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?) AND status = 'active'
                     `, [deduction.loan_id, employeeId, req.session.shopId]);
 
@@ -571,10 +572,10 @@ router.post('/api/EmpMgmt/:id/salary', getShopDetails, async (req, res) => {
                         const deductionAmount = Math.min(parseFloat(deduction.amount), loanRecord.total_balance);
                         
                         // Record loan repayment in ledger (debit = payment made by employee)
-                        const ledgerId = crypto.randomBytes(16);
+                        const ledgerId = crypto.randomUUID();
                         await connection.execute(`
                             INSERT INTO user_loan_ledger (id, loan_id, shop_id, user_id, transaction_type, amount, description, payment_method, reference_type, created_by)
-                            VALUES (?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), 'debit', ?, ?, 'salary_deduction', 'salary_deduction', UUID_TO_BIN(?))
+                            VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), 'debit', ?, ?, 'salary_deduction', 'salary_deduction', UUID_TO_BIN(?))
                         `, [
                             ledgerId,
                             deduction.loan_id,
@@ -585,12 +586,21 @@ router.post('/api/EmpMgmt/:id/salary', getShopDetails, async (req, res) => {
                             req.session.userId || null
                         ]);
 
+                        const newBalance = loanRecord.total_balance - deductionAmount;
+                        await connection.execute(`
+                            UPDATE user_loan
+                            SET total_paid = total_paid + ?,
+                                status = CASE WHEN ? <= 0 THEN 'paid' ELSE status END,
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)
+                        `, [deductionAmount, newBalance, deduction.loan_id, req.session.shopId]);
+
                         totalLoanDeductions += deductionAmount;
                         processedLoans.push({
                             loan_id: deduction.loan_id,
                             amount: deductionAmount,
                             previous_balance: loanRecord.total_balance,
-                            new_balance: loanRecord.total_balance - deductionAmount
+                            new_balance: newBalance
                         });
                     }
                 }
@@ -601,13 +611,13 @@ router.post('/api/EmpMgmt/:id/salary', getShopDetails, async (req, res) => {
         // Ensure net amount is not negative
         if (netAmount < 0) netAmount = 0;
 
-        const salaryId = crypto.randomBytes(16);
+        const salaryId = crypto.randomUUID();
 
         if (existingSalary.length > 0) {
             // Update existing salary
             await connection.execute(`
-                UPDATE user_salary 
-                SET amount = ?, bonus = ?, fine = ?, net_amount = ?, 
+                UPDATE user_salary
+                SET amount = ?, bonus = ?, fine = ?, net_amount = ?,
                     status = 'paid', paid_on = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?) AND month = ?
             `, [amount, bonus || 0, fine || 0, netAmount, paid_on || new Date(), notes, employeeId, req.session.shopId, month]);
@@ -615,7 +625,7 @@ router.post('/api/EmpMgmt/:id/salary', getShopDetails, async (req, res) => {
             // Insert new salary record
             await connection.execute(`
                 INSERT INTO user_salary (id, shop_id, user_id, amount, bonus, fine, net_amount, month, paid_on, status, notes)
-                VALUES (?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, 'paid', ?)
+                VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, 'paid', ?)
             `, [salaryId, req.session.shopId, employeeId, amount, bonus || 0, fine || 0, netAmount, month, paid_on || new Date(), notes]);
         }
 
@@ -671,26 +681,36 @@ router.post('/api/EmpMgmt/:id/loan', getShopDetails, async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        // Generate loan number
-        const shopPrefix = 'LOAN'; // You can customize this
-        const [[loanNumberResult]] = await connection.execute(`
-            SELECT CONCAT(?, '-', DATE_FORMAT(NOW(), '%Y%m%d'), '-', 
-                   LPAD(COALESCE(MAX(SUBSTRING(loan_number, -4)), 0) + 1, 4, '0')) as loan_number
-            FROM user_loan 
-            WHERE shop_id = UUID_TO_BIN(?) 
-            AND loan_number LIKE CONCAT(?, '-', DATE_FORMAT(NOW(), '%Y%m%d'), '-%')
-        `, [shopPrefix, req.session.shopId, shopPrefix]);
+        // Generate loan number (computed in JS to stay portable across MySQL/SQLite --
+        // CONCAT/DATE_FORMAT/LPAD aren't all supported by the SQLite fallback).
+        // loan_number is uniquely constrained across the whole table (not scoped per
+        // shop), so a shop-specific segment is included to avoid collisions between
+        // different shops generating their first loan of the day at the same time.
+        const shopPrefix = 'LOAN';
+        const shopSegment = req.session.shopId.replace(/-/g, '').slice(0, 6).toUpperCase();
+        const datePrefix = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const loanNumberPrefix = `${shopPrefix}-${shopSegment}-${datePrefix}-`;
 
-        const loanNumber = loanNumberResult.loan_number || 
-                          `${shopPrefix}-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-0001`;
+        const [existingLoanNumbers] = await connection.execute(`
+            SELECT loan_number FROM user_loan
+            WHERE shop_id = UUID_TO_BIN(?)
+            AND loan_number LIKE ?
+        `, [req.session.shopId, `${loanNumberPrefix}%`]);
 
-        const loanId = crypto.randomBytes(16);
+        const maxSequence = existingLoanNumbers.reduce((max, row) => {
+            const seq = parseInt(row.loan_number.slice(loanNumberPrefix.length), 10);
+            return Number.isNaN(seq) ? max : Math.max(max, seq);
+        }, 0);
+
+        const loanNumber = loanNumberPrefix + String(maxSequence + 1).padStart(4, '0');
+
+        const loanId = crypto.randomUUID();
         const loanAmount = parseFloat(amount);
         const numInstallments = parseInt(installments) || 1;
-        const installmentAmount = loan_type === 'installment' ? 
+        const installmentAmount = loan_type === 'installment' ?
             Math.ceil(loanAmount / numInstallments) : null;
 
-        console.log('Creating loan with ID:', loanId.toString('hex'));
+        console.log('Creating loan with ID:', loanId);
         console.log('Loan number:', loanNumber);
         console.log('Loan amount:', loanAmount);
         console.log('Installments:', numInstallments);
@@ -698,7 +718,7 @@ router.post('/api/EmpMgmt/:id/loan', getShopDetails, async (req, res) => {
         // Insert loan record
         await connection.execute(`
             INSERT INTO user_loan (id, shop_id, user_id, loan_number, loan_type, total_amount, installments, installment_amount, description, loan_date, status, created_by)
-            VALUES (?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?, 'active', UUID_TO_BIN(?))
+            VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?, 'active', UUID_TO_BIN(?))
         `, [
             loanId,
             req.session.shopId,
@@ -716,12 +736,12 @@ router.post('/api/EmpMgmt/:id/loan', getShopDetails, async (req, res) => {
         console.log('Loan record inserted successfully');
 
         // Record loan given in ledger (credit = loan given to employee)
-        const ledgerId = crypto.randomBytes(16);
+        const ledgerId = crypto.randomUUID();
         console.log('Creating ledger entry with loan ID:', loanId);
-        
+
         await connection.execute(`
             INSERT INTO user_loan_ledger (id, loan_id, shop_id, user_id, transaction_type, amount, description, created_by)
-            VALUES (?, ?, UUID_TO_BIN(?), UUID_TO_BIN(?), 'credit', ?, ?, UUID_TO_BIN(?))
+            VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), 'credit', ?, ?, UUID_TO_BIN(?))
         `, [
             ledgerId,
             loanId, // Use the actual loanId variable, not a string
@@ -739,7 +759,7 @@ router.post('/api/EmpMgmt/:id/loan', getShopDetails, async (req, res) => {
         res.json({
             success: true,
             message: 'Loan added successfully',
-            loanId: crypto.createHash('sha256').update(loanId).digest('hex'),
+            loanId: loanId,
             loanNumber: loanNumber
         });
 
@@ -806,8 +826,8 @@ router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) =>
             
             // Get current loan details
             const [loans] = await connection.execute(`
-                SELECT id, total_balance, total_paid, total_amount, loan_number 
-                FROM user_loan 
+                SELECT id, (total_amount - total_paid) as total_balance, total_paid, total_amount, loan_number
+                FROM user_loan
                 WHERE id = UUID_TO_BIN(?) AND user_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?) AND status = 'active'
             `, [loanId, employeeId, req.session.shopId]);
 
@@ -827,10 +847,10 @@ router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) =>
                 console.log(`Old balance: ${loanRecord.total_balance}, New balance: ${newTotalBalance}`);
                 
                 // Record loan repayment in ledger
-                const ledgerId = crypto.randomBytes(16);
+                const ledgerId = crypto.randomUUID();
                 await connection.execute(`
                     INSERT INTO user_loan_ledger (id, loan_id, shop_id, user_id, transaction_type, amount, description, payment_method, reference_type, created_by)
-                    VALUES (?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), 'debit', ?, ?, ?, 'direct_payment', UUID_TO_BIN(?))
+                    VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), 'debit', ?, ?, ?, 'direct_payment', UUID_TO_BIN(?))
                 `, [
                     ledgerId,
                     loanId,
@@ -842,6 +862,12 @@ router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) =>
                     req.session.userId || null
                 ]);
 
+                await connection.execute(`
+                    UPDATE user_loan
+                    SET total_paid = total_paid + ?, status = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)
+                `, [paymentToLoan, newStatus, loanId, req.session.shopId]);
+
                 processedLoans.push({
                     loan_id: loanId,
                     loan_number: loanRecord.loan_number,
@@ -850,7 +876,7 @@ router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) =>
                     new_balance: newTotalBalance,
                     status: newStatus
                 });
-                
+
                 totalAppliedAmount += paymentToLoan;
             }
         }
@@ -863,10 +889,10 @@ router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) =>
             
             // Record the excess as advance payment
             if (difference > 0) {
-                const ledgerId = crypto.randomBytes(16);
+                const ledgerId = crypto.randomUUID();
                 await connection.execute(`
                     INSERT INTO user_loan_ledger (id, shop_id, user_id, transaction_type, amount, description, payment_method, reference_type, created_by)
-                    VALUES (?, UUID_TO_BIN(?), UUID_TO_BIN(?), 'credit', ?, ?, ?, 'advance_payment', UUID_TO_BIN(?))
+                    VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), 'credit', ?, ?, ?, 'advance_payment', UUID_TO_BIN(?))
                 `, [
                     ledgerId,
                     req.session.shopId,
@@ -1006,20 +1032,20 @@ router.get('/api/EmpMgmt/:id/loans', getShopDetails, async (req, res) => {
         const employeeId = req.params.id;
 
         const [loans] = await pool.execute(`
-            SELECT 
+            SELECT
                 BIN_TO_UUID(id) as id,
                 loan_number,
                 loan_type,
                 total_amount,
                 total_paid,
-                total_balance,
+                (total_amount - total_paid) as total_balance,
                 installments,
                 installment_amount,
                 description,
                 loan_date,
                 status,
                 created_at
-            FROM user_loan 
+            FROM user_loan
             WHERE user_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)
             ORDER BY loan_date DESC
         `, [employeeId, req.session.shopId]);

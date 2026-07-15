@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill <%= bill.bill_number %> - <%= shop.name %></title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            background: white;
+            padding: 20px;
+        }
+
+        .receipt-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .header .subtitle {
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        .receipt-details {
+            margin-bottom: 30px;
+        }
+
+        .receipt-details table {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .receipt-details td {
+            padding: 5px 0;
+            vertical-align: top;
+        }
+
+        .receipt-details .label {
+            font-weight: bold;
+            width: 30%;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .items-table th {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .items-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+        }
+
+        .total-section {
+            border: 2px solid #000;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .total-row.grand-total {
+            font-size: 18px;
+            font-weight: bold;
+            border-top: 1px solid #000;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            font-size: 12px;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                font-size: 12px;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="text-end mb-3 no-print">
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print me-2"></i>Print
+            </button>
+            <button class="btn btn-outline-secondary" onclick="window.close()">
+                <i class="fas fa-times me-2"></i>Close
+            </button>
+        </div>
+
+        <div class="header">
+            <h1><%= shop.name %></h1>
+            <div class="subtitle">SALES INVOICE</div>
+            <% if (shop.address) { %>
+                <div><%= shop.address %></div>
+            <% } %>
+            <% if (shop.phone) { %>
+                <div>Phone: <%= shop.phone %></div>
+            <% } %>
+        </div>
+
+        <div class="receipt-details">
+            <table>
+                <tr>
+                    <td class="label">Bill Number:</td>
+                    <td><%= bill.bill_number %></td>
+                    <td class="label">Date:</td>
+                    <td><%= new Date(bill.created_at).toLocaleString() %></td>
+                </tr>
+                <tr>
+                    <td class="label">Customer:</td>
+                    <td><%= bill.customer_name || 'Walk-in Customer' %></td>
+                    <td class="label">Phone:</td>
+                    <td><%= bill.customer_phone || '-' %></td>
+                </tr>
+                <tr>
+                    <td class="label">Payment Method:</td>
+                    <td colspan="3"><%= (bill.payment_method || 'cash').toUpperCase() %></td>
+                </tr>
+            </table>
+        </div>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Unit Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% items.forEach((item, index) => { %>
+                    <tr>
+                        <td><%= index + 1 %></td>
+                        <td><%= item.product_name || 'Unknown Product' %></td>
+                        <td><%= parseFloat(item.quantity).toFixed(3) %></td>
+                        <td><%= bill.currency %><%= parseFloat(item.unit_price || 0).toFixed(2) %></td>
+                        <td><%= bill.currency %><%= parseFloat(item.total_price || 0).toFixed(2) %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            <div class="total-row">
+                <span>Subtotal:</span>
+                <span><%= bill.currency %><%= parseFloat(bill.subtotal || 0).toFixed(2) %></span>
+            </div>
+            <div class="total-row">
+                <span>Tax:</span>
+                <span><%= bill.currency %><%= parseFloat(bill.tax || 0).toFixed(2) %></span>
+            </div>
+            <div class="total-row grand-total">
+                <span>TOTAL:</span>
+                <span><%= bill.currency %><%= parseFloat(bill.total_amount || 0).toFixed(2) %></span>
+            </div>
+            <div class="total-row">
+                <span>Paid:</span>
+                <span><%= bill.currency %><%= parseFloat(bill.paid_amount || 0).toFixed(2) %></span>
+            </div>
+            <div class="total-row">
+                <span>Due:</span>
+                <span><%= bill.currency %><%= parseFloat(bill.due_amount || 0).toFixed(2) %></span>
+            </div>
+        </div>
+
+        <% if (bill.notes) { %>
+            <div class="notes mb-4">
+                <strong>Notes:</strong> <%= bill.notes %>
+            </div>
+        <% } %>
+
+        <div class="footer">
+            <div>Thank you for your business!</div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+        if (window.location.search.includes('autoprint=true')) {
+            window.print();
+        }
+    </script>
+</body>
+</html>

@@ -12,6 +12,8 @@ const RoleHelper = require('./helpers/roleHelper');
 const permissionHelper = require('./helpers/permissionHelper');
 const { isAuthenticated } = require('./middleware/auth');
 const roleAuth = require('./middleware/roleAuth');
+const { detectMobileApp, mobileReadOnly } = require('./middleware/mobileApp');
+const { sendEmail, getContactNotificationEmail } = require('./config/email');
 
 const app = express();
 
@@ -38,9 +40,83 @@ app.use(session({
 }));
 
 app.use(flash());
+app.use(detectMobileApp);
+app.use((req, res, next) => {
+  res.locals.currentPath = req.path;
+  next();
+});
 
 /* ------------------ API ROUTES THAT REQUIRE SESSIONS ------------------ */
 app.use('/api/sync', require('./routes/sync'));
+
+// ── Sync Health Check ──────────────────────────────────────────────────────
+// Returns whether MySQL is reachable and current sync queue status.
+app.get('/api/sync-health', async (req, res) => {
+  const isSqlite = process.env.ELECTRON_START === '1' || process.env.DB_MODE === 'sqlite';
+
+  if (isSqlite) {
+    try {
+      const dbService = require('./electron/services/databaseService');
+      const syncService = require('./electron/services/syncService');
+      const pendingCount = await dbService.getPendingSyncCount();
+      const mysqlConnected = await syncService.testMysqlConnection();
+      const syncStatus = syncService.getStatus();
+
+      let state = 'offline';
+      if (mysqlConnected) {
+        if (syncStatus.isSyncing) {
+          state = 'syncing';
+        } else if (pendingCount > 0) {
+          state = 'pending';
+        } else {
+          state = 'synced';
+        }
+      }
+
+      return res.json({
+        online: mysqlConnected,
+        mysqlConnected,
+        pendingCount,
+        state,
+        lastSyncedAt: syncStatus.lastSyncedAt,
+        error: syncStatus.error
+      });
+    } catch (error) {
+      return res.json({
+        online: false,
+        mysqlConnected: false,
+        pendingCount: 0,
+        state: 'offline',
+        error: error.message
+      });
+    }
+  }
+
+  try {
+    await pool.execute('SELECT 1');
+    return res.json({ online: true, mysqlConnected: true, pendingCount: 0, state: 'synced' });
+  } catch (_) {
+    return res.json({ online: false, mysqlConnected: false, pendingCount: 0, state: 'offline' });
+  }
+});
+
+// ── Trigger Sync Now ───────────────────────────────────────────────────────
+// Called by the frontend when it detects MySQL came online.
+// Pushes SQLite products/inventory to MySQL and pulls remote changes.
+app.post('/api/sync-now', async (req, res) => {
+  const isSqlite = process.env.ELECTRON_START === '1' || process.env.DB_MODE === 'sqlite';
+  if (!isSqlite) {
+    return res.json({ success: true, message: 'Not in offline mode' });
+  }
+  try {
+    const syncService = require('./electron/services/syncService');
+    const status = await syncService.syncAll();
+    return res.json({ success: true, status });
+  } catch (err) {
+    return res.json({ success: false, error: err.message });
+  }
+});
+
 
 /* ------------------ VIEW ENGINE ------------------ */
 app.use(expressLayouts);
@@ -56,30 +132,30 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // This sets defaults that will be used if user is not logged in
 // Make role helper available in all views
 app.use((req, res, next) => {
-    res.locals.roleHelper = new RoleHelper(req.session);
-    res.locals.session = req.session;
-    next();
+  res.locals.roleHelper = new RoleHelper(req.session);
+  res.locals.session = req.session;
+  next();
 });
 
 // Make permission helper available in all views
 app.use(async (req, res, next) => {
-    res.locals.permissionHelper = permissionHelper;
-    res.locals.permission = {
-        hasPermission: async (slug) => {
-            if (!req.session?.userId) return false;
-            if (Array.isArray(req.userPermissionSlugs) && req.userPermissionSlugs.length) {
-                return req.userPermissionSlugs.includes(slug);
-            }
-            return await permissionHelper.hasPermission(req.session.userId, slug);
-        },
-        getUserPermissions: async () => {
-            if (res.locals.userPermissions) return res.locals.userPermissions;
-            if (!req.session?.userId) return { list: [], byModule: {} };
-            return permissionHelper.getUserPermissions(req.session.userId);
-        }
-    };
-    res.locals.hasPermission = res.locals.permission.hasPermission;
-    next();
+  res.locals.permissionHelper = permissionHelper;
+  res.locals.permission = {
+    hasPermission: async (slug) => {
+      if (!req.session?.userId) return false;
+      if (Array.isArray(req.userPermissionSlugs) && req.userPermissionSlugs.length) {
+        return req.userPermissionSlugs.includes(slug);
+      }
+      return await permissionHelper.hasPermission(req.session.userId, slug);
+    },
+    getUserPermissions: async () => {
+      if (res.locals.userPermissions) return res.locals.userPermissions;
+      if (!req.session?.userId) return { list: [], byModule: {} };
+      return permissionHelper.getUserPermissions(req.session.userId);
+    }
+  };
+  res.locals.hasPermission = res.locals.permission.hasPermission;
+  next();
 });
 
 /* ------------------ DEFAULT GLOBALS ------------------ */
@@ -87,13 +163,13 @@ app.use((req, res, next) => {
   // Initialize with defaults
   res.locals.user = null;
   res.locals.title = 'Manage Hub';
-  
+
   // Default shop data (for public pages)
   res.locals.shop = {
     id: null,
     name: 'Manage Hub',
     // logo: '/images/default-logo.png',
-    logo: 'uploads/shop_logos/default-logo.png',
+    logo: null,
     phone: '+92 000000000',
     address: 'NextGenTech Solution, Quetta, Pakistan',
     email: 'NextGenTechSolution@gmail.com',
@@ -101,7 +177,7 @@ app.use((req, res, next) => {
     primary_color: '#007bff',
     secondary_color: '#6c757d'
   };
-  
+
   res.locals.error = null;
   res.locals.success = null;
   next();
@@ -132,7 +208,7 @@ app.use(async (req, res, next) => {
 
       if (users.length > 0) {
         const user = users[0];
-        
+
         // Store complete user in res.locals
         res.locals.user = {
           id: user.id,
@@ -185,7 +261,7 @@ app.use(async (req, res, next) => {
             res.locals.shop = {
               id: shop.id,
               name: shop.name || 'Manage Hub',
-              logo: shop.logo ? `/uploads/${shop.logo}` : '/shop_logos/default-logo.png',
+              logo: shop.logo ? `/uploads/${shop.logo}` : null,
               phone: shop.phone || '+92 000000000',
               address: shop.address || 'NextGenTech Solution, Quetta, Pakistan',
               email: shop.email || 'NextGenTechSolution@gmail.com',
@@ -205,7 +281,7 @@ app.use(async (req, res, next) => {
       res.locals.user = null;
       res.locals.shop = {
         name: 'Manage Hub',
-        logo: 'uploads/shop_logos/default-logo.png',
+        logo: null,
         phone: '+92 000000000',
         address: 'NextGenTech Solution, Quetta, Pakistan',
         email: 'NextGenTechSolution@gmail.com',
@@ -221,7 +297,7 @@ app.use(async (req, res, next) => {
     res.locals.user = null;
     res.locals.shop = {
       name: 'Manage Hub',
-      logo: 'uploads/shop_logos/default-logo.png',
+      logo: null,
       phone: '+92 000000000',
       address: 'NextGenTech Solution, Quetta, Pakistan',
       email: 'NextGenTechSolution@gmail.com',
@@ -234,28 +310,28 @@ app.use(async (req, res, next) => {
 });
 
 app.use(async (req, res, next) => {
-    if (req.session?.userId) {
-        try {
-            const permissionData = await permissionHelper.getUserPermissions(req.session.userId);
-            req.userPermissions = permissionData.list.map(perm => perm.slug);
-            res.locals.userPermissions = permissionData;
-            res.locals.userPermissionSlugs = req.userPermissions;
-            res.locals.currentUser = res.locals.user;
-        } catch (err) {
-            console.error('Error loading user permissions:', err);
-            req.userPermissions = [];
-            res.locals.userPermissions = { list: [], byModule: {} };
-            res.locals.userPermissionSlugs = [];
-            res.locals.currentUser = res.locals.user || null;
-        }
-    } else {
-        req.userPermissions = [];
-        res.locals.userPermissions = { list: [], byModule: {} };
-        res.locals.userPermissionSlugs = [];
-        res.locals.currentUser = null;
+  if (req.session?.userId) {
+    try {
+      const permissionData = await permissionHelper.getUserPermissions(req.session.userId);
+      req.userPermissions = permissionData.list.map(perm => perm.slug);
+      res.locals.userPermissions = permissionData;
+      res.locals.userPermissionSlugs = req.userPermissions;
+      res.locals.currentUser = res.locals.user;
+    } catch (err) {
+      console.error('Error loading user permissions:', err);
+      req.userPermissions = [];
+      res.locals.userPermissions = { list: [], byModule: {} };
+      res.locals.userPermissionSlugs = [];
+      res.locals.currentUser = res.locals.user || null;
     }
+  } else {
+    req.userPermissions = [];
+    res.locals.userPermissions = { list: [], byModule: {} };
+    res.locals.userPermissionSlugs = [];
+    res.locals.currentUser = null;
+  }
 
-    next();
+  next();
 });
 
 
@@ -272,14 +348,20 @@ app.get('/', async (req, res) => {
       `SELECT f.subject, f.message, f.rating, s.name AS shop_name
        FROM feedback f
        JOIN shops s ON f.shop_id = s.id
-       WHERE f.status IN ('replied', 'resolved') AND f.rating IS NOT NULL
+       WHERE f.show_on_website = 1 AND f.rating IS NOT NULL
        ORDER BY f.created_at DESC
        LIMIT 6`
     );
-    res.render('index', { title: 'Home', testimonials });
+    const [pricingPlans] = await pool.execute(
+      `SELECT *, BIN_TO_UUID(id) AS plan_id
+       FROM pricing_plans
+       WHERE status = 'active'
+       ORDER BY monthly_price ASC`
+    );
+    res.render('index', { title: 'Home', testimonials, pricingPlans });
   } catch (err) {
-    console.error('Home testimonials error:', err);
-    res.render('index', { title: 'Home', testimonials: [] });
+    console.error('Home page data error:', err);
+    res.render('index', { title: 'Home', testimonials: [], pricingPlans: [] });
   }
 });
 
@@ -297,24 +379,44 @@ app.post('/contact', async (req, res) => {
       return res.redirect('/contact?error=Please complete all fields');
     }
 
-    const publicShopId = process.env.CONTACT_SHOP_ID || null;
-    const [shops] = publicShopId
-      ? await pool.execute('SELECT BIN_TO_UUID(id) AS id FROM shops WHERE id = UUID_TO_BIN(?) LIMIT 1', [publicShopId])
-      : await pool.execute('SELECT BIN_TO_UUID(id) AS id FROM shops ORDER BY created_at ASC LIMIT 1');
-
-    if (shops.length) {
-      await pool.execute(
-        `INSERT INTO feedback (id, shop_id, subject, message, rating, status)
-         VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), ?, ?, NULL, 'new')`,
-        [
-          shops[0].id,
-          `[Contact] ${subject}`,
-          `From: ${name} <${email}>\n\n${message}`
-        ]
-      );
+    // Primary channel: email the support inbox directly.
+    const emailResult = await sendEmail(
+      process.env.CONTACT_EMAIL_TO || process.env.SMTP_USER,
+      `New Contact Message: ${subject}`,
+      getContactNotificationEmail({ name, email, subject, message })
+    );
+    if (!emailResult.success) {
+      console.error('Contact form email failed:', emailResult.error);
     }
 
-    res.redirect('/contact?success=Message sent successfully');
+    // Secondary: also log it in the feedback inbox so staff see it in-app.
+    let savedToDb = false;
+    try {
+      const publicShopId = process.env.CONTACT_SHOP_ID || null;
+      const [shops] = publicShopId
+        ? await pool.execute('SELECT BIN_TO_UUID(id) AS id FROM shops WHERE id = UUID_TO_BIN(?) LIMIT 1', [publicShopId])
+        : await pool.execute('SELECT BIN_TO_UUID(id) AS id FROM shops ORDER BY created_at ASC LIMIT 1');
+
+      if (shops.length) {
+        await pool.execute(
+          `INSERT INTO feedback (id, shop_id, subject, message, rating, status)
+           VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), ?, ?, NULL, 'new')`,
+          [
+            shops[0].id,
+            `[Contact] ${subject}`,
+            `From: ${name} <${email}>\n\n${message}`
+          ]
+        );
+        savedToDb = true;
+      }
+    } catch (dbErr) {
+      console.error('Contact form DB save error:', dbErr);
+    }
+
+    if (emailResult.success || savedToDb) {
+      return res.redirect('/contact?success=Message sent successfully');
+    }
+    res.redirect('/contact?error=Unable to send message right now. Please email us directly.');
   } catch (err) {
     console.error('Contact form error:', err);
     res.redirect('/contact?error=Unable to send message right now');
@@ -351,17 +453,18 @@ app.use('/api', require('./routes/aiDataApi'));          // AI module → Backen
 /* ------------------ PROTECTED ROUTES (AUTHENTICATION REQUIRED) ------------------ */
 
 // Products - requires authentication (everyone can view products)
-app.use('/products', isAuthenticated, require('./routes/products'));
+// Phase 1 of the mobile app is view-only here — see middleware/mobileApp.js
+app.use('/products', isAuthenticated, mobileReadOnly, require('./routes/products'));
 
 // Sales routes - requires sales access
-app.use('/bills', isAuthenticated, roleAuth.requireSalesAccess, require('./routes/bills'));
-app.use('/Allbills', isAuthenticated, roleAuth.requireSalesAccess, require('./routes/Allbills'));
-app.use('/customer', isAuthenticated, roleAuth.requireSalesAccess, require('./routes/customer'));
+app.use('/bills', isAuthenticated, roleAuth.requireSalesAccess, mobileReadOnly, require('./routes/bills'));
+app.use('/Allbills', isAuthenticated, roleAuth.requireSalesAccess, mobileReadOnly, require('./routes/Allbills'));
+app.use('/customer', isAuthenticated, roleAuth.requireSalesAccess, mobileReadOnly, require('./routes/customer'));
 
 
 
 // Employee management routes
-app.use('/EmpMgmt', isAuthenticated, roleAuth.requireEmployeeManagement, require('./routes/EmpMgmt'));
+app.use('/EmpMgmt', isAuthenticated, roleAuth.requireEmployeeManagement, mobileReadOnly, require('./routes/EmpMgmt'));
 
 // Inventory routes - requires inventory access
 app.use('/alerts', isAuthenticated, roleAuth.requireInventoryAccess, require('./routes/alerts'));
@@ -371,20 +474,23 @@ app.use('/raw', isAuthenticated, roleAuth.requireInventoryAccess, require('./rou
 app.use('/expenses', isAuthenticated, roleAuth.requireFinanceAccess, require('./routes/expenses'));
 app.use('/cash-deposits', isAuthenticated, roleAuth.requireFinanceAccess, require('./routes/cashDeposits'));
 
-// Reports - requires report access
-app.use('/reports', isAuthenticated, roleAuth.requireReportAccess, require('./routes/reports'));
+// Reports - requires report access (view-only by nature, but blocked defensively too)
+app.use('/reports', isAuthenticated, roleAuth.requireReportAccess, mobileReadOnly, require('./routes/reports'));
 
-// Shop settings - requires settings access
-app.use('/shop_setting', isAuthenticated, roleAuth.requireSettingsAccess, require('./routes/shop'));
+// Shop settings - view/edit access is checked per-route in shopSettingsController.js
+// (Shop Owner/Admin/Super Admin always pass; other roles need the granular
+// shop.view/shop.edit permission granted via the Roles & Permissions panel).
+// NOT mobile-restricted: settings + profile stay fully editable on mobile (phase 1 scope).
+app.use('/shop_setting', isAuthenticated, require('./routes/shop'));
 
 // User profile - requires authentication (any logged-in user)
 app.use('/user_profile', isAuthenticated, require('./routes/user'));
 
 // Suppliers - requires authentication
-app.use('/suppliers', isAuthenticated, require('./routes/suppliers'));
+app.use('/suppliers', isAuthenticated, mobileReadOnly, require('./routes/suppliers'));
 
 // Feedback - requires authentication
-app.use('/feedback', isAuthenticated, require('./routes/feedback'));
+app.use('/feedback', isAuthenticated, mobileReadOnly, require('./routes/feedback'));
 
 /* ------------------ 404 ------------------ */
 app.use((req, res) => {

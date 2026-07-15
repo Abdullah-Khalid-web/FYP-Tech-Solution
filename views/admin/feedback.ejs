@@ -129,9 +129,19 @@
                                 </button>
                                 <% } %>
                                 
-                                <button class="btn btn-outline-warning btn-sm" onclick="addAdminNotes('<%= item.id %>', '<%= item.subject %>')">
+                                <button class="btn btn-outline-warning btn-sm mb-1" onclick="addAdminNotes('<%= item.id %>', '<%= item.subject %>')">
                                     <i class="fas fa-edit me-1"></i>Add Notes
                                 </button>
+
+                                <% if (item.show_on_website) { %>
+                                <button class="btn btn-secondary btn-sm" onclick="toggleFeatured('<%= item.id %>', false)">
+                                    <i class="fas fa-eye-slash me-1"></i>Remove from Website
+                                </button>
+                                <% } else { %>
+                                <button class="btn btn-outline-primary btn-sm" onclick="toggleFeatured('<%= item.id %>', true)" <%= item.rating ? '' : 'disabled title="Needs a star rating to show as a testimonial"' %>>
+                                    <i class="fas fa-globe me-1"></i>Show on Website
+                                </button>
+                                <% } %>
                             </div>
                         </div>
                     </div>
@@ -221,7 +231,28 @@
             document.getElementById('adminNotes').value = '';
             new bootstrap.Modal(document.getElementById('adminNotesModal')).show();
         }
-        
+
+        async function toggleFeatured(feedbackId, featured) {
+            try {
+                const response = await fetch(`/admin/api/feedback/${feedbackId}/toggle-featured`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ featured })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
         document.getElementById('adminNotesForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             

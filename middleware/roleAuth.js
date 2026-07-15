@@ -217,6 +217,69 @@ function requireSettingsAccess(req, res, next) {
     });
 }
 
+/**
+ * Middleware to check if user can view shop settings.
+ * Shop Owner/Admin/Super Admin always pass; other roles pass if granted the
+ * granular 'shop.view' permission (e.g. via the Roles & Permissions admin panel).
+ */
+function requireSettingsView(req, res, next) {
+    if (!req.session?.userId) {
+        req.flash('error', 'Please login first');
+        return res.redirect('/login');
+    }
+
+    const roleHelper = new RoleHelper(req.session);
+    if (roleHelper.canManageSettings()) {
+        return next();
+    }
+
+    permissionHelper.hasPermission(req.session.userId, 'shop.view').then((hasPerm) => {
+        if (hasPerm) return next();
+
+        return res.status(403).render('errors/403', {
+            title: 'Access Denied',
+            message: 'You do not have permission to view shop settings.',
+            requiredPermission: 'shop.view',
+            userRole: roleHelper.role
+        });
+    });
+}
+
+/**
+ * Middleware to check if user can change shop settings.
+ * Shop Owner/Admin/Super Admin always pass; other roles pass if granted the
+ * granular 'shop.edit' permission.
+ */
+function requireSettingsEdit(req, res, next) {
+    if (!req.session?.userId) {
+        req.flash('error', 'Please login first');
+        return res.redirect('/login');
+    }
+
+    const roleHelper = new RoleHelper(req.session);
+    if (roleHelper.canManageSettings()) {
+        return next();
+    }
+
+    permissionHelper.hasPermission(req.session.userId, 'shop.edit').then((hasPerm) => {
+        if (hasPerm) return next();
+
+        if (req.xhr || req.headers.accept?.includes('json')) {
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to change shop settings.'
+            });
+        }
+
+        return res.status(403).render('errors/403', {
+            title: 'Access Denied',
+            message: 'You do not have permission to change shop settings.',
+            requiredPermission: 'shop.edit',
+            userRole: roleHelper.role
+        });
+    });
+}
+
 module.exports = {
     requireRole,
     requirePermission,
@@ -226,5 +289,7 @@ module.exports = {
     requireEmployeeManagement,
     requireFinanceAccess,
     requireReportAccess,
-    requireSettingsAccess
+    requireSettingsAccess,
+    requireSettingsView,
+    requireSettingsEdit
 };

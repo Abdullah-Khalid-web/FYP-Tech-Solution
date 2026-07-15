@@ -29,7 +29,7 @@ const TABLES = {
     inventory: {
         upload: true,
         uuidColumns: ['id', 'shop_id', 'product_id'],
-        columns: ['id', 'shop_id', 'product_id', 'current_quantity', 'avg_cost', 'updated_at']
+        columns: ['id', 'shop_id', 'product_id', 'current_quantity', 'avg_cost', 'selling_price', 'last_buying_price', 'min_stock_level', 'updated_at']
     },
     stock_in: {
         upload: true,
@@ -63,8 +63,53 @@ const TABLES = {
     },
     user_cash_submission: {
         upload: true,
+        uuidColumns: ['id', 'shop_id', 'user_id', 'verified_by'],
+        columns: ['id', 'shop_id', 'user_id', 'submission_date', 'total_collected', 'submitted_amount', 'notes', 'created_at', 'status', 'verified_by', 'verified_at', 'rejection_reason', 'shift', 'payment_method', 'reference_number']
+    },
+    user_loan: {
+        upload: true,
+        uuidColumns: ['id', 'shop_id', 'user_id', 'created_by'],
+        columns: ['id', 'shop_id', 'user_id', 'loan_number', 'loan_type', 'total_amount', 'total_paid', 'installments', 'installment_amount', 'description', 'loan_date', 'status', 'created_by', 'created_at', 'updated_at']
+    },
+    user_loan_ledger: {
+        upload: true,
+        uuidColumns: ['id', 'loan_id', 'shop_id', 'user_id', 'reference_id', 'created_by'],
+        columns: ['id', 'loan_id', 'shop_id', 'user_id', 'transaction_type', 'amount', 'description', 'payment_method', 'reference_id', 'reference_type', 'created_by', 'created_at']
+    },
+    user_salary: {
+        upload: true,
         uuidColumns: ['id', 'shop_id', 'user_id'],
-        columns: ['id', 'shop_id', 'user_id', 'submission_date', 'total_collected', 'submitted_amount', 'notes', 'created_at']
+        columns: ['id', 'shop_id', 'user_id', 'amount', 'bonus', 'fine', 'month', 'paid_on', 'status', 'notes', 'created_at', 'updated_at']
+    },
+    cash_register: {
+        upload: true,
+        uuidColumns: ['id', 'shop_id', 'user_id'],
+        columns: ['id', 'shop_id', 'user_id', 'shift_start', 'shift_end', 'opening_balance', 'closing_balance', 'expected_balance', 'difference', 'status', 'notes', 'created_at']
+    },
+    raw_materials: {
+        upload: true,
+        uuidColumns: ['id', 'shop_id', 'supplier_id', 'created_by'],
+        columns: ['id', 'shop_id', 'name', 'sku', 'barcode', 'category', 'description', 'unit_of_measure', 'current_stock', 'min_stock_level', 'max_stock_level', 'cost_price', 'supplier_id', 'batch_tracking', 'expiry_tracking', 'is_active', 'created_by', 'created_at', 'updated_at']
+    },
+    raw_material_stock_movements: {
+        upload: true,
+        uuidColumns: ['id', 'shop_id', 'raw_material_id', 'reference_id', 'supplier_id', 'created_by'],
+        columns: ['id', 'shop_id', 'raw_material_id', 'batch_number', 'movement_type', 'quantity', 'unit_cost', 'total_cost', 'reference_type', 'reference_id', 'supplier_id', 'notes', 'movement_date', 'expiry_date', 'created_by', 'created_at']
+    },
+    ingredients: {
+        upload: true,
+        uuidColumns: ['id', 'shop_id', 'main_product_id', 'raw_material_id'],
+        columns: ['id', 'shop_id', 'main_product_id', 'raw_material_id', 'quantity_required', 'unit', 'created_at']
+    },
+    supplier_transactions: {
+        upload: true,
+        uuidColumns: ['id', 'shop_id', 'supplier_id', 'reference_id', 'created_by'],
+        columns: ['id', 'shop_id', 'supplier_id', 'type', 'amount', 'description', 'reference_type', 'reference_id', 'created_by', 'created_at']
+    },
+    supplier_balance: {
+        upload: true,
+        uuidColumns: ['id', 'shop_id', 'supplier_id'],
+        columns: ['id', 'shop_id', 'supplier_id', 'total_debit', 'total_credit']
     }
 };
 

@@ -18,7 +18,7 @@ const getShopData = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: shops[0]?.name || 'My Shop',
-            logo: shops[0]?.logo ? `/uploads/${shops[0].logo}` : '/images/default-logo.png',
+            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
             currency: shops[0]?.currency || 'PKR',
             primary_color: shops[0]?.primary_color || '#007bff',
             secondary_color: shops[0]?.secondary_color || '#6c757d'
@@ -30,7 +30,7 @@ const getShopData = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: 'My Shop',
-            logo: '/images/default-logo.png',
+            logo: null,
             currency: 'PKR',
             primary_color: '#007bff',
             secondary_color: '#6c757d'
@@ -150,13 +150,10 @@ router.post('/', getShopData, async (req, res) => {
             ]
         );
 
-        // Initialize supplier balance with ON DUPLICATE KEY UPDATE
+        // Initialize supplier balance for the newly created supplier
         await pool.execute(
-            `INSERT INTO supplier_balance (shop_id, supplier_id, total_debit, total_credit)
-            VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), 0, 0)
-            ON DUPLICATE KEY UPDATE 
-            shop_id = VALUES(shop_id),
-            supplier_id = VALUES(supplier_id)`,
+            `INSERT INTO supplier_balance (id, shop_id, supplier_id, total_debit, total_credit)
+            VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), 0, 0)`,
             [req.session.shopId, supplierId]
         );
 
@@ -391,9 +388,9 @@ router.post('/:id/transactions', getShopData, async (req, res) => {
         try {
             // Insert transaction
             await pool.execute(
-                `INSERT INTO supplier_transactions 
+                `INSERT INTO supplier_transactions
                  (id, shop_id, supplier_id, type, amount, description, reference_type, reference_id, created_by)
-                 VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, UUID_TO_BIN(?))`,
+                 VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
                 [
                     transactionId,
                     req.session.shopId,
@@ -407,24 +404,31 @@ router.post('/:id/transactions', getShopData, async (req, res) => {
                 ]
             );
 
-            // Update supplier balance
-            if (type === 'debit') {
+            // Update supplier balance (portable upsert: SQLite has no ON DUPLICATE KEY UPDATE)
+            const [existingBalance] = await pool.execute(
+                `SELECT id FROM supplier_balance WHERE shop_id = UUID_TO_BIN(?) AND supplier_id = UUID_TO_BIN(?)`,
+                [req.session.shopId, supplierId]
+            );
+
+            if (existingBalance.length === 0) {
                 await pool.execute(
-                    `INSERT INTO supplier_balance (shop_id, supplier_id, total_debit, total_credit)
-                     VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?)
-                     ON DUPLICATE KEY UPDATE 
-                     total_debit = total_debit + VALUES(total_debit),
-                     updated_at = NOW()`,
-                    [req.session.shopId, supplierId, parseFloat(amount), 0]
+                    `INSERT INTO supplier_balance (id, shop_id, supplier_id, total_debit, total_credit)
+                     VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?)`,
+                    [req.session.shopId, supplierId, type === 'debit' ? parseFloat(amount) : 0, type === 'credit' ? parseFloat(amount) : 0]
+                );
+            } else if (type === 'debit') {
+                await pool.execute(
+                    `UPDATE supplier_balance
+                     SET total_debit = total_debit + ?, updated_at = NOW()
+                     WHERE shop_id = UUID_TO_BIN(?) AND supplier_id = UUID_TO_BIN(?)`,
+                    [parseFloat(amount), req.session.shopId, supplierId]
                 );
             } else if (type === 'credit') {
                 await pool.execute(
-                    `INSERT INTO supplier_balance (shop_id, supplier_id, total_debit, total_credit)
-                     VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?)
-                     ON DUPLICATE KEY UPDATE 
-                     total_credit = total_credit + VALUES(total_credit),
-                     updated_at = NOW()`,
-                    [req.session.shopId, supplierId, 0, parseFloat(amount)]
+                    `UPDATE supplier_balance
+                     SET total_credit = total_credit + ?, updated_at = NOW()
+                     WHERE shop_id = UUID_TO_BIN(?) AND supplier_id = UUID_TO_BIN(?)`,
+                    [parseFloat(amount), req.session.shopId, supplierId]
                 );
             }
 
