@@ -872,8 +872,8 @@
 
                 if (result.success) {
                     toastr.success(result.message);
-                    bootstrap.Modal.getInstance(document.getElementById('addCustomerModal')).hide();
-                    setTimeout(() => location.reload(), 1500);
+                    bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'))?.hide();
+                    setTimeout(() => location.reload(), 400);
                 } else {
                     toastr.error(result.message);
                 }
@@ -1220,8 +1220,8 @@
 
                 if (result.success) {
                     toastr.success(result.message);
-                    bootstrap.Modal.getInstance(document.getElementById('editCustomerModal')).hide();
-                    setTimeout(() => location.reload(), 1500);
+                    bootstrap.Modal.getInstance(document.getElementById('editCustomerModal'))?.hide();
+                    setTimeout(() => location.reload(), 400);
                 } else {
                     toastr.error(result.message);
                 }
@@ -1249,7 +1249,7 @@
 
                 if (result.success) {
                     toastr.success(result.message);
-                    setTimeout(() => location.reload(), 1500);
+                    setTimeout(() => location.reload(), 400);
                 } else {
                     toastr.error(result.message);
                 }

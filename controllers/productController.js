@@ -4,6 +4,7 @@ const { pool } = require('../db');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { requirePermissionOrAdmin } = require('../middleware/roleAuth');
 
 // Configure multer for product images
 const storage = multer.diskStorage({
@@ -59,7 +60,7 @@ const getShopInfo = async (req, res, next) => {
             req.shop = {
                 id: req.shopId,
                 name: shops[0].name || 'My Shop',
-                logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
+                logo: shops[0].logo ? `/uploads/shop_logos/${shops[0].logo}` : null,
                 currency: shops[0].currency || 'PKR',
                 primary_color: shops[0].primary_color || '#007bff',
                 secondary_color: shops[0].secondary_color || '#6c757d'
@@ -82,7 +83,7 @@ const getShopInfo = async (req, res, next) => {
 };
 
 // GET products listing
-router.get('/', getShopInfo, async (req, res) => {
+router.get('/', requirePermissionOrAdmin('products.view'), getShopInfo, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = 10;
@@ -170,7 +171,7 @@ router.get('/', getShopInfo, async (req, res) => {
 });
 
 // POST create new product (without stock)
-router.post('/', getShopInfo, async (req, res) => {
+router.post('/', requirePermissionOrAdmin('products.create'), getShopInfo, async (req, res) => {
     // SQLite (Electron offline mode) cannot maintain transactions across
     // file-persist boundaries, so we skip BEGIN/COMMIT/ROLLBACK in that mode.
     const isSqlite = process.env.ELECTRON_START === '1' || process.env.DB_MODE === 'sqlite';
@@ -274,7 +275,7 @@ router.post('/', getShopInfo, async (req, res) => {
 
 
 // GET product details for editing
-router.get('/:id/edit', getShopInfo, async (req, res) => {
+router.get('/:id/edit', requirePermissionOrAdmin('products.view'), getShopInfo, async (req, res) => {
     try {
         const productId = req.params.id;
         
@@ -349,7 +350,7 @@ router.get('/:id/edit', getShopInfo, async (req, res) => {
 });
 
 // PUT update product
-router.put('/:id', getShopInfo, async (req, res) => {
+router.put('/:id', requirePermissionOrAdmin('products.edit'), getShopInfo, async (req, res) => {
     try {
         const {
             name, brand, category, size, sku, barcode,
@@ -447,7 +448,7 @@ router.put('/:id', getShopInfo, async (req, res) => {
 
 // POST add stock to product (batch operation)
 // POST add stock to product (batch operation) - FIXED VERSION
-router.post('/:id/stock', getShopInfo, async (req, res) => {
+router.post('/:id/stock', requirePermissionOrAdmin('inventory.stock_in'), getShopInfo, async (req, res) => {
     try {
         const { stock_entries } = req.body;
         const productId = req.params.id;
@@ -704,7 +705,7 @@ router.post('/:id/stock', getShopInfo, async (req, res) => {
 });
 
 // GET stock ledger for a product
-router.get('/:id/ledger', getShopInfo, async (req, res) => {
+router.get('/:id/ledger', requirePermissionOrAdmin('products.view'), getShopInfo, async (req, res) => {
     try {
         const productId = req.params.id;
         
@@ -771,7 +772,7 @@ router.get('/:id/ledger', getShopInfo, async (req, res) => {
 });
 
 // DELETE stock entry
-router.delete('/stock/:stockId', getShopInfo, async (req, res) => {
+router.delete('/stock/:stockId', requirePermissionOrAdmin('inventory.adjust'), getShopInfo, async (req, res) => {
     try {
         const stockId = req.params.stockId;
 
@@ -860,7 +861,7 @@ router.delete('/stock/:stockId', getShopInfo, async (req, res) => {
 });
 
 // GET product statistics
-router.get('/stats', getShopInfo, async (req, res) => {
+router.get('/stats', requirePermissionOrAdmin('products.view'), getShopInfo, async (req, res) => {
     try {
         // Get total products count
         const [productsCount] = await pool.execute(
@@ -920,7 +921,7 @@ router.get('/stats', getShopInfo, async (req, res) => {
 });
 
 // GET suppliers for dropdown
-router.get('/suppliers/list', getShopInfo, async (req, res) => {
+router.get('/suppliers/list', requirePermissionOrAdmin('products.view'), getShopInfo, async (req, res) => {
     try {
         const [suppliers] = await pool.execute(
             `SELECT 
@@ -948,7 +949,7 @@ router.get('/suppliers/list', getShopInfo, async (req, res) => {
 });
 
 // POST toggle product status
-router.post('/:id/toggle-status', getShopInfo, async (req, res) => {
+router.post('/:id/toggle-status', requirePermissionOrAdmin('products.edit'), getShopInfo, async (req, res) => {
     try {
         const productId = req.params.id;
 
@@ -991,7 +992,7 @@ router.post('/:id/toggle-status', getShopInfo, async (req, res) => {
 });
 
 // GET active products list (used by the bulk stock page as a fallback data source)
-router.get('/list/active', getShopInfo, async (req, res) => {
+router.get('/list/active', requirePermissionOrAdmin('products.view'), getShopInfo, async (req, res) => {
     try {
         const [products] = await pool.execute(
             `SELECT
@@ -1018,7 +1019,7 @@ router.get('/list/active', getShopInfo, async (req, res) => {
 });
 
 // GET bulk stock addition page
-router.get('/stock/add', getShopInfo, async (req, res) => {
+router.get('/stock/add', requirePermissionOrAdmin('inventory.stock_in'), getShopInfo, async (req, res) => {
     try {
         // Get all active products
         const [products] = await pool.execute(
@@ -1064,7 +1065,7 @@ router.get('/stock/add', getShopInfo, async (req, res) => {
     }
 });
 
-router.post('/stock/bulk', getShopInfo, async (req, res) => {
+router.post('/stock/bulk', requirePermissionOrAdmin('inventory.stock_in'), getShopInfo, async (req, res) => {
     try {
         const { 
             stock_entries, 
@@ -1430,7 +1431,7 @@ async function getSupplierBalance(supplierId, req) {
 }
 
 // GET stock receipt
-router.get('/stock/receipt/:receiptId', getShopInfo, async (req, res) => {
+router.get('/stock/receipt/:receiptId', requirePermissionOrAdmin('inventory.view'), getShopInfo, async (req, res) => {
     try {
         const { receiptId } = req.params;
         const { batch_number, supplier_id, total_buying_value, payment_amount, transaction_type, results } = req.query;
@@ -1495,7 +1496,7 @@ router.get('/stock/receipt/:receiptId', getShopInfo, async (req, res) => {
 });
 
 // GET supplier balance
-router.get('/suppliers/:id/balance', getShopInfo, async (req, res) => {
+router.get('/suppliers/:id/balance', requirePermissionOrAdmin('products.view'), getShopInfo, async (req, res) => {
     try {
         const supplierId = req.params.id;
 
@@ -1523,7 +1524,7 @@ router.get('/suppliers/:id/balance', getShopInfo, async (req, res) => {
 });
 
 // GET product details with pricing info for stock addition
-router.get('/:id/details', getShopInfo, async (req, res) => {
+router.get('/:id/details', requirePermissionOrAdmin('products.view'), getShopInfo, async (req, res) => {
     try {
         const productId = req.params.id;
         

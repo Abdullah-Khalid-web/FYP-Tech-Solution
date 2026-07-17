@@ -458,12 +458,22 @@ exports.reorderProduct = async (req, res) => {
     // Create a purchase order or stock in entry
     const stockInId = require('uuid').v4();
     await pool.execute(
-      `INSERT INTO stock_in (id, shop_id, product_id, quantity, buying_price, selling_price, notes, received_by, created_at)
-       VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, 
+      `INSERT INTO stock_in (id, shop_id, product_id, quantity, unit_price, buying_price, selling_price, total_buying_value, notes, received_by, created_at)
+       VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?,
+       (SELECT last_buying_price FROM inventory WHERE product_id = UUID_TO_BIN(?)),
        (SELECT last_buying_price FROM inventory WHERE product_id = UUID_TO_BIN(?)),
        (SELECT selling_price FROM inventory WHERE product_id = UUID_TO_BIN(?)),
+       (SELECT last_buying_price FROM inventory WHERE product_id = UUID_TO_BIN(?)) * ?,
        'Auto reorder due to low stock', UUID_TO_BIN(?), NOW())`,
-      [stockInId, shopId, productId, reorderQuantity, productId, productId, userId]
+      [stockInId, shopId, productId, reorderQuantity, productId, productId, productId, productId, reorderQuantity, userId]
+    );
+
+    // Reflect the received stock in inventory (the stock_in row alone doesn't move current_quantity)
+    await pool.execute(
+      `UPDATE inventory
+       SET current_quantity = COALESCE(current_quantity, 0) + ?, updated_at = NOW()
+       WHERE product_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)`,
+      [reorderQuantity, productId, shopId]
     );
 
     // Log the activity

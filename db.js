@@ -65,29 +65,38 @@ function createSqlitePool() {
     translatedSql = translatedSql.replace(/BIN_TO_UUID\(\s*([^)]+?)\s*\)/gi, '$1');
 
     // DATEDIFF handling with CURDATE() or other functions (must run before CURDATE() is translated to date('now'))
-    translatedSql = translatedSql.replace(/DATEDIFF\(\s*([^,]+?)\s*,\s*CURDATE\(\)\s*\)/gi, "CAST((julianday($1) - julianday(date('now'))) AS INTEGER)");
+    translatedSql = translatedSql.replace(/DATEDIFF\(\s*([^,]+?)\s*,\s*CURDATE\(\)\s*\)/gi, "CAST((julianday($1) - julianday(date('now', 'localtime'))) AS INTEGER)");
     translatedSql = translatedSql.replace(/DATEDIFF\(\s*([^,]+?)\s*,\s*([^)]+?)\s*\)/gi, "CAST((julianday($1) - julianday($2)) AS INTEGER)");
 
     // MySQL FORMAT(number, decimals) -> SQLite has no equivalent; ROUND() is a close approximation
     translatedSql = translatedSql.replace(/\bFORMAT\(\s*([^,]+?)\s*,\s*(\d+)\s*\)/gi, "ROUND($1, $2)");
 
+    // MySQL JSON aggregation -> SQLite JSON1 equivalents (supported by sql.js)
+    translatedSql = translatedSql.replace(/\bJSON_ARRAYAGG\s*\(/gi, 'json_group_array(');
+    translatedSql = translatedSql.replace(/\bJSON_OBJECT\s*\(/gi, 'json_object(');
+
     translatedSql = translatedSql.replace(/DATE_FORMAT\(\s*([^)]+?)\s*,\s*['"]%Y-%m['"]\s*\)/gi, "strftime('%Y-%m', $1)");
     translatedSql = translatedSql.replace(/DATE_FORMAT\(\s*([^)]+?)\s*,\s*['"]%Y-%m-%d['"]\s*\)/gi, "strftime('%Y-%m-%d', $1)");
-    // General DATE_ADD and DATE_SUB replacements
-    translatedSql = translatedSql.replace(/DATE_ADD\(\s*(CURDATE\(\)|NOW\(\))\s*,\s*INTERVAL\s*(\d+)\s*DAY\s*\)/gi, "date('now', '+$2 day')");
-    translatedSql = translatedSql.replace(/DATE_ADD\(\s*(CURDATE\(\)|NOW\(\))\s*,\s*INTERVAL\s*(\?)\s*DAY\s*\)/gi, "date('now', '+' || $2 || ' day')");
-    translatedSql = translatedSql.replace(/DATE_SUB\(\s*(CURDATE\(\)|NOW\(\))\s*,\s*INTERVAL\s*(\d+)\s*DAY\s*\)/gi, "date('now', '-$2 day')");
-    translatedSql = translatedSql.replace(/DATE_SUB\(\s*(CURDATE\(\)|NOW\(\))\s*,\s*INTERVAL\s*(\?)\s*DAY\s*\)/gi, "date('now', '-' || $2 || ' day')");
+    // General DATE_ADD and DATE_SUB replacements.
+    // 'localtime' matches MySQL semantics: NOW()/CURDATE() return the server's
+    // local time, whereas bare SQLite date('now')/CURRENT_TIMESTAMP are UTC.
+    translatedSql = translatedSql.replace(/DATE_ADD\(\s*(CURDATE\(\)|NOW\(\))\s*,\s*INTERVAL\s*(\d+)\s*DAY\s*\)/gi, "date('now', 'localtime', '+$2 day')");
+    translatedSql = translatedSql.replace(/DATE_ADD\(\s*(CURDATE\(\)|NOW\(\))\s*,\s*INTERVAL\s*(\?)\s*DAY\s*\)/gi, "date('now', 'localtime', '+' || $2 || ' day')");
+    translatedSql = translatedSql.replace(/DATE_SUB\(\s*(CURDATE\(\)|NOW\(\))\s*,\s*INTERVAL\s*(\d+)\s*DAY\s*\)/gi, "date('now', 'localtime', '-$2 day')");
+    translatedSql = translatedSql.replace(/DATE_SUB\(\s*(CURDATE\(\)|NOW\(\))\s*,\s*INTERVAL\s*(\?)\s*DAY\s*\)/gi, "date('now', 'localtime', '-' || $2 || ' day')");
 
     // Interval subtract syntax (e.g. CURDATE() - INTERVAL 6 DAY)
-    translatedSql = translatedSql.replace(/(CURDATE\(\)|NOW\(\))\s*-\s*INTERVAL\s*(\d+)\s*DAY/gi, "date('now', '-$2 day')");
-    translatedSql = translatedSql.replace(/(CURDATE\(\)|NOW\(\))\s*-\s*INTERVAL\s*(\?)\s*DAY/gi, "date('now', '-' || $2 || ' day')");
+    translatedSql = translatedSql.replace(/(CURDATE\(\)|NOW\(\))\s*-\s*INTERVAL\s*(\d+)\s*DAY/gi, "date('now', 'localtime', '-$2 day')");
+    translatedSql = translatedSql.replace(/(CURDATE\(\)|NOW\(\))\s*-\s*INTERVAL\s*(\?)\s*DAY/gi, "date('now', 'localtime', '-' || $2 || ' day')");
 
     // Standard date function translation
-    translatedSql = translatedSql.replace(/CURDATE\(\)/gi, "date('now')");
-    translatedSql = translatedSql.replace(/CURRENT_DATE\(\)/gi, "date('now')");
-    translatedSql = translatedSql.replace(/NOW\(\)/gi, 'CURRENT_TIMESTAMP');
-    translatedSql = translatedSql.replace(/CURRENT_TIMESTAMP\(\)/gi, 'CURRENT_TIMESTAMP');
+    translatedSql = translatedSql.replace(/CURDATE\(\)/gi, "date('now', 'localtime')");
+    translatedSql = translatedSql.replace(/CURRENT_DATE\(\)/gi, "date('now', 'localtime')");
+    translatedSql = translatedSql.replace(/NOW\(\)/gi, "datetime('now', 'localtime')");
+    translatedSql = translatedSql.replace(/CURRENT_TIMESTAMP\(\)/gi, "datetime('now', 'localtime')");
+    // Bare CURRENT_TIMESTAMP in DML (e.g. SET updated_at = CURRENT_TIMESTAMP) is UTC
+    // in SQLite; DDL never passes through this translator so DEFAULT clauses are safe.
+    translatedSql = translatedSql.replace(/\bCURRENT_TIMESTAMP\b(?!\s*\()/gi, "datetime('now', 'localtime')");
     translatedSql = translatedSql.replace(/\bYEARWEEK\(\s*([^)]+?)\s*,\s*1\s*\)/gi, "strftime('%Y%W', $1)");
     translatedSql = translatedSql.replace(/\bDATE\(\s*([^)]+?)\s*\)/gi, 'date($1)');
     translatedSql = translatedSql.replace(/\bYEAR\(\s*([^)]+?)\s*\)/gi, "strftime('%Y', $1)");
@@ -109,13 +118,27 @@ function createSqlitePool() {
     const placeholderPattern = /__SQLITE_UUID__|__UUID_TO_BIN_PARAM__|\?/g;
     let match;
 
+    // sql.js only binds Number/String/Uint8Array/null — a raw JS Date or boolean
+    // (both fine for mysql2, which serializes them itself) throws "tried to bind
+    // a value of an unknown type" here. Normalize to what sql.js accepts.
+    const normalizeSqliteParam = (value) => {
+      if (value instanceof Date) {
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())} ${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`;
+      }
+      if (typeof value === 'boolean') {
+        return value ? 1 : 0;
+      }
+      return value;
+    };
+
     while ((match = placeholderPattern.exec(translatedSql)) !== null) {
       if (match[0] === '__SQLITE_UUID__') {
         finalParams.push(uuidToBin(generatedValues.shift() || crypto.randomUUID()));
       } else if (match[0] === '__UUID_TO_BIN_PARAM__') {
         finalParams.push(uuidToBin(paramsQueue.shift()));
       } else {
-        finalParams.push(paramsQueue.shift());
+        finalParams.push(normalizeSqliteParam(paramsQueue.shift()));
       }
     }
 

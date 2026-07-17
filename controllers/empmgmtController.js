@@ -3,6 +3,7 @@ const router = express.Router();
 const { pool } = require('../db');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const { requirePermissionOrAdmin } = require('../middleware/roleAuth');
 
 // Middleware to get shop-specific details
 const getShopDetails = async (req, res, next) => {
@@ -23,7 +24,7 @@ const getShopDetails = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: shops[0].name || 'My Shop',
-            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
+            logo: shops[0].logo ? `/uploads/shop_logos/${shops[0].logo}` : null,
             currency: shops[0].currency || 'PKR',
             primary_color: shops[0].primary_color || '#007bff',
             secondary_color: shops[0].secondary_color || '#6c757d'
@@ -48,17 +49,17 @@ function buildQueryString(query) {
 }
 
 // GET /employees - Show all employees with pagination and filtering
-router.get('/', getShopDetails, async (req, res) => {
+router.get('/', requirePermissionOrAdmin('employees.view'), getShopDetails, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        // Get all roles first
+        // Get all roles first (Super Admin is never assignable to an employee)
         const [roles] = await pool.execute(`
-            SELECT BIN_TO_UUID(id) as id, role_name 
-            FROM roles 
-            WHERE status = 'active'
+            SELECT BIN_TO_UUID(id) as id, role_name
+            FROM roles
+            WHERE status = 'active' AND role_name != 'Super Admin'
         `);
 
         // Build filter conditions
@@ -225,7 +226,7 @@ router.get('/', getShopDetails, async (req, res) => {
 });
 
 // POST /api/employees - Add new employee
-router.post('/api/EmpMgmt', getShopDetails, async (req, res) => {
+router.post('/api/EmpMgmt', requirePermissionOrAdmin('employees.create'), getShopDetails, async (req, res) => {
     let connection;
     try {
         const { name, email, phone, cnic, role, salary, password, notes } = req.body;
@@ -300,7 +301,7 @@ router.post('/api/EmpMgmt', getShopDetails, async (req, res) => {
 });
 
 // PUT /api/employees/:id - Update employee
-router.put('/api/EmpMgmt/:id', getShopDetails, async (req, res) => {
+router.put('/api/EmpMgmt/:id', requirePermissionOrAdmin('employees.edit'), getShopDetails, async (req, res) => {
     let connection;
     try {
         const employeeId = req.params.id;
@@ -363,7 +364,7 @@ router.put('/api/EmpMgmt/:id', getShopDetails, async (req, res) => {
 });
 
 // PUT /api/employees/:id/status - Update employee status
-router.put('/api/EmpMgmt/:id/status', getShopDetails, async (req, res) => {
+router.put('/api/EmpMgmt/:id/status', requirePermissionOrAdmin('employees.edit'), getShopDetails, async (req, res) => {
     try {
         const employeeId = req.params.id;
         const { status } = req.body;
@@ -402,7 +403,7 @@ router.put('/api/EmpMgmt/:id/status', getShopDetails, async (req, res) => {
 });
 
 // GET /api/employees/:id - Get employee details with loans and salary history
-router.get('/api/EmpMgmt/:id', getShopDetails, async (req, res) => {
+router.get('/api/EmpMgmt/:id', requirePermissionOrAdmin('employees.view'), getShopDetails, async (req, res) => {
     try {
         const employeeId = req.params.id;
 
@@ -511,7 +512,7 @@ router.get('/api/EmpMgmt/:id', getShopDetails, async (req, res) => {
 });
 
 // POST /api/employees/:id/salary - Pay salary with loan deduction
-router.post('/api/EmpMgmt/:id/salary', getShopDetails, async (req, res) => {
+router.post('/api/EmpMgmt/:id/salary', requirePermissionOrAdmin('employees.salary.manage'), getShopDetails, async (req, res) => {
     let connection;
     try {
         const employeeId = req.params.id;
@@ -653,7 +654,7 @@ router.post('/api/EmpMgmt/:id/salary', getShopDetails, async (req, res) => {
 
 // POST /api/employees/:id/loan - Add new loan
 // POST /api/employees/:id/loan - Add new loan
-router.post('/api/EmpMgmt/:id/loan', getShopDetails, async (req, res) => {
+router.post('/api/EmpMgmt/:id/loan', requirePermissionOrAdmin('employees.loans.manage'), getShopDetails, async (req, res) => {
     let connection;
     try {
         const employeeId = req.params.id;
@@ -777,7 +778,7 @@ router.post('/api/EmpMgmt/:id/loan', getShopDetails, async (req, res) => {
 });
 
 // POST /api/employees/:id/loan/payment - Make loan payment
-router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) => {
+router.post('/api/EmpMgmt/:id/loan/payment', requirePermissionOrAdmin('employees.loans.manage'), getShopDetails, async (req, res) => {
     let connection;
     try {
         const employeeId = req.params.id;
@@ -936,7 +937,7 @@ router.post('/api/EmpMgmt/:id/loan/payment', getShopDetails, async (req, res) =>
     }
 });
 // DELETE /api/employees/:id - Delete employee
-router.delete('/api/EmpMgmt/:id', getShopDetails, async (req, res) => {
+router.delete('/api/EmpMgmt/:id', requirePermissionOrAdmin('employees.delete'), getShopDetails, async (req, res) => {
     let connection;
     try {
         const employeeId = req.params.id;
@@ -1004,12 +1005,12 @@ router.delete('/api/EmpMgmt/:id', getShopDetails, async (req, res) => {
 });
 
 // GET /api/roles - Get all roles
-router.get('/api/EmpMgmt/roles', getShopDetails, async (req, res) => {
+router.get('/api/EmpMgmt/roles', requirePermissionOrAdmin('employees.view'), getShopDetails, async (req, res) => {
     try {
         const [roles] = await pool.execute(`
-            SELECT BIN_TO_UUID(id) as id, role_name 
-            FROM roles 
-            WHERE status = 'active'
+            SELECT BIN_TO_UUID(id) as id, role_name
+            FROM roles
+            WHERE status = 'active' AND role_name != 'Super Admin'
             ORDER BY role_name
         `);
 
@@ -1027,7 +1028,7 @@ router.get('/api/EmpMgmt/roles', getShopDetails, async (req, res) => {
 });
 
 // GET /api/employees/:id/loans - Get employee loans
-router.get('/api/EmpMgmt/:id/loans', getShopDetails, async (req, res) => {
+router.get('/api/EmpMgmt/:id/loans', requirePermissionOrAdmin('employees.loans.view'), getShopDetails, async (req, res) => {
     try {
         const employeeId = req.params.id;
 
@@ -1064,7 +1065,7 @@ router.get('/api/EmpMgmt/:id/loans', getShopDetails, async (req, res) => {
 });
 
 // GET /api/employees/:id/loan/:loanId/ledger - Get loan ledger
-router.get('/api/EmpMgmt/:id/loan/:loanId/ledger', getShopDetails, async (req, res) => {
+router.get('/api/EmpMgmt/:id/loan/:loanId/ledger', requirePermissionOrAdmin('employees.loans.view'), getShopDetails, async (req, res) => {
     try {
         const { id, loanId } = req.params;
 

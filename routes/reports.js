@@ -3,6 +3,9 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
 const ExcelJS = require('exceljs');
+const { requirePermissionOrAdmin } = require('../middleware/roleAuth');
+
+const ANY_REPORT_PERMISSION = ['reports.sales', 'reports.inventory', 'reports.financial', 'reports.customers', 'reports.employees', 'reports.purchases', 'reports.profit', 'reports.custom', 'reports.tax'];
 
 // Helper function to convert UUID to binary
 function uuidToBin(uuid) {
@@ -64,7 +67,7 @@ const getShopDetails = async (req, res, next) => {
 };
 
 // GET /reports - Daily reports page
-router.get('/', getShopDetails, async (req, res) => {
+router.get('/', requirePermissionOrAdmin(ANY_REPORT_PERMISSION), getShopDetails, async (req, res) => {
     try {
         res.render('reports/daily', {
             title: 'Daily Reports',
@@ -79,7 +82,7 @@ router.get('/', getShopDetails, async (req, res) => {
 });
 
 // API: GET /api/reports - Get daily reports data - FIXED for your schema
-router.get('/api/reports', getShopDetails, async (req, res) => {
+router.get('/api/reports', requirePermissionOrAdmin(ANY_REPORT_PERMISSION), getShopDetails, async (req, res) => {
     try {
         const {
             startDate,
@@ -295,7 +298,7 @@ async function getPaymentMethods(shopId, startDate, endDate) {
 }
 
 // API: GET /api/reports/bills/:id - Get bill details
-router.get('/api/reports/bills/:id', getShopDetails, async (req, res) => {
+router.get('/api/reports/bills/:id', requirePermissionOrAdmin('reports.sales'), getShopDetails, async (req, res) => {
     try {
         const billId = req.params.id;
 
@@ -354,7 +357,7 @@ router.get('/api/reports/bills/:id', getShopDetails, async (req, res) => {
 });
 
 // API: GET /api/reports/export - Export reports to Excel
-router.get('/api/reports/export', getShopDetails, async (req, res) => {
+router.get('/api/reports/export', requirePermissionOrAdmin('reports.export'), getShopDetails, async (req, res) => {
     try {
         const { startDate, endDate, paymentMethod } = req.query;
 
@@ -459,7 +462,7 @@ router.get('/api/reports/export', getShopDetails, async (req, res) => {
 // ============================================
 
 // GET /reports/supplier-payments - Supplier payment report page
-router.get('/supplier-payments', getShopDetails, async (req, res) => {
+router.get('/supplier-payments', requirePermissionOrAdmin('reports.purchases'), getShopDetails, async (req, res) => {
   try {
     res.render('reports/supplier-payments', {
       title: 'Supplier Payment Report',
@@ -472,7 +475,7 @@ router.get('/supplier-payments', getShopDetails, async (req, res) => {
 });
 
 // API: GET /api/reports/supplier-payments - Get supplier payment data
-router.get('/api/supplier-payments', getShopDetails, async (req, res) => {
+router.get('/api/supplier-payments', requirePermissionOrAdmin('reports.purchases'), getShopDetails, async (req, res) => {
   try {
     const { startDate, endDate, supplierId } = req.query;
     const shopId = req.session.shopId;
@@ -572,7 +575,7 @@ router.get('/api/supplier-payments', getShopDetails, async (req, res) => {
 // ============================================
 
 // GET /reports/user-sales - User sales report page
-router.get('/user-sales', getShopDetails, async (req, res) => {
+router.get('/user-sales', requirePermissionOrAdmin('reports.sales'), getShopDetails, async (req, res) => {
   try {
     res.render('reports/user-sales', {
       title: 'User Sales Report',
@@ -585,7 +588,7 @@ router.get('/user-sales', getShopDetails, async (req, res) => {
 });
 
 // API: GET /api/reports/user-sales - Get user sales data
-router.get('/api/user-sales', getShopDetails, async (req, res) => {
+router.get('/api/user-sales', requirePermissionOrAdmin('reports.sales'), getShopDetails, async (req, res) => {
   try {
     const { startDate, endDate, userId, period = 'daily' } = req.query;
     const shopId = req.session.shopId;
@@ -675,7 +678,7 @@ router.get('/api/user-sales', getShopDetails, async (req, res) => {
 // ============================================
 
 // GET /reports/product-sales - Product sales report page
-router.get('/product-sales', getShopDetails, async (req, res) => {
+router.get('/product-sales', requirePermissionOrAdmin('reports.sales'), getShopDetails, async (req, res) => {
   try {
     res.render('reports/product-sales', {
       title: 'Product Sales Report',
@@ -688,7 +691,7 @@ router.get('/product-sales', getShopDetails, async (req, res) => {
 });
 
 // API: GET /api/reports/product-sales - Get product sales data
-router.get('/api/product-sales', getShopDetails, async (req, res) => {
+router.get('/api/product-sales', requirePermissionOrAdmin('reports.sales'), getShopDetails, async (req, res) => {
   try {
     const { startDate, endDate, category, sortBy = 'quantity' } = req.query;
     const shopId = req.session.shopId;
@@ -788,7 +791,7 @@ router.get('/api/product-sales', getShopDetails, async (req, res) => {
 // ============================================
 
 // GET /reports/raw-consumption - Raw material consumption report
-router.get('/raw-consumption', getShopDetails, async (req, res) => {
+router.get('/raw-consumption', requirePermissionOrAdmin('reports.inventory'), getShopDetails, async (req, res) => {
   try {
     res.render('reports/raw-consumption', {
       title: 'Raw Material Consumption Report',
@@ -801,7 +804,7 @@ router.get('/raw-consumption', getShopDetails, async (req, res) => {
 });
 
 // API: GET /api/reports/raw-consumption - Get raw material consumption data
-router.get('/api/raw-consumption', getShopDetails, async (req, res) => {
+router.get('/api/raw-consumption', requirePermissionOrAdmin('reports.inventory'), getShopDetails, async (req, res) => {
   try {
     const { startDate, endDate, category } = req.query;
     const shopId = req.session.shopId;
@@ -911,7 +914,7 @@ router.get('/api/raw-consumption', getShopDetails, async (req, res) => {
 // ============================================
 
 // Export supplier payments report
-router.get('/export/supplier-payments', getShopDetails, async (req, res) => {
+router.get('/export/supplier-payments', requirePermissionOrAdmin('reports.export'), getShopDetails, async (req, res) => {
   try {
     const { startDate, endDate, supplierId } = req.query;
     const shopId = req.session.shopId;

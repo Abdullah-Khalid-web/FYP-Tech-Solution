@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
+const { requirePermissionOrAdmin } = require('../middleware/roleAuth');
 
 // Middleware to get shop info
 const getShopInfo = async (req, res, next) => {
@@ -31,7 +32,7 @@ const getShopInfo = async (req, res, next) => {
             req.shop = {
                 id: req.shopId,
                 name: shops[0].name || 'My Shop',
-                logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
+                logo: shops[0].logo ? `/uploads/shop_logos/${shops[0].logo}` : null,
                 currency: shops[0].currency || 'PKR',
                 primary_color: shops[0].primary_color || '#007bff',
                 secondary_color: shops[0].secondary_color || '#6c757d'
@@ -72,7 +73,7 @@ const EXPENSE_CATEGORIES = [
 ];
 
 // GET expenses page
-router.get('/', getShopInfo, async (req, res) => {
+router.get('/', requirePermissionOrAdmin('expenses.view'), getShopInfo, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = 10;
@@ -133,9 +134,16 @@ router.get('/', getShopInfo, async (req, res) => {
         const totalPages = Math.ceil(total / limit);
 
         // Get summary statistics
+        const [allTimeSummary] = await pool.execute(
+            `SELECT COALESCE(SUM(amount), 0) as total
+             FROM expenses
+             WHERE shop_id = UUID_TO_BIN(?)`,
+            [req.shopId]
+        );
+
         const [todaySummary] = await pool.execute(
-            `SELECT COALESCE(SUM(amount), 0) as total 
-             FROM expenses 
+            `SELECT COALESCE(SUM(amount), 0) as total
+             FROM expenses
              WHERE shop_id = UUID_TO_BIN(?) AND expense_date = CURDATE()`,
             [req.shopId]
         );
@@ -155,7 +163,8 @@ router.get('/', getShopInfo, async (req, res) => {
             categories: EXPENSE_CATEGORIES,
             currentPage: page,
             totalPages,
-            totalExpenses: total,
+            totalExpenses: allTimeSummary[0].total,
+            totalRecords: total,
             todayTotal: todaySummary[0].total,
             monthTotal: monthSummary[0].total,
             shop: req.shop || {},
@@ -171,7 +180,7 @@ router.get('/', getShopInfo, async (req, res) => {
 });
 
 // POST create new expense
-router.post('/', getShopInfo, async (req, res) => {
+router.post('/', requirePermissionOrAdmin('expenses.create'), getShopInfo, async (req, res) => {
     try {
         const {
             category,
@@ -227,7 +236,7 @@ router.post('/', getShopInfo, async (req, res) => {
 });
 
 // GET expense statistics
-router.get('/statistics', getShopInfo, async (req, res) => {
+router.get('/statistics', requirePermissionOrAdmin('expenses.view'), getShopInfo, async (req, res) => {
     try {
         const { period = 'monthly' } = req.query;
 
@@ -312,7 +321,7 @@ router.get('/statistics', getShopInfo, async (req, res) => {
 });
 
 // DELETE expense
-router.delete('/:id', getShopInfo, async (req, res) => {
+router.delete('/:id', requirePermissionOrAdmin('expenses.delete'), getShopInfo, async (req, res) => {
     try {
         const expenseId = req.params.id;
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
+const { requirePermissionOrAdmin } = require('../middleware/roleAuth');
 
 // Helper function to build query string (add this at the top of your controller)
 const buildQueryString = (params) => {
@@ -34,7 +35,7 @@ const getShopDetails = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: shops[0].name || 'My Shop',
-            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
+            logo: shops[0].logo ? `/uploads/shop_logos/${shops[0].logo}` : null,
             currency: shops[0].currency || '₹',
             primary_color: shops[0].primary_color || '#007bff',
             secondary_color: shops[0].secondary_color || '#6c757d'
@@ -48,7 +49,7 @@ const getShopDetails = async (req, res, next) => {
 };
 
 // GET /ALLbills?page=1 - Show all bills with pagination and filtering
-router.get('/', getShopDetails, async (req, res) => {
+router.get('/', requirePermissionOrAdmin('bills.view'), getShopDetails, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = 10;
@@ -215,7 +216,7 @@ router.get('/', getShopDetails, async (req, res) => {
 });
 
 // GET /ALLbills/:id - Get single bill details
-router.get('/:id', getShopDetails, async (req, res) => {
+router.get('/:id', requirePermissionOrAdmin('bills.view'), getShopDetails, async (req, res) => {
     try {
         const billId = req.params.id;
 
@@ -272,7 +273,7 @@ router.get('/:id', getShopDetails, async (req, res) => {
 });
 
 // DELETE /ALLbills/:id - Delete a bill
-router.delete('/:id', getShopDetails, async (req, res) => {
+router.delete('/:id', requirePermissionOrAdmin('bills.delete'), getShopDetails, async (req, res) => {
     let connection;
     try {
         const billId = req.params.id;
@@ -336,7 +337,7 @@ router.delete('/:id', getShopDetails, async (req, res) => {
 });
 
 // GET /ALLbills/:id/print - Print bill
-router.get('/:id/print', getShopDetails, async (req, res) => {
+router.get('/:id/print', requirePermissionOrAdmin('bills.print'), getShopDetails, async (req, res) => {
     try {
         const billId = req.params.id;
 
@@ -386,7 +387,7 @@ router.get('/:id/print', getShopDetails, async (req, res) => {
 });
 
 // GET /ALLbills/export - Export bills to CSV/Excel
-router.get('/export', getShopDetails, async (req, res) => {
+router.get('/export', requirePermissionOrAdmin('bills.reports'), getShopDetails, async (req, res) => {
     try {
         // Similar filtering logic as the main bills route
         // Export implementation would go here

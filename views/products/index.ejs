@@ -1046,7 +1046,7 @@
                     ingredients = [];
                     updateIngredientsList();
                     updateIngredientsData();
-                    setTimeout(() => location.reload(), 1500);
+                    setTimeout(() => location.reload(), 400);
                 } else {
                     toastr.error(result.message);
                 }
@@ -1267,7 +1267,7 @@
                 if (result.success) {
                     toastr.success(result.message);
                     $('#editProductModal').modal('hide');
-                    setTimeout(() => location.reload(), 1500);
+                    setTimeout(() => location.reload(), 400);
                 } else {
                     toastr.error(result.message);
                 }
@@ -1557,7 +1557,7 @@
                 if (data.success) {
                     toastr.success(data.message);
                     $('#addStockModal').modal('hide');
-                    setTimeout(() => location.reload(), 1500);
+                    setTimeout(() => location.reload(), 400);
                 } else {
                     toastr.error(data.message);
                 }

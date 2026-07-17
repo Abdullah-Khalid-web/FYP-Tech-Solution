@@ -99,6 +99,40 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
+        .product-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1050;
+            max-height: 260px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            margin-top: 2px;
+        }
+
+        .product-search-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .product-search-item:hover {
+            background: #f1f5ff;
+        }
+
+        .product-search-empty {
+            padding: 10px 12px;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
         .remove-row {
             color: var(--danger);
             cursor: pointer;
@@ -1014,13 +1048,6 @@
             const emptyState = document.getElementById('emptyState');
             if (emptyState) emptyState.style.display = 'none';
 
-            // Create product options HTML
-            const productOptions = Array.isArray(products) && products.length > 0 ? products.map(product => 
-                `<option value="${product.id}">
-                    ${escapeHtml(product.name || '')} ${product.sku ? `(${escapeHtml(product.sku)})` : ''}
-                </option>`
-            ).join('') : '<option value="">No products available</option>';
-
             // Add to DOM
             const entryElement = document.createElement('div');
             entryElement.className = 'stock-row';
@@ -1032,12 +1059,12 @@
                             <div class="me-3">
                                 <i class="fas fa-question-circle text-warning" style="font-size: 1.5rem;"></i>
                             </div>
-                            <div class="flex-grow-1">
-                                <select class="form-select select-product" onchange="selectProduct('${entryId}', this.value)" 
-                                        style="width: 100%;">
-                                    <option value="">Select Product...</option>
-                                    ${productOptions}
-                                </select>
+                            <div class="flex-grow-1 select-product" style="position: relative;">
+                                <input type="text" class="form-control product-search-input"
+                                       placeholder="Search product..." autocomplete="off"
+                                       data-entry-id="${entryId}" onfocus="showProductSearchResults('${entryId}')"
+                                       oninput="filterProductSearchResults('${entryId}')">
+                                <div class="product-search-results" id="${entryId}-search-results" style="display: none;"></div>
                             </div>
                         </div>
                     </div>
@@ -1084,6 +1111,70 @@
             }
             updateEntryCount();
         }
+
+        // Searchable product dropdown for empty rows (replaces the old plain <select>)
+        window.showProductSearchResults = function(entryId) {
+            closeOtherProductSearchResults(entryId);
+            renderProductSearchResults(entryId, '');
+        };
+
+        window.filterProductSearchResults = function(entryId) {
+            const input = document.querySelector(`#${entryId} .product-search-input`);
+            renderProductSearchResults(entryId, input ? input.value.trim().toLowerCase() : '');
+        };
+
+        // Tabbing/clicking into a different row's search box never fires a "click outside"
+        // on the previously open dropdown, so it stays open behind/over the new one unless
+        // every other row's list is explicitly closed here first.
+        function closeOtherProductSearchResults(exceptEntryId) {
+            document.querySelectorAll('.product-search-results').forEach((el) => {
+                if (el.id !== `${exceptEntryId}-search-results`) {
+                    el.style.display = 'none';
+                }
+            });
+        }
+
+        function renderProductSearchResults(entryId, term) {
+            const resultsEl = document.getElementById(`${entryId}-search-results`);
+            if (!resultsEl) return;
+
+            const list = Array.isArray(products) ? products : [];
+            const matches = (term
+                ? list.filter(p => (p.name || '').toLowerCase().includes(term) || (p.sku || '').toLowerCase().includes(term))
+                : list
+            ).slice(0, 50);
+
+            if (matches.length === 0) {
+                resultsEl.innerHTML = `<div class="product-search-empty">No matching products</div>`;
+            } else {
+                resultsEl.innerHTML = matches.map(product => `
+                    <div class="product-search-item" onmousedown="event.preventDefault(); pickProductSearchResult('${entryId}', '${product.id}')">
+                        <span>${escapeHtml(product.name || '')}</span>
+                        ${product.sku ? `<small class="text-muted">${escapeHtml(product.sku)}</small>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            resultsEl.style.display = 'block';
+        }
+
+        window.pickProductSearchResult = function(entryId, productId) {
+            const product = (products || []).find(p => String(p.id) === String(productId));
+            const input = document.querySelector(`#${entryId} .product-search-input`);
+            if (input && product) {
+                input.value = product.name + (product.sku ? ` (${product.sku})` : '');
+            }
+            const resultsEl = document.getElementById(`${entryId}-search-results`);
+            if (resultsEl) resultsEl.style.display = 'none';
+
+            selectProduct(entryId, productId);
+        };
+
+        // Close any open search dropdown when clicking elsewhere on the page
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.product-search-input') || e.target.closest('.product-search-results')) return;
+            document.querySelectorAll('.product-search-results').forEach(el => { el.style.display = 'none'; });
+        });
 
         // Select product in empty row
         window.selectProduct = async function(entryId, productId) {

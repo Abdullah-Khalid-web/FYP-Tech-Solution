@@ -16,6 +16,12 @@ const TABLES = {
         uuidColumns: ['id'],
         columns: ['id', 'role_name', 'description', 'status', 'created_at', 'updated_at']
     },
+    pricing_plans: {
+        upload: false,
+        shopScoped: false,
+        uuidColumns: ['id'],
+        columns: ['id', 'name', 'description', 'monthly_price', 'quarterly_price', 'yearly_price', 'features', 'status', 'created_at']
+    },
     users: {
         upload: false,
         uuidColumns: ['id', 'shop_id', 'role_id'],

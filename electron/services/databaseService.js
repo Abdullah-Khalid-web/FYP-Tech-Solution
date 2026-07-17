@@ -284,9 +284,13 @@ class DatabaseService {
         );
     }
 
+    // Purges completed items immediately, but only purges failed items once
+    // they've exhausted all retry attempts (matches the attempts < 5 cap in
+    // getPendingSyncItems) -- otherwise this would prematurely give up on
+    // items that are still eligible for another retry.
     async clearSyncQueue() {
         const db = await this.getDb();
-        return this.runMutation(db, `DELETE FROM sync_queue WHERE status IN ('completed', 'failed')`);
+        return this.runMutation(db, `DELETE FROM sync_queue WHERE status = 'completed' OR (status = 'failed' AND attempts >= 5)`);
     }
 
     async getLastSyncTime(tableName) {

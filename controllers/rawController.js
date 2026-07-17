@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
+const { requirePermissionOrAdmin } = require('../middleware/roleAuth');
 
 // Middleware to get shop info
 const getShopInfo = async (req, res, next) => {
@@ -31,7 +32,7 @@ const getShopInfo = async (req, res, next) => {
             req.shop = {
                 id: req.shopId,
                 name: shops[0].name || 'My Shop',
-                logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
+                logo: shops[0].logo ? `/uploads/shop_logos/${shops[0].logo}` : null,
                 currency: shops[0].currency || 'PKR',
                 primary_color: shops[0].primary_color || '#007bff',
                 secondary_color: shops[0].secondary_color || '#6c757d'
@@ -54,7 +55,7 @@ const getShopInfo = async (req, res, next) => {
 };
 
 // GET main raw materials page
-router.get('/', getShopInfo, async (req, res) => {
+router.get('/', requirePermissionOrAdmin('raw_materials.view'), getShopInfo, async (req, res) => {
     try {
         const isApiCall = req.headers['content-type'] === 'application/json' ||
             req.headers.accept?.includes('application/json') ||
@@ -156,7 +157,7 @@ router.get('/', getShopInfo, async (req, res) => {
 });
 
 // GET raw materials data (for table)
-router.get('/materials', getShopInfo, async (req, res) => {
+router.get('/materials', requirePermissionOrAdmin('raw_materials.view'), getShopInfo, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
@@ -276,7 +277,7 @@ router.get('/materials', getShopInfo, async (req, res) => {
 });
 
 // POST create new raw material (without price/quantity - only basic info)
-router.post('/materials', getShopInfo, async (req, res) => {
+router.post('/materials', requirePermissionOrAdmin('raw_materials.create'), getShopInfo, async (req, res) => {
     try {
         const {
             name,
@@ -342,7 +343,7 @@ router.post('/materials', getShopInfo, async (req, res) => {
 });
 
 // POST create multiple raw materials at once
-router.post('/materials/bulk', getShopInfo, async (req, res) => {
+router.post('/materials/bulk', requirePermissionOrAdmin('raw_materials.create'), getShopInfo, async (req, res) => {
     try {
         const materials = req.body.materials;
 
@@ -412,7 +413,7 @@ router.post('/materials/bulk', getShopInfo, async (req, res) => {
 });
 
 // GET single material for editing
-router.get('/materials/:id', getShopInfo, async (req, res) => {
+router.get('/materials/:id', requirePermissionOrAdmin('raw_materials.view'), getShopInfo, async (req, res) => {
     try {
         const materialId = req.params.id;
 
@@ -458,7 +459,7 @@ router.get('/materials/:id', getShopInfo, async (req, res) => {
 });
 
 // PUT update material
-router.put('/materials/:id', getShopInfo, async (req, res) => {
+router.put('/materials/:id', requirePermissionOrAdmin('raw_materials.edit'), getShopInfo, async (req, res) => {
     try {
         const materialId = req.params.id;
         const {
@@ -534,7 +535,7 @@ router.put('/materials/:id', getShopInfo, async (req, res) => {
 });
 
 // DELETE material (soft delete)
-router.delete('/materials/:id', getShopInfo, async (req, res) => {
+router.delete('/materials/:id', requirePermissionOrAdmin('raw_materials.delete'), getShopInfo, async (req, res) => {
     try {
         const materialId = req.params.id;
 
@@ -611,7 +612,7 @@ router.delete('/materials/:id', getShopInfo, async (req, res) => {
 
 // Add this route after your other routes in the controller
 // GET stock ledger for a specific material
-router.get('/materials/:id/ledger', getShopInfo, async (req, res) => {
+router.get('/materials/:id/ledger', requirePermissionOrAdmin('raw_materials.history'), getShopInfo, async (req, res) => {
     try {
         const materialId = req.params.id;
         const page = parseInt(req.query.page) || 1;
@@ -717,7 +718,7 @@ router.get('/materials/:id/ledger', getShopInfo, async (req, res) => {
 });
 
 // GET stock movements (batches)
-router.get('/batches', getShopInfo, async (req, res) => {
+router.get('/batches', requirePermissionOrAdmin('raw_materials.batches'), getShopInfo, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
@@ -804,7 +805,7 @@ router.get('/batches', getShopInfo, async (req, res) => {
 });
 
 // POST create stock movement (with supplier and ledger updates)
-router.post('/batches', getShopInfo, async (req, res) => {
+router.post('/batches', requirePermissionOrAdmin('raw_materials.stock'), getShopInfo, async (req, res) => {
     try {
         const {
             raw_material_id,
@@ -963,7 +964,7 @@ router.post('/batches', getShopInfo, async (req, res) => {
 });
 
 // GET suppliers for dropdown
-router.get('/suppliers', getShopInfo, async (req, res) => {
+router.get('/suppliers', requirePermissionOrAdmin('raw_materials.view'), getShopInfo, async (req, res) => {
     try {
         const [suppliers] = await pool.execute(
             `SELECT 
@@ -992,7 +993,7 @@ router.get('/suppliers', getShopInfo, async (req, res) => {
 });
 
 // GET single batch for editing
-router.get('/batches/:id', getShopInfo, async (req, res) => {
+router.get('/batches/:id', requirePermissionOrAdmin('raw_materials.batches'), getShopInfo, async (req, res) => {
     try {
         const batchId = req.params.id;
 
@@ -1042,7 +1043,7 @@ router.get('/batches/:id', getShopInfo, async (req, res) => {
 });
 
 // PUT update batch
-router.put('/batches/:id', getShopInfo, async (req, res) => {
+router.put('/batches/:id', requirePermissionOrAdmin('raw_materials.stock'), getShopInfo, async (req, res) => {
     try {
         const batchId = req.params.id;
         const {
@@ -1244,7 +1245,7 @@ router.put('/batches/:id', getShopInfo, async (req, res) => {
 });
 
 // DELETE batch
-router.delete('/batches/:id', getShopInfo, async (req, res) => {
+router.delete('/batches/:id', requirePermissionOrAdmin('raw_materials.stock'), getShopInfo, async (req, res) => {
     try {
         const batchId = req.params.id;
 
@@ -1345,7 +1346,7 @@ router.delete('/batches/:id', getShopInfo, async (req, res) => {
 });
 
 // GET real-time stock alerts
-router.get('/alerts/real-time', getShopInfo, async (req, res) => {
+router.get('/alerts/real-time', requirePermissionOrAdmin('raw_materials.view'), getShopInfo, async (req, res) => {
     try {
         const [materials] = await pool.execute(
             `SELECT 

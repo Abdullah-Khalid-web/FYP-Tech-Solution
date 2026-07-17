@@ -1048,7 +1048,7 @@
                 .then(data => {
                     if (data.success) {
                         showToast('Supplier status updated successfully!', 'success');
-                        setTimeout(() => location.reload(), 1000);
+                        setTimeout(() => location.reload(), 400);
                     } else {
                         showToast(data.message || 'Error updating status', 'error');
                     }
@@ -1275,7 +1275,7 @@
                     if (data.success) {
                         showToast('Supplier added successfully!', 'success');
                         $('#addSupplierModal').modal('hide');
-                        setTimeout(() => location.reload(), 1000);
+                        setTimeout(() => location.reload(), 400);
                     } else {
                         showToast(data.message || 'Error adding supplier', 'error');
                     }
@@ -1301,7 +1301,7 @@
                     if (data.success) {
                         showToast('Supplier updated successfully!', 'success');
                         $('#editSupplierModal').modal('hide');
-                        setTimeout(() => location.reload(), 1000);
+                        setTimeout(() => location.reload(), 400);
                     } else {
                         showToast(data.message || 'Error updating supplier', 'error');
                     }

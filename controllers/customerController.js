@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
 const crypto = require('crypto');
+const { requirePermissionOrAdmin } = require('../middleware/roleAuth');
 
 // Helper function to generate UUID
 const generateUUID = () => crypto.randomUUID();
@@ -52,7 +53,7 @@ const getShopDetails = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: shops[0].name || 'My Shop',
-            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
+            logo: shops[0].logo ? `/uploads/shop_logos/${shops[0].logo}` : null,
             currency: shops[0].currency || 'PKR',
             primary_color: shops[0].primary_color || '#4e73df',
             secondary_color: shops[0].secondary_color || '#858796'
@@ -67,7 +68,7 @@ const getShopDetails = async (req, res, next) => {
 };
 
 // Debug route - place this at the top of your router, after getShopDetails middleware
-router.get('/test', getShopDetails, (req, res) => {
+router.get('/test', requirePermissionOrAdmin('customers.view'), getShopDetails, (req, res) => {
     res.json({ 
         success: true, 
         message: 'Customers API is working',
@@ -76,7 +77,7 @@ router.get('/test', getShopDetails, (req, res) => {
 });
 
 // GET /customers - Main customers page
-router.get('/', getShopDetails, async (req, res) => {
+router.get('/', requirePermissionOrAdmin('customers.view'), getShopDetails, async (req, res) => {
     try {
         console.log('Loading customers page for shop:', req.shop.id);
         
@@ -194,7 +195,7 @@ router.get('/', getShopDetails, async (req, res) => {
 });
 
 // POST /customers - Add new customer (FIXED VERSION)
-router.post('/', getShopDetails, async (req, res) => {
+router.post('/', requirePermissionOrAdmin('customers.create'), getShopDetails, async (req, res) => {
     let connection;
     try {
         const { name, phone, email, address, type, city, country, notes, reference, discount, credit_limit } = req.body;
@@ -231,10 +232,6 @@ router.post('/', getShopDetails, async (req, res) => {
         // Generate UUID for new customer
         const customerId = generateUUID();
         console.log('Generated customer ID:', customerId);
-
-        // Convert to binary
-        const customerIdBinary = uuidToBin(customerId);
-        const shopIdBinary = uuidToBin(req.shop.id);
 
         // Prepare values (handle nulls properly)
         const nameValue = name.trim();
@@ -275,25 +272,25 @@ router.post('/', getShopDetails, async (req, res) => {
         // Insert new customer
         const [result] = await connection.execute(`
             INSERT INTO customers (
-                id, 
-                shop_id, 
-                name, 
-                phone, 
-                email, 
-                address, 
-                type, 
-                city, 
-                country, 
-                notes, 
-                reference, 
-                discount, 
+                id,
+                shop_id,
+                name,
+                phone,
+                email,
+                address,
+                type,
+                city,
+                country,
+                notes,
+                reference,
+                discount,
                 credit_limit
             ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
         `, [
-            customerIdBinary,
-            shopIdBinary,
+            customerId,
+            req.shop.id,
             nameValue,
             phoneValue,
             emailValue,
@@ -353,7 +350,7 @@ router.post('/', getShopDetails, async (req, res) => {
 });
 
 // GET /customers/:id - Get customer details with ledger
-router.get('/:id', getShopDetails, async (req, res) => {
+router.get('/:id', requirePermissionOrAdmin('customers.view'), getShopDetails, async (req, res) => {
     try {
         const customerId = req.params.id;
         console.log('Fetching customer details for ID:', customerId);
@@ -387,9 +384,10 @@ router.get('/:id', getShopDetails, async (req, res) => {
 
         const customer = customers[0];
 
-        // Get complete ledger (all bills with details)
+        // Get complete ledger (all bills with details). Items are fetched flat
+        // and grouped in JS -- JSON_ARRAYAGG isn't available on MariaDB or SQLite.
         const [ledger] = await pool.execute(`
-            SELECT 
+            SELECT
                 BIN_TO_UUID(b.id) as bill_id,
                 b.bill_number,
                 b.total_amount,
@@ -397,24 +395,34 @@ router.get('/:id', getShopDetails, async (req, res) => {
                 b.due_amount,
                 b.payment_method,
                 b.created_at,
-                b.notes as bill_notes,
-                (
-                    SELECT JSON_ARRAYAGG(
-                        JSON_OBJECT(
-                            'product_name', p.name,
-                            'quantity', bi.quantity,
-                            'unit_price', bi.unit_price,
-                            'total_price', bi.total_price
-                        )
-                    )
-                    FROM bill_items bi
-                    LEFT JOIN products p ON bi.product_id = p.id
-                    WHERE bi.bill_id = b.id
-                ) as items
+                b.notes as bill_notes
             FROM bills b
             WHERE b.shop_id = UUID_TO_BIN(?) AND b.customer_id = UUID_TO_BIN(?)
             ORDER BY b.created_at DESC
         `, [req.shop.id, customerId]);
+
+        const [ledgerItems] = await pool.execute(`
+            SELECT
+                BIN_TO_UUID(bi.bill_id) as bill_id,
+                p.name as product_name,
+                bi.quantity,
+                bi.unit_price,
+                bi.total_price
+            FROM bill_items bi
+            LEFT JOIN products p ON bi.product_id = p.id
+            JOIN bills b ON bi.bill_id = b.id
+            WHERE b.shop_id = UUID_TO_BIN(?) AND b.customer_id = UUID_TO_BIN(?)
+        `, [req.shop.id, customerId]);
+
+        const itemsByBill = {};
+        for (const item of ledgerItems) {
+            (itemsByBill[item.bill_id] = itemsByBill[item.bill_id] || []).push({
+                product_name: item.product_name,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                total_price: item.total_price
+            });
+        }
 
         // Get purchase statistics
         const [statsResult] = await pool.execute(`
@@ -458,10 +466,10 @@ router.get('/:id', getShopDetails, async (req, res) => {
             LIMIT 10
         `, [req.shop.id, customerId]);
 
-        // Parse items JSON for each bill
+        // Attach grouped items to each bill
         const formattedLedger = ledger.map(bill => ({
             ...bill,
-            items: bill.items ? JSON.parse(bill.items) : []
+            items: itemsByBill[bill.bill_id] || []
         }));
 
         res.json({
@@ -482,7 +490,7 @@ router.get('/:id', getShopDetails, async (req, res) => {
 });
 
 // PUT /customers/:id - Update customer
-router.put('/:id', getShopDetails, async (req, res) => {
+router.put('/:id', requirePermissionOrAdmin('customers.edit'), getShopDetails, async (req, res) => {
     let connection;
     try {
         const customerId = req.params.id;
@@ -590,7 +598,7 @@ router.put('/:id', getShopDetails, async (req, res) => {
 });
 
 // DELETE /customers/:id - Delete customer
-router.delete('/:id', getShopDetails, async (req, res) => {
+router.delete('/:id', requirePermissionOrAdmin('customers.delete'), getShopDetails, async (req, res) => {
     let connection;
     try {
         const customerId = req.params.id;
@@ -643,7 +651,7 @@ router.delete('/:id', getShopDetails, async (req, res) => {
 });
 
 // GET /customers/search/:query - Search customers
-router.get('/search/:query', getShopDetails, async (req, res) => {
+router.get('/search/:query', requirePermissionOrAdmin('customers.view'), getShopDetails, async (req, res) => {
     try {
         const searchQuery = `%${req.params.query}%`;
 
@@ -676,7 +684,7 @@ router.get('/search/:query', getShopDetails, async (req, res) => {
 });
 
 // Debug endpoint to check database
-router.get('/debug/check', getShopDetails, async (req, res) => {
+router.get('/debug/check', requirePermissionOrAdmin('customers.view'), getShopDetails, async (req, res) => {
     let connection;
     try {
         connection = await pool.getConnection();

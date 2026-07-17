@@ -280,6 +280,55 @@ function requireSettingsEdit(req, res, next) {
     });
 }
 
+/**
+ * Generic middleware factory: Shop Owner/Admin/Super Admin always pass (they
+ * rely on the isAdmin() bypass rather than explicit role_permissions rows);
+ * every other role must hold the given granular permission slug, as granted
+ * via the Roles & Permissions admin panel. Accepts a single slug or an array
+ * (any one of which is sufficient).
+ *
+ * This is the single building block every module's access control should use
+ * so that grants made in the admin panel actually take effect everywhere,
+ * instead of each module hardcoding its own hardcoded role list.
+ */
+function requirePermissionOrAdmin(slugOrSlugs, deniedMessage) {
+    const slugs = Array.isArray(slugOrSlugs) ? slugOrSlugs : [slugOrSlugs];
+
+    return (req, res, next) => {
+        if (!req.session?.userId) {
+            req.session.returnTo = req.originalUrl;
+            req.flash('error', 'Please login first');
+            return res.redirect('/login');
+        }
+
+        const roleHelper = new RoleHelper(req.session);
+        if (roleHelper.isAdmin()) {
+            return next();
+        }
+
+        Promise.all(slugs.map((slug) => permissionHelper.hasPermission(req.session.userId, slug)))
+            .then((results) => {
+                if (results.some(Boolean)) {
+                    return next();
+                }
+
+                const message = deniedMessage || 'You do not have permission to access this page.';
+
+                if (req.xhr || req.headers.accept?.includes('json')) {
+                    return res.status(403).json({ success: false, message });
+                }
+
+                return res.status(403).render('errors/403', {
+                    title: 'Access Denied',
+                    message,
+                    requiredPermission: slugs.length === 1 ? slugs[0] : slugs.join(' or '),
+                    userRole: roleHelper.role
+                });
+            })
+            .catch(next);
+    };
+}
+
 module.exports = {
     requireRole,
     requirePermission,
@@ -291,5 +340,6 @@ module.exports = {
     requireReportAccess,
     requireSettingsAccess,
     requireSettingsView,
-    requireSettingsEdit
+    requireSettingsEdit,
+    requirePermissionOrAdmin
 };

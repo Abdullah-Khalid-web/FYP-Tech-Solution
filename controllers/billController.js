@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
+const { requirePermissionOrAdmin } = require('../middleware/roleAuth');
 
 // Helper function to generate UUID
 const generateUUID = () => {
@@ -30,7 +31,7 @@ const getShopDetails = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: shops[0].name || 'My Shop',
-            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
+            logo: shops[0].logo ? `/uploads/shop_logos/${shops[0].logo}` : null,
             currency: shops[0].currency || '₹',
             primary_color: shops[0].primary_color || '#007bff',
             secondary_color: shops[0].secondary_color || '#6c757d'
@@ -44,7 +45,7 @@ const getShopDetails = async (req, res, next) => {
 };
 
 // GET /bills - Render bills page with products
-router.get('/', getShopDetails, async (req, res) => {
+router.get('/', requirePermissionOrAdmin('bills.view'), getShopDetails, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = 10;
@@ -110,7 +111,7 @@ router.get('/', getShopDetails, async (req, res) => {
 
 // POST /bills - Create new bill
 // POST /bills - Create new bill
-router.post('/', getShopDetails, async (req, res) => {
+router.post('/', requirePermissionOrAdmin('bills.create'), getShopDetails, async (req, res) => {
     console.log('Received bill creation request:', {
         body: req.body,
         shopId: req.shop.id,
@@ -389,7 +390,7 @@ router.post('/', getShopDetails, async (req, res) => {
 });
 
 // GET /bills/search - Search bills by customer or bill number
-router.get('/search', getShopDetails, async (req, res) => {
+router.get('/search', requirePermissionOrAdmin('bills.view'), getShopDetails, async (req, res) => {
     try {
         const { query, type } = req.query;
 
@@ -442,7 +443,7 @@ router.get('/search', getShopDetails, async (req, res) => {
 });
 
 // GET /bills/:id/items - Get bill items for return
-router.get('/:id/items', getShopDetails, async (req, res) => {
+router.get('/:id/items', requirePermissionOrAdmin('bills.view'), getShopDetails, async (req, res) => {
     try {
         const billId = req.params.id;
 
@@ -496,7 +497,7 @@ router.get('/:id/items', getShopDetails, async (req, res) => {
 });
 
 // GET /bills/:id - Get bill details
-router.get('/:id', getShopDetails, async (req, res) => {
+router.get('/:id', requirePermissionOrAdmin('bills.view'), getShopDetails, async (req, res) => {
     try {
         const billId = req.params.id;
 
@@ -550,7 +551,7 @@ router.get('/:id', getShopDetails, async (req, res) => {
 });
 
 // GET /bills/api/products - API endpoint for product search
-router.get('/api/products', getShopDetails, async (req, res) => {
+router.get('/api/products', requirePermissionOrAdmin('bills.view'), getShopDetails, async (req, res) => {
     try {
         const { search } = req.query;
         let query = `
@@ -586,7 +587,7 @@ router.get('/api/products', getShopDetails, async (req, res) => {
 
 // GET /bills/api/customer-bills - Get customer's previous bills
 
-router.get('/api/customer-bills', getShopDetails, async (req, res) => {
+router.get('/api/customer-bills', requirePermissionOrAdmin('bills.view'), getShopDetails, async (req, res) => {
     try {
         const { phone, name, search } = req.query;
 
@@ -635,7 +636,7 @@ router.get('/api/customer-bills', getShopDetails, async (req, res) => {
 });
 
 // GET /bills/api/debug-stock - Debug stock information
-router.get('/api/debug-stock', getShopDetails, async (req, res) => {
+router.get('/api/debug-stock', requirePermissionOrAdmin('bills.view'), getShopDetails, async (req, res) => {
     try {
         const [products] = await pool.execute(`
             SELECT 

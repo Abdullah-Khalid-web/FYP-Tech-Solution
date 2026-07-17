@@ -261,7 +261,7 @@ app.use(async (req, res, next) => {
             res.locals.shop = {
               id: shop.id,
               name: shop.name || 'Manage Hub',
-              logo: shop.logo ? `/uploads/${shop.logo}` : null,
+              logo: shop.logo ? `/uploads/shop_logos/${shop.logo}` : null,
               phone: shop.phone || '+92 000000000',
               address: shop.address || 'NextGenTech Solution, Quetta, Pakistan',
               email: shop.email || 'NextGenTechSolution@gmail.com',
@@ -456,26 +456,28 @@ app.use('/api', require('./routes/aiDataApi'));          // AI module → Backen
 // Phase 1 of the mobile app is view-only here — see middleware/mobileApp.js
 app.use('/products', isAuthenticated, mobileReadOnly, require('./routes/products'));
 
-// Sales routes - requires sales access
-app.use('/bills', isAuthenticated, roleAuth.requireSalesAccess, mobileReadOnly, require('./routes/bills'));
-app.use('/Allbills', isAuthenticated, roleAuth.requireSalesAccess, mobileReadOnly, require('./routes/Allbills'));
-app.use('/customer', isAuthenticated, roleAuth.requireSalesAccess, mobileReadOnly, require('./routes/customer'));
+// Sales routes - view/create/etc access is checked per-route via bills.* permissions
+// (Shop Owner/Admin/Super Admin always pass; other roles need the granular
+// permission granted via the Roles & Permissions panel).
+app.use('/bills', isAuthenticated, mobileReadOnly, require('./routes/bills'));
+app.use('/Allbills', isAuthenticated, mobileReadOnly, require('./routes/Allbills'));
+app.use('/customer', isAuthenticated, mobileReadOnly, require('./routes/customer'));
 
 
 
 // Employee management routes
-app.use('/EmpMgmt', isAuthenticated, roleAuth.requireEmployeeManagement, mobileReadOnly, require('./routes/EmpMgmt'));
+app.use('/EmpMgmt', isAuthenticated, mobileReadOnly, require('./routes/EmpMgmt'));
 
 // Inventory routes - requires inventory access
-app.use('/alerts', isAuthenticated, roleAuth.requireInventoryAccess, require('./routes/alerts'));
-app.use('/raw', isAuthenticated, roleAuth.requireInventoryAccess, require('./routes/raw'));
+app.use('/alerts', isAuthenticated, roleAuth.requirePermissionOrAdmin('inventory.alerts', 'You need inventory access to view stock alerts.'), require('./routes/alerts'));
+app.use('/raw', isAuthenticated, require('./routes/raw'));
 
 // Finance routes - requires finance access
-app.use('/expenses', isAuthenticated, roleAuth.requireFinanceAccess, require('./routes/expenses'));
-app.use('/cash-deposits', isAuthenticated, roleAuth.requireFinanceAccess, require('./routes/cashDeposits'));
+app.use('/expenses', isAuthenticated, require('./routes/expenses'));
+app.use('/cash-deposits', isAuthenticated, roleAuth.requirePermissionOrAdmin('cash.view', 'You need cash access to view this page.'), require('./routes/cashDeposits'));
 
 // Reports - requires report access (view-only by nature, but blocked defensively too)
-app.use('/reports', isAuthenticated, roleAuth.requireReportAccess, mobileReadOnly, require('./routes/reports'));
+app.use('/reports', isAuthenticated, mobileReadOnly, require('./routes/reports'));
 
 // Shop settings - view/edit access is checked per-route in shopSettingsController.js
 // (Shop Owner/Admin/Super Admin always pass; other roles need the granular

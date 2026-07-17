@@ -14,6 +14,7 @@ const DEFAULT_API_URL = process.env.SYNC_API_URL || 'http://localhost:3000/api';
 const SYNC_TABLES = [
     'shops',
     'roles',
+    'pricing_plans',
     'users',
     'products',
     'inventory',
@@ -48,6 +49,12 @@ const TABLES = {
         shopScoped: false,
         uuidColumns: ['id'],
         columns: ['id', 'role_name', 'description', 'status', 'created_at', 'updated_at']
+    },
+    pricing_plans: {
+        upload: false,
+        shopScoped: false,
+        uuidColumns: ['id'],
+        columns: ['id', 'name', 'description', 'monthly_price', 'quarterly_price', 'yearly_price', 'features', 'status', 'created_at']
     },
     users: {
         upload: true,
@@ -518,6 +525,9 @@ class SyncService {
                 }
             } finally {
                 enableSyncTriggers(db);
+                // Housekeeping: drop completed items and permanently-failed items
+                // (retries exhausted) so the queue doesn't grow unbounded.
+                await dbService.clearSyncQueue().catch(() => {});
                 await persistDatabase();
             }
 

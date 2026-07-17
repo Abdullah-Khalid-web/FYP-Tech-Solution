@@ -839,6 +839,27 @@
                 });
             }
 
+            // Product Catalog modal search — filters the already-rendered rows client-side
+            const modalProductSearch = document.getElementById('modalProductSearch');
+            const modalSearchBtn = document.getElementById('modalSearchBtn');
+            const modalProductsList = document.getElementById('modalProductsList');
+
+            function filterModalProducts() {
+                const term = (modalProductSearch.value || '').trim().toLowerCase();
+                const rows = modalProductsList ? modalProductsList.querySelectorAll('tr') : [];
+                rows.forEach((row) => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = !term || text.includes(term) ? '' : 'none';
+                });
+            }
+
+            if (modalProductSearch) {
+                modalProductSearch.addEventListener('input', debounce(filterModalProducts, 200));
+            }
+            if (modalSearchBtn) {
+                modalSearchBtn.addEventListener('click', filterModalProducts);
+            }
+
             // Add Return Modal
             const addReturnBtn = document.getElementById('addReturnBtn');
             if (addReturnBtn) {
@@ -931,10 +952,8 @@
                         type: 'sale'
                     });
 
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('productListModal'));
-                    if (modal) {
-                        modal.hide();
-                    }
+                    // Keep the catalog open so multiple products can be added in one go;
+                    // the toast from addProductToTransaction confirms each add.
                 }
             });
 

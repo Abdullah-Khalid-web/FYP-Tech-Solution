@@ -1508,7 +1508,7 @@
                             <li>Remove all products and inventory</li>
                             <li>Clear all sales and purchase records</li>
                             <li>Remove all customers and suppliers</li>
-                            <li>Reset all user passwords</li>
+                            <li>Reset all user passwords to <code>Reset@123</code> (share this with your staff)</li>
                             <li>Keep shop settings and subscription</li>
                         </ul>
                         <p class="mb-0"><strong>Note:</strong> This action cannot be undone.</p>
@@ -1674,6 +1674,20 @@
             }
         }
 
+        // Populates the Subscribe modal from the clicked plan card's data-* attributes.
+        function selectPlan(button) {
+            document.getElementById('modalPlanId').value = button.dataset.planId || '';
+            document.getElementById('modalPlanName').textContent = button.dataset.planName || '';
+        }
+
+        // Highlights the chosen billing period card/radio inside the Subscribe modal.
+        function selectDuration(duration) {
+            document.querySelectorAll('#subscribeModal input[name="duration"]').forEach((radio) => {
+                radio.checked = (radio.value === duration);
+                radio.closest('.form-check.card')?.classList.toggle('border-primary', radio.value === duration);
+            });
+        }
+
         
 
         // Status select warning
@@ -1746,6 +1760,106 @@
         window.addEventListener('beforeunload', function() {
             showLoading();
         });
+
+        // Update Status (Danger Zone) -- confirm then submit the status-change form
+        function confirmStatusChange() {
+            const status = document.getElementById('statusSelect').value;
+            if (status !== 'active') {
+                if (!confirm(`Are you sure you want to set your shop status to "${status}"? This will restrict access to your shop.`)) {
+                    return;
+                }
+            }
+            document.getElementById('statusSelect').closest('form').submit();
+        }
+
+        // Delete Shop -- enable the button only once all three checkboxes are
+        // checked and the user has typed the exact confirmation word.
+        (function () {
+            const checks = [
+                document.getElementById('confirmDelete1'),
+                document.getElementById('confirmDelete2'),
+                document.getElementById('confirmDelete3')
+            ];
+            const textInput = document.getElementById('deleteConfirmText');
+            const btn = document.getElementById('deleteShopBtn');
+            if (!btn) return;
+
+            function refresh() {
+                const allChecked = checks.every(c => c && c.checked);
+                const textOk = textInput && textInput.value.trim() === 'DELETE';
+                btn.disabled = !(allChecked && textOk);
+            }
+
+            checks.forEach(c => c && c.addEventListener('change', refresh));
+            textInput && textInput.addEventListener('input', refresh);
+
+            btn.addEventListener('click', async function () {
+                btn.disabled = true;
+                showLoading();
+                try {
+                    const res = await fetch('/shop_setting/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ confirmText: textInput.value.trim() })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert('Your shop has been deleted.');
+                        window.location.href = '/';
+                    } else {
+                        hideLoading();
+                        alert(data.message || 'Failed to delete shop');
+                        btn.disabled = false;
+                    }
+                } catch (err) {
+                    hideLoading();
+                    alert('Failed to delete shop: ' + err.message);
+                    btn.disabled = false;
+                }
+            });
+        })();
+
+        // Reset All Data -- same confirm-then-enable pattern
+        (function () {
+            const check = document.getElementById('confirmReset');
+            const textInput = document.getElementById('resetConfirmText');
+            const btn = document.getElementById('resetDataBtn');
+            if (!btn) return;
+
+            function refresh() {
+                const checked = check && check.checked;
+                const textOk = textInput && textInput.value.trim() === 'RESET';
+                btn.disabled = !(checked && textOk);
+            }
+
+            check && check.addEventListener('change', refresh);
+            textInput && textInput.addEventListener('input', refresh);
+
+            btn.addEventListener('click', async function () {
+                btn.disabled = true;
+                showLoading();
+                try {
+                    const res = await fetch('/shop_setting/reset-data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ confirmText: textInput.value.trim() })
+                    });
+                    const data = await res.json();
+                    hideLoading();
+                    if (data.success) {
+                        alert('All shop data has been reset.');
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to reset shop data');
+                        btn.disabled = false;
+                    }
+                } catch (err) {
+                    hideLoading();
+                    alert('Failed to reset shop data: ' + err.message);
+                    btn.disabled = false;
+                }
+            });
+        })();
     </script>
 </body>
 </html>

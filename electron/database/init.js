@@ -684,6 +684,7 @@ async function initDatabase() {
             expires_at DATETIME,
             payment_method TEXT,
             payment_details TEXT,
+            auto_renew INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -879,6 +880,7 @@ async function initDatabase() {
     ensureColumn('subscriptions', 'started_at', 'started_at DATETIME');
     ensureColumn('subscriptions', 'payment_method', 'payment_method TEXT');
     ensureColumn('subscriptions', 'payment_details', 'payment_details TEXT');
+    ensureColumn('subscriptions', 'auto_renew', 'auto_renew INTEGER DEFAULT 0');
     ensureColumn('feedback', 'user_id', 'user_id TEXT');
     ensureColumn('feedback', 'admin_reply', 'admin_reply TEXT');
     ensureColumn('feedback', 'replied_by', 'replied_by TEXT');

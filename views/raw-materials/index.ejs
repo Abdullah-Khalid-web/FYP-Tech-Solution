@@ -1893,7 +1893,6 @@
         e.preventDefault();
         const form = e.target;
         const submitButton = form.querySelector('button[type="submit"]');
-        const modal = bootstrap.Modal.getInstance(document.getElementById('addMaterialModal'));
 
         try {
             setLoading(submitButton, true);
@@ -1912,17 +1911,20 @@
             });
 
             showAlert('Material added successfully!', 'success');
-            
-            // Close modal properly
-            modal.hide();
-            
-            // Reset form
             form.reset();
-            
-            // Load updated data
+
+            // Refresh the list first — this must run even if the modal-closing
+            // step below fails (e.g. a null instance from a stale DOM reference)
+            // so a successful save always shows up without a manual page refresh.
             loadMaterials();
             loadDashboardData();
             loadMaterialsForBatchSelect();
+
+            // Close modal — re-fetch the instance right before hiding rather than
+            // reusing one captured at handler-start, in case the modal element was
+            // re-rendered while the request was in flight.
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addMaterialModal'));
+            modal?.hide();
 
         } catch (error) {
             console.error('Error saving material:', error);
@@ -1985,7 +1987,7 @@
             });
 
             showAlert('Material updated successfully!', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('editMaterialModal')).hide();
+            bootstrap.Modal.getInstance(document.getElementById('editMaterialModal'))?.hide();
             loadMaterials();
             loadDashboardData();
 
@@ -2112,7 +2114,7 @@
             });
             
             showAlert(`Successfully added ${materials.length} materials!`, 'success');
-            bootstrap.Modal.getInstance(document.getElementById('bulkAddMaterialModal')).hide();
+            bootstrap.Modal.getInstance(document.getElementById('bulkAddMaterialModal'))?.hide();
             
             // Reset form
             resetBulkForm();
@@ -2215,7 +2217,7 @@
             });
 
             showAlert('Stock movement recorded successfully!', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('addBatchModal')).hide();
+            bootstrap.Modal.getInstance(document.getElementById('addBatchModal'))?.hide();
             loadBatches();
             loadDashboardData();
             loadMaterials();
@@ -2280,7 +2282,7 @@
             });
 
             showAlert('Stock movement updated successfully!', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('editBatchModal')).hide();
+            bootstrap.Modal.getInstance(document.getElementById('editBatchModal'))?.hide();
             loadBatches();
             loadMaterials();
             loadRealTimeAlerts();

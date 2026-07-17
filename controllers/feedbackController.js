@@ -32,7 +32,7 @@ class FeedbackController {
                 req.shop = {
                     id: req.shopId,
                     name: shops[0].name || 'My Shop',
-                    logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
+                    logo: shops[0].logo ? `/uploads/shop_logos/${shops[0].logo}` : null,
                     currency: shops[0].currency || 'PKR',
                     primary_color: shops[0].primary_color || '#007bff',
                     secondary_color: shops[0].secondary_color || '#6c757d'

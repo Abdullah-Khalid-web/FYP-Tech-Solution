@@ -23,6 +23,14 @@ function hasPermission(permissionSlug) {
         return res.redirect('/login');
       }
 
+      // Shop Owner/Admin/Super Admin always pass -- these roles rely on this
+      // bypass rather than needing explicit role_permissions rows (several
+      // top-level roles have none populated in the DB).
+      const adminRoles = ['Super Admin', 'Admin', 'Shop Owner'];
+      if (adminRoles.includes(req.session.roleName)) {
+        return next();
+      }
+
       // Query the DB to check if user has the permission
       const [rows] = await pool.execute(
         `SELECT COUNT(*) AS allowed

@@ -34,7 +34,8 @@
             html[data-theme="dark"] .product-list,
             html[data-theme="dark"] .return-option-card.selected,
             html[data-theme="dark"] .return-quantity-control,
-            html[data-theme="dark"] .feedback-item {
+            html[data-theme="dark"] .feedback-item,
+            html[data-theme="dark"] .history-item {
                 background-color: #1e293b !important;
                 border-color: #475569 !important;
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
@@ -44,6 +45,25 @@
             html[data-theme="dark"] .admin-reply {
                 background-color: #0c2f4a !important;
                 border-left-color: #16a34a !important;
+                color: #f8fafc !important;
+            }
+
+            /* Danger Zone card (shop settings) has a hardcoded pink/white gradient
+               background, and its inline warning banners have a hardcoded cream
+               background -- both need dark equivalents so the (dark-remapped) text
+               stays readable instead of light-on-light. */
+            html[data-theme="dark"] .danger-zone {
+                background: linear-gradient(135deg, #2a1215, #1e293b) !important;
+                color: #f8fafc !important;
+            }
+
+            html[data-theme="dark"] .danger-zone .section-header {
+                border-bottom-color: #7f1d1d !important;
+            }
+
+            html[data-theme="dark"] .warning-alert {
+                background-color: #3f2d0a !important;
+                border-left-color: #f59e0b !important;
                 color: #f8fafc !important;
             }
 
@@ -68,6 +88,57 @@
             html[data-theme="dark"] .btn-outline-secondary.active {
                 background-color: #64748b !important;
                 color: #f8fafc !important;
+            }
+
+            /* Bootstrap's .bg-light utility (used for nested card headers, summary boxes,
+               etc. across many pages) ships with its own !important, so the plain .card
+               override above can't reach it -- needs its own dark equivalent. */
+            html[data-theme="dark"] .bg-light {
+                background-color: #1e293b !important;
+                color: #f8fafc !important;
+            }
+
+            /* Activity/list entries (salary history, loan history, recent-activity feed)
+               have a hardcoded light-gray background not covered by the .card rule since
+               they're nested content, not the card itself. */
+            html[data-theme="dark"] .activity-item,
+            html[data-theme="dark"] .stock-row {
+                background-color: #263449 !important;
+                color: #f8fafc !important;
+            }
+
+            html[data-theme="dark"] .info-value {
+                color: #f8fafc !important;
+            }
+
+            html[data-theme="dark"] .product-search-results {
+                background: #1e293b !important;
+                border-color: #475569 !important;
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
+            }
+
+            html[data-theme="dark"] .product-search-item {
+                color: #f8fafc !important;
+            }
+
+            html[data-theme="dark"] .product-search-item:hover {
+                background: #334155 !important;
+            }
+
+            html[data-theme="dark"] .product-search-empty {
+                color: #94a3b8 !important;
+            }
+
+            html[data-theme="dark"] .card h6 {
+                color: #f8fafc !important;
+            }
+
+            /* Printable receipt/invoice tables (bills/print.ejs, products/stock-receipt.ejs)
+               hardcode a light header background; the generic `th { color }` remap above
+               already whitens the text, so without this the header reads white-on-white. */
+            html[data-theme="dark"] .items-table th {
+                background: #1e293b !important;
+                border-color: #475569 !important;
             }
 
             html[data-theme="dark"] .dashboard-container,
@@ -169,9 +240,14 @@
             }
             <% } %>
 
-            /* Sidebar Styles - Only for logged-in users */
+            /* Sidebar Styles - Only for logged-in users.
+               navbar.ejs sets `body { padding-top: 85px }` globally to clear the fixed navbar
+               on ordinary (non-sidebar) pages. App/dashboard pages already clear the navbar via
+               .main-content's own margin-top below, so that body padding just double-reserves
+               the same space here — zero it out so only one offset applies. */
             .sidebar-enabled {
                 overflow-x: hidden;
+                padding-top: 0;
             }
 
             .sidebar-enabled .main-content {
@@ -185,9 +261,18 @@
                 width: calc(100% - 260px);
             }
 
-            /* Adjust navbar when sidebar is open */
+            /* Adjust navbar when sidebar is open.
+               The .modern-navbar component was built for the public landing page: it starts
+               tall/transparent (18px padding) and only shrinks to its compact 10px-padding
+               "scrolled" state once JS sees window.scrollY > 50. Logged-in app pages never
+               reliably cross that threshold on load, so the navbar was stuck at its full
+               ~85px height while .main-content only reserved 70px for it (margin-top below),
+               leaving a visible empty gap between the navbar and the page content. App pages
+               don't need the hero shrink effect at all, so pin them to the compact height
+               (~70px) all the time instead of waiting on scroll. */
             .sidebar-enabled .modern-navbar {
                 transition: all 0.3s ease;
+                padding: 10px 0;
             }
 
             .sidebar-enabled .modern-navbar.with-sidebar {
@@ -419,6 +504,40 @@
 
             .sidebar::-webkit-scrollbar-thumb:hover {
                 background: rgba(255, 255, 255, 0.3);
+            }
+
+            /* Printing (receipts, reports, any page's window.print()) should never include
+               the app chrome -- only the page's own content. Individual pages are still
+               responsible for hiding their own non-printable controls (filters, buttons)
+               via a `.no-print` class. */
+            @media print {
+
+                .modern-navbar,
+                .sidebar,
+                .sidebar-toggle,
+                .sidebar-overlay,
+                #syncStatus,
+                .mobile-readonly-banner,
+                #ai-chat-toggle,
+                #ai-chat-panel,
+                .premium-footer {
+                    display: none !important;
+                }
+
+                body.sidebar-enabled {
+                    padding-top: 0 !important;
+                }
+
+                .sidebar-enabled .main-content,
+                .sidebar-enabled .main-content.with-sidebar {
+                    margin: 0 !important;
+                    margin-left: 0 !important;
+                    width: 100% !important;
+                }
+
+                .main-content {
+                    margin-top: 0 !important;
+                }
             }
 
             /* Mobile app phase-1 view-only banner (see middleware/mobileApp.js) */

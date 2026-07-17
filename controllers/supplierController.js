@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
+const { requirePermissionOrAdmin } = require('../middleware/roleAuth');
 
 // Middleware to get shop-specific data
 const getShopData = async (req, res, next) => {
@@ -18,7 +19,7 @@ const getShopData = async (req, res, next) => {
         req.shop = {
             id: req.session.shopId,
             name: shops[0]?.name || 'My Shop',
-            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
+            logo: shops[0].logo ? `/uploads/shop_logos/${shops[0].logo}` : null,
             currency: shops[0]?.currency || 'PKR',
             primary_color: shops[0]?.primary_color || '#007bff',
             secondary_color: shops[0]?.secondary_color || '#6c757d'
@@ -40,7 +41,7 @@ const getShopData = async (req, res, next) => {
 };
 
 // GET suppliers listing
-router.get('/', getShopData, async (req, res) => {
+router.get('/', requirePermissionOrAdmin('suppliers.view'), getShopData, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = 10;
@@ -110,7 +111,7 @@ router.get('/', getShopData, async (req, res) => {
 });
 
 // POST create new supplier
-router.post('/', getShopData, async (req, res) => {
+router.post('/', requirePermissionOrAdmin('suppliers.create'), getShopData, async (req, res) => {
     try {
         const {
             name, contact_person, email, phone, address, city, country,
@@ -172,7 +173,7 @@ router.post('/', getShopData, async (req, res) => {
 });
 
 // GET supplier for editing
-router.get('/:id/edit', getShopData, async (req, res) => {
+router.get('/:id/edit', requirePermissionOrAdmin('suppliers.view'), getShopData, async (req, res) => {
     try {
         const supplierId = req.params.id;
 
@@ -219,7 +220,7 @@ router.get('/:id/edit', getShopData, async (req, res) => {
 });
 
 // PUT update supplier
-router.put('/:id', getShopData, async (req, res) => {
+router.put('/:id', requirePermissionOrAdmin('suppliers.edit'), getShopData, async (req, res) => {
     try {
         const {
             name, contact_person, email, phone, address, city, country,
@@ -265,7 +266,7 @@ router.put('/:id', getShopData, async (req, res) => {
 });
 
 // POST toggle supplier status
-router.post('/:id/toggle-status', getShopData, async (req, res) => {
+router.post('/:id/toggle-status', requirePermissionOrAdmin('suppliers.edit'), getShopData, async (req, res) => {
     try {
         await pool.execute(
             `UPDATE suppliers 
@@ -282,7 +283,7 @@ router.post('/:id/toggle-status', getShopData, async (req, res) => {
 });
 
 // GET supplier ledger (transactions)
-router.get('/:id/ledger', getShopData, async (req, res) => {
+router.get('/:id/ledger', requirePermissionOrAdmin('suppliers.balance'), getShopData, async (req, res) => {
     try {
         const supplierId = req.params.id;
         const page = parseInt(req.query.page) || 1;
@@ -368,7 +369,7 @@ router.get('/:id/ledger', getShopData, async (req, res) => {
 });
 
 // POST add transaction to supplier ledger
-router.post('/:id/transactions', getShopData, async (req, res) => {
+router.post('/:id/transactions', requirePermissionOrAdmin('suppliers.payments'), getShopData, async (req, res) => {
     try {
         const supplierId = req.params.id;
         const { type, amount, description, reference_type, reference_id } = req.body;
@@ -454,7 +455,7 @@ router.post('/:id/transactions', getShopData, async (req, res) => {
 
 
 // GET supplier ledger report page - FIXED VERSION
-router.get('/reports/ledger', getShopData, async (req, res) => {
+router.get('/reports/ledger', requirePermissionOrAdmin('suppliers.balance'), getShopData, async (req, res) => {
     try {
         console.log('Loading ledger report page for shop:', req.shop.id);
         
@@ -502,7 +503,7 @@ router.get('/reports/ledger', getShopData, async (req, res) => {
 });
 
 // POST generate ledger report - FIXED VERSION
-router.post('/reports/ledger/generate', getShopData, async (req, res) => {
+router.post('/reports/ledger/generate', requirePermissionOrAdmin('suppliers.balance'), getShopData, async (req, res) => {
     try {
         console.log('Generating ledger report with data:', req.body);
         const { supplier_id, start_date, end_date, report_type } = req.body;

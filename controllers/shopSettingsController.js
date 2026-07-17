@@ -6,7 +6,23 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
 const { requireSettingsView, requireSettingsEdit } = require('../middleware/roleAuth');
+const RoleHelper = require('../helpers/roleHelper');
+
+// Shop deletion / data reset are far more destructive than routine settings
+// edits, so they require Shop Owner/Admin/Super Admin specifically -- no
+// granular permission can delegate this (there's no shop.delete slug).
+function requireOwnerOnly(req, res, next) {
+    if (!req.session?.userId) {
+        return res.status(401).json({ success: false, message: 'Please login first' });
+    }
+    const roleHelper = new RoleHelper(req.session);
+    if (roleHelper.isAdmin()) {
+        return next();
+    }
+    return res.status(403).json({ success: false, message: 'Only the shop owner or an admin can perform this action.' });
+}
 
 // Middleware to get shop data
 const getShopData = async (req, res, next) => {
@@ -26,7 +42,7 @@ const getShopData = async (req, res, next) => {
             email: shops[0]?.email || '',
             phone: shops[0]?.phone || '',
             address: shops[0]?.address || '',
-            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
+            logo: shops[0].logo ? `/uploads/shop_logos/${shops[0].logo}` : null,
             plan: shops[0]?.plan || 'Free',
             currency: shops[0]?.currency || 'PKR',
             primary_color: shops[0]?.primary_color || '#4e73df',
@@ -283,7 +299,7 @@ router.get('/', requireSettingsView, getShopData, async (req, res) => {
                 email: shop.email,
                 phone: shop.phone,
                 address: shop.address,
-                logo: shop.logo ? `/uploads/${shop.logo}` : null,
+                logo: shop.logo ? `/uploads/shop_logos/${shop.logo}` : null,
                 plan: shop.plan,
                 currency: shop.currency,
                 primary_color: shop.primary_color,
@@ -845,6 +861,118 @@ router.get('/export-data', requireSettingsView, getShopData, async (req, res) =>
     } catch (error) {
         console.error('Error exporting data:', error);
         res.redirect('/shop_setting?error=Failed to export data: ' + error.message);
+    }
+});
+
+// POST /shop-settings/reset-data - Wipe all operational data, keep the shop/subscription
+router.post('/reset-data', requireOwnerOnly, getShopData, async (req, res) => {
+    let connection;
+    try {
+        const { confirmText } = req.body;
+        if (confirmText !== 'RESET') {
+            return res.status(400).json({ success: false, message: 'Please type RESET to confirm.' });
+        }
+
+        const shopId = req.session.shopId;
+        const TEMP_PASSWORD = 'Reset@123';
+        const tempPasswordHash = await bcrypt.hash(TEMP_PASSWORD, 10);
+
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // Delete children before parents to satisfy FK constraints regardless
+        // of whether ON DELETE CASCADE is configured on this DB.
+        const shopScopedTables = [
+            'bill_items', 'bills',
+            'stock_in', 'inventory', 'ingredients',
+            'raw_material_stock_movements',
+            'supplier_transactions', 'supplier_balance',
+            'user_loan_ledger', 'user_loan', 'user_salary', 'user_cash_submission', 'cash_register',
+            'products', 'raw_materials', 'suppliers', 'customers', 'expenses'
+        ];
+
+        for (const table of shopScopedTables) {
+            await connection.execute(`DELETE FROM ${table} WHERE shop_id = UUID_TO_BIN(?)`, [shopId]);
+        }
+
+        // Reset every user's password to a shared temporary password
+        await connection.execute(
+            `UPDATE users SET password = ?, updated_at = NOW() WHERE shop_id = UUID_TO_BIN(?)`,
+            [tempPasswordHash, shopId]
+        );
+
+        await connection.execute(
+            `INSERT INTO admin_actions (id, admin_id, shop_id, action_type, details)
+             VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), 'data_reset', ?)`,
+            [req.session.userId, shopId, JSON.stringify({ action: 'Shop data reset to factory defaults' })]
+        );
+
+        await connection.commit();
+        connection.release();
+
+        res.json({
+            success: true,
+            message: `All shop data has been reset. Every user's password was set to "${TEMP_PASSWORD}" -- please share it with your staff so they can log in and change it.`,
+            temporaryPassword: TEMP_PASSWORD
+        });
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+            connection.release();
+        }
+        console.error('Error resetting shop data:', error);
+        res.status(500).json({ success: false, message: 'Failed to reset shop data: ' + error.message });
+    }
+});
+
+// POST /shop-settings/delete - Permanently delete the shop and everything in it
+router.post('/delete', requireOwnerOnly, getShopData, async (req, res) => {
+    let connection;
+    try {
+        const { confirmText } = req.body;
+        if (confirmText !== 'DELETE') {
+            return res.status(400).json({ success: false, message: 'Please type DELETE to confirm.' });
+        }
+
+        const shopId = req.session.shopId;
+
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // Same child-before-parent ordering as reset-data, plus the shop and
+        // its users at the end (users must go before the shop row itself
+        // since users.shop_id references shops.id).
+        const shopScopedTables = [
+            'bill_items', 'bills',
+            'stock_in', 'inventory', 'ingredients',
+            'raw_material_stock_movements',
+            'supplier_transactions', 'supplier_balance',
+            'user_loan_ledger', 'user_loan', 'user_salary', 'user_cash_submission', 'cash_register',
+            'products', 'raw_materials', 'suppliers', 'customers', 'expenses',
+            'subscriptions', 'admin_actions', 'backups', 'feedback',
+            'users'
+        ];
+
+        for (const table of shopScopedTables) {
+            await connection.execute(`DELETE FROM ${table} WHERE shop_id = UUID_TO_BIN(?)`, [shopId]);
+        }
+
+        await connection.execute(`DELETE FROM shops WHERE id = UUID_TO_BIN(?)`, [shopId]);
+
+        await connection.commit();
+        connection.release();
+
+        // The current user no longer exists -- end the session.
+        req.session.destroy(() => {
+            res.json({ success: true, message: 'Shop deleted successfully.' });
+        });
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+            connection.release();
+        }
+        console.error('Error deleting shop:', error);
+        res.status(500).json({ success: false, message: 'Failed to delete shop: ' + error.message });
     }
 });
 
