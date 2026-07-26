@@ -61,7 +61,7 @@ class ForecastAgent(BaseAgent):
                 trend="analyzing",
                 percentage_change=0.0,
                 period="weekly",
-                insight=result.get("output", "")
+                insight=result.get("output") or "Unable to generate forecast."
             )
         except Exception as e:
             return ForecastInsight(

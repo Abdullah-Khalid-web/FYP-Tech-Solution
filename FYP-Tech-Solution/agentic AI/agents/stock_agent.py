@@ -112,7 +112,7 @@ class StockOrderingAgent(BaseAgent):
                 current_stock=0,
                 min_stock_threshold=0,
                 suggested_quantity=0,
-                reasoning=result.get("output", ""),
+                reasoning=result.get("output") or "Unable to analyze stock.",
                 awaiting_approval=True
             )
             

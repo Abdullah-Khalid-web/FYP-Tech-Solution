@@ -91,16 +91,42 @@ class AIActionExecutor {
         throw new Error(`Insufficient stock for ${product.name}. Available: ${product.current_quantity}`);
       }
 
+      const unitPrice = product.selling_price;
+      const total = unitPrice * quantity;
+      const billId = uuidv4();
+      const billNumber = 'AI-INV-' + Math.floor(Date.now() / 1000);
+
+      // Insert bill
+      await conn.execute(`
+        INSERT INTO bills (id, shop_id, bill_number, customer_name, subtotal, tax, total_amount, paid_amount, due_amount, payment_method, notes, created_by, created_at)
+        VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, 'AI Customer', ?, 0, ?, ?, 0, 'cash', 'Created via AI Assistant', UUID_TO_BIN(?), NOW())
+      `, [billId, shopId, billNumber, total, total, total, userId]);
+
+      // Insert bill item
+      const billItemId = uuidv4();
+      await conn.execute(`
+        INSERT INTO bill_items (id, bill_id, product_id, quantity, unit_price, total_price, tax_amount, discount_amount)
+        VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, 0, 0)
+      `, [billItemId, billId, product.id, quantity, unitPrice, total]);
+
+      // Update inventory
+      await conn.execute(`
+        UPDATE inventory 
+        SET current_quantity = current_quantity - ?
+        WHERE product_id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?)
+      `, [quantity, product.id, shopId]);
+
       return {
         action: 'add_bill_item',
         product: {
           id: product.id,
           name: product.name,
-          unit_price: product.selling_price,
+          unit_price: unitPrice,
           quantity: quantity,
-          total_price: product.selling_price * quantity,
+          total_price: total,
         },
-        message: `Ready to add ${quantity}x ${product.name} @ ${product.selling_price} each = ${product.selling_price * quantity}`,
+        bill_id: billId,
+        message: `Successfully created bill ${billNumber} with ${quantity}x ${product.name} @ ${unitPrice} each = ${total}`,
       };
     },
 

@@ -18,6 +18,11 @@ CRITICAL RULES:
 2. Be constructive, never accusatory
 3. Highlight strengths alongside areas for improvement
 
+RESPONSE FORMAT:
+Use bold text for staff names and important numbers (e.g. **John Doe**, **$5,000**).
+Use bullet points for separating individual staff members or key metrics.
+Ensure your response is highly structured, easy to read, and looks professional.
+
 Shop ID: {shop_id}
 """
 
@@ -43,7 +48,7 @@ class StaffAgent(BaseAgent):
         return {"intent": intent, "tools_to_use": ["get_staff_performance_metrics", "get_cashier_activity"]}
     
     async def get_performance_report(
-        self, user_id: int = None, role: str = None, period: str = "weekly"
+        self, user_id: Optional[str] = None, role: str = None, period: str = "weekly"
     ) -> StaffPerformanceReport:
         query = f"Analyze performance for staff {user_id or 'team'} over {period}"
         
@@ -51,18 +56,18 @@ class StaffAgent(BaseAgent):
             result = await self.act({}, {"original_input": query})
             return StaffPerformanceReport(
                 status=ActionStatus.SUCCESS,
-                user_id=user_id or 0,
+                user_id=user_id or "",
                 user_name="Team" if not user_id else f"Staff #{user_id}",
                 role=role or "all",
                 metrics={},
                 comparison_to_average={},
-                guidance=result.get("output", ""),
+                guidance=result.get("output") or "Unable to generate performance report.",
                 period=period
             )
         except Exception as e:
             return StaffPerformanceReport(
                 status=ActionStatus.FAILED,
-                user_id=user_id or 0,
+                user_id=user_id or "",
                 user_name="Unknown",
                 role=role or "unknown",
                 metrics={},

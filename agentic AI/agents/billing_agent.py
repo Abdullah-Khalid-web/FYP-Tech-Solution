@@ -27,11 +27,14 @@ CRITICAL RULES:
 3. If quantity is not specified, assume 1
 4. If you're unsure about the product, ask for clarification
 5. Confirm each item addition before proceeding
+6. IMPORTANT: When extracting product names to search, use the EXACT spelling provided by the user. Do NOT auto-correct spelling mistakes (e.g. if the user says 'suger', search for 'suger', not 'sugar').
 
 RESPONSE FORMAT:
 1. Echo back: "I understood: Add [quantity]x [product] @ [price] each"
 2. Ask: "Should I add this to the bill?"
-3. Wait for confirmation before executing
+3. Wait for confirmation before executing.
+4. When the user confirms the action, you MUST output this JSON exactly with the "data" object to trigger the backend execution:
+{{"action": "final_answer", "response": "Your success message", "data": {{"action": "add_bill_item", "params": {{"product_name": "[product]", "quantity": [quantity]}}}}}}
 
 COMMON VOICE PATTERNS:
 - "Add two milk packets" → product: milk, quantity: 2
@@ -145,6 +148,7 @@ class BillingAgent(BaseAgent):
             return BillingResponse(
                 status=ActionStatus.SUCCESS,
                 message=result.get("output", "Item added to bill."),
+                data=result.get("data"),
                 requires_confirmation=False
             )
         except Exception as e:

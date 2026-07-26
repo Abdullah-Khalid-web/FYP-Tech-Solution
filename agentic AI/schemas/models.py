@@ -112,6 +112,7 @@ class BillingResponse(BaseModel):
     message: str
     item_added: Optional[Dict[str, Any]] = None
     current_bill_total: Optional[float] = None
+    data: Optional[Dict[str, Any]] = None
     requires_confirmation: bool = True
     confirmation_prompt: Optional[str] = None
 

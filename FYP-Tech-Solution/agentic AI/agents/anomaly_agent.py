@@ -52,7 +52,7 @@ class AnomalyAgent(BaseAgent):
                 status=ActionStatus.SUCCESS,
                 anomaly_type="analysis",
                 severity="medium",
-                description=result.get("output", ""),
+                description=result.get("output") or "No anomalies detected.",
                 recommendation="Consider manual review.",
                 flagged_for_review=False
             )

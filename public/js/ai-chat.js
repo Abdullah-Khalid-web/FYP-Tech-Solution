@@ -269,7 +269,7 @@
       const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       // Use extractText to safely handle any content type
       const rawContent = extractText(msg.content) || '(empty message)';
-      const content = escapeHtml(rawContent).replace(/\n/g, '<br>');
+      const content = parseMarkdown(rawContent);
 
       return `
         <div class="ai-msg ${isUser ? 'ai-msg-user' : 'ai-msg-assistant'}">
@@ -455,6 +455,19 @@
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  function parseMarkdown(text) {
+    let html = escapeHtml(text);
+    // Bold
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Italic
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Bullet points (convert starting with - or * to a nice bullet)
+    html = html.replace(/^[\-\*]\s+(.*)$/gm, '• $1');
+    // Newlines
+    html = html.replace(/\n/g, '<br>');
+    return html;
   }
 
   function saveHistory() {

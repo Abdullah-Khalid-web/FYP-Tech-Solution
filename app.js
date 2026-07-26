@@ -445,11 +445,11 @@ app.use('/', require('./routes/auth/login'));
 app.use('/', require('./routes/auth/logout'));
 app.use('/', require('./routes/auth/register'));
 app.use('/admin', require('./routes/admin'));
-app.use('/', isAuthenticated, require('./routes/dashboard'));
-
 /* ------------- AI INTEGRATION ROUTES ------------- */
 app.use('/api/ai', require('./routes/ai'));            // Frontend → Backend → AI proxy
-app.use('/api', require('./routes/aiDataApi'));          // AI module → Backend data endpoints
+app.use('/api/ai-data', require('./routes/aiDataApi')); // AI module → Backend data endpoints
+
+app.use('/', isAuthenticated, require('./routes/dashboard'));
 /* ------------------ PROTECTED ROUTES (AUTHENTICATION REQUIRED) ------------------ */
 
 // Products - requires authentication (everyone can view products)

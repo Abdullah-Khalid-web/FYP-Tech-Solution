@@ -7,6 +7,7 @@ Updated for LangChain 1.x compatibility.
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
 import json
+import re
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
@@ -47,7 +48,7 @@ class BaseAgent(ABC):
             api_key=settings.GROQ_API_KEY
         )
         
-        # Bind tools to LLM for tool calling
+        # We keep bind_tools for compatibility but primarily use manual JSON routing
         if tools:
             self.llm_with_tools = self.llm.bind_tools(tools)
         else:
@@ -126,7 +127,6 @@ class BaseAgent(ABC):
         
         try:
             result = await self.llm.ainvoke([HumanMessage(content=extraction_prompt)])
-            import json
             # Try to extract JSON from response
             content = result.content.strip()
             if content.startswith("```"):
@@ -134,7 +134,7 @@ class BaseAgent(ABC):
                 if content.startswith("json"):
                     content = content[4:]
             return json.loads(content)
-        except:
+        except Exception:
             return {}
     
     @abstractmethod
@@ -155,14 +155,45 @@ class BaseAgent(ABC):
     
     async def act(self, plan: Dict, perceived_input: Dict) -> Dict[str, Any]:
         """
-        Step 4: Action - Execute the plan using LLM with tools.
-        Implements a tool-calling loop: invoke LLM → execute tools → feed
-        results back → repeat until the LLM produces a final text answer.
+        Step 4: Action - Execute the plan using manual JSON-based tool routing.
+        
+        Instead of relying on Groq's native tool-calling API (which generates
+        malformed XML tags like <function=...>), we ask the LLM to output
+        structured JSON when it wants to use a tool. This works reliably
+        with ALL Groq models.
         """
         try:
-            # Build messages with system prompt and user input
+            # Build tool descriptions for the prompt
+            tool_descriptions = []
+            for name, tool in self.tools_by_name.items():
+                desc = getattr(tool, 'description', '') or name
+                # Clean the description to one line
+                desc = ' '.join(desc.split())
+                tool_descriptions.append(f"  - {name}: {desc}")
+            
+            tools_text = "\n".join(tool_descriptions) if tool_descriptions else "  No tools available."
+            
+            system_content = self.system_prompt.format(shop_id=self.shop_id)
+            system_content += "\n\nAVAILABLE TOOLS:\n"
+            system_content += tools_text
+            system_content += """
+
+HOW TO RESPOND:
+When you need data from a tool, respond with EXACTLY this JSON format and nothing else:
+{"action": "tool_call", "tool": "tool_name_here", "args": {"arg_name": "value"}}
+
+When you have all the information needed to answer the user, respond with EXACTLY this JSON:
+{"action": "final_answer", "response": "Your helpful, detailed answer here."}
+
+RULES:
+- ALWAYS respond with valid JSON only. No extra text before or after the JSON.
+- Call ONE tool at a time.
+- Only use tools from the AVAILABLE TOOLS list above.
+- If a tool returns an error, explain the situation to the user in your final answer.
+"""
+            
             messages = [
-                {"role": "system", "content": self.system_prompt.format(shop_id=self.shop_id)},
+                {"role": "system", "content": system_content},
             ]
             
             # Add conversation history
@@ -176,71 +207,67 @@ class BaseAgent(ABC):
             messages.append({"role": "user", "content": perceived_input["original_input"]})
             
             all_tool_calls = []
-            max_iterations = 5  # Safety limit to prevent infinite loops
+            max_iterations = 5
+            output_content = ""
             
             for iteration in range(max_iterations):
-                # Invoke LLM with tools
-                result = await self.llm_with_tools.ainvoke(messages)
+                # Call LLM WITHOUT tool binding - just plain text completion
+                result = await self.llm.ainvoke(messages)
                 
-                tool_calls = getattr(result, 'tool_calls', [])
+                response_text = result.content.strip() if result.content else ""
                 
-                # If no tool calls, we have the final text response
-                if not tool_calls:
-                    break
+                # Try to parse as JSON
+                parsed = self._try_parse_json(response_text)
                 
-                # LLM wants to call tools — execute each one
-                all_tool_calls.extend(tool_calls)
-                
-                # Append the AI message (with tool calls) to the conversation
-                messages.append(result)
-                
-                for tc in tool_calls:
-                    tool_name = tc.get('name', '') if isinstance(tc, dict) else getattr(tc, 'name', '')
-                    tool_args = tc.get('args', {}) if isinstance(tc, dict) else getattr(tc, 'args', {})
-                    tool_id = tc.get('id', '') if isinstance(tc, dict) else getattr(tc, 'id', '')
+                if parsed and isinstance(parsed, dict) and parsed.get("action") == "tool_call":
+                    # LLM wants to call a tool
+                    tool_name = parsed.get("tool", "")
+                    tool_args = parsed.get("args", {})
                     
                     if settings.VERBOSE_LOGGING:
                         print(f"  [TOOL] Executing: {tool_name}({tool_args})")
+                    all_tool_calls.append({"name": tool_name, "args": tool_args})
                     
-                    # Look up and execute the tool
+                    # Execute the tool
                     tool_fn = self.tools_by_name.get(tool_name)
                     if tool_fn:
                         try:
                             tool_result = await tool_fn.ainvoke(tool_args)
-                        except Exception as tool_err:
-                            tool_result = {"error": f"Tool execution failed: {str(tool_err)}"}
+                        except Exception as te:
+                            tool_result = {"error": f"Tool failed: {str(te)}"}
                     else:
-                        tool_result = {"error": f"Unknown tool: {tool_name}"}
+                        available = ", ".join(self.tools_by_name.keys())
+                        tool_result = {"error": f"Tool '{tool_name}' not found. Available tools: {available}"}
                     
-                    # Convert result to string for the ToolMessage
+                    # Convert to string
                     if not isinstance(tool_result, str):
-                        tool_result_str = json.dumps(tool_result, default=str)
+                        tool_result_str = json.dumps(tool_result, default=str, ensure_ascii=True)
                     else:
                         tool_result_str = tool_result
                     
                     if settings.VERBOSE_LOGGING:
-                        print(f"  [OK] Tool result: {tool_result_str[:200]}")
+                        print(f"  [OK] Tool result: {tool_result_str[:300]}")
                     
-                    # Append tool result as a ToolMessage
-                    messages.append(ToolMessage(
-                        content=tool_result_str,
-                        tool_call_id=tool_id,
-                    ))
+                    # Feed tool result back and ask for next action
+                    messages.append({"role": "assistant", "content": response_text})
+                    messages.append({
+                        "role": "user",
+                        "content": f"Tool '{tool_name}' returned: {tool_result_str}\n\nNow either call another tool if needed, or provide your final answer using: {{\"action\": \"final_answer\", \"response\": \"your answer\"}}"
+                    })
+                    continue
+                    
+                elif parsed and isinstance(parsed, dict) and parsed.get("action") == "final_answer":
+                    # LLM has the final answer
+                    output_content = parsed.get("response", "")
+                    break
+                else:
+                    # Not valid JSON or unknown action - use raw text as the answer
+                    output_content = response_text
+                    break
             
-            # Extract final text content
-            output_content = result.content
-            if isinstance(output_content, list):
-                text_parts = []
-                for part in output_content:
-                    if isinstance(part, str):
-                        text_parts.append(part)
-                    elif isinstance(part, dict) and "text" in part:
-                        text_parts.append(part["text"])
-                output_content = " ".join(text_parts).strip()
-                
-            if not isinstance(output_content, str):
-                output_content = str(output_content)
-                
+            if not output_content:
+                output_content = "I was unable to process your request. Please try again."
+            
             # Store in conversation history
             self.conversation_history.append(HumanMessage(content=perceived_input["original_input"]))
             self.conversation_history.append(AIMessage(content=output_content))
@@ -258,6 +285,37 @@ class BaseAgent(ABC):
                 "error": str(e),
                 "output": None,
             }
+    
+    def _try_parse_json(self, text: str):
+        """Try to parse JSON from LLM response, handling markdown code blocks."""
+        if not text:
+            return None
+        
+        # Strip markdown code fences if present
+        cleaned = text.strip()
+        if cleaned.startswith("```"):
+            lines = cleaned.split("\n")
+            # Remove first and last lines (the ``` markers)
+            lines = lines[1:]
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            cleaned = "\n".join(lines).strip()
+        
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            pass
+        
+        # Try to find JSON object in the text
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            try:
+                return json.loads(text[start:end + 1])
+            except json.JSONDecodeError:
+                pass
+        
+        return None
     
     async def reflect(self, action_result: Dict) -> Dict[str, Any]:
         """
@@ -320,7 +378,7 @@ class BaseAgent(ABC):
             tool_name = call.get('name', 'Unknown tool') if isinstance(call, dict) else getattr(call, 'name', 'Unknown')
             steps.append(f"{i}. Called {tool_name}")
         
-        return " → ".join(steps) if steps else "Processed query directly."
+        return " -> ".join(steps) if steps else "Processed query directly."
     
     def clear_history(self):
         """Clear conversation history."""

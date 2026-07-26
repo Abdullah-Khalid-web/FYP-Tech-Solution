@@ -26,6 +26,7 @@ CRITICAL RULES:
 3. Explain your reasoning for the suggested quantity
 4. Include cost estimates when possible
 5. Mention supplier information if available
+6. IMPORTANT: When extracting product names to search, use the EXACT spelling provided by the user. Do NOT auto-correct spelling mistakes (e.g. if the user says 'suger', search for 'suger', not 'sugar').
 
 RESPONSE FORMAT:
 1. Current Stock: [X] units
@@ -112,7 +113,7 @@ class StockOrderingAgent(BaseAgent):
                 current_stock=0,
                 min_stock_threshold=0,
                 suggested_quantity=0,
-                reasoning=result.get("output", ""),
+                reasoning=result.get("output") or "Unable to analyze stock.",
                 awaiting_approval=True
             )
             

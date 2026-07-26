@@ -80,7 +80,7 @@ class AgentRouter:
             result = await self.llm.ainvoke([HumanMessage(content=classification_prompt)])
             intent_str = result.content.strip().lower()
             return IntentType(intent_str)
-        except:
+        except Exception:
             return IntentType.UNKNOWN
     
     async def route(self, user_query: UserQuery) -> AgentResponse:
@@ -108,5 +108,3 @@ class AgentRouter:
             agent.clear_history()
 
 
-# Global router instance
-router = AgentRouter()

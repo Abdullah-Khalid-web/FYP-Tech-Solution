@@ -9,6 +9,15 @@ uploads/
 # Capacitor mobile app (mobile/) — native build output, not source
 mobile/android/app/build/
 mobile/android/build/
+inventory/
+node_modules/
+FYP-Tech-Solution(old)/
+uploads/
+.claude/
+
+# Capacitor mobile app (mobile/) — native build output, not source
+mobile/android/app/build/
+mobile/android/build/
 mobile/android/.gradle/
 mobile/android/capacitor-cordova-android-plugins/
 mobile/android/local.properties
@@ -16,3 +25,16 @@ mobile/ios/App/Pods/
 mobile/ios/App/build/
 mobile/ios/App/App.xcworkspace/xcuserdata/
 mobile/ios/DerivedData/
+
+# Secrets
+.env
+.env.*
+agentic AI/.env
+FYP-Tech-Solution/agentic AI/.env
+
+# Data
+data/managehub.db
+
+# Python
+__pycache__/
+*.pyc

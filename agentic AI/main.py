@@ -15,7 +15,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, Dict
 
 from config import settings
 from schemas import (
@@ -117,18 +117,18 @@ async def log_requests(request: Request, call_next):
 # Main Chat Endpoint
 # =============================================================================
 
+from api_client import current_shop_id
+
 @app.post("/api/chat", response_model=AgentResponse)
 async def chat(query: UserQuery) -> AgentResponse:
     """
     Main endpoint for natural language queries.
     Routes to appropriate agent based on intent classification.
-    
-    Examples:
-    - "What is today's total sale?"
-    - "How much sugar is left in stock?"
-    - "Which item sells the most?"
     """
     try:
+        # Set the shop_id in contextvar so api_client uses the correct one
+        current_shop_id.set(query.shop_id)
+        
         router = app.state.router
         response = await router.route(query)
         return response
@@ -144,12 +144,9 @@ async def chat(query: UserQuery) -> AgentResponse:
 async def voice_billing(request: VoiceBillingRequest) -> BillingResponse:
     """
     Process voice billing command.
-    
-    Example: "Add two milk packets"
-    
-    Returns confirmation prompt before executing.
     """
     try:
+        current_shop_id.set(request.shop_id)
         router = app.state.router
         billing_agent = router.get_agent(AgentType.BILLING_AGENT)
         
@@ -163,14 +160,18 @@ async def voice_billing(request: VoiceBillingRequest) -> BillingResponse:
 
 
 @app.post("/api/billing/confirm", response_model=BillingResponse)
-async def confirm_billing(confirmed: bool = True) -> BillingResponse:
+async def confirm_billing(request: Dict) -> BillingResponse:
     """
-    Confirm or cancel pending billing action.
+    Confirm and execute a pending billing action.
     """
     try:
+        shop_id = request.get("shop_id", settings.DEFAULT_SHOP_ID)
+        current_shop_id.set(shop_id)
+        
         router = app.state.router
         billing_agent = router.get_agent(AgentType.BILLING_AGENT)
         
+        confirmed = request.get("confirmed", True)
         if not confirmed:
             billing_agent.cancel_pending()
             return BillingResponse(

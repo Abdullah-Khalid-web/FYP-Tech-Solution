@@ -89,6 +89,9 @@ function createSqlitePool() {
     translatedSql = translatedSql.replace(/(CURDATE\(\)|NOW\(\))\s*-\s*INTERVAL\s*(\d+)\s*DAY/gi, "date('now', 'localtime', '-$2 day')");
     translatedSql = translatedSql.replace(/(CURDATE\(\)|NOW\(\))\s*-\s*INTERVAL\s*(\?)\s*DAY/gi, "date('now', 'localtime', '-' || $2 || ' day')");
 
+    translatedSql = translatedSql.replace(/\bYEARWEEK\(\s*CURDATE\(\)\s*,\s*1\s*\)/gi, "strftime('%Y%W', 'now', 'localtime')");
+    translatedSql = translatedSql.replace(/\bYEARWEEK\(\s*([^)]+?)\s*,\s*1\s*\)/gi, "strftime('%Y%W', $1)");
+
     // Standard date function translation
     translatedSql = translatedSql.replace(/CURDATE\(\)/gi, "date('now', 'localtime')");
     translatedSql = translatedSql.replace(/CURRENT_DATE\(\)/gi, "date('now', 'localtime')");
@@ -97,7 +100,6 @@ function createSqlitePool() {
     // Bare CURRENT_TIMESTAMP in DML (e.g. SET updated_at = CURRENT_TIMESTAMP) is UTC
     // in SQLite; DDL never passes through this translator so DEFAULT clauses are safe.
     translatedSql = translatedSql.replace(/\bCURRENT_TIMESTAMP\b(?!\s*\()/gi, "datetime('now', 'localtime')");
-    translatedSql = translatedSql.replace(/\bYEARWEEK\(\s*([^)]+?)\s*,\s*1\s*\)/gi, "strftime('%Y%W', $1)");
     translatedSql = translatedSql.replace(/\bDATE\(\s*([^)]+?)\s*\)/gi, 'date($1)');
     translatedSql = translatedSql.replace(/\bYEAR\(\s*([^)]+?)\s*\)/gi, "strftime('%Y', $1)");
     translatedSql = translatedSql.replace(/\bMONTH\(\s*([^)]+?)\s*\)/gi, "strftime('%m', $1)");

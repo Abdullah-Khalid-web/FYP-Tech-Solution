@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     LLM_TEMPERATURE: float = 0.1
     
     # Backend API Configuration (provided by backend team)
-    BACKEND_API_BASE_URL: str = "http://localhost:3000/api"
+    BACKEND_API_BASE_URL: str = "http://localhost:3000/api/ai-data"
     BACKEND_API_TIMEOUT: int = 30
     
     # Shop Configuration (multi-tenant support)

@@ -53,7 +53,7 @@ class ReportAgent(BaseAgent):
                 status=ActionStatus.SUCCESS,
                 report_type=report_type,
                 period=f"{start_date} to {end_date}" if start_date else "current",
-                executive_summary=result.get("output", ""),
+                executive_summary=result.get("output") or "Unable to generate report.",
                 key_metrics={},
                 trends=[],
                 alerts=[],

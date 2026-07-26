@@ -87,16 +87,28 @@ async def search_product(product_name: str) -> dict:
 
 
 @tool
-async def get_product_stock(product_id: int) -> dict:
+async def get_product_stock(product_name: str) -> dict:
     """
     Get current stock level for a specific product.
     
     Args:
-        product_id: ID of the product.
+        product_name: Name of the product (e.g., 'Sugar').
     
     Returns:
         Stock level, minimum threshold, and reorder status.
     """
+    search_results = await api_client.search_product(product_name)
+    if isinstance(search_results, dict) and "error" in search_results:
+        return search_results
+    
+    products = search_results.get("products", []) if isinstance(search_results, dict) else []
+    if not products:
+        return {"error": f"Product '{product_name}' not found."}
+        
+    product_id = products[0].get("id")
+    if not product_id:
+        return {"error": "Product found but ID is missing."}
+        
     return await api_client.get_product_stock(product_id)
 
 
@@ -167,20 +179,16 @@ async def get_current_bill() -> dict:
 # =============================================================================
 
 @tool
-async def get_staff_list(role: str = "") -> dict:
+async def get_staff_list() -> dict:
     """
-    Get list of staff members.
-    
-    Args:
-        role: Filter by role (cashier, manager, owner, other)
+    Get list of all staff members.
     
     Returns:
         List of staff with basic info.
     """
     from config import API_ENDPOINTS
     endpoint = API_ENDPOINTS.get("staff", {}).get("all_users", "/users")
-    params = {"role": role} if role else {}
-    return await api_client._get(endpoint, params=params)
+    return await api_client._get(endpoint)
 
 
 @tool
@@ -303,20 +311,25 @@ async def get_detected_anomalies() -> dict:
 # =============================================================================
 
 @tool
-async def create_reorder_draft(product_id: int, quantity: int, supplier_id: int = 0) -> dict:
+async def create_reorder_draft(product_name: str, quantity: int) -> dict:
     """
     Create a draft reorder for a product.
     
     IMPORTANT: This creates a DRAFT only. Human approval is required to submit.
     
     Args:
-        product_id: ID of the product to reorder.
+        product_name: Name of the product to reorder.
         quantity: Suggested quantity to order.
-        supplier_id: Preferred supplier ID (optional)
     
     Returns:
         Draft order details with estimated cost.
     """
+    search_results = await api_client.search_product(product_name)
+    products = search_results.get("products", []) if isinstance(search_results, dict) else []
+    if not products:
+        return {"error": f"Product '{product_name}' not found."}
+    
+    product_id = products[0].get("id")
     return await api_client.create_reorder_draft(product_id, quantity)
 
 
@@ -328,7 +341,6 @@ RETAIL_ASSISTANT_TOOLS = [
     get_daily_sales,
     get_weekly_sales,
     get_top_selling_products,
-    search_product,
     get_product_stock,
     get_low_stock_items,
 ]

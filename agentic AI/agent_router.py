@@ -61,26 +61,40 @@ class AgentRouter:
         """Classify the intent of a user query."""
         query_lower = query.lower()
         
-        # Fast keyword matching
+        # Fast keyword matching (score-based)
+        scores = {}
         for intent_name, keywords in INTENT_CATEGORIES.items():
-            if any(kw in query_lower for kw in keywords):
-                return IntentType(intent_name)
+            scores[intent_name] = sum(1 for kw in keywords if kw in query_lower)
+            
+        max_score = max(scores.values()) if scores else 0
+        if max_score > 0:
+            top_intents = [name for name, score in scores.items() if score == max_score]
+            if len(top_intents) == 1:
+                return IntentType(top_intents[0])
         
         # Fall back to LLM classification
         classification_prompt = f"""
-        Classify this retail query into one category:
-        sales_query, inventory_query, billing_action, reorder_action, 
-        staff_query, report_query, forecast_query, anomaly_query, expense_query
+        Classify this retail query into the most appropriate category from this list:
+        - sales_query: general sales, top items
+        - inventory_query: stock levels
+        - billing_action: checkout
+        - reorder_action: restocking
+        - staff_query: MUST use this for ANY questions about employee or cashier performance, staff revenue, or staff breakdown
+        - report_query: daily/weekly business reports (NOT staff specific)
+        - forecast_query: predictions
+        - anomaly_query: anomalies
+        - expense_query: expenses
         
         Query: "{query}"
-        Respond with ONLY the category name.
+        
+        Respond ONLY with the category name (e.g. staff_query).
         """
         
         try:
             result = await self.llm.ainvoke([HumanMessage(content=classification_prompt)])
             intent_str = result.content.strip().lower()
             return IntentType(intent_str)
-        except:
+        except Exception:
             return IntentType.UNKNOWN
     
     async def route(self, user_query: UserQuery) -> AgentResponse:
@@ -108,5 +122,3 @@ class AgentRouter:
             agent.clear_history()
 
 
-# Global router instance
-router = AgentRouter()
