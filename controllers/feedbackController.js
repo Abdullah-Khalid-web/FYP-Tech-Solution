@@ -243,6 +243,71 @@ class FeedbackController {
         }
     }
 
+    // POST mark own feedback as resolved
+    async resolveOwnFeedback(req, res) {
+        try {
+            const { id } = req.params;
+
+            const [result] = await pool.execute(
+                `UPDATE feedback
+                SET status = 'resolved', updated_at = NOW()
+                WHERE id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?) AND user_id = UUID_TO_BIN(?)
+                AND status NOT IN ('resolved', 'cancelled')`,
+                [id, req.shopId, req.session.userId]
+            );
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Feedback not found'
+                });
+            }
+
+            res.json({
+                success: true,
+                message: 'Feedback marked as resolved'
+            });
+        } catch (err) {
+            console.error('Error resolving feedback:', err);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to update feedback'
+            });
+        }
+    }
+
+    // POST delete own feedback
+    async deleteOwnFeedback(req, res) {
+        try {
+            const { id } = req.params;
+
+            const [result] = await pool.execute(
+                `DELETE FROM feedback
+                WHERE id = UUID_TO_BIN(?) AND shop_id = UUID_TO_BIN(?) AND user_id = UUID_TO_BIN(?)
+                AND status != 'cancelled'`,
+                [id, req.shopId, req.session.userId]
+            );
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Feedback not found'
+                });
+            }
+
+            res.json({
+                success: true,
+                message: 'Feedback deleted successfully'
+            });
+        } catch (err) {
+            console.error('Error deleting own feedback:', err);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to delete feedback'
+            });
+        }
+    }
+
     // ==================== ADMIN FUNCTIONS ====================
 
     // GET all feedback for admin (with filters)

@@ -13,6 +13,8 @@ router.get('/', isAuthenticated, feedbackController.getUserFeedback.bind(feedbac
 router.get('/submit', isAuthenticated, feedbackController.getSubmitForm.bind(feedbackController));
 router.post('/submit', isAuthenticated, feedbackController.submitFeedback.bind(feedbackController));
 router.get('/:id', isAuthenticated, feedbackController.getFeedbackDetails.bind(feedbackController));
+router.post('/:id/resolve', isAuthenticated, feedbackController.resolveOwnFeedback.bind(feedbackController));
+router.post('/:id/delete', isAuthenticated, feedbackController.deleteOwnFeedback.bind(feedbackController));
 
 // ==================== ADMIN ROUTES ====================
 // Viewing/managing everyone's feedback requires the granular feedback.* permission.

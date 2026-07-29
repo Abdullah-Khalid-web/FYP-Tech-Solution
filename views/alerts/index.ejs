@@ -56,6 +56,23 @@
 
         .shop-info {
             text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .shop-logo-img {
+            height: 42px;
+            width: 42px;
+            border-radius: 8px;
+            object-fit: cover;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .shop-info-text p {
+            margin: 5px 0;
+            color: var(--dark);
+            font-size: 0.9rem;
         }
 
         .shop-info p {
@@ -373,6 +390,7 @@
             
             .shop-info {
                 text-align: center;
+                justify-content: center;
             }
             
             .stats-grid {
@@ -395,8 +413,13 @@
                 <p class="datetime" id="datetime"></p>
             </div>
             <div class="shop-info">
-                <p><i class="fas fa-store"></i> <%= (shop && shop.name) || 'My Shop' %></p>
-                <p><i class="fas fa-map-marker-alt"></i> <%= (shop && shop.address) || 'Add shop address' %></p>
+                <div class="shop-info-text">
+                    <p><i class="fas fa-store"></i> <%= (shop && shop.name) || 'My Shop' %></p>
+                    <p><i class="fas fa-map-marker-alt"></i> <%= (shop && shop.address) || 'Add shop address' %></p>
+                </div>
+                <% if (shop && shop.logo) { %>
+                    <img src="<%= shop.logo %>" alt="<%= shop.name %>" class="shop-logo-img">
+                <% } %>
             </div>
         </div>
 
