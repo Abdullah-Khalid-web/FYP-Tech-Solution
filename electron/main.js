@@ -53,15 +53,30 @@ function createWindow() {
         }
     });
 
-    // Handle external links
+    // Open links to our own local server (e.g. receipts opened via window.open)
+    // in an in-app window; only send genuinely external links to the OS browser.
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        const electronPort = process.env.ELECTRON_PORT || '3000';
+        const isInternal = url.startsWith(`http://localhost:${electronPort}/`) ||
+            url.startsWith(`http://127.0.0.1:${electronPort}/`);
+
+        if (isInternal) {
+            return {
+                action: 'allow',
+                overrideBrowserWindowOptions: {
+                    width: 900,
+                    height: 700,
+                    webPreferences: {
+                        nodeIntegration: false,
+                        contextIsolation: true,
+                        preload: path.join(__dirname, 'preload.js')
+                    }
+                }
+            };
+        }
+
         shell.openExternal(url);
         return { action: 'deny' };
-    });
-
-    mainWindow.webContents.on('new-window', (event, url) => {
-        event.preventDefault();
-        shell.openExternal(url);
     });
 
     mainWindow.on('closed', () => {

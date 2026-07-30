@@ -1,0 +1,397 @@
+1	Normal	Report
+2	Normal	Problem Based Learning
+3	Normal	ManageHub: An Agentic AI Driven SaaS
+4	Normal	Artificial Intelligence
+5	Normal	Spring 2026
+6	Normal	Group Members
+7	Normal	Muhammad Nassar 59849
+8	Normal	Abdullah Khalid 59873
+9	Normal	Muhammad Rayan Sarfaraz 59552
+10	Normal	8th
+12	Normal	Department of  Software Engineering
+13	Normal	Faculty of Information and Communication Technology (FICT), BUITEMS, Quetta
+15	Normal	ManageHub: An Agentic AI Driven SaaS Solution for Retail Management
+16	Normal	Submitted to the
+17	Normal	Department of Software Engineering
+18	Normal	In Partial Fulfillment of the Requirements for the Degree of Bachelor of Science in Software Engineering at Balochistan University of Information Technology, Engineering and Management Sciences
+19	Normal	Muhammad Nassar
+20	Normal	59849
+21	Normal	Abdullah Khalid
+22	Normal	59873
+23	Normal	Muhammad Rayan Sarfaraz
+24	Normal	59552
+25	Normal	Supervisor: Mr. Shahrukh Riaz
+26	Normal	Co-Supervisor: Engr. Laila Baloch
+27	Normal	Signature of Supervisor: ______________________________
+28	Normal	Signature of Co-Supervisor: ______________________________
+29	Normal	Signature of FYP Coordinator: ______________________________
+31	Heading 1	UNDERTAKING
+32	Normal	It is certified that this work titled "ManageHub: An Agentic AI Driven SaaS Solution for Retail Management" is our own work. The work has not been presented elsewhere for assessment. Where material has been used from other sources, it has been properly acknowledged and referenced.
+34	Normal	______________________
+35	Normal	Muhammad Nassar
+36	Normal	59849
+37	Normal	______________________
+38	Normal	Abdullah Khalid
+39	Normal	59873
+40	Normal	______________________
+41	Normal	Muhammad Rayan Sarfaraz
+42	Normal	59552
+43	Heading 1	ACKNOWLEDGEMENTS
+44	Normal	We want to say thanks to all our supporters as we were creating in ManageHub. We are very grateful to our supervisor, Mr. Shahrukh Riaz, and co-supervisor, Engr. Laila Baloch, in their guidance, patience and honest feedback on this project at all levels. Their advice assisted us in transforming our coarse idea into a working product.
+45	Normal	We also owe our teachers in the Department of Software Engineering at BUITEMS, the knowledge, and skills that enabled this project to take place, and our families and friends who were constantly encouraging. Last but not least, we thank Allah that we had the strength and patience to accomplish this work.
+46	Heading 1	DEDICATION
+47	Normal	We dedicate this work to our parents whose love, sacrifice and unending support took us through the late nights and through tough deadlines. It is also devoted to all small shop owners who based on a notebook and a calculator, he/she has a business, and he/she hopes something better this project is to you.
+48	Heading 1	ABSTRACT
+49	Normal	In Pakistan, small and medium sized shops continue to utilise paper records, memory and stock counts done by guesswork, sales are difficult to track and the owners are seldom aware of which products are making them profits. Current software is costly, designed and targeted towards big companies and is useless once the internet drops. This thesis features ManageHub which is a web first, cloud based Software as a Service (SaaS) which configures inventory, sales, customers, suppliers, staff and finance into a single system which can be accessed by all via a browser with no installation. An offline capable mode is supported by a special Electron desktop client that continues to operate in the event of an internet outage and synchronizes back upon connection. The Node.js Express server supports a multi tenant MySQL database, allowing multiple shops to safely share the system, without sharing their data. A shopkeeper with a large language model, FastAI, and LangChain using a plain language assistant may hypothesize, ask particular questions (e.g., how much sugar is left) or make commands (e.g., add two crates of soft drinks). Sensitive actions are the ones that must always be human-approved and role-based access control restricts every user to what he or she must view. The system was developed in resistance to a formal Software Requirement Specification and was module tested online and offline providing the locals with a much cheaper, easier to use, and more locally relevant alternative to a costly foreign ERP software.
+50	Normal	Keywords: Retail Management, Software as a Service (SaaS), Point-of-Sale, Inventory Management, Offline-First Synchronisation, Agentic AI, Role-Based Access Control
+51	Heading 1	TABLE OF CONTENTS
+52	Heading 1	LIST OF FIGURES
+53	Normal	Figure 1: Layered System Architecture of ManageHub	29
+54	Normal	Figure 2: The Four Functional Domains of the ManageHub Database	32
+55	Normal	Figure 3: Role-Based Access Control in ManageHub	39
+56	Normal	Figure 4: Offline-First Sync Flow on the Desktop App	42
+57	Normal	Figure 5: How the Agentic AI Assistant Handles a Request	43
+58	Heading 1	LIST OF TABLES
+59	Normal	Table 1: ManageHub Compared with Manual Records and Off-the-Shelf ERP Software	25
+60	Normal	Table 2: Technology Stack Used in ManageHub	30
+61	Normal	Table 3: Roles and the Modules They Can Access	32
+62	Normal	Table 4: Core Database Tables and Their Purpose	39
+63	Normal	Table 5: Functional Requirements of the System	47
+64	Normal	Table 6: Non-Functional Requirements of the System	50
+65	Normal	Table 7: Hardware Requirements	51
+66	Normal	Table 8: Software Requirements	52
+67	Normal	Table 9: Test Case Scenarios and Outcomes	54
+68	Normal	Table 10: Functional Testing Summary by Module	58
+69	Normal	Table 11: Non-Functional Requirement Compliance	11
+70	Normal	Table 12: ManageHub Compared with Alternative Solutions (Detailed)	71
+71	Normal	Table 13: Route Groups by Module	80
+72	Normal	Table 14: Specialised Agents in the Agentic AI Service	82
+74	Normal	CHAPTER 1
+75	Heading 1	1. INTRODUCTION
+76	Heading 2	1.1 Background
+77	Normal	Enter any small Pakistani shop a grocer, a bakery, a hardware store, a pharmacy and the trend continues, a handwritten record book, a calculator and an owner who will tell who is in debt. This is only to a certain extent, once a shop employed more people or opened up another shop the manual method becomes disorganized.
+78	Normal	There is also a risk of the occurrence of out of stock due to lack of its real time tracking. Adding the figures in sales is not only time-consuming and prone to errors but also requires the use of hand, salaries and loans of the staff are managed on a piece of paper and it is difficult to detect any mistakes. Since all is recorded in a single notebook or memory of a single person, the individual that owns it will have little opportunity to figure out what products sell, who the customers are that are worth keeping and where the money is possibly being squandered.
+79	Normal	There exist software already to address these issues point of sale systems, inventory software and full ERP suites such as Odoo or ERPNext, but most of it was developed to fit an alternate market. They can be costly, require full time IT individual to set up, require constant access to the internet, and in most cases not customized to Urdu or local pricing/tax standards. To a shop that only functions on a slim margin that is tied up, it is here that the project fits in, that disparity between what is available and what can be bought and utilized.
+80	Normal	ManageHub was designed to seal up such gap: a single system that a small shop can actually afford, can open in an ordinary browser, nothing to install, and which, in case of a Wi-Fi drop, will continue to run and would be talking to the owner in plain English, not a complex new tool.
+81	Heading 2	1.2 Problem Statement
+82	Normal	Pakistan is characterized by small or medium sized retail business where retailers not only need a steady stream of problem-solving features, but also need affordable solutions, which can not be delivered by hand record keeping and most extant computer solutions do not offer relatively low-priced offerings:
+83	Normal	Pakistan is characterized by small or medium sized retail business where retailers not only need a steady stream of problem-solving features, but also need affordable solutions, which can not be delivered by hand record keeping and most extant computer solutions do not offer relatively low-priced offerings:
+84	Normal	●	No doubt there is not a single place where the information about stocks, sales, customers, suppliers, and staff is not scattered across the laptops, memory and individual spreadsheets.
+85	Normal	●	Stock outs and overstocking are very frequent as nobody is notified when something becomes low until it is out of stock.
+86	Normal	●	Manual sales total and cash handovers are slow and subject to human error and in some cases, even dishonesty.
+87	Normal	●	Ready-to-buy ERP and POS packages are too costly or too complicated to implement or so inflexible to fit the way a real-life local shop should operate.
+88	Normal	●	Most of the current systems allow the assumption that has internet connected always, which is not realistic in most areas of Pakistan where there is sporadic internet access and one lost packet can paralyze the till.
+89	Normal	●Most also require a shop to install and feed a particular application to a particular machine, instead of allowing personnel to work on any browser and device accessible.
+90	Normal	●	Few systems are as conversant with the language of the shopkeeper, both literally (Urdu support) and in the real world (a straightforward interface, rather than an overload an enterprise dashboard).
+91	Normal	These gaps combined make the question of whether to perform everything manually or to shell out some money to buy a more complicated, delicate and costly tool heavy rested on the shoulders of many shop owners. ManageHub eliminates that trade-off with a web based first, offline continuity as a core requirement, and not a by-product.
+92	Heading 2	1.3 Objectives
+93	Normal	The overall aim of this project is:
+94	Normal	The objective is to create and develop one, web-based, clouds-hosted SaaS application integrating inventory, sales, customer, supplier, employee and finance functionalities to small and medium retail stores in Pakistan which has an offline-capable client plus a physical AI-assistant that responds to plain-language queries.
+95	Normal	The particular aims of the project are:
+96	List Paragraph	To develop a multi tenant system in which a great number of stores can operate on the same platform, yet their data remain completely independent and safe.
+97	List Paragraph	To present the whole system using just a regular web browser, i.e. no client software will have to be installed to be used on a daily, online basis.
+98	List Paragraph	●In order to have full inventory control such as tracking of stocks, low stocks related messages as well as buying orders.
+99	List Paragraph	To develop a point of sale (POS) billing module, which logs sales, computes totals and automatically updates inventory.
+100	List Paragraph	Added customer relationship management (CRM) functions include the customer profile, purchase history and loyalty.
+101	List Paragraph	To establish a role based access control system in such a way that owners, managers, accountants, human resources personnel and cashiers can only see what is related to their work.
+102	List Paragraph	To create an Electron based desktop app that is able to continue to work even when offline and automatically update when it can again connect, in the event that shops need to ensure reliable offline functionality at the counter.
+103	List Paragraph	To create a sort of agentic AI assistant, answering questions and performing simple tasks, in plain English or Urdu, with a human making any decisions involving money or stock.
+104	List Paragraph	To incorporate subscription billing via Stripe in order to make the platform be able to maintain itself as the actual SaaS product.
+105	List Paragraph	To thoroughly test the system against its requirements, both online and offline, then to contemplate it case closed.
+106	Heading 2	1.4 Scope
+107	Normal	ManageHub is designed with the needs of a day-to-day operations of a single retail shop in mind, but is built in such a manner that many others (tenants) can share the deployment. Within the scope of this project there are the following areas:
+108	List Paragraph	A web based dashboard, which can be accessed via any modern browser, as the main method of access to the system by the staff and owners.
+109	List Paragraph	Managing inventory, such as products, inventory, batches and being low.
+110	List Paragraph	Sales and point of sale billing, receipts, discounts and methods of payment.
+111	List Paragraph	Management of customers and suppliers.
+112	List Paragraph	Raw material tracking where the products being produced are the products that are being sold i.e. bakery or small restaurants.
+113	List Paragraph	Management of employees, salaries, loans and cash registers.
+114	List Paragraph	Exportable report and dashboards (PDF and excel).
+115	List Paragraph	Role access control and an administrator panel to control roles and permissions.
+116	List Paragraph	Full offline support and background synchronisation, to desktop clients, where the store cannot count on an Internet connection all the time.
+117	List Paragraph	A natural language query and plain voice-operated billing agentic AI assistant.
+118	List Paragraph	Subscriptions and billed with Stripe.
+119	Normal	The current version of the project does not cover the following areas:
+120	List Paragraph	An Android or iOS app. The system is browsable with a mobile browser, but a mobile app is optional to be developed later (Section 6.2).
+121	List Paragraph	Complete filing of taxes by the government and e-invoicing (tax ready receipts are only issued).
+122	List Paragraph	Institution of direct integration between e-commerce markets or online storefronts.
+123	List Paragraph	Completely independent AI behaviours not subject to human verification.
+124	List Paragraph	Hardware manufacturing or supply of barcode scanners or printers or POS terminals the system supports but not provided.
+125	Heading 2	1.5 Why a Web Based, Offline Capable Platform
+126	Normal	One intentional architectural choice made in ManageHub is the intention to use the web browser as the main means of accessing the system, instead of a native application, which will have to be installed and serviced on all the tills. This clearly has drawbacks to a small retailer: nothing needs to be installed to allow a new cashier to be immediately made active; all the updates can be centralised, allowing all the shops to have a patch or added feature the moment they refresh the page; and since the pages are generated by the server as normal HTML, the interface becomes consistent across older, re-purposed hardware.
+127	Normal	The only weakness a purely web based system has is that when the connection fails, a window in a browser has nothing to revert to, something that a shop that is not able to afford to discontinue selling cannot tolerate. ManageHub handles this by providing an Electron desktop client (Chapter 3) that uses the same backend and data model but includes a local database and a background sync engine to allow billing and stock updates to continue even when there is no connection whatsoever and automatically resynchronizes with the cloud when the connection is re-established. The default usage (and constant up-to-date method) is the web dashboard, used at all times - the desktop client is used when the internet is untrustworthy.
+128	Normal	CHAPTER 2
+129	Heading 1	2. LITERATURE REVIEW / RELATED WORK
+130	Heading 2	2.1 Introduction
+131	Normal	All the in-between steps leading up to the creation of ManageHub made sense to research the current state of how businesses managing retail operations are run today via notebook and calculator to enterprise software to current AI-enhanced cloud solutions. This chapter tours that spectrum, focusing especially on the methods by which each of them is accessed over the web and how they perform under circumstances in which the internet is unreliable, in which each fails a small Pakistani retailer, and in which ManageHub fits.
+132	Heading 2	2.2 Manual and Paper Based Retail Management
+133	Normal	The simplest method, which is in operation in the majority of small stores, is a paper book, with a calculator or simple spreadsheet. It is free and requires no training, but is not scaled: no automatic tracking of stock, no low-stock alert, no intuitive look at what products provide any profit and all reports are manually constructed. Errors are usual and maintaining consistency of numbers becomes a real trial at the point when a shop exceeds one location or shift. Paradoxically, even a paper ledger is the only system in this site that can never go offline as a reminder that any digital substitution must consider connectivity loss as a serious issue instead of closing their eyes to it.
+135	Heading 2	2.3 Off the Shelf Point of Sale and ERP Systems
+136	Normal	On the opposite end of the scorecard is in place the established products like Odoo, ERPNext, Square, and QuickBooks Point of Sale mature, feature rich products targeting a large, usually Western market. Odoo and ERPNext are open source and versatile, however, that versatility requires a developer to customize modules, integrate local payment options and localize the interface, which is significantly beyond the abilities of a small shop owner to do so on their own. Square and QuickBooks POS are well polished yet its price, currency and offline behaviour are predicated on secure internet and card first payments which is not necessarily applicable in the world of the Pakistani retail industry. None of these systems are modeled based on the Urdu-first or the combination of cash, informal credit, and mobile wallets usage in local stores.
+137	Heading 2	2.4 Cloud and SaaS Retail Platforms
+138	Normal	Software-as-a-Service model where one pays a subscription fee rather than purchase and install software has become the most common form of delivering business software as it eliminates the requirement of a shop to maintain its own server and only the vendor can push out an update in a central location. This is affordable at scale as it uses a shared platform (including many customers but maintaining the isolation of their data) and the infrastructure cost of a single store is shared across all locations instead of being repeated per location. ManageHub adheres to this pattern, sharing a common Node.js and MySQL back-end, in which all records have a scope to a single shop, keeping running expenses minimal to make the service available at a price that can be offered to small retailers.
+140	Heading 2	2.5 Session Based Web Applications vs. Installed Software
+141	Normal	One such pattern in business software design is whether to implement a thick client that is installed on a computer, a thin client that is purely in a browser and requires server-side rendering and session-based authentication. Installed software can be faster to feel, operating offline in the default configuration, but is more difficult to update, and confer security with numerous machines. Web applications that are server-rendered, that is, where the server constructs each page (as opposed to a single-page application where the logic of interpreting user-generated input is kept on the client), are easier to reason about and maintain consistency among, as its interface logic is only needed to run anywhere. The web dashboard of ManageHub is based on this server-rendered, session-based patterning, and it is only that a true, distinct installed client (the Electron desktop application) is essentially needed when there is real need off-line persistence between it and a browser.
+142	Heading 2	2.6 Artificial Intelligence in Retail: Forecasting and Recommendations
+143	Normal	Machine learning has been extensively applied in the retail industry to forecast demand, recommend reorder, and raise flags (typically by analyzing past sales data), and convert the forecast into a recommended activity e.g. order 20 items. Stock Agent and Forecast Agent by ManageHub pursue this concept, but put a human in the loop: the system is a recommendation to place an order, and a manager either accepts it or modifies it and retains the advantage of data-driven recommendations without letting computers make financial choices.
+145	Heading 2	2.7 Conversational and Agentic AI Assistants
+146	Normal	Over the past few years, there has been a transition to agentic AI systems (matching key word in chatbots) along with large language models (LLMs) understanding an unstructured request, considering internal tools that will be involved and responding or acting accordingly. This scheme of an intent classifier or router anteceding specialised agents is now typical in AI-assisted business software, and what ManageHub agentic AI service adheres to, where LangChain is used to coordinate agents and a hosted LLM (via Groq) to understand language. The moral of the story always of this work is that only a confirmatory action ( худож , ) can prevent an irreparable event happening within the channel outside of human control otherwise known as human in the loop design, implemented by ManageHub to its billing and stock reorder agents.
+147	Heading 2	2.8 Offline First and Local First Software
+148	Normal	Applications which require offline functionality tend to be designed following a local-first pattern: the app writes data to a local database as it leaves the app and pushes changes that need to be sent to the server onto the queue, and syncs the queue in the background upon an available connection. The shared-record two-device conflicts When offline or conflicting with a device that is offline are usually solved with timestamps or a simple last-write-wins rule, a pragmatic compromise between full consistency and full availability. The Electron desktop client of ManageHub conforms to this trend perfectly: all operations are initialised to a local SQLite database from which they are then queued and sent to a shared MySQL database when the internet is available again, with the version of operations prevailing based on the updated at timestamps. This offline functionality layers on top of the same backend and schema as the browser dashboard that a shop can hop between browser and desktop and always view the same data after being synced.
+149	Heading 2	2.9 Summary and Comparative Analysis
+150	Normal	Table 1 summarises how these different approaches compare against the needs of a small Pakistani retail shop.
+151	Normal	Table 1: ManageHub Compared with Manual Records and Off-the-Shelf ERP Software
+153	Heading 2	2.10 Research Gaps and Opportunities
+154	Normal	Looking through these approaches it is possible to highlight several gaps that are consistent:
+155	List Paragraph	There are only a limited number of truly offline first and not offline tolerant retail systems that are affordable.
+156	List Paragraph	Local language support features and Pakistan specific pricing/tax conventions are seldom a first-class attribute.
+157	List Paragraph	Conversational AI assistants are found in vast enterprise solutions, but are virtually unavailable in small-shop sizes at an affordable price.
+158	List Paragraph	Those systems with available AI features generally do not include a human-confirmation step to money related actions.
+159	List Paragraph	Most systems mandate an either/or decision between an easy-to-use, continuously-changing web interface, and a durable, installable client, instead of both using the same data.
+160	Heading 2	2.11 Contribution of This Thesis
+161	Normal	Combining multi-tenant, web-based SaaS delivery with a truly offline-first desktop user experience, role-based access control, and an agentic, human-in-the-loop AI assistant, ManageHub fills these gaps by offering one low-cost platform to small and medium-sized retail stores in Pakistan. The remainder of this thesis describes the design, construction and testing of the system.
+162	Normal	CHAPTER 3
+163	Heading 1	3. METHODOLOGY
+164	Heading 2	3.1 Introduction
+165	Normal	This chapter describes the design and construction of ManageHub: the development framework, general architecture, technology selection of each layer, data share design, web application construction and access control, and the architecture of the web application, as well as the two distinguishing elements offline-first synchronisation and agentic AI assistant.
+166	Heading 2	3.2 Development Approach
+167	Normal	This project did not follow a single plan when developing but as an iterative process. The team started with the modules any shop requires on day one products, inventory, and billing and overlaid on top of these modules the HR and payroll, raw materials, offline sync, and the agentic AI assistant and tested each of the modules and its needs before proceeding on to the next. The entire process was done with Git and the codebase was structured into distinct layers (routes, controllers, views, helpers, middleware) in such a manner that a new module can be added without affecting others. Due to the web dashboard being the core product out of the initial iteration, all subsequent features such as the offline desktop client built upon the same backend (as well as schema) and not as an independent platform maintained by manual syncing.
+169	Heading 2	3.3 System Architecture Overview
+170	Normal	ManageHub is a layered based system, displayed in figure 1. There are two options to get to the system: a regular web browser, the default, which has no installation to follow, and an Electron-based desktop application as shops might need a guaranteed offline connection at the till. They both communicate to the same Node.js/Express backend via a REST API, and both are used to authenticate and use one of their sessions and do business-level logic. In addition, it is accompanied by a separate agentic AI service, developed using FastAPI, which the backend and browser can request to, when making a natural-language or voice request. Both write to and read out of one, multi-tenant MySQL database that is safely accessed by stores. The client also maintains a local SQLite cache enabling it to continue to function in the event that the path to MySQL is inaccessible.
+172	Normal	Figure 1: Layered System Architecture of ManageHub
+173	Heading 2	3.4 Technology Stack
+174	Normal	Table 2 lists the main technologies used to build each part of the system.
+175	Normal	Table 2: Technology Stack Used in ManageHub
+177	Normal	The decision of server-rendered EJS templates, instead of front-end rendered templates, was intentional, implied by the web-first philosophy of Section 1.5: by keeping the product as a single deployable component, it has no separate validation or permission code operative between the front and back end, and any given page is operable as soon as it is requested, there is no separate step to compile a front-end..
+178	Heading 2	3.5 Database Design
+179	Normal	The database is structured based on a multi-tenant model: each shop is a tenant record and nearly every other table will contain a column of shop-id so that the data of one shop information will never get into the query of another shop. Table keys are not auto-increments but UUIDs, which means that it is possible to create preferences offline in the desktop app and add them to the shared database after that without an ID collision. The schema can be broken down into four functional areas, as displayed in Figure 2: system management (shops, users, roles, subscriptions, feedback), sales and inventory (products, suppliers, billing, expenses), HR and payroll (employees, salaries, loans, activity logs), and raw materials (stock, movements, low-stock indicators by shops that make what they sell).
+181	Normal	Figure 2: The Four Functional Domains of the ManageHub Database
+182	Normal	Table 4 is a table of the core tables that constitute the schema and the purpose of each table that the offline sync engine (Section 3.9) maintains compatible between the desktop client and the cloud database.
+183	Normal	Table 3: Core Database Tables and Their Purpose
+185	Heading 2	3.6 Web Application Design
+186	Normal	Due to the use of the browser as the main tool of ManageHub, some attention was given to the construction of the web application. The server-side is rendered with EJS templates, written into on shared layout and on reusable partials a header, navigation bar and role-based partial sidebar to ensure that once a single change to the navigation or branding is made, it matches across the entire site immediately. Authentication is implemented with express-session that is supported by a MySQL session store and therefore, the identity of a logged-in user is stored not in a browser-controlled token, but on the server and in its session, which only includes a user ID and a role, and which is again validated against the database store with each request.
+187	Normal	A request moves through a set of relatively predictable middlewares, and then to a controller: session parsing, CSRF verification of anything that modifies data, rate limiting access to sensitive routes, including login, and the role-based access control (RBAC) discussed in Section 3.8. When there is a successful save, a validation problem, a permission problem it is surfaced via express-flash messages at the start of the subsequent page, not using a discrete client-side notification mechanism. Due to the entire interface being rendered like this, a shop can and will be able to open ManageHub in any modern day browser, on any computer, and be presented with the same fully featured dashboard, without needing to install anything, or maintain it locally.
+188	Heading 2	3.7 Core Modules
+189	Normal	The following modules constitute the backend, each of them has its routes, controller logic and views:
+190	Heading 3	3.7.1 Inventory / Products
+191	Normal	This inventory module also enables a shop to add, typeify products, assign SKUs and barCodes and monitor stock and batches. In bulk, stock is either imported or exported and when the level of a product reduces to its minimum set level the system sends a notification of a low level.
+194	Heading 3	3.7.2 Sales / Point of Sale (Billing)
+195	Normal	The billing module provides a cashier with a point-of-sale quick screen: a scan bar or search, off discounts and taxes, a form of payment to be recorded against one or more methods. Inventory sold is automatically deducted by every bill being completed.
+196	Heading 3	3.7.3 Customers (CRM)
+197	Normal	Each regular customer has a profile in the customer module, which contains their contact information, their purchases, per-customer discount policy and an optional credit limit where stores can buy on account.
+198	Heading 3	3.7.4 Suppliers
+199	Normal	The supplier module contains profiles and payment terms maintained on suppliers, and allows a manager to create a purchase order and monitor incoming stock against it, maintaining a running balance that allows an owner at a glance what the shop currently owes.
+200	Heading 3	3.7.5 Raw Materials
+201	Normal	In the case of manufacturing-style retailers (like bakeries or small restaurants), the raw materials module can monitor the stock of ingredients and finished products separately, and can record all stock movements, and connect ingredients to products who use them.
+202	Heading 3	3.7.6 Expenses & Cash Register
+203	Normal	This module discusses day-to-day recording of expenses as per category, and closing cash register reconciliation: starting balance, final balance and any discrepancy between projected and actual amount of cash, and cash deposit reports that can be authenticated by a manager.
+204	Heading 3	3.7.7 Employee Management
+205	Normal	The employee management module will contain staff records, monthly salary calculations, loan and salary-advance tracking with repayment schedules and a history of important user actions which can be used to support the payroll and to provide accountability.
+206	Heading 3	3.7.8 Reports & Dashboards
+207	Normal	The same underlying data is used to create sales, inventory and financial reports as well as get interactive dashboard chart (Chart.js) and one-click export to PDF ( PDFKit ) or to Excel ( ExcelJS ).
+208	Heading 3	3.7.9 Roles & Permissions (Admin)
+209	Normal	A special administrative panel also allows a Shop Owner or Super Admin to create new roles and provide narrow permissions such as enabling a role to see shop settings, but not make any changes, without a developer requiring any code changes.
+210	Normal	ManageHub also establishes a platform-wide Super Admin role, which is above all individual shops having a Shop Owner. As is the case with a Shop Owner, which is scoped to a single tenant, the Super Admin has a cross-tenant dashboard with all the shops on the platform: total/active/expired subscriptions, active/expired/premvirgin subscriptions, blocked subscriptions, recently created subscriptions and subscriptions about to go dead. There the Super Admin is able to view all of the shop, subscription, and platform users, whitelist/blacklist a shop, read reviews and maintain the master list of role and permission that all the individual shops derived their roles. The Super Admin position is always designed to have access to all modules and is not allowed to be altered or negativeged in the Roles & Permissions screen, unlike any other position.
+211	Heading 3	3.7.10 Feedback
+212	Normal	An in-built feedback system allows employees and clients to post problems, or offer suggestions so they can be addressed in the system itself, providing the team with a stream of airing the problems once the system is in real-life use as well as during official testing.
+213	Heading 3	3.7.11 Subscription & Billing
+214	Normal	The subscription module handles an SaaS plan on a shop, allows payment processing via Stripe and capabilities of scale plans up and down, and provides invoice history to allow ManageHub to be a fully-fledged SaaS product.
+215	Heading 2	3.8 Role-Based Access Control
+216	Normal	Since a shop has multiple types of users whom an owner, a manager, an accountant, and an HR staff, an inventory manager, and cashiers ManageHub implements role-based access control (RBAC) on middleware as referenced in Figure 3. Any request is verified with the user role and, in some cases an additional control (related to the actual permission) should be requested (e.g. shop.view or shop.edit). Roles with wider authority like Shop Owner or Super Admin automatically bypass all checks, whereas more limited roles, like needing a cashier to process a bill but not open payroll; an HR manager to manage employees but not global options. Anyone without a login, or outside their role is redirected to the login page or is presented with an unambiguous access denied page.
+218	Normal	Figure 3: Role-Based Access Control in ManageHub
+219	Normal	Table 4: Roles and the Modules They Can Access
+221	Heading 2	3.9 Offline-First Desktop App and Data Synchronisation
+222	Normal	Pakistan still does not have the best internet connectivity everywhere which is why, together with the web dashboard, ManageHub includes an Electron desktop client developed to stay on even at full offline. This section explains the way that that offline capability is implemented.
+223	Heading 3	3.9.1 Local Database and Sync Queue
+224	Normal	All operations that a cashier performs on the desktop app are logged straight to a local SQLite database (through sql.js) and at the same time to a sync queue table. The cashier does not wait to get the cloud: the local write is immediate and the network route is served completely in the background.
+227	Heading 3	3.9.2 Background Sync Service
+228	Normal	One of them is a background sync service that regularly examines their ability to connect to the internet of the shop and the shared MySQL server (approximately every minute). Otherwise, the app will continue to operate not connected and the queue will continue to expand securely; otherwise, once the service is available, the queue will be emptied to update changes to be uploaded and download newer records created in other devices.
+229	Heading 3	3.9.3 Conflict Resolution
+230	Normal	Since multiple devices can be offline, and changing data simultaneously, the sync engine must have a rule of which version of a record should prevail. Each table version at ManageHub uses the value of the updated-at column: the last version in a database is considered the authoritative one under an honest and straightforward rule: the last version updated in a single shift is the one behave a single shop is expected to use in a single shift, but not a complete field-by-field merge, as described in Section 5.6.
+231	Heading 3	3.9.4 Direct-to-MySQL Sync Mode
+232	Normal	The sync service will be able to conveniently connect to the MySQL database directly of the shop instead of via the REST API in Electron mode, clearing the pending backlog by batch instead of per tick, meaning that a big backlog due to a lengthy offline period does not require an unreasonable number of cycles to clear. The records are automatically translated as they are moved between two databases with UUID values changing their binary MySQL representation into their string counterpart and vice versa.
+234	Heading 3	3.9.5 Keeping the User Informed
+235	Normal	Since a cashier should know whether he/she is working offline or not, the desktop app exposes the state of sync, right in the interface (offlineService.js, syncStatus.js) indicating whether it is online, syncing, has changes pending, or is entirely offline making what would otherwise be a background process of no immediate utility to a non-technical user to appear trusted.
+237	Normal	Figure 4: Offline-First Sync Flow on the Desktop App
+238	Heading 2	3.10 Agentic AI Assistant
+239	Normal	Part of the distinguishing feature of ManageHub is an agentic AI helper, which is an independent FastAPI service, that allows a shopkeeper to use plain text to interact with the system, rather than clicking through a menu. A query like What is the total sale today? or Add two crates of soft drinks will first be sent through an intent classifier on the open list with key word matching and possibly an ambiguous query get them run through a large language model (via LangChain and Groq). A request is then passed to an agent router which in turn passes the request to one of seven specialised agents which make calls to the same backend REST API that the web dashboard accepts and, as such, none can circumvent the usual business rules of the system. This is indicated in Figure 5.
+241	Normal	Figure 5: How the Agentic AI Assistant Handles a Request
+242	Heading 3	3.10.1 Retail Assistant Agent
+243	Normal	Answers general questions about sales and inventory (how much stock of a product is left or what the total sales are on a specific day).
+246	Heading 3	3.10.2 Billing Agent
+247	Normal	Drives voice-based billing: It describes a verbal order such as add two crates of soft drinks, creates the related sale and it just waits until the cashier replies before it writes anything to its database.
+248	Heading 3	3.10.3 Stock (Ordering) Agent
+249	Normal	Compares the existing stock levels with the sales history and generates a draft reorder recommendation, a manager has to review it and expressly approve, modify, or disapprove before a purchase order is generated.
+250	Heading 3	3.10.4 Forecast Agent
+251	Normal	Produces uncomplicated sales and demand details of a product or category to enable a manager to predict what will sell off well in the next few days.
+252	Heading 3	3.10.5 Anomaly Agent
+253	Normal	Identifies the transactions which are not typical of the usual trends of a shop, alerting a manager of its existence instead of acting on them automatically.
+254	Heading 3	3.10.6 Staff Agent
+255	Normal	Makes plain-language summaries of staff performance in a specified period of time, which the user can search by.
+258	Heading 3	3.10.7 Report Agent
+259	Normal	Makes simple a typical report by making a small, narrated, plain language summary, e.g., by explaining what changed in this week in sales report instead of delivering a table of numbers which do not make a lot of sense.
+260	Normal	Since certain agents may work on real money or stocks, all sensitive actions provide a human-in-the-loop verification measure as detailed above in the Billing and Stock Agents that retain the convenience of an AI assistant without eliminating the final decision of a human.
+261	Heading 2	3.11 Security Measures
+262	Normal	There were several common security practices implemented over the system:
+263	List Paragraph	Passwords have not been reported to be saved in plaintext; hashing with bcrypt was done and then they are saved.
+264	List Paragraph	User sessions are saved on the server through the use of express session backed up by a MySQL session store as opposed to relying on the data posted by the client.
+265	List Paragraph	Forms: Cross-site request forgery (CSRF) is guarded with the use of the csurf middleware.
+266	List Paragraph	Pricey endpoints such as the ones used to log in are rate limited to delay brute force intrusions.
+267	List Paragraph	All of the secured paths are traversed by the role based access control middleware of Section 3.8, prior to data actually being sent out.
+268	List Paragraph	The local database on the desktop application is merely a temporary cache and a synchronisation queue to minimise the amount of sensitive information stored unprotected in a single store.
+269	List Paragraph	Since the web dashboard is provided on the server side, all access rules are applied in a single place that can be audited, as opposed to client-side logic and API logic having the same conditions over and over again.
+270	Heading 2	3.12 Summary
+271	Normal	In this chapter, ManageHub was characterised as taking a traditional, server-rendered web app and combining it with two capabilities that are often not available in the relatively low retail software market: a truly offline-first desktop client with auto-synchronisation and an agentic AI assistant with human-in-the-loop protections. In the following chapter, this design is made a formal set of requirements and how they were tested on the system is shown.
+272	Normal	CHAPTER 4
+273	Heading 1	4. EXPERIMENTS / SOFTWARE REQUIREMENT SPECIFICATIONS
+274	Heading 2	4.1 Introduction
+275	Normal	The team created a formal Software Requirement Specification (SRS) of the ManageHub before finishing each line, although the IEEE 830-1998 convention of giving a short label (e.g. FR-1, NFR-1) to each requirement to enable every feature to be traced to an agreed requirement. The highlights of this chapter are that every single module was specification, along with the manner in which it would be delivered via the web and its behaviour when offline and how the testing was done according to the completed system.
+276	Heading 2	4.2 Software Requirement Specification (SRS)
+277	Heading 3	4.2.1 Functional Requirements
+278	Normal	The core functional requirements that needed to be met by the system can be seen in Table 5 and address all the modules that are detailed in Chapter 3.
+279	Normal	Table 5: Functional Requirements of the System
+285	Heading 3	4.2.2 Non-Functional Requirements
+286	Normal	Table 6: Non-Functional Requirements of the System
+288	Heading 3	4.2.3 Hardware Requirements
+289	Normal	Table 7: Hardware Requirements
+294	Heading 3	4.2.4 Software Requirements
+295	Normal	Table 8: Software Requirements
+297	Heading 2	4.3 Experimental / Testing Setup
+298	Heading 3	4.3.1 Testing Environment
+299	Normal	The system was put to test on a local rig that simulated the desired production environment: the Express backend and MySQL database locally substitutable, the web dashboard locally tested in a modern browser, in various window sizes, the Electron app both connected to and fully disconnected, and the FastAPI agentic artificial intelligence service run in concert with the backend to test end-to-end natural-language behaviour.
+302	Heading 3	4.3.2 Test Approach
+303	Normal	Testing was a combination of multiple complementary methods as opposed to using one method:
+304	List Paragraph	Unit testing of all modules (add/edit/delete flows, calculations, exports) on its requirement Table 5.
+305	List Paragraph	Test access based on roles, use each role to perform a test login and ensure pages that are restricted give the appropriate response of access denied.
+306	List Paragraph	Offline/online testing, do some work with the network offline to ensure it is working properly and that the network mirrors its actions once it is reinstated.
+307	List Paragraph	Testing of the agentic AI assistant conversational-based: You can ask it with natural-language queries, and voice billing commands and confirm that the right agent replied with any required confirmation step.
+308	List Paragraph	Cross -browsing tests on the web dashboard, and ensure pages render and act as intended without the client having to be installed.
+309	List Paragraph	Basic responsiveness tests, checking page loads and API response behaviour under normal load, on the development machine.
+315	Heading 3	4.3.3 Test Case Scenarios
+316	Normal	Table 9: Test Case Scenarios and Outcomes
+317	Heading 2	4.4 Evaluation Criteria
+318	Normal	The success of the system was measured based on four criteria which were established at the beginning of the project:
+319	List Paragraph	Correctness all modules act in accordance to the SRS and run their test scenarios.
+320	List Paragraph	Responsiveness and reliability The web dashboard is still usable even when a normal load is made, and the desktop app will not crash when the internet connection is lost, but instead it will be gracefully degraded.
+321	List Paragraph	Usability An owner, manager, or cashier is able to access the applicable sections of the system without installing anything in his or her browser and without any technical instructions.
+322	List Paragraph	Only security and access control users will have access to modules and data based on their roles.
+326	Heading 2	4.5 Summary
+327	Normal	This chapter established the functional and non-functional requirements that led up to ManageHub including all the modules and web-based as well as offline delivery and how the completed system complied with them. The results are presented and discussed in the following chapter.
+328	Normal	CHAPTER 5
+329	Heading 1	5. RESULT AND DISCUSSION
+330	Heading 2	5.1 Introduction
+331	Normal	This chapter presents the results of a test of ManageHub on the conditions given in Table 9, explains the consistency of the system with its non functional objectives, and the honest comparison of the system with the alternatives adopted in Chapter 2.
+332	Heading 2	5.2 Functional Testing Results
+333	Normal	All modules were tested using their usual create, update and delete flows and all seven hundred and seventeen scenarios in Table 9 were successfully accomplished in the process of testing. Table 10 summarises summarise by module.
+334	Normal	Table 10: Functional Testing Summary by Module
+336	Normal	Since the web dashboard is the main interface, specific care was taken to ensure that all the modules perform the same functions identically when using a plain browser and nothing is installed on it, and that the offline behaviour of the desktop app corresponds to the same action as on the internet, once synced.
+338	Normal	Screenshot 1: Public Landing Page (Light Mode)
+340	Normal	Screenshot 2: Public Landing Page in Dark Mode
+342	Normal	Screenshot 3: Public Landing Page with Urdu Localisation
+343	Normal	Inventory / Products
+345	Normal	Screenshot 4: Product Inventory List
+347	Normal	Screenshot 5: Adding a New Product
+349	Normal	Screenshot 6: Product Detail Page
+351	Normal	Screenshot 7: Adding Stock to a Product
+353	Normal	Screenshot 8: Stock Movement History
+356	Normal	Sales / Point of Sale (Billing)
+358	Normal	Screenshot 9: Point of Sale (POS) Billing Screen
+360	Normal	Screenshot 10: Product Catalogue within the POS Screen
+362	Normal	Screenshot 11: All Bills / Sales List
+364	Normal	Screenshot 12: Generated Sales Receipt
+365	Normal	Customers (CRM)
+367	Normal	Screenshot 13: Customer List (CRM Module)
+368	Normal	Suppliers
+370	Normal	Screenshot 14: Supplier Management
+371	Normal	Raw Materials
+373	Normal	Screenshot 15: Raw Material Stock Tracking
+374	Normal	Employee Management
+376	Normal	Screenshot 16: Employee List
+378	Normal	Screenshot 17: Adding a New Employee
+379	Normal	Expenses & Cash Register
+381	Normal	Screenshot 18: Expense Log
+383	Normal	Screenshot 19: Adding a New Expense
+385	Normal	Screenshot 20: Cash Deposit Submission
+386	Normal	Roles & Permissions (Admin)
+388	Normal	Screenshot 21: Super Admin Dashboard (Cross-Tenant Platform View)
+390	Normal	Screenshot 22: Roles & Permissions Management Screen
+392	Normal	Screenshot 23: Shop Settings (Admin Panel)
+394	Normal	Screenshot 24: User Profile Settings
+395	Normal	Feedback
+397	Normal	Screenshot 25: Feedback Module
+398	Heading 2	5.3 Non-Functional Observations
+399	Normal	Table 11 enables a comparison of each of the non-functional requirements of Chapter 4 with the observed situation during the process of testing on the development machine. They are empirical, local-testing measurements and not formal load-testing measurements; more comprehensive performance testing that includes actual multi-tenant load is enumerated in Chapter 6 as part of future research.
+400	Normal	Table 11: Non-Functional Requirement Compliance
+402	Heading 2	5.4 Comparison with Alternative Solutions
+403	Normal	Table 12 builds on the comparison in Chapter 2, and it focuses in particular on the features that are considered the most important by a small Pakistani retailer.
+404	Normal	Table 12: ManageHub Compared with Alternative Solutions (Detailed)
+406	Normal	The given comparison does not allege that ManageHub is better than more developed products such as Odoo or ERPNext in the raw functionality that the platforms offer several years of development; these services serve many industries. The argument is thinner: when a small Pakistani shopping store is required to establish him or herself, in her own language, without the need of a creator or the loss of business when the internet goes offline, ManageHub will be at a far closer reach.
+407	Heading 2	5.5 Feedback and Usability Observations
+408	Normal	ManageHub has inbuilt feedback mechanism to ensure that usability problems continue to emerge subsequent to the system taking real usage and not just in the formal test run. The plain-language AI assistant, the fact that there was no install step, and the obvious role-based menus were the most valued factors during informal walkthroughs with the supervisory team, whereas the initial reporting module, needed to be simplified, which has been done before this thesis was finalised.
+411	Heading 2	5.6 Limitations
+412	List Paragraph	To date, non-functional testing has only been performed on an individual development machine, as opposed to realistic multi tenant production load.
+413	List Paragraph	The agentic AI assistant is reliant on an hosted large language model, and thus its behaviour can change based on its availability and quality.
+414	List Paragraph	A simple last-write-wins conflict resolution based on timestamps is already used in practice today and can be used in offline conflict resolution but does not support a complete field-by-field merge.
+415	List Paragraph	The system has not yet got a specific packaged mobile application, it is accessible in a mobile browser, however, a native app remains a task in the future.
+416	Heading 2	5.7 Discussion
+417	Normal	ManageHub is tested to satisfy its SRS requirements, is fully usable in-browser, gracefully deals with offline situations and has a rigid role separation, while the AI assistant is only a convenience device with human-in-control of the essential actions. More work entailed in the future involves multi-tenant load testing, a mobile application and continued feedback by actual shop owners after the implementation.
+418	Normal	CHAPTER 6
+419	Heading 1	6. CONCLUSION AND FUTURE WORK
+420	Heading 2	6.1 Conclusion
+421	Normal	Although software that can help in this can often be too costly, complicated, or reliant on always having internet access, small and medium retail shops in Pakistan are largely operating on paper, memory and guesswork. ManageHub bridges that divide: a single, Web-based, cloud-based SaaS solution that unites inventory, sales, customers, suppliers, employees, and finance, and can be accessed via any browser with no software to install, and complements by Electron desktop client in any shop that requires assured offline connectivity when at the till.
+422	Normal	It was developed with a well-written Software Requirement Specification and structured note, behind a formal Node.js/MySQL (backend) interface, a server-rendered web app archived as a single (continuously published) deployment, with user access based on role, and an Electron desktop client that operates offline and auto-syncs, and an agentic AI service that allows a shopkeeper to ask questions or to bill a sale in plain language, and a dedicated agentic AI service that oversees any action touching money or stock. The testing of the system in all modules, roles and online/ offline conditions demonstrated the system to act as desired and achieve its objectives.
+423	Normal	Through the brief explanation, it was proved that nowadays SaaS and AI solutions could expand and cover the market segment that small retailers in the area typically did not enter into that dialogue, but it did not necessarily mean a trade-off between the cost, languages, the number of installation efforts, or the reliability.
+424	Heading 2	6.2 Future Work
+425	Normal	Although ManageHub is already a solution with the basic requirements to support a small retail store, it can be expanded in a few directions:
+426	List Paragraph	Creating a special-purpose, Android and iOS application. The mobile-based web dashboard can already work with a mobile browser, but an offline-caching native app with push notifications would be appropriate to owners who would like to check their business using a phone.
+427	List Paragraph	Load and performance testing- in a realistic multi tenant load in order to verify the scalability objectives proposed in the non-functional requirements.
+428	List Paragraph	Greater, AI-supported prediction, eating a greater range of past data to enhance reorder and demand predictions with time.
+429	List Paragraph	Direct integrations to e-commerce and marketplace, hence the online and in-store inventory of a shop is kept up to date.
+430	List Paragraph	A more detailed tax and GST interface of areas with official requirements of e-invoicing.
+431	List Paragraph	More integration of hardware, e.g., first class support of barcode scanners, receipt printers, and card terminals.
+432	List Paragraph	Better accessibility (such as text-to-speech) and more languages on top of English and Urdu.
+433	List Paragraph	More progressive conflict resolution mechanism of offline sync, beyond last-write-wins, e.g., field-level merging of records being edited on several machines when they are offline.
+434	List Paragraph	Proper security audit, penetration test prior to broader commercial use.
+435	List Paragraph	The web dashboard will have Progressive Web App (PWA) support, which will install an icon in the browser and provide a limited offline cache to include those shops with isolated offline connectivity currently.
+436	Heading 2	6.3 Final Remarks
+437	Normal	This project demonstrates that a well considered multifaceted, web-first application, an offline-first application on the desktop, and a strictly limited AI assistant can render business software genuinely usable by a store owner who has never interacted with anything more complex than a calculator. Through the above improvements, ManageHub can have a feasible approach to becoming a real-life, daily use application by small retailers in Pakistan.
+438	Heading 1	REFERENCES
+439	Normal	[1] IEEE Std 830-1998, IEEE Recommended Practice for Software Requirements Specifications, Institute of Electrical and Electronics Engineers, 1998.
+440	Normal	[2] OpenJS Foundation, "Express Node.js web application framework," expressjs.com.
+441	Normal	[3] Node.js Foundation, "Node.js Documentation," nodejs.org.
+442	Normal	[4] Oracle Corporation, "MySQL 8.0 Reference Manual," dev.mysql.com/doc.
+443	Normal	[5] OpenJS Foundation, "Electron Documentation," electronjs.org/docs.
+444	Normal	[6] FastAPI, "FastAPI Documentation," fastapi.tiangolo.com.
+445	Normal	[7] LangChain, "LangChain Documentation," python.langchain.com.
+446	Normal	[8] Groq, "Groq API Documentation," console.groq.com/docs.
+447	Normal	[9] Stripe, "Stripe API Documentation," stripe.com/docs.
+448	Normal	[10] Odoo S.A., "Odoo Open Source ERP and CRM," odoo.com.
+449	Normal	[11] Frappe Technologies, "ERPNext Documentation," docs.erpnext.com.
+450	Normal	[12] sql.js, "sql.js SQLite compiled to JavaScript," sql.js.org.
+451	Normal	[13] OWASP Foundation, "OWASP Top Ten," owasp.org/www-project-top-ten.
+452	Heading 1	ABBREVIATIONS
+453	Normal	AI: Artificial Intelligence
+454	Normal	API: Application Programming Interface
+455	Normal	CRM: Customer Relationship Management
+456	Normal	CSRF: Cross Site Request Forgery
+457	Normal	CSV: Comma Separated Values
+458	Normal	ERP: Enterprise Resource Planning
+459	Normal	FR: Functional Requirement
+460	Normal	GST: General Sales Tax
+461	Normal	HR: Human Resources
+462	Normal	LLM: Large Language Model
+463	Normal	NFR: Non Functional Requirement
+464	Normal	OWASP: Open Web Application Security Project
+465	Normal	POS: Point of Sale
+466	Normal	RBAC: Role-Based Access Control
+467	Normal	REST: Representational State Transfer
+468	Normal	SaaS: Software as a Service
+469	Normal	SKU: Stock Keeping Unit
+470	Normal	SRS: Software Requirement Specification
+471	Normal	TLS: Transport Layer Security
+472	Normal	UUID: Universally Unique Identifier
+473	Heading 1	APPENDIX A: FULL LIST OF FUNCTIONAL MODULES
+474	Normal	The table below lists every backend route group implemented in ManageHub, grouped by module, for reference.
+475	Normal	Table 13: Route Groups by Module
+477	Heading 1	APPENDIX B: AGENTIC AI AGENTS
+478	Normal	Table 14: Specialised Agents in the Agentic AI Service

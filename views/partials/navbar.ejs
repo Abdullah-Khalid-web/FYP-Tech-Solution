@@ -18,14 +18,6 @@
             color: #e2e8f0;
         }
 
-        /* Portfolio navbar logo: swap light/dark variant with the active theme. */
-        html[data-theme="dark"] .brand-logo-light {
-            display: none !important;
-        }
-        html[data-theme="dark"] .brand-logo-dark {
-            display: block !important;
-        }
-
         /* custom scroll */
         ::-webkit-scrollbar {
             width: 8px;
@@ -353,8 +345,8 @@
                 <% if (!isLoggedIn) { %>
                     <!-- Public/portfolio pages only — the shop-branded logo below only applies once logged in.
                          Both variants render; CSS below shows the one matching the active theme. -->
-                    <img src="/images/managehub_logo_light.png" alt="Manage Hub" class="brand-logo-light" style="height:84px; width:auto; display:block;">
-                    <img src="/images/managehub_logo_dark.png" alt="Manage Hub" class="brand-logo-dark" style="height:84px; width:auto; display:none;">
+                    <img src="/images/managehub_logo_light.svg" alt="Manage Hub" class="brand-logo-light" style="height:54px; width:auto; display:block;">
+                    <img src="/images/managehub_logo_dark.svg" alt="Manage Hub" class="brand-logo-dark" style="height:54px; width:auto; display:none;">
                 <% } else if (typeof shop !=='undefined' && shop && shop.logo) { %>
                     <img src="<%= shop.logo.startsWith('/') ? shop.logo : '/uploads/' + shop.logo.split('/').pop() %>" alt="<%= shop.name %>"
                         style="height:36px; border-radius:8px; object-fit: cover;">

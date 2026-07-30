@@ -1,0 +1,161 @@
+<div class="card">
+    <div class="section-header">
+        <h2><i class="fas fa-list"></i> Products</h2>
+        <span class="badge bg-primary" id="productCount">
+            <%= products.length %> products
+        </span>
+    </div>
+    <div class="table-responsive">
+        <table class="table" id="productsTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Stock</th>
+                    <th>Avg Cost</th>
+                    <th>Selling Price</th>
+                    <th>Last Purchase</th>
+                    <th>Ingredients</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (products.length) { %>
+                    <% products.forEach(product=> { %>
+                        <tr data-product-id="<%= product.id %>"
+                            data-category="<%= product.category || '' %>"
+                            data-status="<%= product.status %>">
+                            <td>
+                                <div class="fw-semibold"><%= product.name %></div>
+                                <% if (product.brand) { %>
+                                    <small class="text-muted"><%= product.brand %></small>
+                                <% } %>
+                                <% if (product.sku) { %>
+                                    <small class="text-muted d-block">SKU: <%= product.sku %></small>
+                                <% } %>
+                            </td>
+                            <td>
+                                <%= product.category || 'Uncategorized' %>
+                            </td>
+                            <td>
+                                <span class="badge stock-badge <%= product.total_stock <= 5 ? 'bg-warning' : 'bg-success' %>">
+                                    <%= product.total_stock %>
+                                    <% if (product.total_stock <= 5) { %>
+                                        <i class="fas fa-exclamation-triangle ms-1"></i>
+                                    <% } %>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="price-info">
+                                    <span class="fw-semibold">₨<%= Number(product.avg_cost || 0).toFixed(2) %></span>
+                                    <span class="price-label">Avg Cost</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="price-info">
+                                    <span class="fw-semibold">₨<%= Number(product.selling_price || 0).toFixed(2) %></span>
+                                    <span class="price-label">Selling</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="price-info">
+                                    <span class="fw-semibold">₨<%= Number(product.last_purchase_price || product.avg_cost || 0).toFixed(2) %></span>
+                                    <span class="price-label">Last Purchase</span>
+                                </div>
+                            </td>
+                            <td>
+                                <% if (product.ingredient_count > 0) { %>
+                                    <span class="badge bg-info ingredient-badge"
+                                          onclick="viewIngredients('<%= product.id %>')">
+                                        <%= product.ingredient_count %> ingredients
+                                    </span>
+                                <% } else { %>
+                                    <span class="badge bg-secondary">No ingredients</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <span class="badge <%= product.status === 'active' ? 'bg-success' : 'bg-secondary' %>">
+                                    <%= product.status.charAt(0).toUpperCase() + product.status.slice(1) %>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-outline-primary edit-product"
+                                            data-bs-toggle="tooltip" title="Edit Product">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-success add-stock"
+                                            data-bs-toggle="tooltip" title="Add Stock">
+                                        <i class="fas fa-plus-circle"></i>
+                                    </button>
+                                    <button class="btn btn-outline-info view-ledger"
+                                            data-bs-toggle="tooltip" title="View Stock Ledger">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                    <button class="btn btn-outline-<%= product.status === 'active' ? 'warning' : 'success' %> toggle-status"
+                                            data-bs-toggle="tooltip"
+                                            title="<%= product.status === 'active' ? 'Deactivate' : 'Activate' %>">
+                                        <i class="fas <%= product.status === 'active' ? 'fa-toggle-on' : 'fa-toggle-off' %>"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-box-open"></i>
+                                </div>
+                                <h5>No products found</h5>
+                                <p class="text-muted mb-3">Add your first product to get started</p>
+                                <button class="btn btn-primary" data-bs-toggle="modal"
+                                        data-bs-target="#addProductModal">
+                                    <i class="fas fa-plus me-2"></i>Add Product
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <%
+        const filterQS = (p) => {
+            const parts = [`page=${p}`];
+            if (search) parts.push(`search=${encodeURIComponent(search)}`);
+            if (categoryQuery) parts.push(`category=${encodeURIComponent(categoryQuery)}`);
+            if (statusQuery) parts.push(`status=${encodeURIComponent(statusQuery)}`);
+            return parts.join('&');
+        };
+    %>
+    <% if (totalPages > 1) { %>
+        <div class="card-footer border-top">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                        <a class="page-link" href="?<%= filterQS(currentPage - 1) %>" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <% for (let i = 1; i <= totalPages; i++) { %>
+                        <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                            <a class="page-link" href="?<%= filterQS(i) %>">
+                                <%= i %>
+                            </a>
+                        </li>
+                    <% } %>
+                    <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                        <a class="page-link" href="?<%= filterQS(currentPage + 1) %>" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    <% } %>
+</div>

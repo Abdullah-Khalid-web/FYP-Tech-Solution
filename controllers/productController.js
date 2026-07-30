@@ -78,7 +78,14 @@ const getShopInfo = async (req, res, next) => {
         next();
     } catch (err) {
         console.error('Error in getShopInfo middleware:', err);
-        res.status(500).json({ success: false, message: 'Server error' });
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            details: (err && err.message) ? err.message : String(err),
+            errName: err && err.name,
+            errCode: err && err.code,
+            errStack: err && err.stack ? String(err.stack).split('\n').slice(0, 4) : undefined
+        });
     }
 };
 
@@ -88,28 +95,52 @@ router.get('/', requirePermissionOrAdmin('products.view'), getShopInfo, async (r
         const page = parseInt(req.query.page) || 1;
         const limit = 10;
         const offset = (page - 1) * limit;
+        const search = (req.query.search || '').trim();
+        const categoryQuery = (req.query.category || '').trim();
+        const statusQuery = (req.query.status || '').trim();
 
-        // Get products with stock info from inventory table
+        // Filters run server-side (not just against the current page's rows) so
+        // search/category/status find matches across the whole catalog, not just
+        // the 10 products currently loaded on screen.
+        const filters = ['p.shop_id = UUID_TO_BIN(?)'];
+        const filterParams = [req.shopId];
+
+        if (search) {
+            filters.push('(p.name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?)');
+            const like = `%${search}%`;
+            filterParams.push(like, like, like);
+        }
+        if (categoryQuery) {
+            filters.push('p.category = ?');
+            filterParams.push(categoryQuery);
+        }
+        if (statusQuery) {
+            filters.push('p.status = ?');
+            filterParams.push(statusQuery);
+        }
+
+        const whereClause = filters.join(' AND ');
+
         // Get products with stock info from inventory table
         // In GET products listing route, update the query to include last_purchase_price:
         const [products] = await pool.execute(
-            `SELECT 
+            `SELECT
                 BIN_TO_UUID(p.id) as id,
-                p.name, 
-                p.brand, 
-                p.category, 
-                p.size, 
-                p.sku, 
+                p.name,
+                p.brand,
+                p.category,
+                p.size,
+                p.sku,
                 p.barcode,
                 COALESCE(i.current_quantity, 0) as total_stock,
                 COALESCE(i.avg_cost, 0) as avg_cost,
                 COALESCE(i.selling_price, 0) as selling_price,
                 COALESCE(i.avg_cost, 0) as buying_price,
                 COALESCE((
-                    SELECT si.unit_price 
-                    FROM stock_in si 
-                    WHERE si.product_id = p.id 
-                    ORDER BY si.created_at DESC 
+                    SELECT si.unit_price
+                    FROM stock_in si
+                    WHERE si.product_id = p.id
+                    ORDER BY si.created_at DESC
                     LIMIT 1
                 ), i.avg_cost, 0) as last_purchase_price, -- ADD THIS
                 COUNT(DISTINCT ing.raw_material_id) as ingredient_count,
@@ -118,22 +149,36 @@ router.get('/', requirePermissionOrAdmin('products.view'), getShopInfo, async (r
             FROM products p
             LEFT JOIN inventory i ON p.id = i.product_id
             LEFT JOIN ingredients ing ON p.id = ing.main_product_id
-            WHERE p.shop_id = UUID_TO_BIN(?)
-            GROUP BY p.id, p.name, p.brand, p.category, p.size, 
+            WHERE ${whereClause}
+            GROUP BY p.id, p.name, p.brand, p.category, p.size,
                     p.sku, p.barcode, p.created_at, p.status,
                     i.current_quantity, i.avg_cost, i.selling_price
-            ORDER BY p.created_at DESC 
+            ORDER BY p.created_at DESC
             LIMIT ? OFFSET ?`,
-            [req.shopId, limit, offset]
+            [...filterParams, limit, offset]
         );
 
         // Get total count for pagination
         const [countResult] = await pool.execute(
-            `SELECT COUNT(*) as total FROM products WHERE shop_id = UUID_TO_BIN(?)`,
-            [req.shopId]
+            `SELECT COUNT(*) as total FROM products p WHERE ${whereClause}`,
+            filterParams
         );
         const total = countResult[0].total;
         const totalPages = Math.ceil(total / limit);
+
+        // Live search/filter requests only need the table + pagination fragment,
+        // not the full page (avoids a jarring full reload on every keystroke).
+        if (req.query.ajax === '1') {
+            return res.render('products/_productsList', {
+                layout: false,
+                products: products || [],
+                currentPage: page,
+                totalPages,
+                search,
+                categoryQuery,
+                statusQuery
+            });
+        }
 
         // Get distinct categories for filter dropdown
         const [categoriesResult] = await pool.execute(
@@ -159,6 +204,9 @@ router.get('/', requirePermissionOrAdmin('products.view'), getShopInfo, async (r
             categories: categories || [],
             currentPage: page,
             totalPages,
+            search,
+            categoryQuery,
+            statusQuery,
             shop: req.shop
         });
     } catch (err) {

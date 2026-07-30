@@ -50,7 +50,14 @@ class FeedbackController {
             next();
         } catch (err) {
             console.error('Error in getShopInfo middleware:', err);
-            res.status(500).json({ success: false, message: 'Server error' });
+            res.status(500).json({
+                success: false,
+                message: 'Server error',
+                details: (err && err.message) ? err.message : String(err),
+                errName: err && err.name,
+                errCode: err && err.code,
+                errStack: err && err.stack ? String(err.stack).split('\n').slice(0, 4) : undefined
+            });
         }
     }
 

@@ -32,6 +32,10 @@ mobile/ios/DerivedData/
 agentic AI/.env
 FYP-Tech-Solution/agentic AI/.env
 
+# Electron build output
+dist/
+dist1/
+
 # Data
 data/managehub.db
 

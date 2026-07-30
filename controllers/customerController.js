@@ -63,7 +63,14 @@ const getShopDetails = async (req, res, next) => {
         next();
     } catch (err) {
         console.error('Error fetching shop details:', err);
-        res.status(500).json({ success: false, message: 'Error fetching shop details' });
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching shop details',
+            details: (err && err.message) ? err.message : String(err),
+            errName: err && err.name,
+            errCode: err && err.code,
+            errStack: err && err.stack ? String(err.stack).split('\n').slice(0, 4) : undefined
+        });
     }
 };
 
