@@ -13,14 +13,15 @@ const getShopPrefix = async (req, res, next) => {
     try {
         // Get shop details from database
         const [shops] = await pool.execute(
-            'SELECT * FROM shops WHERE id = ?',
+            'SELECT * FROM shops WHERE id = UUID_TO_BIN(?)',
             [req.session.shopId]
         );
 
         req.shop = {
             id: req.session.shopId,
             name: shops[0]?.name || 'My Shop',
-            logo: shops[0].logo ? `/uploads/${shops[0].logo}` : null,
+            logo: shops[0]?.logo ? `/uploads/shop_logos/${shops[0].logo}` : null,
+            address: shops[0]?.address || '',
             currency: shops[0]?.currency || 'PKR',
             primary_color: shops[0]?.primary_color || '#007bff',
             secondary_color: shops[0]?.secondary_color || '#6c757d'

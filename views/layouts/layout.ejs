@@ -227,19 +227,19 @@
                 color: #fecaca !important;
                 border-color: #991b1b !important;
             }
+        </style>
 
-            /* Shop's saved Primary/Secondary Color (Shop Settings) — most individual pages
-               declare their own hardcoded `:root { --primary: #4e73df; ... }`. This block has
-               higher specificity (html[data-theme] beats a bare :root) so the shop's chosen
-               colors win everywhere instead of only on the pages that happened to read
-               shop.primary_color themselves. */
-            <% if (typeof shop !== 'undefined' && shop) { %>
+        <!-- Shop Colors - Moved outside the main style tag to avoid CSS parsing errors -->
+        <% if (typeof shop !== 'undefined' && shop) { %>
+        <style>
             html[data-theme] {
                 --primary: <%= shop.primary_color || '#4e73df' %> !important;
                 --secondary: <%= shop.secondary_color || '#858796' %> !important;
             }
-            <% } %>
+        </style>
+        <% } %>
 
+        <style>
             /* Sidebar Styles - Only for logged-in users.
                navbar.ejs sets `body { padding-top: 85px }` globally to clear the fixed navbar
                on ordinary (non-sidebar) pages. App/dashboard pages already clear the navbar via
@@ -316,6 +316,18 @@
                 font-size: 0.85rem;
                 color: #94a3b8;
                 margin-top: 5px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+            }
+
+            .sidebar-user-avatar {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                object-fit: cover;
+                flex-shrink: 0;
             }
 
             .sidebar-menu {

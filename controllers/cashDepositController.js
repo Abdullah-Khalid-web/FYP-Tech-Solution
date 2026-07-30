@@ -157,11 +157,14 @@ class CashDepositController {
 
             // Get shop details - MOVED BEFORE render
             const [[shop]] = await pool.execute(
-                `SELECT name, currency, primary_color 
-                FROM shops 
+                `SELECT name, logo, currency, primary_color
+                FROM shops
                 WHERE id = UUID_TO_BIN(?)`,
                 [shopId],
             );
+            if (shop) {
+                shop.logo = shop.logo ? `/uploads/shop_logos/${shop.logo}` : null;
+            }
 
             // Process summary values
             const processedSummary = {
@@ -510,9 +513,12 @@ class CashDepositController {
       );
 
       const [[shop]] = await pool.execute(
-        `SELECT name, currency FROM shops WHERE id = UUID_TO_BIN(?)`,
+        `SELECT name, logo, currency FROM shops WHERE id = UUID_TO_BIN(?)`,
         [shopId],
       );
+      if (shop) {
+        shop.logo = shop.logo ? `/uploads/shop_logos/${shop.logo}` : null;
+      }
 
       res.render("cash-deposits/register", {
         title: "Cash Register",
@@ -617,9 +623,12 @@ class CashDepositController {
       );
 
       const [[shop]] = await pool.execute(
-        `SELECT name, currency FROM shops WHERE id = UUID_TO_BIN(?)`,
+        `SELECT name, logo, currency FROM shops WHERE id = UUID_TO_BIN(?)`,
         [shopId],
       );
+      if (shop) {
+        shop.logo = shop.logo ? `/uploads/shop_logos/${shop.logo}` : null;
+      }
 
       res.render("cash-deposits/reports", {
         title: "Cash Reports",

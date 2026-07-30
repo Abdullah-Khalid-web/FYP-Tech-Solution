@@ -2,7 +2,12 @@
     <div class="sidebar-header">
         <h3><%= typeof shop !== 'undefined' && shop ? shop.name : 'Manage Hub' %></h3>
         <div class="shop-name">
-            <i class="fas fa-user-circle"></i> <%= user.username || user.name %>
+            <% if (user.profile_picture) { %>
+                <img src="/uploads/profiles/<%= user.profile_picture %>" alt="<%= user.username || user.name %>" class="sidebar-user-avatar">
+            <% } else { %>
+                <i class="fas fa-user-circle"></i>
+            <% } %>
+            <%= user.username || user.name %>
         </div>
     </div>
     

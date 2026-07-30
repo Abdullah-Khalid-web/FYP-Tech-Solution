@@ -236,6 +236,101 @@
     text-decoration: underline;
   }
 
+  /* Analytics Controls */
+  .filter-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--secondary);
+    margin-bottom: 10px;
+  }
+
+  .pill-filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border-radius: 999px;
+    border: 1.5px solid #e3e6f0;
+    background: #fff;
+    color: var(--dark);
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .pill-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  .pill-btn i {
+    font-size: 0.85rem;
+  }
+
+  .pill-sales.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(78, 115, 223, 0.35); }
+  .pill-expenses.active { background: var(--danger); border-color: var(--danger); color: #fff; box-shadow: 0 4px 12px rgba(231, 74, 59, 0.35); }
+  .pill-users.active { background: var(--success); border-color: var(--success); color: #fff; box-shadow: 0 4px 12px rgba(28, 200, 138, 0.35); }
+  .pill-products.active { background: var(--warning); border-color: var(--warning); color: #fff; box-shadow: 0 4px 12px rgba(246, 194, 62, 0.35); }
+  .pill-suppliers.active { background: var(--info); border-color: var(--info); color: #fff; box-shadow: 0 4px 12px rgba(54, 185, 204, 0.35); }
+  .pill-neutral.active { background: var(--dark); border-color: var(--dark); color: #fff; box-shadow: 0 4px 12px rgba(90, 92, 105, 0.3); }
+
+  .custom-date-input {
+    border-radius: 8px;
+    border: 1.5px solid #e3e6f0;
+  }
+
+  .btn-apply-filter {
+    background: var(--primary);
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    padding: 9px 14px;
+    transition: all 0.2s ease;
+  }
+
+  .btn-apply-filter:hover {
+    background: #3d5fc4;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(78, 115, 223, 0.3);
+  }
+
+  .analytics-chart-card {
+    background: #fff;
+  }
+
+  .chart-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(78, 115, 223, 0.1);
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 0.82rem;
+    transition: all 0.25s ease;
+  }
+
+  .chart-canvas-wrap {
+    position: relative;
+    padding: 10px 4px 0;
+    min-height: 320px;
+  }
+
   /* Quick Actions */
   .action-grid {
     display: grid;
@@ -655,7 +750,7 @@
         </div>
       </div>
 
-      <div class="ai-suggestions card">
+      <!-- <div class="ai-suggestions card">
         <div class="section-header">
           <h2><i class="fas fa-wand-magic-sparkles"></i> AI Business Suggestions</h2>
           <button class="btn btn-sm btn-outline-primary" onclick="loadBusinessSuggestions()">
@@ -667,7 +762,7 @@
             <i class="fas fa-spinner fa-spin"></i> Loading suggestions...
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Recent Sales -->
       <div class="recent-sales card">
@@ -747,69 +842,71 @@
     </div>
   </div>
 
-  <!-- Graph Controls -->
-  <div class="card mb-3">
+  <!-- Analytics: Controls + Graph combined -->
+  <div class="card analytics-chart-card">
     <div class="section-header">
       <h2><i class="fas fa-chart-line"></i> Analytics Dashboard</h2>
+      <span class="chart-type-badge" id="chartTypeBadge"><i class="fas fa-chart-line"></i> Sales</span>
     </div>
-    <div class="card-body">
-      <!-- Chart Type Filters -->
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Data Type</label>
-        <div class="btn-group w-100 flex-wrap" role="group">
-          <button type="button" class="btn btn-outline-primary chart-filter-btn" data-type="sales" onclick="changeChartType('sales')">
-            <i class="fas fa-chart-line"></i> Sales
-          </button>
-          <button type="button" class="btn btn-outline-danger chart-filter-btn" data-type="expenses" onclick="changeChartType('expenses')">
-            <i class="fas fa-money-bill-wave"></i> Expenses
-          </button>
-          <button type="button" class="btn btn-outline-success chart-filter-btn" data-type="users" onclick="changeChartType('users')">
-            <i class="fas fa-users"></i> Users
-          </button>
-          <button type="button" class="btn btn-outline-warning chart-filter-btn" data-type="products" onclick="changeChartType('products')">
-            <i class="fas fa-box"></i> Products
-          </button>
-          <button type="button" class="btn btn-outline-info chart-filter-btn" data-type="suppliers" onclick="changeChartType('suppliers')">
-            <i class="fas fa-truck"></i> Suppliers
-          </button>
-        </div>
-      </div>
-      
-      <!-- Date Range Filters -->
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Date Range</label>
-        <div class="btn-group w-100 mb-2 flex-wrap" role="group">
-          <button type="button" class="btn btn-outline-secondary date-filter-btn" data-days="7" onclick="changeDateRange(7)">
-            <i class="fas fa-calendar-week"></i> Last 7 Days
-          </button>
-          <button type="button" class="btn btn-outline-secondary date-filter-btn" data-days="30" onclick="changeDateRange(30)">
-            <i class="fas fa-calendar-month"></i> Last 30 Days
-          </button>
-          <button type="button" class="btn btn-outline-secondary date-filter-btn" data-days="90" onclick="changeDateRange(90)">
-            <i class="fas fa-calendar"></i> Last 90 Days
-          </button>
-        </div>
-        <div class="row g-2">
-          <div class="col-md-5">
-            <input type="date" class="form-control" id="customStartDate" placeholder="Start Date">
-          </div>
-          <div class="col-md-5">
-            <input type="date" class="form-control" id="customEndDate" placeholder="End Date">
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-primary w-100" onclick="applyCustomDates()">
-              <i class="fas fa-search"></i> Apply
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Single Graph Card -->
-  <div class="card">
-    <h3>Analytics Overview</h3>
-    <canvas id="mainSalesChart" height="100"></canvas>
+    <!-- Chart Type Filters -->
+    <div class="mb-4">
+      <label class="filter-label"><i class="fas fa-layer-group"></i> Data Type</label>
+      <div class="pill-filter-group">
+        <button type="button" class="chart-filter-btn pill-btn pill-sales active" data-type="sales" onclick="changeChartType('sales')">
+          <i class="fas fa-chart-line"></i> Sales
+        </button>
+        <button type="button" class="chart-filter-btn pill-btn pill-expenses" data-type="expenses" onclick="changeChartType('expenses')">
+          <i class="fas fa-money-bill-wave"></i> Expenses
+        </button>
+        <button type="button" class="chart-filter-btn pill-btn pill-users" data-type="users" onclick="changeChartType('users')">
+          <i class="fas fa-users"></i> Users
+        </button>
+        <button type="button" class="chart-filter-btn pill-btn pill-products" data-type="products" onclick="changeChartType('products')">
+          <i class="fas fa-box"></i> Products
+        </button>
+        <button type="button" class="chart-filter-btn pill-btn pill-suppliers" data-type="suppliers" onclick="changeChartType('suppliers')">
+          <i class="fas fa-truck"></i> Suppliers
+        </button>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-canvas-wrap">
+      <canvas id="mainSalesChart" height="100"></canvas>
+    </div>
+
+    <!-- Date Range Filters -->
+    <div class="mt-4">
+      <label class="filter-label"><i class="fas fa-calendar-alt"></i> Date Range</label>
+      <div class="pill-filter-group mb-3">
+        <button type="button" class="date-filter-btn pill-btn pill-neutral" data-days="0" onclick="changeDateRange(0)">
+          <i class="fas fa-calendar-day"></i> Today
+        </button>
+        <button type="button" class="date-filter-btn pill-btn pill-neutral active" data-days="7" onclick="changeDateRange(7)">
+          <i class="fas fa-calendar-week"></i> Last 7 Days
+        </button>
+        <button type="button" class="date-filter-btn pill-btn pill-neutral" data-days="30" onclick="changeDateRange(30)">
+          <i class="fas fa-calendar-month"></i> Last 30 Days
+        </button>
+        <button type="button" class="date-filter-btn pill-btn pill-neutral" data-days="90" onclick="changeDateRange(90)">
+          <i class="fas fa-calendar"></i> Last 90 Days
+        </button>
+      </div>
+      <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+          <input type="date" class="form-control custom-date-input" id="customStartDate" placeholder="Start Date">
+        </div>
+        <div class="col-md-5">
+          <input type="date" class="form-control custom-date-input" id="customEndDate" placeholder="End Date">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-apply-filter w-100" onclick="applyCustomDates()">
+            <i class="fas fa-search"></i> Apply
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1364,12 +1461,29 @@
   function changeChartType(type) {
     currentChartType = type;
     loadSalesGraph();
-    
+
     // Update active button styles
     document.querySelectorAll('.chart-filter-btn').forEach(btn => {
       btn.classList.remove('active');
     });
     document.querySelector(`.chart-filter-btn[data-type="${type}"]`).classList.add('active');
+    updateChartTypeBadge(type);
+  }
+
+  function updateChartTypeBadge(type) {
+    const badge = document.getElementById('chartTypeBadge');
+    if (!badge) return;
+    const meta = {
+      sales: { icon: 'fa-chart-line', color: 'var(--primary)', bg: 'rgba(78, 115, 223, 0.1)' },
+      expenses: { icon: 'fa-money-bill-wave', color: 'var(--danger)', bg: 'rgba(231, 74, 59, 0.1)' },
+      users: { icon: 'fa-users', color: 'var(--success)', bg: 'rgba(28, 200, 138, 0.1)' },
+      products: { icon: 'fa-box', color: 'var(--warning)', bg: 'rgba(246, 194, 62, 0.1)' },
+      suppliers: { icon: 'fa-truck', color: 'var(--info)', bg: 'rgba(54, 185, 204, 0.1)' }
+    };
+    const m = meta[type] || meta.sales;
+    badge.style.color = m.color;
+    badge.style.background = m.bg;
+    badge.innerHTML = `<i class="fas ${m.icon}"></i> ${getChartLabel()}`;
   }
   
   function changeDateRange(days) {
