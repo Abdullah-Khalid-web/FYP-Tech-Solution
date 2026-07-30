@@ -3,6 +3,11 @@ const app = require('./app');
 const net = require('net');
 
 const PREFERRED_PORT = parseInt(process.env.PORT || '3000', 10);
+// Electron defaults to a different port than the plain web server (3000) so the
+// two don't race for the same port when both are run side by side during dev —
+// previously they'd both try 3000, and whichever lost the race got silently
+// served by the other (e.g. Electron talking to the online MySQL dev server).
+const ELECTRON_PREFERRED_PORT = parseInt(process.env.ELECTRON_PORT_BASE || '3500', 10);
 
 // Check if a port is free
 function isPortFree(port) {
@@ -29,9 +34,9 @@ function startServer() {
 
         if (isElectron) {
             // In Electron mode, find a free port so we don't clash with any running web server
-            port = await findFreePort(PREFERRED_PORT);
-            if (port !== PREFERRED_PORT) {
-                console.log(`⚠️  Port ${PREFERRED_PORT} in use. Electron using port ${port} instead.`);
+            port = await findFreePort(ELECTRON_PREFERRED_PORT);
+            if (port !== ELECTRON_PREFERRED_PORT) {
+                console.log(`⚠️  Port ${ELECTRON_PREFERRED_PORT} in use. Electron using port ${port} instead.`);
             }
             // Store it so the Electron window can load the right URL
             process.env.ELECTRON_PORT = String(port);

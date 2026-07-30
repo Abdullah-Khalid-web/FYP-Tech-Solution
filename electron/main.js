@@ -39,8 +39,8 @@ function createWindow() {
         titleBarStyle: 'default'
     });
 
-    // Load the Express app — use ELECTRON_PORT set by server.js (may differ from 3000 if port was taken)
-    const electronPort = process.env.ELECTRON_PORT || '3000';
+    // Load the Express app — use ELECTRON_PORT set by server.js (may differ from 3500 if port was taken)
+    const electronPort = process.env.ELECTRON_PORT || '3500';
     const url = `http://localhost:${electronPort}`;
     
     mainWindow.loadURL(url);
@@ -56,7 +56,7 @@ function createWindow() {
     // Open links to our own local server (e.g. receipts opened via window.open)
     // in an in-app window; only send genuinely external links to the OS browser.
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-        const electronPort = process.env.ELECTRON_PORT || '3000';
+        const electronPort = process.env.ELECTRON_PORT || '3500';
         const isInternal = url.startsWith(`http://localhost:${electronPort}/`) ||
             url.startsWith(`http://127.0.0.1:${electronPort}/`);
 
@@ -166,7 +166,7 @@ app.whenReady().then(async () => {
         // Start Express server
         const { startServer } = require('../server');
         expressServer = await startServer();
-        console.log('✅ Express server started on port 3000');
+        console.log(`✅ Express server started on port ${process.env.ELECTRON_PORT || '3500'}`);
 
         syncService.startAutoSync(30000);
 
